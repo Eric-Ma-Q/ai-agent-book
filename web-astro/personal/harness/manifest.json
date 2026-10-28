@@ -1,0 +1,1725 @@
+{
+  "format": "harness-migration-manifest",
+  "version": 1,
+  "source": "~/project/harness",
+  "sourceCommit": "4c1cbf265541b75e820bde70bd6503c6e82960a6",
+  "sourceDirty": false,
+  "migratedAt": "2026-10-18T03:24:53.558Z",
+  "fileCount": 188,
+  "totalBytes": 6925634,
+  "counts": {
+    "meta": 4,
+    "build": 8,
+    "page": 20,
+    "longform": 2,
+    "collab": 71,
+    "doc": 21,
+    "artifact": 2,
+    "lab": 41,
+    "research": 19
+  },
+  "files": [
+    {
+      "source": ".gitignore",
+      "target": "meta/gitignore.txt",
+      "category": "meta",
+      "url": null,
+      "bytes": 70,
+      "sha256": "64fcbade9e783e1f1bb19a7498cbd9c067873b816a69f9017331c8d2539864df",
+      "mode": "100644"
+    },
+    {
+      "source": ".zcodeignore",
+      "target": "meta/zcodeignore.txt",
+      "category": "meta",
+      "url": null,
+      "bytes": 942,
+      "sha256": "3426215d05709084139224c813f4ce85c368786902e6ca9b1ac2663f6d7b759e",
+      "mode": "100644"
+    },
+    {
+      "source": "AGENTS.md",
+      "target": "meta/agents-md.txt",
+      "category": "meta",
+      "url": null,
+      "bytes": 2833,
+      "sha256": "86dab86363bbbb127951ab2689a4856f36221851eb7b71e2ead8ec49241f0eb8",
+      "mode": "100644"
+    },
+    {
+      "source": "CLAUDE.md",
+      "target": "meta/claude-md.txt",
+      "category": "meta",
+      "url": null,
+      "bytes": 11,
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+      "mode": "100644"
+    },
+    {
+      "source": "_deck/build_deck.py",
+      "target": "archive/_deck/build_deck.py",
+      "category": "build",
+      "url": "/harness/site/_deck/build_deck.py",
+      "bytes": 48319,
+      "sha256": "38a84b53e8c31e8bf6802ac446c509b5590fa693526393489b6ff6883ab54ca0",
+      "mode": "100644"
+    },
+    {
+      "source": "_deck/checks.json",
+      "target": "archive/_deck/checks.json",
+      "category": "build",
+      "url": "/harness/site/_deck/checks.json",
+      "bytes": 783,
+      "sha256": "8ca6fafc972358fc4c47d816f6c6858394101244cf9d0a71c8a740610d443b37",
+      "mode": "100644"
+    },
+    {
+      "source": "_deck/harness-tech-share-2026-10.pptx",
+      "target": "archive/_deck/harness-tech-share-2026-10.pptx",
+      "category": "build",
+      "url": "/harness/site/_deck/harness-tech-share-2026-10.pptx",
+      "bytes": 106448,
+      "sha256": "62a965ed2e8fdd7d9641d166f6a8e9127cf2efea83b259f2d78edaa76e489236",
+      "mode": "100644"
+    },
+    {
+      "source": "_deck/qa_layout.py",
+      "target": "archive/_deck/qa_layout.py",
+      "category": "build",
+      "url": "/harness/site/_deck/qa_layout.py",
+      "bytes": 3097,
+      "sha256": "61f03477449d41a839bd3a106de16b3e9db9c431f937efeeaebf7ecbf8836f06",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-agent-pm-career.html",
+      "target": "archive/ai-agent-pm-career.html",
+      "category": "page",
+      "url": "/harness/site/ai-agent-pm-career.html",
+      "bytes": 75826,
+      "sha256": "0400e182e297a9690e37e11be7aa2861030be018de3be7ea2d8430528f5df9c0",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-expense-review-prd.html",
+      "target": "archive/ai-expense-review-prd.html",
+      "category": "page",
+      "url": "/harness/site/ai-expense-review-prd.html",
+      "bytes": 77285,
+      "sha256": "aaaf9992f0ad6f227b3f63c4762eba4addd9d9700a399c60770c2c18dddc9697",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-failure-casebook.html",
+      "target": "archive/ai-failure-casebook.html",
+      "category": "page",
+      "url": "/harness/site/ai-failure-casebook.html",
+      "bytes": 372526,
+      "sha256": "af02d25803b43e60d7f1275c37b3abf2e5be3039b510426bad9740c021049a9d",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-harness-explained.html",
+      "target": "archive/ai-harness-explained.html",
+      "category": "page",
+      "url": "/harness/site/ai-harness-explained.html",
+      "bytes": 197230,
+      "sha256": "d91c07295e3a835a3e6a8ef9544d1539b6bfe12e0d2d77887f51bd2dc57773f8",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-harness-flow.html",
+      "target": "archive/ai-harness-flow.html",
+      "category": "page",
+      "url": "/harness/site/ai-harness-flow.html",
+      "bytes": 118752,
+      "sha256": "6f78a7729818e970dba4d54798e38dbf7b70e4d5b00b5eb39fb1d474d990b7ac",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-industry-research-2026-10.html",
+      "target": "archive/ai-industry-research-2026-10.html",
+      "category": "page",
+      "url": "/harness/site/ai-industry-research-2026-10.html",
+      "bytes": 82820,
+      "sha256": "1f53978693a2f9edfe4bb08daef1e83e7cce2813608f4756b5ed3b5668803204",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-industry-research-2026-10.md",
+      "target": "archive/ai-industry-research-2026-10.md",
+      "category": "longform",
+      "url": "/harness/site/ai-industry-research-2026-10.md",
+      "bytes": 31298,
+      "sha256": "2c6f4197fb9b67e0e95e6a11fa1a50b5a32a81a01af0976bf0a8058a5ddbda0a",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-pm-exam.html",
+      "target": "archive/ai-pm-exam.html",
+      "category": "page",
+      "url": "/harness/site/ai-pm-exam.html",
+      "bytes": 156620,
+      "sha256": "1bf283042ea9015741454d209d149bd0d6dbd12fedca0ce4ecc552d12a810191",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-pm-resume.html",
+      "target": "archive/ai-pm-resume.html",
+      "category": "page",
+      "url": "/harness/site/ai-pm-resume.html",
+      "bytes": 136047,
+      "sha256": "a35b3dba3bcd3738f67c7600f79891b52b6b0c408ccb2a02de3ec16ae1b3ce72",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-products-pm-analysis.html",
+      "target": "archive/ai-products-pm-analysis.html",
+      "category": "page",
+      "url": "/harness/site/ai-products-pm-analysis.html",
+      "bytes": 182369,
+      "sha256": "170d0798097cfc4e887636e505e3bea0ca8fbbfc20ffdd0328b8fcae0323a492",
+      "mode": "100644"
+    },
+    {
+      "source": "ask-user-question-product.html",
+      "target": "archive/ask-user-question-product.html",
+      "category": "page",
+      "url": "/harness/site/ask-user-question-product.html",
+      "bytes": 64433,
+      "sha256": "0ae01e90a7614e6ef46bc55717802a87e2cfc0ef25599b26854790cf455d56f7",
+      "mode": "100644"
+    },
+    {
+      "source": "agent-task-queue.html",
+      "target": "archive/agent-task-queue.html",
+      "category": "page",
+      "url": "/harness/site/agent-task-queue.html",
+      "bytes": 93859,
+      "sha256": "d238fd591aa10369b64f86f3822d696d47cb24413b4732acbb19765d9aef22b8",
+      "mode": "100644"
+    },
+    {
+      "source": "claude-code-hooks-33.html",
+      "target": "archive/claude-code-hooks-33.html",
+      "category": "page",
+      "url": "/harness/site/claude-code-hooks-33.html",
+      "bytes": 128801,
+      "sha256": "a19e3fc49a9271ebff2774c3c40a3d45972a12afdcdd6fbe6f1805ba08fb3912",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/BOARD.md",
+      "target": "archive/collab/BOARD.md",
+      "category": "collab",
+      "url": "/harness/site/collab/BOARD.md",
+      "bytes": 10249,
+      "sha256": "3efb8e808da0451df2834de00756bbaf5279071432824464c1a45a497ad0a6b9",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/PROTOCOL.md",
+      "target": "archive/collab/PROTOCOL.md",
+      "category": "collab",
+      "url": "/harness/site/collab/PROTOCOL.md",
+      "bytes": 5226,
+      "sha256": "c142e35d854b0cea2c35cca87c67e73fe433e000d13afbd844edf4aa2ec43c3f",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/ROADMAP.md",
+      "target": "archive/collab/ROADMAP.md",
+      "category": "collab",
+      "url": "/harness/site/collab/ROADMAP.md",
+      "bytes": 5934,
+      "sha256": "42447de128e4f56a83920032d8f553f2f94e6d74796380aa3215f97a87a6997a",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/F01-fix-04-attribution.report.md",
+      "target": "archive/collab/reports/F01-fix-04-attribution.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/F01-fix-04-attribution.report.md",
+      "bytes": 8097,
+      "sha256": "b2d3c7ba4eba052addf12c18955bd002f779f11bfdca17f591bd0ee05eb03139",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/F02-small-errata.report.md",
+      "target": "archive/collab/reports/F02-small-errata.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/F02-small-errata.report.md",
+      "bytes": 13357,
+      "sha256": "cc78d60684aef8b8a439765bbe159ee216b2a0f088d03745dfc0ee8fcf473b52",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/F03-explained-mobile-overflow.report.md",
+      "target": "archive/collab/reports/F03-explained-mobile-overflow.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/F03-explained-mobile-overflow.report.md",
+      "bytes": 4299,
+      "sha256": "8567567c543c32afc886c5a6727551b0c9aefb1a3fc6b34e6b7a4488360278f3",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T01-harness-teardown.report.md",
+      "target": "archive/collab/reports/T01-harness-teardown.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T01-harness-teardown.report.md",
+      "bytes": 6559,
+      "sha256": "92eab41ab2902fef25d7ed0286c989e19408698fc1bae28751c5afdf672c22d7",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T01-r1-harness-teardown.report.md",
+      "target": "archive/collab/reports/T01-r1-harness-teardown.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T01-r1-harness-teardown.report.md",
+      "bytes": 8383,
+      "sha256": "b4dc4eecd108c57c1d8efb677becc1a27f4cd53bbec1688d453578fe8fcd7cc9",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T02-tools-mcp-skills.report.md",
+      "target": "archive/collab/reports/T02-tools-mcp-skills.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T02-tools-mcp-skills.report.md",
+      "bytes": 7041,
+      "sha256": "8a2c098c782c29ded5268d63ba650490313f36b6a89a5d2b36cfdae5cb8c3c3d",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T03-r1-security-sandbox.report.md",
+      "target": "archive/collab/reports/T03-r1-security-sandbox.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T03-r1-security-sandbox.report.md",
+      "bytes": 14234,
+      "sha256": "ec3d4206283e23e25d2785630be9332aad1ccaaafb372c134b22ca0159ac6d84",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T03-security-sandbox.report.md",
+      "target": "archive/collab/reports/T03-security-sandbox.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T03-security-sandbox.report.md",
+      "bytes": 7278,
+      "sha256": "5356dabc1804ac052b714a94cbc23d86e69dade4cb968fdccef023cc2079f570",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T04-memory.report.md",
+      "target": "archive/collab/reports/T04-memory.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T04-memory.report.md",
+      "bytes": 7602,
+      "sha256": "b240937dc7c8584c4f9c03c85f43bc5d5ec63104ae1d60e5939986ab534efdce",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T05-multi-agent.report.md",
+      "target": "archive/collab/reports/T05-multi-agent.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T05-multi-agent.report.md",
+      "bytes": 7103,
+      "sha256": "612380a43e2963ddce062706fe94e50b4816bf49f8c2872b35981220d7cc5422",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T06-evals.report.md",
+      "target": "archive/collab/reports/T06-evals.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T06-evals.report.md",
+      "bytes": 7045,
+      "sha256": "19ea2fd1534ae00faead79839f79aa009049cdaaf3862664f6379ad4c7b5c11c",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T07-economics-observability.report.md",
+      "target": "archive/collab/reports/T07-economics-observability.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T07-economics-observability.report.md",
+      "bytes": 6250,
+      "sha256": "09a5a280a913f8d6125f7527edbe70d9f8889beddb29d06b37e64ae2d0e6951f",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T08-ext-memory-lab.report.md",
+      "target": "archive/collab/reports/T08-ext-memory-lab.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T08-ext-memory-lab.report.md",
+      "bytes": 13904,
+      "sha256": "890eb129a38c41902d4951f85db1cf845b68d80ee1dc7068c06abb1afe33dd43",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T08-mini-harness-lab.report.md",
+      "target": "archive/collab/reports/T08-mini-harness-lab.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T08-mini-harness-lab.report.md",
+      "bytes": 8704,
+      "sha256": "fea9d400d041f6541a0df56c29e1c357636b359ee3461dcaf6e925f1b3321ac6",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T08-r1-mini-harness-lab.report.md",
+      "target": "archive/collab/reports/T08-r1-mini-harness-lab.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T08-r1-mini-harness-lab.report.md",
+      "bytes": 8688,
+      "sha256": "429f51bf61b032a78dc6bdbf6061ece2b19a5cea0f5bff516581a29c70f6b4bc",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T09a-research-fixups.report.md",
+      "target": "archive/collab/reports/T09a-research-fixups.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T09a-research-fixups.report.md",
+      "bytes": 17637,
+      "sha256": "09c7c8b55bde349fe18a893449246957befaed43fe3028e5e7888742c6b578d5",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T09b-learning-pages.report.md",
+      "target": "archive/collab/reports/T09b-learning-pages.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T09b-learning-pages.report.md",
+      "bytes": 14049,
+      "sha256": "3b2ee3c30369395f52c1ca6d68ef17b2180939a54ce3575cd8cab9fa859a880d",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T10-s7-pages-exam.report.md",
+      "target": "archive/collab/reports/T10-s7-pages-exam.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T10-s7-pages-exam.report.md",
+      "bytes": 11418,
+      "sha256": "23b8401d7174aaa4f6ef7cbc6af511ad8ac0d30d30eb74081d2386faf07fba4e",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T11a-failure-cases-conversation.report.md",
+      "target": "archive/collab/reports/T11a-failure-cases-conversation.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T11a-failure-cases-conversation.report.md",
+      "bytes": 11619,
+      "sha256": "3ac8e9aa031a91ce35acbdf9157d643accebddaf77006ba3aecf1e2695b0ca00",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T11b-failure-cases-defaults-agents.report.md",
+      "target": "archive/collab/reports/T11b-failure-cases-defaults-agents.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T11b-failure-cases-defaults-agents.report.md",
+      "bytes": 10215,
+      "sha256": "72f6efd02dc201f7189e7e2dedc7b341a734f0fd3782848c7b6dd77287715679",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T11b-r1-failure-cases-deeplinks.report.md",
+      "target": "archive/collab/reports/T11b-r1-failure-cases-deeplinks.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T11b-r1-failure-cases-deeplinks.report.md",
+      "bytes": 8835,
+      "sha256": "45cf8a4edce8725711249c3bb5b2ffb3af674e92a527a51534fa8f845ac2c13b",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T11c-failure-cases-workflow-companion.report.md",
+      "target": "archive/collab/reports/T11c-failure-cases-workflow-companion.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T11c-failure-cases-workflow-companion.report.md",
+      "bytes": 9821,
+      "sha256": "9be4bce9b15dad47acefcbd2d77803e7205f98b48998c95bc1b8476c539e4f36",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T11d-failure-cases-high-stakes.report.md",
+      "target": "archive/collab/reports/T11d-failure-cases-high-stakes.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T11d-failure-cases-high-stakes.report.md",
+      "bytes": 10583,
+      "sha256": "5958da5f4e53d144819b1de0eedbdf095b2858f008365d8f17f87fe63c477ffe",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reports/T12-casebook-merge.report.md",
+      "target": "archive/collab/reports/T12-casebook-merge.report.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reports/T12-casebook-merge.report.md",
+      "bytes": 14790,
+      "sha256": "2bea5247be3df7fabba9e2fc721340a4aab6176d0a98c733c5fc1135eb9f6de4",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/F01-fix-04-attribution.review.md",
+      "target": "archive/collab/reviews/F01-fix-04-attribution.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/F01-fix-04-attribution.review.md",
+      "bytes": 630,
+      "sha256": "09af320ddd888c514189e7777c09a291243a5f11da5c0ad9d05ea55a44b22583",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/F02-small-errata.review.md",
+      "target": "archive/collab/reviews/F02-small-errata.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/F02-small-errata.review.md",
+      "bytes": 561,
+      "sha256": "0c905be23ce5bbfe4b8fc2fd82a8d3ba332e932ab5714d8ddbf47d06fbcb43fe",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/F03-explained-mobile-overflow.review.md",
+      "target": "archive/collab/reviews/F03-explained-mobile-overflow.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/F03-explained-mobile-overflow.review.md",
+      "bytes": 945,
+      "sha256": "638cdbaace90d36a826b79881ea26eb3f3d66ffa524c1bb8c291b458addd4ea3",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T01-harness-teardown.review.md",
+      "target": "archive/collab/reviews/T01-harness-teardown.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T01-harness-teardown.review.md",
+      "bytes": 3940,
+      "sha256": "968be49f2ab7d819d84adf86e92ca5063fa4ae88baf6e8cad2147a14a659b976",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T02-tools-mcp-skills.review.md",
+      "target": "archive/collab/reviews/T02-tools-mcp-skills.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T02-tools-mcp-skills.review.md",
+      "bytes": 2409,
+      "sha256": "02de5a5fed770f86d1ac99d45c930e4e0b8725bd2a245cad439996b5a79668ec",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T03-security-sandbox.review.md",
+      "target": "archive/collab/reviews/T03-security-sandbox.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T03-security-sandbox.review.md",
+      "bytes": 5008,
+      "sha256": "c65c5be1b9e691c1a11c7de48b9d74bd16459723379fb975888350de9eb6072e",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T04-memory.review.md",
+      "target": "archive/collab/reviews/T04-memory.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T04-memory.review.md",
+      "bytes": 2271,
+      "sha256": "63d2512a41130107b62a1d6bb4d3f591bbc3de8f3ad9189a87751ff0a37aa455",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T05-multi-agent.review.md",
+      "target": "archive/collab/reviews/T05-multi-agent.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T05-multi-agent.review.md",
+      "bytes": 1980,
+      "sha256": "cf3b579285f7f9e4275e053863d55d739b6ca4ffed4c8ec06b891326d2257c64",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T06-evals.review.md",
+      "target": "archive/collab/reviews/T06-evals.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T06-evals.review.md",
+      "bytes": 1529,
+      "sha256": "c82a0c6d616e0d71bb357fec26d1bc2567a6e34215eeda19a537646429af3af7",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T07-economics-observability.review.md",
+      "target": "archive/collab/reviews/T07-economics-observability.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T07-economics-observability.review.md",
+      "bytes": 1445,
+      "sha256": "883e7487305ca2eb389f63b4691bcdc98de32194d9ef2b2411afe7b6d12e6e7b",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T08-ext-memory-lab.review.md",
+      "target": "archive/collab/reviews/T08-ext-memory-lab.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T08-ext-memory-lab.review.md",
+      "bytes": 2131,
+      "sha256": "ea839277f11b3875003a65268f2025ac50009ea3269f2444da93e9e047bbf7e0",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T08-mini-harness-lab.review.md",
+      "target": "archive/collab/reviews/T08-mini-harness-lab.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T08-mini-harness-lab.review.md",
+      "bytes": 7585,
+      "sha256": "e93f6bcedcea910fd0c1f3c53f76926368a23a5f27008547c864277a0c0e850f",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T09a-research-fixups.review.md",
+      "target": "archive/collab/reviews/T09a-research-fixups.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T09a-research-fixups.review.md",
+      "bytes": 1864,
+      "sha256": "f46231ef52645900cddf52f64dfa8991b73313c11588b7f1505248591d526a55",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T09b-learning-pages.review.md",
+      "target": "archive/collab/reviews/T09b-learning-pages.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T09b-learning-pages.review.md",
+      "bytes": 1097,
+      "sha256": "a7ca2b7d68f46878ba24f7337dff0ee792297ecbba55b214d5cbf8bc09d14df7",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T10-s7-pages-exam.review.md",
+      "target": "archive/collab/reviews/T10-s7-pages-exam.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T10-s7-pages-exam.review.md",
+      "bytes": 1150,
+      "sha256": "370769d938872c4dc0b4f3282966eb39959555ed0e91c8ae0539e02b010d114f",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T11a-failure-cases-conversation.review.md",
+      "target": "archive/collab/reviews/T11a-failure-cases-conversation.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T11a-failure-cases-conversation.review.md",
+      "bytes": 1643,
+      "sha256": "9bee26a46788952a61adce2fa8aaf7885378672bdffea6294bbb2a034736acaa",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T11b-failure-cases-defaults-agents.review.md",
+      "target": "archive/collab/reviews/T11b-failure-cases-defaults-agents.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T11b-failure-cases-defaults-agents.review.md",
+      "bytes": 2474,
+      "sha256": "3020fd17b7425505101522670de38771f01282247d5901fc787148ce669b7f27",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T11c-failure-cases-workflow-companion.review.md",
+      "target": "archive/collab/reviews/T11c-failure-cases-workflow-companion.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T11c-failure-cases-workflow-companion.review.md",
+      "bytes": 2089,
+      "sha256": "7dc6010dbef942b8a419e6a03774c73792a6a1bec90323e7e7177c072e07d862",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T11d-failure-cases-high-stakes.review.md",
+      "target": "archive/collab/reviews/T11d-failure-cases-high-stakes.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T11d-failure-cases-high-stakes.review.md",
+      "bytes": 2403,
+      "sha256": "f19b168f9222ed8dd37e5e2707b7c8962054053872c722a61fc945a3dd784ead",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/reviews/T12-casebook-merge.review.md",
+      "target": "archive/collab/reviews/T12-casebook-merge.review.md",
+      "category": "collab",
+      "url": "/harness/site/collab/reviews/T12-casebook-merge.review.md",
+      "bytes": 1329,
+      "sha256": "4980f674b9ec590a17d7521bc1a80a65f5c123bb25b3ffb773b363be286a1266",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/F01-fix-04-attribution.md",
+      "target": "archive/collab/tasks/F01-fix-04-attribution.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/F01-fix-04-attribution.md",
+      "bytes": 1541,
+      "sha256": "63ad99a7643ee459daa787b908ccfecf62f6a1512a23e7d879fcb2d927f133f2",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/F02-small-errata.md",
+      "target": "archive/collab/tasks/F02-small-errata.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/F02-small-errata.md",
+      "bytes": 2979,
+      "sha256": "025ea8a1253ec2ff34d1f053abbc92a2068ca5ce7cbe3a97d5d2feab0ca7aa8f",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/F03-explained-mobile-overflow.md",
+      "target": "archive/collab/tasks/F03-explained-mobile-overflow.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/F03-explained-mobile-overflow.md",
+      "bytes": 1539,
+      "sha256": "bd2eaed0d159f7d2d1e4defb0db506f2f8a9a50caf5346747e1368ebf50e304b",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T01-harness-teardown.md",
+      "target": "archive/collab/tasks/T01-harness-teardown.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T01-harness-teardown.md",
+      "bytes": 2584,
+      "sha256": "fc006dbc85b4ad351e837ba128bd8079c2c50152628f68909f37db477add33d4",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T01-r1-harness-teardown.md",
+      "target": "archive/collab/tasks/T01-r1-harness-teardown.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T01-r1-harness-teardown.md",
+      "bytes": 740,
+      "sha256": "801dc944543307d7071b8ebfa1c95314b3176c04c82e48f535e00ecc0f91927d",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T02-tools-mcp-skills.md",
+      "target": "archive/collab/tasks/T02-tools-mcp-skills.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T02-tools-mcp-skills.md",
+      "bytes": 2295,
+      "sha256": "010db8533719a96423d482af5c86948f15381b2a714056fdf94331a5996421a9",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T03-r1-security-sandbox.md",
+      "target": "archive/collab/tasks/T03-r1-security-sandbox.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T03-r1-security-sandbox.md",
+      "bytes": 824,
+      "sha256": "706bca0fa6fca8e78789596f9975606fcdb9c17fabcd06851e1c7c9fdf966628",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T03-security-sandbox.md",
+      "target": "archive/collab/tasks/T03-security-sandbox.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T03-security-sandbox.md",
+      "bytes": 2303,
+      "sha256": "97e7584c225d308558c70054c9ad3de208231e6ae9264d2edc5cb44262f10814",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T04-memory.md",
+      "target": "archive/collab/tasks/T04-memory.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T04-memory.md",
+      "bytes": 2662,
+      "sha256": "7dcb785ec784b93e795eee5d5670d9bc483beb9a544b04c4fc50a9c1e3187481",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T05-multi-agent.md",
+      "target": "archive/collab/tasks/T05-multi-agent.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T05-multi-agent.md",
+      "bytes": 2596,
+      "sha256": "d1013e51bf8cc09242c04104d39c79515ba20ce0b211c34734c63c77546d277c",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T06-evals.md",
+      "target": "archive/collab/tasks/T06-evals.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T06-evals.md",
+      "bytes": 2642,
+      "sha256": "94dc7001428ca55b20ff24c6ce66964d70ff3c1df0dee8aee41cb686e6df10c5",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T07-economics-observability.md",
+      "target": "archive/collab/tasks/T07-economics-observability.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T07-economics-observability.md",
+      "bytes": 2911,
+      "sha256": "daa5242572e1d61b971f03c1bbc37c7b3895d994f6308b7ed9b3d0dc5888a539",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T08-ext-memory-lab.md",
+      "target": "archive/collab/tasks/T08-ext-memory-lab.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T08-ext-memory-lab.md",
+      "bytes": 5349,
+      "sha256": "f5489452ec4bfccb3fb55142a427c420ff5068892abedf48ad99edf35876539d",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T08-mini-harness-lab.md",
+      "target": "archive/collab/tasks/T08-mini-harness-lab.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T08-mini-harness-lab.md",
+      "bytes": 3251,
+      "sha256": "cf9c5c29966e8d0f15b014dd124a39b74f5be9bc011fd52e799c4269f88826e4",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T08-r1-mini-harness-lab.md",
+      "target": "archive/collab/tasks/T08-r1-mini-harness-lab.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T08-r1-mini-harness-lab.md",
+      "bytes": 1671,
+      "sha256": "f51d12ef0f98913a0b5ebb7b57ec956de3e444a8fe6811f0a14a10a37c0d6f87",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T09a-research-fixups.md",
+      "target": "archive/collab/tasks/T09a-research-fixups.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T09a-research-fixups.md",
+      "bytes": 3026,
+      "sha256": "c9d6787a7d84b66cb9a7d447ab75747c2d89a2c56dc62c863276439377f7aeeb",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T09b-learning-pages.md",
+      "target": "archive/collab/tasks/T09b-learning-pages.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T09b-learning-pages.md",
+      "bytes": 6029,
+      "sha256": "2d498fba3f3985c438c4a3101ec36e0f4c8fe4283b0f0fea3435b847ba1ec4d2",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T10-s7-pages-exam.md",
+      "target": "archive/collab/tasks/T10-s7-pages-exam.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T10-s7-pages-exam.md",
+      "bytes": 3799,
+      "sha256": "1560ac0241753cca5145e87355943adcc36cee10489f56a87b356d9fc6156108",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T11a-failure-cases-conversation.md",
+      "target": "archive/collab/tasks/T11a-failure-cases-conversation.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T11a-failure-cases-conversation.md",
+      "bytes": 5228,
+      "sha256": "7396169c5696c3be004628fb1ee64e0ac0f809356320c429c212095116b27b0e",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T11b-failure-cases-defaults-agents.md",
+      "target": "archive/collab/tasks/T11b-failure-cases-defaults-agents.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T11b-failure-cases-defaults-agents.md",
+      "bytes": 5616,
+      "sha256": "0d9b2d52d70e3c7e93ab3a28569c865e50642da2329332fa342839b86846ff87",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T11b-r1-failure-cases-deeplinks.md",
+      "target": "archive/collab/tasks/T11b-r1-failure-cases-deeplinks.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T11b-r1-failure-cases-deeplinks.md",
+      "bytes": 1525,
+      "sha256": "936e86f775191cf6cc0b253994ff579eb7a885c7f1364f16a62055fb87c5b657",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T11c-failure-cases-workflow-companion.md",
+      "target": "archive/collab/tasks/T11c-failure-cases-workflow-companion.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T11c-failure-cases-workflow-companion.md",
+      "bytes": 5884,
+      "sha256": "d3217c3d99e1164c9f1facdefdbe4b1b989bf0eb2153ce76f0d98286e33cb936",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T11d-failure-cases-high-stakes.md",
+      "target": "archive/collab/tasks/T11d-failure-cases-high-stakes.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T11d-failure-cases-high-stakes.md",
+      "bytes": 6286,
+      "sha256": "ee5c487b9c4d58bd7294724f9f5f2e65a95d4269f76260a01bf06a467928e649",
+      "mode": "100644"
+    },
+    {
+      "source": "collab/tasks/T12-casebook-merge.md",
+      "target": "archive/collab/tasks/T12-casebook-merge.md",
+      "category": "collab",
+      "url": "/harness/site/collab/tasks/T12-casebook-merge.md",
+      "bytes": 4393,
+      "sha256": "0d315100be77ec45076e1bf82e3553597fa3e297619552f6ab77b2abccf97eef",
+      "mode": "100644"
+    },
+    {
+      "source": "deepseek-harness-dsh.html",
+      "target": "archive/deepseek-harness-dsh.html",
+      "category": "page",
+      "url": "/harness/site/deepseek-harness-dsh.html",
+      "bytes": 41764,
+      "sha256": "7f48d0c7214ec7575db6b6892117ddd205887148cb6faae022800e551469e970",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "archive/docs/README.md",
+      "category": "doc",
+      "url": "/harness/site/docs/README.md",
+      "bytes": 1848,
+      "sha256": "dbcd700b650cb18d12da8a40ca008e2483b736d1c5670b45d3023b46e25ccdcb",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/使用文档/已有功能模块梳理.md",
+      "target": "archive/docs/使用文档/已有功能模块梳理.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3/%E5%B7%B2%E6%9C%89%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97%E6%A2%B3%E7%90%86.md",
+      "bytes": 4338,
+      "sha256": "5139af9e76acfb2491e3ffffd1e44a517531690c1d8cc8626ed014c1f15e5f91",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/使用文档/页面清单.md",
+      "target": "archive/docs/使用文档/页面清单.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3/%E9%A1%B5%E9%9D%A2%E6%B8%85%E5%8D%95.md",
+      "bytes": 4121,
+      "sha256": "db31f1fb844f0effb826640db66b706552e37090337687c90034d94346453431",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/01-Hooks33事件/README.md",
+      "target": "archive/docs/学习专题/01-Hooks33事件/README.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/01-Hooks33%E4%BA%8B%E4%BB%B6/README.md",
+      "bytes": 1373,
+      "sha256": "e548b51065f3baa3b60cbf20ad5ba223638394636eeb30558ff590a60ddc700d",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/01-Hooks33事件/内容文档.md",
+      "target": "archive/docs/学习专题/01-Hooks33事件/内容文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/01-Hooks33%E4%BA%8B%E4%BB%B6/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+      "bytes": 2143,
+      "sha256": "9b180a999fde5e4305d90bcfe2bd943c0c364c1623b844a66b58b98be39eea90",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/01-Hooks33事件/实现文档.md",
+      "target": "archive/docs/学习专题/01-Hooks33事件/实现文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/01-Hooks33%E4%BA%8B%E4%BB%B6/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+      "bytes": 3896,
+      "sha256": "c9eb7ebe337e79e361faf5f4d3a14995dd3f328e78396a2eece0521a7658a8d2",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/02-SelfLoop自举循环/README.md",
+      "target": "archive/docs/学习专题/02-SelfLoop自举循环/README.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/02-SelfLoop%E8%87%AA%E4%B8%BE%E5%BE%AA%E7%8E%AF/README.md",
+      "bytes": 1587,
+      "sha256": "f1e449adf993abe3f9d8581c6c40ea48f9a395c254f8825c3b69cdeaf04a248e",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/02-SelfLoop自举循环/内容文档.md",
+      "target": "archive/docs/学习专题/02-SelfLoop自举循环/内容文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/02-SelfLoop%E8%87%AA%E4%B8%BE%E5%BE%AA%E7%8E%AF/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+      "bytes": 2152,
+      "sha256": "4c73e38ec6678936539e767a0b94702106625349b4c32cd5805689c646f265aa",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/02-SelfLoop自举循环/实现文档.md",
+      "target": "archive/docs/学习专题/02-SelfLoop自举循环/实现文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/02-SelfLoop%E8%87%AA%E4%B8%BE%E5%BE%AA%E7%8E%AF/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+      "bytes": 4366,
+      "sha256": "af00986d792514f786914fcc22d798b9d97fcdf5d0ed06f0a3f7e5230419e240",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/03-Harness结业考试/README.md",
+      "target": "archive/docs/学习专题/03-Harness结业考试/README.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/03-Harness%E7%BB%93%E4%B8%9A%E8%80%83%E8%AF%95/README.md",
+      "bytes": 1661,
+      "sha256": "6761d6cf7cf312c0a361ac48e6f6ce5f53f32a27d342cea9cf01b181df0fec1a",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/03-Harness结业考试/内容文档.md",
+      "target": "archive/docs/学习专题/03-Harness结业考试/内容文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/03-Harness%E7%BB%93%E4%B8%9A%E8%80%83%E8%AF%95/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+      "bytes": 2342,
+      "sha256": "a068b1232e568a1f6526e4b1abea7b682ca8df91038fa95b601afc706ae1a979",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/03-Harness结业考试/实现文档.md",
+      "target": "archive/docs/学习专题/03-Harness结业考试/实现文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/03-Harness%E7%BB%93%E4%B8%9A%E8%80%83%E8%AF%95/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+      "bytes": 4693,
+      "sha256": "5b13a80d4fb61bf54dc20d48bf6f424bcde554778b0a4087c720685e09266585",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/04-AI产品经理考试/README.md",
+      "target": "archive/docs/学习专题/04-AI产品经理考试/README.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/04-AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E8%80%83%E8%AF%95/README.md",
+      "bytes": 1497,
+      "sha256": "9cf25874caf3ad59f2f8e99a87db9853f26c81016dd04ca3268992b645a1b4df",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/04-AI产品经理考试/内容文档.md",
+      "target": "archive/docs/学习专题/04-AI产品经理考试/内容文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/04-AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E8%80%83%E8%AF%95/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+      "bytes": 2143,
+      "sha256": "9dd56efba2cc0e6c2154f7e6b6ece5c62a24ad00e07f207d3c1fc3f698b0633a",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/04-AI产品经理考试/实现文档.md",
+      "target": "archive/docs/学习专题/04-AI产品经理考试/实现文档.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/04-AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E8%80%83%E8%AF%95/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+      "bytes": 4695,
+      "sha256": "e45c3461692970e3495e63735837deddf3ad7502cf0155cf40a37dc0bfce2b40",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/学习专题/README.md",
+      "target": "archive/docs/学习专题/README.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/README.md",
+      "bytes": 1389,
+      "sha256": "197071c56297216e19fda613f261c20f91f37b36dbfbc9a2f2f737d68de1a2db",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/开发规范/业务模块文档模版.md",
+      "target": "archive/docs/开发规范/业务模块文档模版.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E4%B8%9A%E5%8A%A1%E6%A8%A1%E5%9D%97%E6%96%87%E6%A1%A3%E6%A8%A1%E7%89%88.md",
+      "bytes": 4957,
+      "sha256": "e32d9805a85463d55ee83d2af0b8169345ed646d58d07689b20dce12c5d7f359",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/开发规范/已有功能模块梳理模板.md",
+      "target": "archive/docs/开发规范/已有功能模块梳理模板.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E5%B7%B2%E6%9C%89%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97%E6%A2%B3%E7%90%86%E6%A8%A1%E6%9D%BF.md",
+      "bytes": 684,
+      "sha256": "bf6c55659ce39cd399fef0d62d780f517934eb4cec4dd21c1fef562a6bf5c980",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/开发规范/开发流程.md",
+      "target": "archive/docs/开发规范/开发流程.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B.md",
+      "bytes": 3402,
+      "sha256": "35a7d988f06893d6375a8da4543243299d1b5640c98361fcb1c638189426b61e",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/开发规范/核心数据位置.md",
+      "target": "archive/docs/开发规范/核心数据位置.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E4%BD%8D%E7%BD%AE.md",
+      "bytes": 3251,
+      "sha256": "63757ef3772cb34f7db98710f8215e8e69f914d9bce8e71747ff105add4b448b",
+      "mode": "100644"
+    },
+    {
+      "source": "docs/开发规范/页面规范.md",
+      "target": "archive/docs/开发规范/页面规范.md",
+      "category": "doc",
+      "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E9%A1%B5%E9%9D%A2%E8%A7%84%E8%8C%83.md",
+      "bytes": 2749,
+      "sha256": "cf99d3bbb435ab3ecdcefd2ed22e1bdb78a345205313c56fe13d380cd90d5383",
+      "mode": "100644"
+    },
+    {
+      "source": "harness-engineering.html",
+      "target": "archive/harness-engineering.html",
+      "category": "page",
+      "url": "/harness/site/harness-engineering.html",
+      "bytes": 100234,
+      "sha256": "b16a3d75bc5b6dca518b6b6eb0f837982a431f59e911e79effab877d92b40735",
+      "mode": "100644"
+    },
+    {
+      "source": "harness-exam.html",
+      "target": "archive/harness-exam.html",
+      "category": "page",
+      "url": "/harness/site/harness-exam.html",
+      "bytes": 156960,
+      "sha256": "98c72005ee6183b541f05b11239f836379b3d0b2360437cd32ec3f88b5ed676b",
+      "mode": "100644"
+    },
+    {
+      "source": "harness-tech-share-2026-10.pdf",
+      "target": "archive/harness-tech-share-2026-10.pdf",
+      "category": "artifact",
+      "url": "/harness/site/harness-tech-share-2026-10.pdf",
+      "bytes": 1107398,
+      "sha256": "c2f5c631b6755cc7ab9ae0ae923c2d0be76c205a6af99c8f1e2d98b96c19075d",
+      "mode": "100644"
+    },
+    {
+      "source": "harness-tech-share-2026-10.pptx",
+      "target": "archive/harness-tech-share-2026-10.pptx",
+      "category": "artifact",
+      "url": "/harness/site/harness-tech-share-2026-10.pptx",
+      "bytes": 106448,
+      "sha256": "62a965ed2e8fdd7d9641d166f6a8e9127cf2efea83b259f2d78edaa76e489236",
+      "mode": "100644"
+    },
+    {
+      "source": "hooks-33/README.md",
+      "target": "archive/hooks-33/README.md",
+      "category": "build",
+      "url": "/harness/site/hooks-33/README.md",
+      "bytes": 984,
+      "sha256": "4c0970eae28c4be0e973f0e6bd7bd4301e98ca2a1f62f67cf5134cdc33d0ffa1",
+      "mode": "100644"
+    },
+    {
+      "source": "hooks-33/build.py",
+      "target": "archive/hooks-33/build.py",
+      "category": "build",
+      "url": "/harness/site/hooks-33/build.py",
+      "bytes": 47056,
+      "sha256": "4a1c6c520a0057cd0056eed806ca641fe37a01fbc0b71713af34c10e1f3edd85",
+      "mode": "100644"
+    },
+    {
+      "source": "hooks-33/style.css",
+      "target": "archive/hooks-33/style.css",
+      "category": "build",
+      "url": "/harness/site/hooks-33/style.css",
+      "bytes": 18056,
+      "sha256": "d46fa96ce9738399b13f071ad2436c0d288c514d5a60e1a4781ea462ed5e2700",
+      "mode": "100644"
+    },
+    {
+      "source": "hooks-33/template.html",
+      "target": "archive/hooks-33/template.html",
+      "category": "build",
+      "url": "/harness/site/hooks-33/template.html",
+      "bytes": 15372,
+      "sha256": "271424f90886d6caa4b5c00ed09e6d23719f2466a04118102826857a81a80161",
+      "mode": "100644"
+    },
+    {
+      "source": "index.html",
+      "target": "archive/index.html",
+      "category": "page",
+      "url": "/harness/site/index.html",
+      "bytes": 20116,
+      "sha256": "d1d33f5713d756cc2585b63269fe843f95ef2f36a7a192116c9cd26f14062d4c",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/README.md",
+      "target": "archive/labs/mini-harness/README.md",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/README.md",
+      "bytes": 41678,
+      "sha256": "7d519e10f42ffb5eda6854a2859acb21f7f023f25ec86418d15ce7c7734f38bd",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/__init__.py",
+      "target": "archive/labs/mini-harness/harness/__init__.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/__init__.py",
+      "bytes": 1974,
+      "sha256": "6fe8f90f2566e72a00d03224ff52a75c3271334f72746e25fdab94c0c64db635",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/__main__.py",
+      "target": "archive/labs/mini-harness/harness/__main__.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/__main__.py",
+      "bytes": 48,
+      "sha256": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/cli.py",
+      "target": "archive/labs/mini-harness/harness/cli.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/cli.py",
+      "bytes": 5339,
+      "sha256": "0e57f58743d1de9489d9055bdbcb448d899be0fe8c6186a10f9b3a8a815a2ce9",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/compaction.py",
+      "target": "archive/labs/mini-harness/harness/compaction.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/compaction.py",
+      "bytes": 3867,
+      "sha256": "5a3b867633266f20dc108a664b5797168edf3d903a5624ab8026d2009ff4fa39",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/evals.py",
+      "target": "archive/labs/mini-harness/harness/evals.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/evals.py",
+      "bytes": 14216,
+      "sha256": "d3edebd8a66817d28c2fdb8ec8b7cc118053fb605cca718f6f7860ecb8b7a4cf",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/loop.py",
+      "target": "archive/labs/mini-harness/harness/loop.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/loop.py",
+      "bytes": 9910,
+      "sha256": "53c9da7aa36e8dc1e62e6d732f5d3bc2071d5b60c4c6430fd7f8b4774f0bf2b5",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/memory.py",
+      "target": "archive/labs/mini-harness/harness/memory.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/memory.py",
+      "bytes": 17694,
+      "sha256": "d7419d25b81e59883b6bd747f09422bb9fcb42c0841c2fbb825ec9b7bcfaead0",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/models.py",
+      "target": "archive/labs/mini-harness/harness/models.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/models.py",
+      "bytes": 6400,
+      "sha256": "c53ba927a87ea8ba686105bfd162a60a8f93f49679bc3c79bb21dbb55599577e",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/outputs.py",
+      "target": "archive/labs/mini-harness/harness/outputs.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/outputs.py",
+      "bytes": 2632,
+      "sha256": "bd9fcde6c4bd06135616d8e81770e0e504325b6158acd716507136a4072cf34e",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/permissions.py",
+      "target": "archive/labs/mini-harness/harness/permissions.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/permissions.py",
+      "bytes": 5476,
+      "sha256": "541978c16e825b62f45f9acb2a78b48052a60237ec4d09ce357c287a7148c24e",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/sessions.py",
+      "target": "archive/labs/mini-harness/harness/sessions.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/sessions.py",
+      "bytes": 4161,
+      "sha256": "30afb351e5f18a72256dffafab1e70ad15939a720c5b2fe837372706cab2331d",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/subagent.py",
+      "target": "archive/labs/mini-harness/harness/subagent.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/subagent.py",
+      "bytes": 8301,
+      "sha256": "a73ddf4562a18cc25b30ff766e7752f6ee80aca82dd3a0755282b4a22e625279",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/harness/tools.py",
+      "target": "archive/labs/mini-harness/harness/tools.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/harness/tools.py",
+      "bytes": 7178,
+      "sha256": "b47b8e31904bca905fe802343782814e4f545561617717e3c62c624ec93e568b",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/prompts/compact.md",
+      "target": "archive/labs/mini-harness/prompts/compact.md",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/prompts/compact.md",
+      "bytes": 731,
+      "sha256": "5db9f0a47190f1a4edcf02c6b7b1098420555e51c1b216ac1321028be2d93695",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/rules.example.json",
+      "target": "archive/labs/mini-harness/rules.example.json",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/rules.example.json",
+      "bytes": 1156,
+      "sha256": "e6a714aa3e7fdf74d67d5972745310b3d5662d233b2c64be1b5084814c52bdb0",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_models_http.py",
+      "target": "archive/labs/mini-harness/tests/test_models_http.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_models_http.py",
+      "bytes": 3707,
+      "sha256": "8957e15e0187dde5474df6e482f37665e1648ac166a9a7237e44a65cd85e226c",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s1_loop.py",
+      "target": "archive/labs/mini-harness/tests/test_s1_loop.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s1_loop.py",
+      "bytes": 3976,
+      "sha256": "e43c18208c9f8318e9ed4ea9f8b29f25650bcb8c2b9aad3244f255522e3b235c",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s2_permissions.py",
+      "target": "archive/labs/mini-harness/tests/test_s2_permissions.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s2_permissions.py",
+      "bytes": 6058,
+      "sha256": "03277f7f76cc6a61970ed2a2b4e6b7bfe7fa3fd322ed9d89117bf477b38dee98",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s3_compaction.py",
+      "target": "archive/labs/mini-harness/tests/test_s3_compaction.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s3_compaction.py",
+      "bytes": 5551,
+      "sha256": "e767f62ef4088ef2ad0511110951ba814991abd6c4c5467f68482f73b906ba8f",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s4_spill.py",
+      "target": "archive/labs/mini-harness/tests/test_s4_spill.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s4_spill.py",
+      "bytes": 3398,
+      "sha256": "926b97c0b8de689be866469d3f50425fb08f720929f6de9c4ae294a81a7e0db4",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s5_subagent.py",
+      "target": "archive/labs/mini-harness/tests/test_s5_subagent.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s5_subagent.py",
+      "bytes": 6938,
+      "sha256": "fe93c6781bbbf25926cfb6203c108560557cf613f790eb592b96a98dd5d1f948",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s6_evals.py",
+      "target": "archive/labs/mini-harness/tests/test_s6_evals.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s6_evals.py",
+      "bytes": 5929,
+      "sha256": "ec6f35d0c9255e1517fdf25636a00a2d1e0be28aa7a514cf81b54dd4e0e15009",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/test_s7_memory.py",
+      "target": "archive/labs/mini-harness/tests/test_s7_memory.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/test_s7_memory.py",
+      "bytes": 17578,
+      "sha256": "29a3732a970a5abf65a07dc939dd268e255340192b54e1eab2de2c3d572a05d9",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/mini-harness/tests/tutil.py",
+      "target": "archive/labs/mini-harness/tests/tutil.py",
+      "category": "lab",
+      "url": "/harness/site/labs/mini-harness/tests/tutil.py",
+      "bytes": 907,
+      "sha256": "21c1af940dee703d965121084a439ac3faf0a9e3acab319f535969d2bb327914",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/.gitignore",
+      "target": "archive/labs/selfloop/gitignore.txt",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/gitignore.txt",
+      "bytes": 30,
+      "sha256": "10400a5c289ee9225b7745fe2700baae75ccc62d593e28d37e24235af257260b",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/README.md",
+      "target": "archive/labs/selfloop/README.md",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/README.md",
+      "bytes": 9114,
+      "sha256": "8aef26c4dc78f1fe28555fa4f394295decc725ca0551515699091559f005dd19",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/docs/ui-diff.png",
+      "target": "archive/labs/selfloop/docs/ui-diff.png",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/docs/ui-diff.png",
+      "bytes": 647957,
+      "sha256": "3194deca34f7c8ee5875585d037f2588f8f8ebf33cda72f9897794af83f45922",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/docs/ui-overview.png",
+      "target": "archive/labs/selfloop/docs/ui-overview.png",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/docs/ui-overview.png",
+      "bytes": 544237,
+      "sha256": "eb07ce996b33353af0f90102e1b08fa98bb65c46bb4078e10b591ed31aca4248",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/run.py",
+      "target": "archive/labs/selfloop/run.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/run.py",
+      "bytes": 789,
+      "sha256": "95486515fb8b24299062174b9e4f513b17c70d39c601ca80d233f04749a71549",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/__init__.py",
+      "target": "archive/labs/selfloop/selfloop/__init__.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/archive.py",
+      "target": "archive/labs/selfloop/selfloop/archive.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/archive.py",
+      "bytes": 5653,
+      "sha256": "41ecb5aa4b77f324f285eaba7f2f8471dd67bb4c3f1345d89eceb63a2e62b469",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/loop.py",
+      "target": "archive/labs/selfloop/selfloop/loop.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/loop.py",
+      "bytes": 12891,
+      "sha256": "b963e003c2f930c07bb786eab91e854f88f6c6e84677cdfa7818be808c62ce67",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/providers.py",
+      "target": "archive/labs/selfloop/selfloop/providers.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/providers.py",
+      "bytes": 9994,
+      "sha256": "fcab3464c79ee94e53c283ad1ee9347e0139b90d373c7da21d7010f57e0df298",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/server.py",
+      "target": "archive/labs/selfloop/selfloop/server.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/server.py",
+      "bytes": 10241,
+      "sha256": "a104e83c2329d6859268c9357086bf1407773aea015ec7cb944973bad1e6b249",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/tasks.py",
+      "target": "archive/labs/selfloop/selfloop/tasks.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/tasks.py",
+      "bytes": 8230,
+      "sha256": "f09f8c0000671b2bf57c497af67b7b506b8f64171ab43ab28fc1a7b7ad6055af",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/verify.py",
+      "target": "archive/labs/selfloop/selfloop/verify.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/verify.py",
+      "bytes": 9600,
+      "sha256": "9e99ea095c8e0827cd3ea527feaa7c32ccbf59a8b73cc8d72423362c78755710",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/web/app.js",
+      "target": "archive/labs/selfloop/selfloop/web/app.js",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/web/app.js",
+      "bytes": 15588,
+      "sha256": "0f40257e5ab09ec9a004837b8064477ad7a455e1d9d9e79850ef347f0b71d8e9",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/web/index.html",
+      "target": "archive/labs/selfloop/selfloop/web/index.html",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/web/index.html",
+      "bytes": 7065,
+      "sha256": "4477377a9639377c8a6c782bfccc5a895b26bd7b05defba6cf2739225ea558bd",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/selfloop/web/style.css",
+      "target": "archive/labs/selfloop/selfloop/web/style.css",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/selfloop/web/style.css",
+      "bytes": 11996,
+      "sha256": "b5eb5a4d4cd2d6dd07a52e2851f3b638fa8e399da871d8eb87c7c91dfc963bab",
+      "mode": "100644"
+    },
+    {
+      "source": "labs/selfloop/tests/test_selfloop.py",
+      "target": "archive/labs/selfloop/tests/test_selfloop.py",
+      "category": "lab",
+      "url": "/harness/site/labs/selfloop/tests/test_selfloop.py",
+      "bytes": 6783,
+      "sha256": "2ed16a5290392c73767cece4333749a73c378bdd53d53a9c3b566bd694393bc4",
+      "mode": "100644"
+    },
+    {
+      "source": "mcp-history.md",
+      "target": "archive/mcp-history.md",
+      "category": "longform",
+      "url": "/harness/site/mcp-history.md",
+      "bytes": 27487,
+      "sha256": "227a35fc83a32c3d531e53bad168e0fc5c993c59132948b4b4b345d9089b905f",
+      "mode": "100644"
+    },
+    {
+      "source": "research/01-global-vendors-problems.md",
+      "target": "archive/research/01-global-vendors-problems.md",
+      "category": "research",
+      "url": "/harness/site/research/01-global-vendors-problems.md",
+      "bytes": 29540,
+      "sha256": "93fa7de2d24b95223b700aa21d9328b22dce142b56ebbb0eff90185d716999e6",
+      "mode": "100644"
+    },
+    {
+      "source": "research/02-china-vendors-problems.md",
+      "target": "archive/research/02-china-vendors-problems.md",
+      "category": "research",
+      "url": "/harness/site/research/02-china-vendors-problems.md",
+      "bytes": 32791,
+      "sha256": "368d56465b77e65d5819c5eb673de266634966b9eac80bd4d82ad083afca24c8",
+      "mode": "100644"
+    },
+    {
+      "source": "research/03-product-design-ux-lessons.md",
+      "target": "archive/research/03-product-design-ux-lessons.md",
+      "category": "research",
+      "url": "/harness/site/research/03-product-design-ux-lessons.md",
+      "bytes": 27203,
+      "sha256": "2d6f685dd2e6c4c141f37fcedefa98bfecb0c6b81206b35a556353f02759e584",
+      "mode": "100644"
+    },
+    {
+      "source": "research/04-product-engineering-lessons.md",
+      "target": "archive/research/04-product-engineering-lessons.md",
+      "category": "research",
+      "url": "/harness/site/research/04-product-engineering-lessons.md",
+      "bytes": 34250,
+      "sha256": "fbed29cc9b0d006cfc78cca3419edc4271111a7d07bc5bea369fb15f663fc202",
+      "mode": "100644"
+    },
+    {
+      "source": "research/05-frontier-models-tech.md",
+      "target": "archive/research/05-frontier-models-tech.md",
+      "category": "research",
+      "url": "/harness/site/research/05-frontier-models-tech.md",
+      "bytes": 25070,
+      "sha256": "d9c1c6bf2021c4b9c079ea7fdb55413a1ad19ab398c535a3bdb1d2f64527f1a5",
+      "mode": "100644"
+    },
+    {
+      "source": "research/06-frontier-products-business.md",
+      "target": "archive/research/06-frontier-products-business.md",
+      "category": "research",
+      "url": "/harness/site/research/06-frontier-products-business.md",
+      "bytes": 22105,
+      "sha256": "99b29d66df5932536158d572250939f47f7b82a20cae7117dba2a8ce16e05fa3",
+      "mode": "100644"
+    },
+    {
+      "source": "research/07-pi-design-philosophy.md",
+      "target": "archive/research/07-pi-design-philosophy.md",
+      "category": "research",
+      "url": "/harness/site/research/07-pi-design-philosophy.md",
+      "bytes": 27056,
+      "sha256": "249014576d92efcf76b8642d98239aa7f5a63e5a25736b387d7fde4ca79219d3",
+      "mode": "100644"
+    },
+    {
+      "source": "research/08-harness-teardown-comparison.md",
+      "target": "archive/research/08-harness-teardown-comparison.md",
+      "category": "research",
+      "url": "/harness/site/research/08-harness-teardown-comparison.md",
+      "bytes": 60411,
+      "sha256": "7cbea4d8121635740a5ac90ec70ba7285a72be038651b324f0713515f04fc4a0",
+      "mode": "100644"
+    },
+    {
+      "source": "research/09-tools-mcp-skills.md",
+      "target": "archive/research/09-tools-mcp-skills.md",
+      "category": "research",
+      "url": "/harness/site/research/09-tools-mcp-skills.md",
+      "bytes": 60853,
+      "sha256": "6a8caf316251aa40ff67ed70b359a05f91967840bb7886cdc0157add18e48046",
+      "mode": "100644"
+    },
+    {
+      "source": "research/10-agent-security-sandbox.md",
+      "target": "archive/research/10-agent-security-sandbox.md",
+      "category": "research",
+      "url": "/harness/site/research/10-agent-security-sandbox.md",
+      "bytes": 49167,
+      "sha256": "865e6107e59a4a8a23b629eb0cea3e898d63bdd797431a232bb63b3830c8d180",
+      "mode": "100644"
+    },
+    {
+      "source": "research/11-memory-systems.md",
+      "target": "archive/research/11-memory-systems.md",
+      "category": "research",
+      "url": "/harness/site/research/11-memory-systems.md",
+      "bytes": 47566,
+      "sha256": "669a2bd050adcd8eb24ca22dd09fd6cbf000faa399ed7105d2cfd028af422317",
+      "mode": "100644"
+    },
+    {
+      "source": "research/12-multi-agent-orchestration.md",
+      "target": "archive/research/12-multi-agent-orchestration.md",
+      "category": "research",
+      "url": "/harness/site/research/12-multi-agent-orchestration.md",
+      "bytes": 51338,
+      "sha256": "06c8788d6f16500c77e7e008ca5c2d536c1458bdca0880962f8bde7ca5c60c78",
+      "mode": "100644"
+    },
+    {
+      "source": "research/13-agent-evals.md",
+      "target": "archive/research/13-agent-evals.md",
+      "category": "research",
+      "url": "/harness/site/research/13-agent-evals.md",
+      "bytes": 47173,
+      "sha256": "95693f689bdb59e6b458acbe0fa37bd77fb890c8cd0d883970bb6d7d0da87364",
+      "mode": "100644"
+    },
+    {
+      "source": "research/14-economics-observability.md",
+      "target": "archive/research/14-economics-observability.md",
+      "category": "research",
+      "url": "/harness/site/research/14-economics-observability.md",
+      "bytes": 46913,
+      "sha256": "e60b4982172ebb5f72ed0f8a3600d09bc9f996f76f6c94ead8bb4d03fab987a1",
+      "mode": "100644"
+    },
+    {
+      "source": "research/15-ai-failure-cases-a.md",
+      "target": "archive/research/15-ai-failure-cases-a.md",
+      "category": "research",
+      "url": "/harness/site/research/15-ai-failure-cases-a.md",
+      "bytes": 74541,
+      "sha256": "9275026676a25753973ab8a015836ae39c60eb062c8974398eb11b3197fecf8c",
+      "mode": "100644"
+    },
+    {
+      "source": "research/16-ai-failure-cases-b.md",
+      "target": "archive/research/16-ai-failure-cases-b.md",
+      "category": "research",
+      "url": "/harness/site/research/16-ai-failure-cases-b.md",
+      "bytes": 110055,
+      "sha256": "3929ee410dc0603e87577a600d3f951e7df9ea374b52339771061479d2bb0506",
+      "mode": "100644"
+    },
+    {
+      "source": "research/17-ai-failure-cases-c.md",
+      "target": "archive/research/17-ai-failure-cases-c.md",
+      "category": "research",
+      "url": "/harness/site/research/17-ai-failure-cases-c.md",
+      "bytes": 95736,
+      "sha256": "2eb1099710578e03fa99df61a6e638930f58036ffdb7be6d9705f319be1e701e",
+      "mode": "100644"
+    },
+    {
+      "source": "research/18-ai-failure-cases-d.md",
+      "target": "archive/research/18-ai-failure-cases-d.md",
+      "category": "research",
+      "url": "/harness/site/research/18-ai-failure-cases-d.md",
+      "bytes": 158940,
+      "sha256": "0c7deab1f6c1f9ad9140e40a0377786af5899659d996aea53439fd4bf47a2e46",
+      "mode": "100644"
+    },
+    {
+      "source": "harness-in-business.html",
+      "target": "archive/harness-in-business.html",
+      "category": "page",
+      "url": "/harness/site/harness-in-business.html",
+      "bytes": 114732,
+      "sha256": "75af0e6a44008eed6ec60972876e350f4dbf4184d6f9c9ecaf38aafca8d867af",
+      "mode": "100644"
+    },
+    {
+      "source": "anthropic-workflow-shift-2026-10.html",
+      "target": "archive/anthropic-workflow-shift-2026-10.html",
+      "category": "page",
+      "url": "/harness/site/anthropic-workflow-shift-2026-10.html",
+      "bytes": 65560,
+      "sha256": "db055ad159797a059a26e5ad60867cef9c75d561442fd42f1deba24c932fd29e",
+      "mode": "100644"
+    },
+    {
+      "source": "ai-pm-interview-questions.html",
+      "target": "archive/ai-pm-interview-questions.html",
+      "category": "page",
+      "url": "/harness/site/ai-pm-interview-questions.html",
+      "bytes": 201723,
+      "sha256": "31ba761dcc66380868b0a217da0c81676258ef67cd1b2a7e76005275db273bdf",
+      "mode": "100644"
+    },
+    {
+      "source": "claude-code-product-design.html",
+      "target": "archive/claude-code-product-design.html",
+      "category": "page",
+      "url": "/harness/site/claude-code-product-design.html",
+      "bytes": 88857,
+      "sha256": "0fd1cd4519f2b0cfaf2a309fb2aafd2a7f5f51913021fd7eaecfb800a5c86a08",
+      "mode": "100644"
+    },
+    {
+      "source": "research/19-claude-code-product-design.md",
+      "target": "archive/research/19-claude-code-product-design.md",
+      "category": "research",
+      "url": "/harness/site/research/19-claude-code-product-design.md",
+      "bytes": 6476,
+      "sha256": "815021aa7922fac6da7e26b2a1974f4395f9aadb0a38e83bfdb1aaade4197770",
+      "mode": "100644"
+    }
+  ],
+  "excluded": [
+    ".git/",
+    ".playwright-mcp/",
+    "**/__pycache__/",
+    "*.pyc",
+    "labs/selfloop/.selfloop/",
+    "_deck/pdfout/",
+    ".DS_Store"
+  ],
+  "updatedAt": "2026-10-28T10:32:41.774Z"
+}

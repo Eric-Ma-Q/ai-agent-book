@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 产品全景 2026 · 产品经理视角的产品解构报告</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --ink:#0f172a; --ink2:#475569; --line:#e2e8f0; --card:#ffffff;
+    --accent:#4f46e5; --accent2:#7c3aed;
+    --c-assist:#6366f1; --c-search:#0ea5e9; --c-code:#10b981; --c-agent:#f59e0b;
+    --c-image:#ec4899; --c-video:#8b5cf6; --c-audio:#ef4444; --c-prod:#14b8a6;
+    --c-comp:#f472b6; --c-vert:#3b82f6; --c-hw:#64748b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.75;font-size:15px}
+  a{color:var(--accent)}
+
+  /* ===== Hero ===== */
+  .hero{background:radial-gradient(1200px 600px at 20% -10%,rgba(124,58,237,.55),transparent 60%),radial-gradient(900px 500px at 85% 0%,rgba(14,165,233,.4),transparent 55%),linear-gradient(160deg,#0b1026 0%,#171a3a 55%,#241b4d 100%);color:#fff;padding:72px 24px 56px;text-align:center}
+  .hero .kicker{display:inline-block;font-size:13px;letter-spacing:.35em;text-transform:uppercase;color:#c7d2fe;border:1px solid rgba(199,210,254,.35);border-radius:999px;padding:6px 18px;margin-bottom:22px}
+  .hero h1{font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:.02em;margin-bottom:14px}
+  .hero h1 em{font-style:normal;background:linear-gradient(90deg,#a5b4fc,#67e8f9,#f0abfc);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.sub{max-width:860px;margin:0 auto 30px;color:#c7d2fe;font-size:16.5px}
+  .stats{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+  .stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(6px);border-radius:14px;padding:14px 26px;min-width:130px}
+  .stat b{display:block;font-size:26px;font-weight:800;background:linear-gradient(90deg,#e0e7ff,#a5f3fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat span{font-size:12.5px;color:#c7d2fe}
+
+  /* ===== TOC ===== */
+  .toc{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:8px;flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}
+  .toc a{white-space:nowrap;flex:none;font-size:13px;color:var(--ink2);text-decoration:none;padding:5px 12px;border-radius:999px;border:1px solid transparent;white-space:nowrap;transition:.15s}
+  .toc a:hover{color:var(--accent);border-color:var(--accent);background:#eef2ff}
+
+  main{max-width:1200px;margin:0 auto;padding:0 20px 80px}
+
+  /* ===== Sections ===== */
+  section{padding-top:52px}
+  .sec-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+  .sec-head .no{font-size:13px;font-weight:700;color:#fff;background:var(--cat,#6366f1);border-radius:8px;padding:3px 10px;letter-spacing:.05em}
+  .sec-head h2{font-size:26px;font-weight:800}
+  .sec-head .cnt{font-size:13px;color:var(--ink2)}
+  .sec-intro{color:var(--ink2);max-width:960px;margin-bottom:24px;font-size:14.5px}
+  .sec-intro b{color:var(--ink)}
+
+  /* ===== Cards ===== */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 20px 16px;box-shadow:0 1px 3px rgba(15,23,42,.05);transition:.18s;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cat,#6366f1)}
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(15,23,42,.12)}
+  .card.hidden{display:none}
+  .chead{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+  .logo{flex:0 0 42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;background:color-mix(in srgb,var(--cat,#6366f1) 14%,#fff);border:1px solid color-mix(in srgb,var(--cat,#6366f1) 30%,#fff)}
+  .chead h3{font-size:17.5px;font-weight:800;line-height:1.3}
+  .chead .by{display:inline-block;max-width:100%;vertical-align:baseline;font-size:12px;font-weight:600;color:var(--ink2);margin-left:6px;text-wrap:balance}
+  .slogan{font-size:13px;color:var(--accent);font-weight:600;margin-top:2px}
+  .rows{display:grid;gap:7px;margin-bottom:12px}
+  .row{display:grid;grid-template-columns:76px 1fr;gap:8px;font-size:13.2px;align-items:start}
+  .row b{color:var(--ink2);font-weight:600;white-space:nowrap;font-size:12.5px;padding-top:1px}
+  .row span{color:#1e293b}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:11.5px;font-weight:600;color:color-mix(in srgb,var(--cat,#6366f1) 80%,#000);background:color-mix(in srgb,var(--cat,#6366f1) 10%,#fff);border-radius:999px;padding:3px 10px;border:1px solid color-mix(in srgb,var(--cat,#6366f1) 22%,#fff)}
+  .pm-note{margin-top:10px;background:#f8fafc;border-left:3px solid var(--cat,#6366f1);border-radius:0 10px 10px 0;padding:8px 12px;font-size:12.8px;color:var(--ink2)}
+  .pm-note b{color:var(--ink);font-size:12px;letter-spacing:.08em}
+
+  /* ===== Framework ===== */
+  .fw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:10px}
+  .fw{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .fw .ic{font-size:24px;margin-bottom:8px}
+  .fw h4{font-size:15px;font-weight:800;margin-bottom:6px}
+  .fw p{font-size:12.8px;color:var(--ink2)}
+
+  /* ===== Charts ===== */
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px}
+  .chartbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .chartbox h3{font-size:16px;font-weight:800;margin-bottom:4px}
+  .chartbox .src{font-size:12px;color:var(--ink2);margin-bottom:18px}
+  .bar-row{display:grid;grid-template-columns:130px 1fr 84px;gap:10px;align-items:center;margin-bottom:10px;font-size:13px}
+  .bar-row .lbl{text-align:right;font-weight:600;color:var(--ink2)}
+  .bar-track{background:#eef2f7;border-radius:999px;height:22px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:999px;display:flex;align-items:center;min-width:2px}
+  .bar-row .val{font-weight:800;font-size:12.5px}
+  .chart-note{font-size:12px;color:var(--ink2);margin-top:10px}
+
+  /* ===== Trends ===== */
+  .trend{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:12px;display:grid;grid-template-columns:44px 1fr;gap:14px}
+  .trend .n{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .trend h4{font-size:15.5px;font-weight:800;margin-bottom:4px}
+  .trend p{font-size:13.5px;color:var(--ink2)}
+
+  /* ===== Timeline ===== */
+  .timeline{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 26px;margin-top:22px}
+  .timeline h3{font-size:16px;font-weight:800;margin-bottom:16px}
+  .tl-item{display:grid;grid-template-columns:110px 1fr;gap:14px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .tl-item:last-child{border-bottom:none}
+  .tl-item b{color:var(--accent);font-variant-numeric:tabular-nums}
+
+  /* ===== Sources ===== */
+  .srcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;font-size:12.8px}
+  .srcs div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--ink2)}
+
+  footer{background:#0b1026;color:#94a3b8;text-align:center;padding:34px 20px;font-size:13px}
+
+  /* search bar */
+  .searchbar{max-width:640px;margin:0 auto;display:flex;gap:8px}
+  .searchbar input{flex:1;padding:12px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:14px;outline:none}
+  .searchbar input::placeholder{color:#cbd5e1}
+  .searchbar input:focus{border-color:#a5b4fc;background:rgba(255,255,255,.18)}
+  #noresult{display:none;text-align:center;color:var(--ink2);padding:40px 0;font-size:15px}
+
+  #backtop{position:fixed;right:22px;bottom:26px;width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:19px;cursor:pointer;box-shadow:0 6px 18px rgba(79,70,229,.4);opacity:0;pointer-events:none;transition:.25s;z-index:60}
+  #backtop.show{opacity:1;pointer-events:auto}
+
+  @media (max-width:640px){
+    .charts{grid-template-columns:1fr}
+    .row{grid-template-columns:66px 1fr}
+    .bar-row{grid-template-columns:92px 1fr 74px}
+  }
+  @media print{
+    .toc,#backtop,.searchbar{display:none}
+    .card{break-inside:avoid}
+    body{background:#fff}
+  }
+</style>
+<!-- theme-patch:start -->
+<style id="themePatchStyle">
+/* ===== theme patch ===== */
+:where(body *){transition:background-color .22s ease,border-color .22s ease,color .22s ease}
+html.dark{color-scheme:dark}
+#themeFab{position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#themeFab:hover{transform:scale(1.08)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+
+html.dark{--bg:#0e1320;--ink:#e4e9f2;--ink2:#97a3b8;--line:#27303f;--card:#161c2a;--accent:#8b93f8;--accent2:#a78bfa}
+html.dark .toc{background:rgba(14,19,32,.92)}
+.toc::-webkit-scrollbar{display:none}
+html.dark .toc a:hover{background:#1d2434}
+html.dark .card{box-shadow:0 1px 3px rgba(0,0,0,.4)}
+html.dark .card:hover{box-shadow:0 10px 28px rgba(0,0,0,.5)}
+html.dark .logo{background:color-mix(in srgb,var(--cat,#6366f1) 16%,#161c2a);border-color:color-mix(in srgb,var(--cat,#6366f1) 32%,#161c2a)}
+html.dark .row span{color:#dbe2ec}
+html.dark .chip{color:color-mix(in srgb,var(--cat,#6366f1) 60%,#e4e9f2);background:color-mix(in srgb,var(--cat,#6366f1) 16%,#161c2a);border-color:color-mix(in srgb,var(--cat,#6366f1) 30%,#161c2a)}
+html.dark .pm-note{background:#1b2130}
+html.dark .bar-track{background:#232b3c}
+#backtop{right:20px;bottom:78px;width:40px;height:40px;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,.16)}
+#backtop:hover{transform:scale(1.08)}
+</style>
+<script id="themePatch">
+(function(){
+  var KEY='harness-theme';
+  var root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){
+    root.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeFab');
+    if(b){var l=t==='dark'?'切换为白天模式':'切换为黑夜模式';b.setAttribute('aria-label',l);b.setAttribute('title',l);}
+  }
+  apply(cur());
+  function init(){
+    if(document.getElementById('themeFab'))return;
+    var b=document.createElement('button');
+    b.id='themeFab';b.type='button';
+    b.innerHTML='<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    b.addEventListener('click',function(){
+      var t=root.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,t)}catch(e){}
+      apply(t);
+    });
+    (document.body||document.documentElement).appendChild(b);
+    apply(cur());
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  try{
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});
+    window.addEventListener('storage',function(e){if(e.key===KEY&&(e.newValue==='dark'||e.newValue==='light'))apply(e.newValue)});
+  }catch(e){}
+})();
+</script>
+<!-- theme-patch:end -->
+<!-- home-patch:start -->
+<style id="homePatchStyle">
+#homeFab{position:fixed;left:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#homeFab:hover{transform:scale(1.08)}
+#homeFab svg{width:18px;height:18px}
+@media print{#homeFab{display:none}}
+</style>
+<script id="homePatch">
+(function(){
+  function init(){
+    if(document.getElementById('homeFab'))return;
+    var a=document.createElement('a');
+    a.id='homeFab';a.href='index.html';a.title='返回页面总览';a.setAttribute('aria-label','返回页面总览');
+    a.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+    (document.body||document.documentElement).appendChild(a);
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+})();
+</script>
+<!-- home-patch:end -->
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <span class="kicker">Product Manager's Field Guide</span>
+  <h1>AI 产品全景 <em>2026</em></h1>
+  <p class="sub">基于 70+ 轮公开信息检索（含 Reddit、Hacker News、Product Hunt、知乎等社区渠道），对全球 97 款 AI 产品做产品经理式解构——主流大盘之外，另设"小众黑马"专章收录搜索半径之外的快速上升产品：它们各自瞄准谁、解决了什么问题、用什么方案、怎么赚钱、凭什么守住位置。数据截至 2026 年 10 月。</p>
+  <div class="searchbar"><input id="q" type="search" placeholder="🔍 搜索产品名或关键词，如：Cursor、数字人、月活…"></div>
+  <div style="height:26px"></div>
+  <div class="stats">
+    <div class="stat"><b>97</b><span>解构的产品卡</span></div>
+    <div class="stat"><b>13</b><span>产品大类</span></div>
+    <div class="stat"><b>70+</b><span>轮网络检索</span></div>
+    <div class="stat"><b>2026-10</b><span>数据截止</span></div>
+  </div>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc">
+  <a href="#framework">解读框架</a>
+  <a href="#assistants">通用助手</a>
+  <a href="#search">AI 搜索</a>
+  <a href="#coding">AI 编程</a>
+  <a href="#opensource">开源生态</a>
+  <a href="#agents">Agent 平台</a>
+  <a href="#image">图像生成</a>
+  <a href="#video">视频生成</a>
+  <a href="#audio">语音音乐</a>
+  <a href="#prod">办公知识</a>
+  <a href="#companion">情感陪伴</a>
+  <a href="#vertical">垂直行业</a>
+  <a href="#hardware">AI 硬件</a>
+  <a href="#rising">小众黑马</a>
+  <a href="#charts">数据对比</a>
+  <a href="#trends">趋势洞察</a>
+  <a href="#sources">来源说明</a>
+</nav>
+
+<main>
+
+<!-- ================= FRAMEWORK ================= -->
+<section id="framework" style="--cat:#4f46e5">
+  <div class="sec-head"><span class="no">00</span><h2>解读框架：产品经理怎么看一款 AI 产品</h2></div>
+  <p class="sec-intro">本报告对每款产品统一使用五个维度解构。<b>核心判断：</b>AI 本身不是产品，"用 AI 更好地完成某个具体任务"才是产品。所以每一款都回答——谁的、哪个具体任务，被它变得多快好省了。</p>
+  <div class="fw-grid">
+    <div class="fw"><div class="ic">🎯</div><h4>目标用户</h4><p>谁在用？消费者、开发者、创作者还是企业职能岗？用户群决定了付费能力与增长打法。</p></div>
+    <div class="fw"><div class="ic">🩹</div><h4>解决的问题</h4><p>Job-to-be-done：原来这件事怎么做、贵在哪/慢在哪/难在哪？AI 把哪个环节的成本打下来了？</p></div>
+    <div class="fw"><div class="ic">⚙️</div><h4>产品方案</h4><p>用什么形态交付价值：对话、画布、终端、浏览器还是硬件？模型能力如何被包装成工作流？</p></div>
+    <div class="fw"><div class="ic">💰</div><h4>商业模式</h4><p>订阅、用量计费、广告、API 还是成交分成？免费层怎么设计，钱从哪个环节收回来？</p></div>
+    <div class="fw"><div class="ic">🏰</div><h4>壁垒与卡位</h4><p>模型会被追平，什么留下：数据飞轮、生态分发、工作流锁定、信任合规，还是规模成本？</p></div>
+  </div>
+</section>
+
+<!-- ================= ASSISTANTS ================= -->
+<section id="assistants" style="--cat:var(--c-assist)">
+  <div class="sec-head"><span class="no">01</span><h2>通用 AI 助手</h2><span class="cnt">10 款 · 用户规模最大、竞争最激烈的入口赛道</span></div>
+  <p class="sec-intro">解决的是同一个元问题：<b>"我需要帮手，但请不起"</b>——查资料、写东西、出主意、干杂活。竞争焦点已从"模型谁聪明"转向"谁的入口离用户更近、生态绑定更深"。中国市场的月活梯队已明显分层：豆包一骑绝尘，千问靠免费+生态暴涨，DeepSeek 靠口碑长尾。</p>
+  <div class="grid">
+
+    <article class="card" data-k="meta ai whatsapp instagram 社交 助手 meta one">
+      <div class="chead"><span class="logo">♾️</span><div><h3>Meta AI <span class="by">Meta</span></h3><p class="slogan">藏在社交矩阵里的全球第二大助手</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Facebook/Instagram/WhatsApp 全球用户，增长主力在印度与新兴市场</span></div>
+        <div class="row"><b>解决的问题</b><span>让 30 多亿社交用户"零安装"用上 AI：聊天里、搜索框里、眼镜上随手可问</span></div>
+        <div class="row"><b>产品方案</b><span>家族矩阵内嵌 + 独立 App + Ray-Ban/Meta 眼镜；1.2B 月活中约 63% 交互发生在 WhatsApp；2026.9 推出 Meta One 订阅（更多 AI 用量+专属功能）</span></div>
+        <div class="row"><b>商业模式</b><span>免费为主，Meta One 订阅（2026.9）+ 广告与商业消息的长线变现</span></div>
+        <div class="row"><b>壁垒卡位</b><span>无人可复制的社交分发矩阵（家族 App 日活 36 亿）；模型能力非第一梯队但入口极深</span></div>
+      </div>
+      <div class="chips"><span class="chip">月活 12 亿（2026Q1）</span><span class="chip">WhatsApp 占 63% 交互</span><span class="chip">Meta One 订阅</span></div>
+      <div class="pm-note"><b>PM 点评 </b>第一个验证"AI 助手可以不做入口、寄生在社交关系里长到十亿级"的产品——中国对应的打法是元宝，但它没有微信的独家 intimacy。</div>
+    </article>
+
+    <article class="card" data-k="apple intelligence siri 苹果 端侧">
+      <div class="chead"><span class="logo">🍎</span><div><h3>Apple Intelligence / Siri <span class="by">Apple</span></h3><p class="slogan">最大存量设备的"迟到 AI"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球 20 亿+ 活跃苹果设备用户</span></div>
+        <div class="row"><b>解决的问题</b><span>个人情境 AI：理解你的邮件、消息、屏幕内容后替你办事——但关键功能从 iOS 18 一路跳票到 2026</span></div>
+        <div class="row"><b>产品方案</b><span>端侧小模型+私有云+接入 ChatGPT；新 Siri 主打个人数据与屏幕感知；欧盟因 DMA 再度延迟（iOS 27 无法在欧盟上线新 Siri）</span></div>
+        <div class="row"><b>商业模式</b><span>不直接收费——AI 是设备换新与生态粘性的燃料</span></div>
+        <div class="row"><b>壁垒卡位</b><span>端侧隐私叙事+硬件矩阵；风险是"跳票惯性"消耗信任，第三方 App 与开发者生态观望</span></div>
+      </div>
+      <div class="chips"><span class="chip">新 Siri 目标 2026 内</span><span class="chip">EU 因 DMA 再延迟</span></div>
+      <div class="pm-note"><b>PM 点评 </b>苹果案例说明：在 AI 时代，"可靠交付"本身就是产品力——发布会承诺与上线之间的距离，正在变成苹果最大的产品负债。</div>
+    </article>
+
+    <article class="card" data-k="mistral le chat 欧洲 主权 开源">
+      <div class="chead"><span class="logo">🇪🇺</span><div><h3>Mistral Le Chat <span class="by">Mistral AI（法国）</span></h3><p class="slogan">欧洲主权 AI 的旗舰助手</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>欧洲企业、公共部门与注重数据主权的开发者</span></div>
+        <div class="row"><b>解决的问题</b><span>欧洲不想把数据交给美国/中国模型——"欧盟合规+欧洲托管"本身就是产品</span></div>
+        <div class="row"><b>产品方案</b><span>Le Chat 助手（语音/多模态快速跟进）+ 开源权重模型系列 + 与微软扩展主权云合作（2025.7）</span></div>
+        <div class="row"><b>商业模式</b><span>API/企业合约 + Le Chat 订阅 + 政府订单</span></div>
+        <div class="row"><b>壁垒卡位</b><span>地缘政治红利与欧盟关系；模型能力在第一阵营之外，靠"合规身位"立足</span></div>
+      </div>
+      <div class="chips"><span class="chip">欧洲主权 AI 旗舰</span><span class="chip">微软主权云合作</span></div>
+    </article>
+
+    <article class="card" data-k="poe quora 聚合 多模型">
+      <div class="chead"><span class="logo">🧫</span><div><h3>Poe <span class="by">Quora</span></h3><p class="slogan">一个订阅打包所有模型的"聚合器"生意</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>想同时用多家模型、又不想付 N 份订阅的用户与 bot 开发者</span></div>
+        <div class="row"><b>解决的问题</b><span>订阅碎片化：ChatGPT+Claude+Gemini+Grok 各买一份太贵——Poe 一份订阅全打包，还允许用户自建 bot 并 monetize</span></div>
+        <div class="row"><b>产品方案</b><span>多模型聚合 + 用户创建/分享 bot 的 UGC 市场 + 图像视频模型接入；2026 年仍是多模型聚合品类头部</span></div>
+        <div class="row"><b>商业模式</b><span>单一订阅（按点数用量分配给上游模型商）——做模型的"分销渠道"</span></div>
+        <div class="row"><b>壁垒卡位</b><span>bot 市场 UGC 生态 + Quora 内容；命门：上游厂商直营体验更强，聚合层随时可能被"官方免费额度"击穿</span></div>
+      </div>
+      <div class="chips"><span class="chip">多模型聚合头部</span><span class="chip">bot UGC 市场</span></div>
+      <div class="pm-note"><b>PM 点评 </b>聚合器是"渠道价值"的试金石：当模型免费额度越来越多，Poe 们必须从"省钱"升级到"独家 bot 生态"才能活。</div>
+    </article>
+
+    <article class="card" data-k="讯飞星火 iflytek 教育 医疗 学习机">
+      <div class="chead"><span class="logo">📶</span><div><h3>讯飞星火 <span class="by">科大讯飞</span></h3><p class="slogan">不卷 C 端聊天，卷教育和医疗的"行业大模型"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>学校/家庭（AI 学习机）、医院/患者（晓医 App）、B/G 端开发者</span></div>
+        <div class="row"><b>解决的问题</b><span>教育个性化与医疗资源不均——用行业大模型+自有硬件直接变现，不依赖聊天助手心智</span></div>
+        <div class="row"><b>产品方案</b><span>星火教育大模型+AI 学习机/AI 黑板；星火医疗 X1/V3.5+晓医 App；星火 X2（2026.2，130 语种）；2026 上半年营收 116.23 亿元、研发投入 30 亿</span></div>
+        <div class="row"><b>商业模式</b><span>硬件（学习机/眼镜）+G 端项目+B 端 API；星火 App 安卓下载 2 亿+人次、开发者生态 1000 万</span></div>
+        <div class="row"><b>壁垒卡位</b><span>全国产算力叙事+校院渠道深耕；C 端存在感弱于豆包系，但收入结构最健康</span></div>
+      </div>
+      <div class="chips"><span class="chip">开发者 1000 万</span><span class="chip">半年营收 116 亿元</span><span class="chip">教育/医疗双轮</span></div>
+      <div class="pm-note"><b>PM 点评 </b>当同行在卷月活，讯飞在卷"卖硬件给家长"——差异化生存的样本，也是中国 AI 公司里少数"模型直接赚钱"的。</div>
+    </article>
+
+    <article class="card" data-k="智谱清言 glm autopglm 大模型第一股 z.ai">
+      <div class="chead"><span class="logo">🎓</span><div><h3>智谱清言 / GLM <span class="by">智谱 AI（港股 2513）</span></h3><p class="slogan">"大模型第一股"：开源生态+B/G 端基本盘</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>B/G 端（政企大客户）、开发者（开源 GLM）、C 端清言 App 用户（2500 万+）</span></div>
+        <div class="row"><b>解决的问题</b><span>把学术系大模型公司做成资本平台：2026.1 港股 IPO 市值约 511 亿港元，被称为"全球大模型第一股"</span></div>
+        <div class="row"><b>产品方案</b><span>GLM-5 开源（2026.2，可把文本直接转 .docx/.pdf/.xlsx 成品文件）；AutoGLM-web/PC 智能体（数十个网站"无人驾驶"上网）；Z.ai 面向海外开发者</span></div>
+        <div class="row"><b>商业模式</b><span>B 端/G 端合约+API+会员；出海偏东南亚（海外收入占比 <12%，早期）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>50+ 开源模型累计 15 万 GitHub stars、下载 3000 万；资本平台地位+清华系人才</span></div>
+      </div>
+      <div class="chips"><span class="chip">市值 ~511 亿港元</span><span class="chip">GLM-5 开源</span><span class="chip">App 用户 2500 万+</span></div>
+    </article>
+
+    <article class="card" data-k="chatgpt openai 助手 chatbot 广告">
+      <div class="chead"><span class="logo">💬</span><div><h3>ChatGPT <span class="by">OpenAI</span></h3><p class="slogan">AI 时代的操作系统级入口</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全民消费者 + 开发者 + 企业，几乎所有人</span></div>
+        <div class="row"><b>解决的问题</b><span>过去要请专家/搜半天/学软件才能完成的事——写作、编程、分析、学习——一个对话框搞定</span></div>
+        <div class="row"><b>产品方案</b><span>对话为核心，向外长出全家桶：GPT Store、Agent 模式、Pulse（主动推送）、Atlas 浏览器、Sora 社交视频、Ads 广告体系</span></div>
+        <div class="row"><b>商业模式</b><span>订阅（~5000 万付费）+ API + 企业版 + 广告（ChatGPT Ads 一年做到 ~10 亿美元年化）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>规模（10 亿周活）带来的数据飞轮 + 先发品牌心智；正在复制"免费规模+广告"的谷歌打法</span></div>
+      </div>
+      <div class="chips"><span class="chip">周活 10 亿（2026.8）</span><span class="chip">年化收入 ~$25B</span><span class="chip">付费订阅 ~50M</span><span class="chip">Ads $1B ARR</span></div>
+      <div class="pm-note"><b>PM 点评 </b>史上最快破 10 亿月活的 App。它最大的产品决策是把"助手"升级成"平台"：浏览器、社交、广告全线出击，直接与谷歌正面竞争。</div>
+    </article>
+
+    <article class="card" data-k="claude anthropic 企业 安全 constitutional ai">
+      <div class="chead"><span class="logo">📜</span><div><h3>Claude <span class="by">Anthropic</span></h3><p class="slogan">企业级、安全优先的"靠谱同事"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>企业客户与专业开发者，尤其是金融、法律等高风险场景</span></div>
+        <div class="row"><b>解决的问题</b><span>企业不敢用 AI：怕出错、怕泄密、怕不可控。Claude 用 Constitutional AI + 安全叙事拿下"高信任"心智</span></div>
+        <div class="row"><b>产品方案</b><span>Opus 4.6：百万 token 上下文 + 多 Agent 协调；Claude Code 终端工程 Agent；Claude Design（2026.4）切入视觉创作</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + API 按量 + 企业合约；2026.4 据报道企业市场采用率首次反超 OpenAI</span></div>
+        <div class="row"><b>壁垒卡位</b><span>安全信任的品牌资产 + 编码场景的 benchmark 领先；短板是 EU 数据驻留等合规覆盖仍不完整</span></div>
+      </div>
+      <div class="chips"><span class="chip">企业采用反超 OpenAI</span><span class="chip">百万 token 上下文</span><span class="chip">Claude Design 新品</span></div>
+      <div class="pm-note"><b>PM 点评 </b>证明了一个差异化定位的价值：不抢"最聪明的玩具"，抢"最敢托付的同事"。</div>
+    </article>
+
+    <article class="card" data-k="gemini google ai mode search 搜索 nano banana">
+      <div class="chead"><span class="logo">✨</span><div><h3>Gemini + AI Mode <span class="by">Google</span></h3><p class="slogan">把 AI 装进 20 亿人的搜索框</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球搜索/安卓/Workspace 存量用户</span></div>
+        <div class="row"><b>解决的问题</b><span>AI 时代搜索被 ChatGPT/Perplexity 分流——Google 的生死防守战：让 AI 直接住在搜索框里</span></div>
+        <div class="row"><b>产品方案</b><span>AI Mode 免费开放（2026.3 起）；Spark 后台自主 Agent；连接 Gmail 等个人上下文；第三方 App 接入；Nano Banana 图像全家桶</span></div>
+        <div class="row"><b>商业模式</b><span>广告基本盘升级（AI 答案内嵌广告）+ AI Pro $19.99 / Ultra $249.99 订阅</span></div>
+        <div class="row"><b>壁垒卡位</b><span>无人能敌的分发（搜索、安卓、Chrome、Workspace）+ TPU 自研的成本优势</span></div>
+      </div>
+      <div class="chips"><span class="chip">AI Mode 全面免费</span><span class="chip">Spark Agent</span><span class="chip">Nano Banana 2</span></div>
+      <div class="pm-note"><b>PM 点评 </b>典型的"防守者反攻"：不发明新品类，而是把新品类塞进已有分发，用免费策略拖死独立玩家。</div>
+    </article>
+
+    <article class="card" data-k="grok xai spacex 马斯克 实时">
+      <div class="chead"><span class="logo">⚡</span><div><h3>Grok <span class="by">xAI / SpaceXAI</span></h3><p class="slogan">实时信息 + 无所顾忌的个性助手</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>X（推特）用户、关注实时热点与"不受审查"体验的人群</span></div>
+        <div class="row"><b>解决的问题</b><span>主流助手"太客气、不实时"——Grok 用 X 平台实时数据 + 更放开的人设做差异化</span></div>
+        <div class="row"><b>产品方案</b><span>Grok 4.3（2026.9）；编码模型 Grok Build 0.1；与 SpaceX 合并后深度整合 Starlink/终端场景</span></div>
+        <div class="row"><b>商业模式</b><span>罕见的 7 档订阅阶梯：免费 → $30 → $100 → $300（Heavy），重度用户按算力分层付费</span></div>
+        <div class="row"><b>壁垒卡位</b><span>X 实时语料 + 马斯克系分发（X、Tesla、SpaceX）；模型能力第一梯队之外，靠渠道取胜</span></div>
+      </div>
+      <div class="chips"><span class="chip">订阅 $0–$300/月</span><span class="chip">Grok 4.3</span><span class="chip">与 SpaceX 合并</span></div>
+      <div class="pm-note"><b>PM 点评 </b>把"订阅档位拉到 $300"是在向市场示范：AI 助手可以做成分级算力商品，重度用户的支付意愿远超想象。</div>
+    </article>
+
+    <article class="card" data-k="deepseek 幻方 开源 低价 中国">
+      <div class="chead"><span class="logo">🐋</span><div><h3>DeepSeek <span class="by">深度求索（幻方背景）</span></h3><p class="slogan">把前沿模型的价格打下来</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>开发者、价格敏感的用户与企业、全球开源社区</span></div>
+        <div class="row"><b>解决的问题</b><span>前沿 AI 太贵。R1 以 ~45 倍训练效率对标 o1 并开源权重，直接击穿模型层定价权</span></div>
+        <div class="row"><b>产品方案</b><span>开源权重模型 + 极简免费 App；V4-Flash（2026.7）延续高性价比路线；App 月活稳居国内前三</span></div>
+        <div class="row"><b>商业模式</b><span>不靠模型收费：幻方量化资金输血，开源换取生态影响力与人才，API 极低价维持存在感</span></div>
+        <div class="row"><b>壁垒卡位</b><span>工程效率口碑 + 开源社区势能；2026 年 App 仍以 1.3 亿月活守住第三</span></div>
+      </div>
+      <div class="chips"><span class="chip">月活 1.30 亿</span><span class="chip">开源权重</span><span class="chip">训练效率 ~45×</span></div>
+      <div class="pm-note"><b>PM 点评 </b>产品即宣言：当模型本身不构成生意，它就成了打击对手定价的武器。</div>
+    </article>
+
+    <article class="card" data-k="doubao 豆包 字节 全民 语音">
+      <div class="chead"><span class="logo">🫘</span><div><h3>豆包 <span class="by">字节跳动</span></h3><p class="slogan">中国月活第一的全民 AI 助手</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>中国大众用户，包括大量下沉市场与中老年、青少年用户</span></div>
+        <div class="row"><b>解决的问题</b><span>大众用户要的不是"最强模型"，而是"顺手的陪伴+问答+生活助手"——语音对话、拍照答疑、日常闲聊</span></div>
+        <div class="row"><b>产品方案</b><span>语音交互体验领先 + 火山引擎模型底座 + 字节系（抖音等）低成本买量与预装分发</span></div>
+        <div class="row"><b>商业模式</b><span>C 端免费拿量，价值回收在 B 端（火山引擎 API/云）与字节生态协同</span></div>
+        <div class="row"><b>壁垒卡位</b><span>分发碾压：3.82 亿月活，跻身全网 App 前 16；AI 原生 App 中断层领先第二名一倍以上</span></div>
+      </div>
+      <div class="chips"><span class="chip">月活 3.82 亿（2026H1）</span><span class="chip">全网 App 前 16</span><span class="chip">语音体验领先</span></div>
+      <div class="pm-note"><b>PM 点评 </b>豆包验证了中国市场的 AI 增长公式：抖音级投放 × 免费策略 × 语音降低使用门槛 = 指数级月活。</div>
+    </article>
+
+    <article class="card" data-k="千问 qwen 夸克 阿里 通义">
+      <div class="chead"><span class="logo">🔆</span><div><h3>千问 App + 夸克 <span class="by">阿里巴巴</span></h3><p class="slogan">"AI 超级框"：搜索、学习、网盘一体化</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>学生、职场人的搜索与学习场景；夸克存量年轻用户</span></div>
+        <div class="row"><b>解决的问题</b><span>用户不想在"搜索、问答、网盘、扫描、翻译"多个工具间切换——夸克把它们收进一个框</span></div>
+        <div class="row"><b>产品方案</b><span>夸克"AI 超级框"（DAU 3000 万+）：AI 搜索+深度研究+网盘 AI 助手+AI 眼镜；千问 App 免费 + Qwen 开源模型双轮</span></div>
+        <div class="row"><b>商业模式</b><span>会员增值 + 云/模型商业协同；千问 App 月活 1.67 亿、同比暴涨 4241%，是增长最快的产品</span></div>
+        <div class="row"><b>壁垒卡位</b><span>阿里电商/云/高德/支付宝生态 + Qwen 开源全球开发者生态</span></div>
+      </div>
+      <div class="chips"><span class="chip">千问月活 1.67 亿</span><span class="chip">同比 +4241%</span><span class="chip">夸克 DAU 3000 万+</span></div>
+      <div class="pm-note"><b>PM 点评 </b>双品牌打法值得细看：夸克接场景，千问接模型心智，两条腿把免费策略打满。</div>
+    </article>
+
+    <article class="card" data-k="元宝 腾讯 微信 混元">
+      <div class="chead"><span class="logo">🧧</span><div><h3>腾讯元宝 <span class="by">腾讯</span></h3><p class="slogan">微信生态的 AI 前哨站</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>微信/QQ 存量用户、公众号重度阅读者</span></div>
+        <div class="row"><b>解决的问题</b><span>微信内容生态没有"AI 读法"——元宝打通公众号文章、腾讯文档等独家内容做问答与总结</span></div>
+        <div class="row"><b>产品方案</b><span>深度接入微信/QQ/腾讯文档；春节 10 亿元红包拉新冲上 DAU 5000 万、MAU 1.14 亿；混元 3.0 走"够用且便宜"路线</span></div>
+        <div class="row"><b>商业模式</b><span>免费 + 生态协同（广告、企业微信、云）；撤销 AI Lab 并入混元集中资源</span></div>
+        <div class="row"><b>壁垒卡位</b><span>微信独家内容 + 社交关系链；但独立 App 口径仍是"行业老四"，微信 AI 独立入口分流也在进行中</span></div>
+      </div>
+      <div class="chips"><span class="chip">MAU 1.14 亿（峰值）</span><span class="chip">DAU 5000 万+</span><span class="chip">混元 3.0</span></div>
+      <div class="pm-note"><b>PM 点评 </b>红包买来的月活留存成疑——"元宝漏水"的批评说明：AI 产品的留存靠任务完成质量，不靠拉新手段。</div>
+    </article>
+
+    <article class="card" data-k="kimi 月之暗面 长文本 开源">
+      <div class="chead"><span class="logo">🌙</span><div><h3>Kimi <span class="by">月之暗面</span></h3><p class="slogan">从长文本出圈到开源第一梯队的转型样本</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>C 端：长文档处理的知识工作者；B 端：K2/K3 开源模型的全球开发者</span></div>
+        <div class="row"><b>解决的问题</b><span>长文本理解曾是空白：一次喂几十万字资料再提问。靠这一手曾跑出媲美豆包的月活</span></div>
+        <div class="row"><b>产品方案</b><span>C 端助手 + 战略重心转向开源模型：K3（2026.7）2.8T 参数 MoE、激活 ~104B、1M 上下文，开放权重</span></div>
+        <div class="row"><b>商业模式</b><span>据报道正与微软/亚马逊/谷歌谈云托管分成（最高 30% 云收益）——中国模型公司的新出海路径</span></div>
+        <div class="row"><b>壁垒卡位</b><span>开源第一梯队的模型能力 + 1M 上下文的差异化记忆点</span></div>
+      </div>
+      <div class="chips"><span class="chip">K3：2.8T MoE</span><span class="chip">1M 上下文</span><span class="chip">开放权重</span></div>
+      <div class="pm-note"><b>PM 点评 </b>C 端打不过字节就换赛道打模型——"助手转开源"的路线切换，是中国 AI 创业公司战略韧性的代表案例。</div>
+    </article>
+
+    <article class="card" data-k="文小言 文心一言 百度 搜索">
+      <div class="chead"><span class="logo">🔍</span><div><h3>文小言 <span class="by">百度</span></h3><p class="slogan">搜索巨头的转型防守：新搜索智能助手</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>百度搜索存量用户、中文内容消费者</span></div>
+        <div class="row"><b>解决的问题</b><span>AI 直接给答案，传统搜索广告模式被釜底抽薪——百度必须自己革自己的命</span></div>
+        <div class="row"><b>产品方案</b><span>文心一言 App 更名"文小言"，定位"新搜索"：富媒体搜索 + 创作 + 记忆 + 订阅；2025.4 起文心 4.0 全部免费</span></div>
+        <div class="row"><b>商业模式</b><span>免费开放换取调用量，收入指望广告体系 AI 化改造与云</span></div>
+        <div class="row"><b>壁垒卡位</b><span>累计用户 3 亿+ 与中文搜索内容池；但独立 AI 心智已被豆包/DeepSeek 盖过</span></div>
+      </div>
+      <div class="chips"><span class="chip">累计用户 3 亿+</span><span class="chip">2025.4 全面免费</span><span class="chip">"新搜索"定位</span></div>
+      <div class="pm-note"><b>PM 点评 </b>开创者困境的经典案例：过去的现金牛（搜索广告）恰是转型最大的组织阻力。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= SEARCH ================= -->
+<section id="search" style="--cat:var(--c-search)">
+  <div class="sec-head"><span class="no">02</span><h2>AI 搜索</h2><span class="cnt">3 款代表 · 向"SEO 垃圾+广告"的传统搜索发起替代</span></div>
+  <p class="sec-intro">解决的是<b>"搜索结果里找不到答案"</b>：十条蓝色链接、满屏 SEO 农场和广告，用户要的只是答案。Gartner 曾预测 2026 年传统搜索引擎搜索量下降 25%——AI 搜索是今年最确定的替代趋势之一。</p>
+  <div class="grid">
+
+    <article class="card" data-k="dia browser arc 浏览器 the browser company">
+      <div class="chead"><span class="logo">✨</span><div><h3>Dia <span class="by">The Browser Company</span></h3><p class="slogan">Arc 团队的"AI-first 浏览器"决裂之作</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>知识工作者——官方定位"work 专用浏览器"</span></div>
+        <div class="row"><b>解决的问题</b><span>边看边问边产出：侧边栏聊天带着全部标签页上下文，直接生成可分享的成品（写稿/比价/计划）</span></div>
+        <div class="row"><b>产品方案</b><span>Chromium 内核 + 上下文侧边栏；接入 Slack/Gmail/Notion/Outlook 与 ChatGPT/Perplexity/Claude 多模型；2025.6 beta、2025.10 macOS 公测</span></div>
+        <div class="row"><b>商业模式</b><span>免费 + Pro 订阅（高级模型用量）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>产品完成度与设计品味口碑；代价是 Arc 用户"被抛弃"的社区怨气——转型决绝的典型样本</span></div>
+      </div>
+      <div class="chips"><span class="chip">上下文聊天侧栏</span><span class="chip">多模型接入</span><span class="chip">2025.10 公测</span></div>
+    </article>
+
+    <article class="card" data-k="brave leo opera aria 浏览器 ai 隐私">
+      <div class="chead"><span class="logo">🦁</span><div><h3>Brave Leo / Opera Aria <span class="by">Brave / Opera</span></h3><p class="slogan">浏览器 AI 的"传统派"：隐私与免费两条守势</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Leo：隐私敏感用户；Aria：Opera 存量的免费用户</span></div>
+        <div class="row"><b>解决的问题</b><span>不换浏览器也能用上 AI：Leo 主打"对话不留存"的隐私 AI；Aria 免费+文生图+语音输出</span></div>
+        <div class="row"><b>产品方案</b><span>内建侧边栏助手（桌面+移动全覆盖），Leo 用可校验隐私架构，Aria 免费走量</span></div>
+        <div class="row"><b>商业模式</b><span>Leo 随 Brave Premium 订阅；Aria 免费导流 Opera 生态</span></div>
+        <div class="row"><b>壁垒卡位</b><span>存量浏览器用户基本盘；在 Atlas/Comet/Dia 的围剿下，"守"比"攻"现实</span></div>
+      </div>
+      <div class="chips"><span class="chip">隐私优先（Leo）</span><span class="chip">免费（Aria）</span><span class="chip">2026 最佳 AI 浏览器榜单常客</span></div>
+      <div class="pm-note"><b>PM 点评 </b>AI 浏览器大战的完整拼图：OpenAI/Perplexity 进攻，Dia 做精品，Brave/Opera 守存量——浏览器再次成为所有 AI 入口的必争之地。</div>
+    </article>
+
+    <article class="card" data-k="perplexity comet 浏览器 chrome">
+      <div class="chead"><span class="logo">🔎</span><div><h3>Perplexity <span class="by">Perplexity AI</span></h3><p class="slogan">答案引擎 → AI 浏览器 → "AI 个人电脑"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>研究型用户、专业人士、知识工作者</span></div>
+        <div class="row"><b>解决的问题</b><span>传统搜索"给链接不给答案"；Perplexity 直接给带引用的答案，把"查资料"压缩成"问一句"</span></div>
+        <div class="row"><b>产品方案</b><span>答案引擎（编排 ~19 家模型）+ Comet AI 浏览器（Agent 代你操作网页）+ 页面内广告实验；曾出价 $34.5B 求购 Chrome</span></div>
+        <div class="row"><b>商业模式</b><span>订阅（Max $200/月）+ 广告 + API；月查询量 ~7.8 亿次，用户以高价值决策场景为主</span></div>
+        <div class="row"><b>壁垒卡位</b><span>引用式答案的用户心智；但面对 Google AI Mode 免费碾压，护城河在收窄，估值 $14–21B</span></div>
+      </div>
+      <div class="chips"><span class="chip">月查询 7.8 亿</span><span class="chip">Comet 浏览器</span><span class="chip">$34.5B 竞购 Chrome</span></div>
+      <div class="pm-note"><b>PM 点评 </b>从搜索做到浏览器再做"AI PC"，是一条清晰的"沿用户任务链向上爬"的扩张路线，也是被巨头挤压下的必然选择。</div>
+    </article>
+
+    <article class="card" data-k="秘塔 metaso ai搜索 学术 中国 无广告">
+      <div class="chead"><span class="logo">📑</span><div><h3>秘塔 AI 搜索 <span class="by">秘塔科技</span></h3><p class="slogan">无广告、可溯源的中文深度搜索</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>学生、研究者、律师、医生等需要"严肃检索"的中文用户</span></div>
+        <div class="row"><b>解决的问题</b><span>中文搜索广告多、质量差；学术/司法等专业内容检索门槛高</span></div>
+        <div class="row"><b>产品方案</b><span>简洁/深入/研究三档模式 + 大纲式结构化答案 + 引用溯源；多专家混合模型提效；学术论文专项检索</span></div>
+        <div class="row"><b>商业模式</b><span>免费为主，靠专业版/生态续接；"无广告直达结果"是最强的口碑差异化</span></div>
+        <div class="row"><b>壁垒卡位</b><span>中文专业内容处理的口碑心智；规模不及大厂但场景粘性高</span></div>
+      </div>
+      <div class="chips"><span class="chip">无广告</span><span class="chip">学术/司法检索强</span><span class="chip">三档深度模式</span></div>
+      <div class="pm-note"><b>PM 点评 </b>小团队撬动大厂的样本：不比模型，比"检索结果的干净程度"这一个单点体验。</div>
+    </article>
+
+    <article class="card" data-k="genspark ai搜索 agent 代理">
+      <div class="chead"><span class="logo">🌐</span><div><h3>Genspark <span class="by">MainFunc</span></h3><p class="slogan">从 AI 搜索走向"超级 Agent"的跨界者</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>海外个人用户、轻量任务自动化需求者</span></div>
+        <div class="row"><b>解决的问题</b><span>搜索只是起点：用户最终要的是"帮我订好、比好价、做好表"——Genspark 把搜索升级成执行</span></div>
+        <div class="row"><b>产品方案</b><span>AI 搜索 + Agent 页面（自动生成定制结果页）+ 电话代打（AI Call）等 Agent 功能，国际市场口碑良好</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + 增值用量；与秘塔、Perplexity 分别代表"专业检索/工程执行/答案心智"三种 AI 搜索产品化路线</span></div>
+        <div class="row"><b>壁垒卡位</b><span>Agent 功能先发；但同样面临 Google 免费策略挤压</span></div>
+      </div>
+      <div class="chips"><span class="chip">Agent 化搜索</span><span class="chip">AI Call 电话代打</span></div>
+      <div class="pm-note"><b>PM 点评 </b>AI 搜索的终局不是"更好的搜索"，而是"替你完成任务"——Genspark 是这条路径上最激进的实践者之一。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= CODING ================= -->
+<section id="coding" style="--cat:var(--c-code)">
+  <div class="sec-head"><span class="no">03</span><h2>AI 编程</h2><span class="cnt">10 款 · 商业化最成功的 AI 赛道</span></div>
+  <p class="sec-intro">开发者付费意愿最高、ROI 最可量化（省掉的是工资最贵的工程师的时间）。2026 年的关键分水岭：从"编辑器里补全代码"全面转向 <b>"Agent 端到端交付任务"</b>——评测共识是 Claude Code 领跑终端 Agent、Codex 胜在速度、Copilot 强在存量生态、Cursor 赢在产品体验。</p>
+  <div class="grid">
+
+    <article class="card" data-k="cline roo code aider 开源 编码 agent 终端">
+      <div class="chead"><span class="logo">🦞</span><div><h3>Cline / Roo Code / Aider <span class="by">开源社区</span></h3><p class="slogan">开源编码 Agent 三杰：BYOK 的"逃离舱门"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>不想被订阅锁定的开发者、模型极客、隐私敏感团队</span></div>
+        <div class="row"><b>解决的问题</b><span>商业工具的限额与涨价：开源 Agent 让你带自己的 API key（BYOK），按 token 直付，无中间溢价</span></div>
+        <div class="row"><b>产品方案</b><span>Cline：VS Code 内简洁成熟的自主 Agent；Roo Code：其 fork，功能更全开箱即用；Aider：终端结对编程，git 纪律与低开销最佳</span></div>
+        <div class="row"><b>商业模式</b><span>开源免费 + 可选托管/偏好设置；上游是模型 API 商</span></div>
+        <div class="row"><b>壁垒卡位</b><span>社区与口碑分发；无商业护城河，但"无厂商锁定"本身就是护城河</span></div>
+      </div>
+      <div class="chips"><span class="chip">全部免费开源</span><span class="chip">BYOK 模式</span><span class="chip">VS Code + 终端双形态</span></div>
+      <div class="pm-note"><b>PM 点评 </b>当 Cursor/Copilot 转向用量计费时，论坛共识是"大不了用 Cline"——开源备胎的存在，给所有商业编码工具的价格上限画了一条线。</div>
+    </article>
+
+    <article class="card" data-k="zed 编辑器 rust 性能 acp 协作">
+      <div class="chead"><span class="logo">⚡</span><div><h3>Zed <span class="by">Zed Industries</span></h3><p class="slogan">2ms 延迟的 Rust 编辑器 + Agent 开放协议</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>性能极客、开源社区、需要实时协作的工程团队</span></div>
+        <div class="row"><b>解决的问题</b><span>VS Code 体系越来越重；Zed 用 Rust 重写拿到 2ms 输入延迟，并内建 CRDT 多人协作与语音</span></div>
+        <div class="row"><b>产品方案</b><span>Agentic 编辑 + 内联 AI + Agent Client Protocol（ACP，Zed 主导的标准）让第三方 Agent 即插即用；55k+ GitHub stars</span></div>
+        <div class="row"><b>商业模式</b><span>个人免费；Pro $10/月、Business $30/席/月</span></div>
+        <div class="row"><b>壁垒卡位</b><span>性能心智 + 开放协议（成为 Agent 编辑器互操作标准的话，就是"Agent 时代的 USB 接口"）</span></div>
+      </div>
+      <div class="chips"><span class="chip">55k+ stars</span><span class="chip">ACP 开放协议</span><span class="chip">$10/月 Pro</span></div>
+    </article>
+
+    <article class="card" data-k="cursor 编辑器 vibe coding anysphere">
+      <div class="chead"><span class="logo">⌨️</span><div><h3>Cursor <span class="by">Anysphere</span></h3><p class="slogan">AI-first 编辑器，SaaS 史上最快收入增长之一</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>专业开发者、AI 重度编程团队</span></div>
+        <div class="row"><b>解决的问题</b><span>VS Code 不是为 AI 设计的；Cursor 把"Tab 补全 + Agent 修改整个代码库"做成原生体验</span></div>
+        <div class="row"><b>产品方案</b><span>Fork VS Code 的 AI 原生编辑器：Composer 多文件编辑、Agent 模式、代码库语义索引</span></div>
+        <div class="row"><b>商业模式</b><span>$20/月个人订阅 + 团队/企业版；年化收入 $1B（2025.11）→ ~$4B（2026），估值 $29.3B</span></div>
+        <div class="row"><b>壁垒卡位</b><span>产品体验心智 + 收入规模反哺模型训练；2026.4 SpaceX 抛出 $60B 收购选项（或 $10B 合作）</span></div>
+      </div>
+      <div class="chips"><span class="chip">年化 ~$4B</span><span class="chip">估值 $29.3B</span><span class="chip">SpaceX $60B 选项</span></div>
+      <div class="pm-note"><b>PM 点评 </b>两年从 $100M 到 $4B 年化——证明"在巨头生态上做一层更好的体验"也能长成巨兽，但上游模型层（Anthropic/OpenAI）既是供应商也是竞争者。</div>
+    </article>
+
+    <article class="card" data-k="claude code 终端 agent anthropic">
+      <div class="chead"><span class="logo">🛠️</span><div><h3>Claude Code <span class="by">Anthropic</span></h3><p class="slogan">终端里的工程 Agent，大库重构首选</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>习惯命令行的资深工程师、需要大范围改动的团队</span></div>
+        <div class="row"><b>解决的问题</b><span>"帮我把这个 50 万行仓库的认证模块重构掉"——编辑器补全干不了的事</span></div>
+        <div class="row"><b>产品方案</b><span>终端 Agent：理解仓库、跑测试、多步自主执行；2026 多个评测榜单综合第一（MightyBot 等）</span></div>
+        <div class="row"><b>商业模式</b><span>随 Claude 订阅/API 计费，按用量消耗 token</span></div>
+        <div class="row"><b>壁垒卡位</b><span>模型能力本体（复杂架构推理）+ Anthropic 企业客户通道</span></div>
+      </div>
+      <div class="chips"><span class="chip">Agent 榜单第一梯队</span><span class="chip">大库重构强</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"没有 UI"反而是卖点：把产品做成协议（CLI/MCP），让生态替你长出界面。</div>
+    </article>
+
+    <article class="card" data-k="github copilot 微软 agent cloud">
+      <div class="chead"><span class="logo">🐙</span><div><h3>GitHub Copilot <span class="by">GitHub / Microsoft</span></h3><p class="slogan">存量最大的编码助手，全面 Agent 化</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>1 亿+ GitHub 开发者、企业工程组织</span></div>
+        <div class="row"><b>解决的问题</b><span>让存量开发流程零成本接入 AI：在 IDE 里补全，在云端开 PR</span></div>
+        <div class="row"><b>产品方案</b><span>IDE Agent Mode + Cloud Agent（自主研究仓库→改代码→开 PR）+ Agents 面板（可调用第三方 Agent 含 Claude）</span></div>
+        <div class="row"><b>商业模式</b><span>订阅分层，Agent 重度用户导入 Pro+ 与超额计费——从"席位"走向"用量"的混合模式</span></div>
+        <div class="row"><b>壁垒卡位</b><span>GitHub 生态数据与分发；劣势是模型来自外部、体验迭代慢于 Cursor/Claude Code</span></div>
+      </div>
+      <div class="chips"><span class="chip">Cloud Agent 开 PR</span><span class="chip">席位+用量混合计费</span></div>
+      <div class="pm-note"><b>PM 点评 </b>平台型玩家的标准打法：不追求单点最强，追求"任何工作流里都缺不了我"。</div>
+    </article>
+
+    <article class="card" data-k="codex openai 编程">
+      <div class="chead"><span class="logo">🧩</span><div><h3>Codex <span class="by">OpenAI</span></h3><p class="slogan">速度型编码 Agent，生产就绪</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>追求快速原型与生产部署的 ChatGPT 生态开发者</span></div>
+        <div class="row"><b>解决的问题</b><span>对比评测中的差异化定位：快、适合快速迭代与"直接投产"的工程任务</span></div>
+        <div class="row"><b>产品方案</b><span>云端 + 本地双形态的编码 Agent，与 ChatGPT 订阅打通</span></div>
+        <div class="row"><b>商业模式</b><span>ChatGPT 订阅捆绑 + API</span></div>
+        <div class="row"><b>壁垒卡位</b><span>OpenAI 模型与用户基数；编码单项上与 Claude 互有胜负</span></div>
+      </div>
+      <div class="chips"><span class="chip">速度快</span><span class="chip">原型/投产友好</span></div>
+    </article>
+
+    <article class="card" data-k="devin cognition 自主工程师 windsurf">
+      <div class="chead"><span class="logo">🤖</span><div><h3>Devin <span class="by">Cognition</span></h3><p class="slogan">"AI 软件工程师"概念的发起者</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>想把整块工程任务外包给 AI 的企业团队</span></div>
+        <div class="row"><b>解决的问题</b><span>不是辅助写代码，而是接下"一个工单"：规划、编码、调试、部署端到端完成</span></div>
+        <div class="row"><b>产品方案</b><span>云端自主工程师 + 收购 Windsurf 补齐编辑器；企业落地案例（如 Hippo 保险）</span></div>
+        <div class="row"><b>商业模式</b><span>企业订阅 + 按任务用量；早期因实际能力与宣传落差遭质疑，2026 年靠落地案例重建口碑</span></div>
+        <div class="row"><b>壁垒卡位</b><span>"AI 员工"品类的定义者 + Windsurf 分发</span></div>
+      </div>
+      <div class="chips"><span class="chip">端到端工程任务</span><span class="chip">收购 Windsurf</span></div>
+      <div class="pm-note"><b>PM 点评 </b>给全行业的教训：Agent 产品的发布节奏要与能力成熟度匹配，过度承诺透支的是整个品类的信任。</div>
+    </article>
+
+    <article class="card" data-k="replit agent 浏览器 ide 全栈">
+      <div class="chead"><span class="logo">🧰</span><div><h3>Replit Agent 3 <span class="by">Replit</span></h3><p class="slogan">浏览器里的"描述即应用"全栈平台</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>初学者、独立开发者、快速验证想法的人</span></div>
+        <div class="row"><b>解决的问题</b><span>配环境、装依赖、部署上线这些"写代码之外的事"占掉 70% 时间——Replit 把它们全部消失</span></div>
+        <div class="row"><b>产品方案</b><span>云端 IDE + Agent 3：对话生成 Web App 与原生移动 App（React Native/Expo），开发-部署-托管一体</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + 用量（Agent 执行时长）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>教学市场与"第一个 IDE"的用户起点心智；短板是沙盒与本地代码库衔接不够顺</span></div>
+      </div>
+      <div class="chips"><span class="chip">Web+移动端生成</span><span class="chip">开发部署一体</span></div>
+    </article>
+
+    <article class="card" data-k="lovable 非技术 全栈 app 创业">
+      <div class="chead"><span class="logo">💜</span><div><h3>Lovable <span class="by">Lovable（欧洲）</span></h3><p class="slogan">给非技术创始人的全栈 App 工厂</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>不会写代码的创业者、产品经理、运营</span></div>
+        <div class="row"><b>解决的问题</b><span>有想法没工程师：AI 直接生成带登录、数据库的可用全栈应用</span></div>
+        <div class="row"><b>产品方案</b><span>对话生成全栈应用（Auth/后端内置）+ GitHub 同步；~71% 用户好评</span></div>
+        <div class="row"><b>商业模式</b><span>$25/月起的信用点订阅；人效惊人：~$2.77M 收入/员工，团队人效全球顶尖</span></div>
+        <div class="row"><b>壁垒卡位</b><span>"非技术者做产品"的心智与社区模板生态</span></div>
+      </div>
+      <div class="chips"><span class="chip">$2.77M 收入/员工</span><span class="chip">好评 ~71%</span></div>
+      <div class="pm-note"><b>PM 点评 </b>vibe coding 的正确姿势：不服务程序员，服务"想做软件的其他 99% 的人"。</div>
+    </article>
+
+    <article class="card" data-k="bolt new stackblitz 全栈 生成">
+      <div class="chead"><span class="logo">⚡</span><div><h3>Bolt.new <span class="by">StackBlitz</span></h3><p class="slogan">浏览器里秒开的全栈开发生成器</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>开发者与半技术用户，偏快速生成与迭代</span></div>
+        <div class="row"><b>解决的问题</b><span>从想法到可运行代码的最短路径：打开网页、一句话、直接跑</span></div>
+        <div class="row"><b>产品方案</b><span>WebContainer 浏览器内运行全栈环境 + AI 生成；$40M+ ARR</span></div>
+        <div class="row"><b>商业模式</b><span>$25/月订阅 + token 用量</span></div>
+        <div class="row"><b>壁垒卡位</b><span>浏览器内执行的独家技术栈；与 Lovable/v0 构成三强：Bolt 求快、Lovable 求全、v0 求美</span></div>
+      </div>
+      <div class="chips"><span class="chip">$40M+ ARR</span><span class="chip">浏览器内全栈</span></div>
+    </article>
+
+    <article class="card" data-k="v0 vercel ui 生成 前端">
+      <div class="chead"><span class="logo">🎨</span><div><h3>v0 <span class="by">Vercel</span></h3><p class="slogan">UI 生成最强：从截图/描述到生产级前端</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>前端工程师、设计工程师、Vercel 生态用户</span></div>
+        <div class="row"><b>解决的问题</b><span>UI 还原与前端搭页面是重复劳动；v0 直接生成高质量 React/Tailwind 代码</span></div>
+        <div class="row"><b>产品方案</b><span>生成-预览-迭代-部署全在浏览器，与 Vercel 部署管道无缝衔接</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + 与 Vercel 云服务协同变现</span></div>
+        <div class="row"><b>壁垒卡位</b><span>设计质量心智 + 部署生态闭环</span></div>
+      </div>
+      <div class="chips"><span class="chip">UI 生成最强</span><span class="chip">Vercel 生态闭环</span></div>
+    </article>
+
+    <article class="card" data-k="trae 字节 通义灵码 codebuddy comate 国产 编程">
+      <div class="chead"><span class="logo">🇨🇳</span><div><h3>Trae / 通义灵码 / CodeBuddy <span class="by">字节 / 阿里 / 腾讯</span></h3><p class="slogan">国产 AI 编程三队：免费换市场</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>中国开发者与企业研发团队</span></div>
+        <div class="row"><b>解决的问题</b><span>Cursor $20/月的门槛 + 中文物料/需求理解差；国产工具用免费 + 本土化破局</span></div>
+        <div class="row"><b>产品方案</b><span>Trae 国内版全功能免费（中文需求理解准确率约 98%）；通义灵码 59 元/月主打企业安全合规；腾讯 CodeBuddy、百度 Comate 跟进</span></div>
+        <div class="row"><b>商业模式</b><span>个人免费/低价，企业版收费；为云与模型生态导流</span></div>
+        <div class="row"><b>壁垒卡位</b><span>本土合规与私有化部署需求；模型能力仍依赖自有或开源底座</span></div>
+      </div>
+      <div class="chips"><span class="chip">Trae 免费</span><span class="chip">灵码 ¥59/月</span><span class="chip">中文优化</span></div>
+      <div class="pm-note"><b>PM 点评 </b>中国 SaaS 式竞争：当海外对手靠订阅赚钱时，本土玩家把编程工具当"云的引流品"打。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= OPENSOURCE ================= -->
+<section id="opensource" style="--cat:#0d9488">
+  <div class="sec-head"><span class="no">12</span><h2>开源与本地生态</h2><span class="cnt">3 款代表 · 论坛（Reddit r/LocalLLaMA、HN）最活跃的极客阵地</span></div>
+  <p class="sec-intro">这一组不是"产品对消费者"，而是<b>整个开源 AI 生态的基础设施</b>：模型在这里分发、运行、编排。隐私、成本与"不被任何厂商锁定"是三大驱动力——开源权重模型（DeepSeek/Kimi/FLUX/Wan）越繁荣，它们越繁荣。</p>
+  <div class="grid">
+
+    <article class="card" data-k="ollama lm studio 本地 大模型 local llm 隐私">
+      <div class="chead"><span class="logo">🦙</span><div><h3>Ollama / LM Studio <span class="by">本地 LLM 运行时双雄</span></h3><p class="slogan">在自己的电脑上跑大模型：CLI 与 GUI 两条路</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Ollama：开发者与极客；LM Studio：想本地跑模型的非技术用户</span></div>
+        <div class="row"><b>解决的问题</b><span>隐私（数据不出本机）、成本（无 API 账单）、离线可用——把开源权重模型变成"双击即用"</span></div>
+        <div class="row"><b>产品方案</b><span>Ollama：一条命令拉起模型+本地 API 服务（开发者工作流标配）；LM Studio：最完善的桌面 GUI 与模型浏览器（社区公认新手第一装）</span></div>
+        <div class="row"><b>商业模式</b><span>Ollama 开源免费（企业版路线）；LM Studio 个人免费+企业商用授权</span></div>
+        <div class="row"><b>壁垒卡位</b><span>r/LocalLLaMA 等社区的开发者心智；是开源模型繁荣的最大受益渠道层</span></div>
+      </div>
+      <div class="chips"><span class="chip">2026 本地 LLM 双雄</span><span class="chip">CLI + GUI 分工</span><span class="chip">隐私/离线</span></div>
+      <div class="pm-note"><b>PM 点评 </b>云厂商最该警惕的其实不是竞品模型，而是"本地运行"这个行为本身——它把 AI 的默认假设从"连网付费"改成"装在硬盘里"。</div>
+    </article>
+
+    <article class="card" data-k="comfyui 节点 工作流 stable diffusion 开源">
+      <div class="chead"><span class="logo">🧵</span><div><h3>ComfyUI <span class="by">Comfy Org（开源）</span></h3><p class="slogan">AI 生成的"专业版 DAW"：节点式工作流引擎</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>重度 AI 创作者、工作流工程师、开源模型玩家</span></div>
+        <div class="row"><b>解决的问题</b><span>商业工具的"黑盒生成"不够可控——节点图把模型/采样/控制网/放大全流程拆开编排，可复用可分享</span></div>
+        <div class="row"><b>产品方案</b><span>图形化节点画布跑 Stable Diffusion/FLUX/Wan/混元等开源模型；工作流 JSON 模板社区流通；Windows/Linux/macOS 全平台</span></div>
+        <div class="row"><b>商业模式</b><span>开源免费 + 云服务/模板市场探索</span></div>
+        <div class="row"><b>壁垒卡位</b><span>SD 时代积累的工作流资产与社区惯性——门槛最高、上限最高的生成工具</span></div>
+      </div>
+      <div class="chips"><span class="chip">节点式工作流</span><span class="chip">开源模型全兼容</span><span class="chip">社区模板生态</span></div>
+      <div class="pm-note"><b>PM 点评 </b>ComfyUI 证明：当生成能力商品化后，"编排与复现"成为新的价值层——它就是 AI 创作圈的 Ableton Live。</div>
+    </article>
+
+    <article class="card" data-k="hugging face 模型 社区 开源 hub">
+      <div class="chead"><span class="logo">🤗</span><div><h3>Hugging Face <span class="by">Hugging Face</span></h3><p class="slogan">全球开源 AI 生态的事实中枢</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>ML 工程师、研究者、模型厂商、企业 AI 团队</span></div>
+        <div class="row"><b>解决的问题</b><span>开源模型"存在哪里、怎么试、怎么部署"——Hub 把模型/数据集/演示应用（Spaces）聚合成分发网络</span></div>
+        <div class="row"><b>产品方案</b><span>模型/数据集 Hub + Spaces 在线试玩 + 企业版私有部署 + 推理端点；几乎所有开源权重模型（DeepSeek/Kimi/FLUX/Wan）首发于此</span></div>
+        <div class="row"><b>商业模式</b><span>企业版订阅 + 推理/存储用量 + 融资支持（AI 界"GitHub"地位）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>网络效应：模型厂商与使用者互相锁定，是开源 AI 的默认起点</span></div>
+      </div>
+      <div class="chips"><span class="chip">开源模型中枢</span><span class="chip">Spaces 社区</span><span class="chip">企业版</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= AGENTS ================= -->
+<section id="agents" style="--cat:var(--c-agent)">
+  <div class="sec-head"><span class="no">04</span><h2>通用 Agent 与工作流平台</h2><span class="cnt">4 款代表 · 从"问答"到"替你干活"</span></div>
+  <p class="sec-intro">2026 年的行业主题词。Agent 产品解决的是<b>"多步骤、跨系统的重复任务"</b>：不止回答，还要执行、交付结果。企业侧则把 Agent 当作新的"数字员工"来采购与治理。</p>
+  <div class="grid">
+
+    <article class="card" data-k="lindy ai员工 数字员工 no-code agent">
+      <div class="chead"><span class="logo">👩‍💼</span><div><h3>Lindy <span class="by">Lindy AI</span></h3><p class="slogan">No-code "AI 员工"超市：邮件/日程/CRM 打包雇用</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>中小企业主、solo 运营者、非技术业务岗</span></div>
+        <div class="row"><b>解决的问题</b><span>雇不起助理：邮件管理、日程安排、CRM 更新、多步流程这些"行政杂活"按月租一个 AI 员工</span></div>
+        <div class="row"><b>产品方案</b><span>No-code 搭建/测试/维护自己的 Agent；接 Stripe 等业务系统；积分制按用量计</span></div>
+        <div class="row"><b>商业模式</b><span>$49.99–$199.99/月订阅（Max 档 ~35,000 积分）；2026 年取消免费层、全面转向付费</span></div>
+        <div class="row"><b>壁垒卡位</b><span>"AI 员工"品类心智与模板库；与 Manus 的差异：Lindy 做固定岗位，Manus 做开放任务</span></div>
+      </div>
+      <div class="chips"><span class="chip">$49.99–$199.99/月</span><span class="chip">积分制</span><span class="chip">no-code Agent</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"按岗位卖 Agent"比"按任务卖"更容易定价，也更容易被 SaaS 化——AI 员工赛道正在重演 HR SaaS 的细分史。</div>
+    </article>
+
+    <article class="card" data-k="manus 通用 agent meta 收购">
+      <div class="chead"><span class="logo">🖐️</span><div><h3>Manus <span class="by">蝴蝶效应 → Meta 收购</span></h3><p class="slogan">通用自主 Agent：给任务，不给步骤</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>有开放性任务的非技术专业人士（调研、报告、批量处理）</span></div>
+        <div class="row"><b>解决的问题</b><span>ChatGPT 给建议、Manus 给成品：拆解任务→自建虚拟机执行→交付文件/网站/表格</span></div>
+        <div class="row"><b>产品方案</b><span>云端沙盒 + 多 Agent 编排 + 异步执行；2026 年多个榜单"开放性通用工作"类第一</span></div>
+        <div class="row"><b>商业模式</b><span>积分制（有效价约 $0.005/积分）+ 订阅（Starter $39/月起）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>品类先发与"通用 Agent"心智；2025 年末被 Meta 以数十亿美元收购，中国 AI 出海标志性事件</span></div>
+      </div>
+      <div class="chips"><span class="chip">积分制计费</span><span class="chip">被 Meta 收购</span><span class="chip">通用任务第一梯队</span></div>
+      <div class="pm-note"><b>PM 点评 </b>从刷屏爆款到被收购仅一年多——通用 Agent 的价值最终被大厂按"入口期权"定价。</div>
+    </article>
+
+    <article class="card" data-k="glean 企业搜索 work ai 知识">
+      <div class="chead"><span class="logo">🏢</span><div><h3>Glean <span class="by">Glean</span></h3><p class="slogan">企业知识的统一 AI 入口（Work AI）</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>中大型企业的全员与 IT 部门</span></div>
+        <div class="row"><b>解决的问题</b><span>公司知识散落在 100+ SaaS 里，新人"问不着、搜不到"；还要保证"该看的才能看"（权限感知）</span></div>
+        <div class="row"><b>产品方案</b><span>连接 100+ 应用的权限感知索引 + AI 问答 + Agent 平台（Glean Agents），帮企业统一 AI 工具栈</span></div>
+        <div class="row"><b>商业模式</b><span>席位订阅 + Agent 用量；ARR 9 个月翻倍至 $200M（2025.12），2026.5 破 $300M，估值 $7.2B</span></div>
+        <div class="row"><b>壁垒卡位</b><span>企业权限图 + 连接器网络；正与微软 Copilot 正面竞争，以"帮企业省 30% 推理成本"为卖点</span></div>
+      </div>
+      <div class="chips"><span class="chip">ARR $300M+</span><span class="chip">估值 $7.2B</span><span class="chip">100+ 应用连接器</span></div>
+      <div class="pm-note"><b>PM 点评 </b>企业 AI 的真痛点不是模型而是"权限+整合"——谁把脏活干完谁赢。</div>
+    </article>
+
+    <article class="card" data-k="microsoft 365 copilot 微软 office cowork">
+      <div class="chead"><span class="logo">🪟</span><div><h3>Microsoft 365 Copilot <span class="by">Microsoft</span></h3><p class="slogan">办公全家桶 Agent 化的航空母舰</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球 Office 用户与 Fortune 500 企业</span></div>
+        <div class="row"><b>解决的问题</b><span>知识工作 80% 的时间在 Office 三件套里——AI 必须长在 Word/Excel/Teams 的工作流里才有效</span></div>
+        <div class="row"><b>产品方案</b><span>Wave 3（2026.3）：Copilot Cowork"数字同事" + 多模型接入 + Copilot Studio 低代码建 Agent</span></div>
+        <div class="row"><b>商业模式</b><span>$30/席/月席位制；付费席位 2000 万+，90%+ Fortune 500 在用；活跃 Agent 数量同比增长 15–18 倍</span></div>
+        <div class="row"><b>壁垒卡位</b><span>办公生态锁定无解；软肋是实际使用率仅 ~36%——席位付费与真实活跃之间的落差是行业级问题</span></div>
+      </div>
+      <div class="chips"><span class="chip">付费席位 20M+</span><span class="chip">F500 覆盖 90%+</span><span class="chip">实际使用率 ~36%</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"卖出 2000 万席位"和"36% 使用率"放在一起读，是 2026 年企业 AI 最重要的产品课：激活比获客更难。</div>
+    </article>
+
+    <article class="card" data-k="n8n zapier 工作流 自动化 agent">
+      <div class="chead"><span class="logo">🔗</span><div><h3>n8n / Zapier <span class="by">n8n / Zapier</span></h3><p class="slogan">工作流自动化的 AI 升级战</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Zapier：非技术团队；n8n：需要自主可控的开发者与企业</span></div>
+        <div class="row"><b>解决的问题</b><span>跨系统重复劳动（收邮件→更新表→发通知→调 API）——AI Agent 让"写自动化"变成"描述自动化"</span></div>
+        <div class="row"><b>产品方案</b><span>n8n：原生 AI Agent 节点 + LangChain 集成 + 自托管（成本可省 80%+）；Zapier：最易上手的应用连接网络</span></div>
+        <div class="row"><b>商业模式</b><span>订阅按任务量计费（Zapier $20–699+/月）；AI 自动化服务商生态两年从 2000 家涨到 12000+ 家</span></div>
+        <div class="row"><b>壁垒卡位</b><span>连接器规模与工作流资产沉淀；开源（n8n）抢占开发者心智</span></div>
+      </div>
+      <div class="chips"><span class="chip">n8n 自托管省 80%</span><span class="chip">AI Agent 节点</span></div>
+      <div class="pm-note"><b>PM 点评 </b>自动化平台是 Agent 的"操作系统"候选：模型再强，也要通过它们才摸得到企业的 200 个 SaaS。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= IMAGE ================= -->
+<section id="image" style="--cat:var(--c-image)">
+  <div class="sec-head"><span class="no">05</span><h2>图像生成</h2><span class="cnt">3 款代表 · 审美派、普惠派与开源派的三国杀</span></div>
+  <p class="sec-intro">解决的是<b>"视觉内容的制作成本"</b>：一张商拍图/海报/概念图从几百元+数天，压缩到几秒几分钱。三条路线清晰分化：Midjourney 卖审美、Google 卖免费普及、开源模型（FLUX）卖可控与自托管。</p>
+  <div class="grid">
+
+    <article class="card" data-k="ideogram recraft krea 矢量 文字 设计 垂直">
+      <div class="chead"><span class="logo">🔤</span><div><h3>Ideogram / Recraft / Krea <span class="by">垂直设计三强</span></h3><p class="slogan">在通用巨头夹缝里靠"输出格式"立足</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>平面设计师、品牌/Logo 设计、需要精确排版或矢量交付的专业工作流</span></div>
+        <div class="row"><b>解决的问题</b><span>通用模型的老大难：图里写字必错、不能出矢量文件、不能实时迭代——三家各占一个痛点</span></div>
+        <div class="row"><b>产品方案</b><span>Ideogram：文字渲染/Logo 最强；Recraft：原生矢量/SVG 输出（社区好评 ~71%）；Krea：实时生成+放大，$9/月价格杀手</span></div>
+        <div class="row"><b>商业模式</b><span>freemium 订阅（$9–12/月档为主）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>专业交付格式（SVG/可编辑文字）的工程纵深——通用模型"顺带做"很难做好</span></div>
+      </div>
+      <div class="chips"><span class="chip">文字渲染最强</span><span class="chip">原生 SVG</span><span class="chip">$9/月起</span></div>
+      <div class="pm-note"><b>PM 点评 </b>当通用模型免费可用，垂直工具的生路是"交付物专业度"——用户最终要的不是一张图，是一个能进生产环节的文件。</div>
+    </article>
+
+    <article class="card" data-k="midjourney 美学 订阅 discord">
+      <div class="chead"><span class="logo">🖼️</span><div><h3>Midjourney <span class="by">Midjourney（独立实验室）</span></h3><p class="slogan">审美即护城河的图像生成之王</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>设计师、插画师、品牌营销、概念创作者</span></div>
+        <div class="row"><b>解决的问题</b><span>"好看"这件最主观也最难的事：海报、壁纸、IP 概念图等氛围型图像，MJ 仍是首选</span></div>
+        <div class="row"><b>产品方案</b><span>V8.2（2026.7）：美学/画质/个性化；V8.1 快 3–5 倍、原生 2K、HD 降价 25%；2025 起图生视频；与 Meta 合作分发</span></div>
+        <div class="row"><b>商业模式</b><span>纯订阅无免费层：$10/$30/$60/$120 四档；盈利能力极强的小团队（~100 人）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>审美调性的社区文化与品牌；威胁：GPT Image、Nano Banana 追赶 + 400+ 开源模型分流</span></div>
+      </div>
+      <div class="chips"><span class="chip">订阅 $10–$120</span><span class="chip">V8.2 默认</span><span class="chip">Meta 合作分发</span></div>
+      <div class="pm-note"><b>PM 点评 </b>在"能力趋同"的赛道里，把主观体验（审美）做成客观壁垒，是消费级 AI 产品最漂亮的差异化。</div>
+    </article>
+
+    <article class="card" data-k="meshy tripo 3d 生成 游戏 资产">
+      <div class="chead"><span class="logo">🎲</span><div><h3>Meshy / Tripo <span class="by">Meshy / VAST</span></h3><p class="slogan">AI 3D 生成双雄：游戏资产管线的重写者</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>独立游戏开发者、游戏美术、XR/电商 3D 内容团队</span></div>
+        <div class="row"><b>解决的问题</b><span>一个 3D 模型人工建模数天——单图/文本 60 秒出可用的游戏资产，把美术产能放大一个量级</span></div>
+        <div class="row"><b>产品方案</b><span>文本/图片→3D 网格+贴图，免费层+$13–20/月；Meshy v4 主打画质与渲染资产、登 GDC 2026 讲台；Tripo 竞争 image-to-3D 质量</span></div>
+        <div class="row"><b>商业模式</b><span>freemium 订阅 + API</span></div>
+        <div class="row"><b>壁垒卡位</b><span>游戏管线适配（拓扑/UV/引擎导入）的工程纵深；上限仍受 3D 资产可用性标准制约</span></div>
+      </div>
+      <div class="chips"><span class="chip">~60 秒出模</span><span class="chip">GDC 2026</span><span class="chip">$13–20/月</span></div>
+      <div class="pm-note"><b>PM 点评 </b>3D 是生成式 AI 最后一块难啃的骨头——它要的不是"像"，而是能进引擎的规整网格。谁先解决拓扑问题，谁拿走游戏工业的钱。</div>
+    </article>
+
+    <article class="card" data-k="nano banana gemini 图像 google">
+      <div class="chead"><span class="logo">🍌</span><div><h3>Nano Banana <span class="by">Google（Gemini 3.1 Flash Image）</span></h3><p class="slogan">免费可用的国民级图像生成与编辑</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球 Gemini/Workspace 用户，大众创作场景</span></div>
+        <div class="row"><b>解决的问题</b><span>图像生成门槛与价格：Nano Banana 2（2026.2）更快、文字渲染准、指令遵循强、支持 4K 放大</span></div>
+        <div class="row"><b>产品方案</b><span>内置于 Gemini App 与 Workspace：生成+对象级编辑+批量出图；2026.3 扩大企业可用范围</span></div>
+        <div class="row"><b>商业模式</b><span>免费引流 + 订阅额度 + API 计费</span></div>
+        <div class="row"><b>壁垒卡位</b><span>分发与"够用且免费"；对订阅制图像产品（Midjourney 等）构成直接的价格打击</span></div>
+      </div>
+      <div class="chips"><span class="chip">4K 放大</span><span class="chip">文本渲染精准</span><span class="chip">Workspace 集成</span></div>
+    </article>
+
+    <article class="card" data-k="flux black forest 开源 图像模型">
+      <div class="chead"><span class="logo">🌲</span><div><h3>FLUX.2 <span class="by">Black Forest Labs</span></h3><p class="slogan">最强开源权重图像模型：可控、可自托管</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>开发者、企业（要私有化部署）、 ComfyUI 玩家</span></div>
+        <div class="row"><b>解决的问题</b><span>闭源 API 的三件套顾虑：数据不出域、成本不可控、风格不可微调——FLUX.2 dev（32B 参数）全解决</span></div>
+        <div class="row"><b>产品方案</b><span>开放权重本地/自托管 + 多参考图编辑；商用版 Flux 2 Pro 走 Krea/Cloudflare 等 API 分发</span></div>
+        <div class="row"><b>商业模式</b><span>开源权重（dev 许可）+ 商用 API 授权双轨</span></div>
+        <div class="row"><b>壁垒卡位</b><span>Stable Diffusion 系社区的正统继承者；把"图像生成基础设施"的定价权拉回开源侧</span></div>
+      </div>
+      <div class="chips"><span class="chip">32B 开源权重</span><span class="chip">多参考编辑</span><span class="chip">可自托管</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= VIDEO ================= -->
+<section id="video" style="--cat:var(--c-video)">
+  <div class="sec-head"><span class="no">06</span><h2>视频生成</h2><span class="cnt">8 款代表 · 2025-2026 进步最快、烧钱最狠的赛道</span></div>
+  <p class="sec-intro">解决的是<b>"视频的制作成本"</b>：一条广告片/短剧/口播视频从数万元+数周，压缩到几百元+数小时。格局分三层：通用模型（Sora/Veo/可灵/即梦）、专业工作流（Runway/Flow）、垂直场景（HeyGen/Synthesia 数字人）。中国的可灵是全球最早跑通规模化商业化的视频产品。</p>
+  <div class="grid">
+
+    <article class="card" data-k="wan 通义万相 hunyuanvideo 混元 开源视频 阿里 腾讯">
+      <div class="chead"><span class="logo">🫱</span><div><h3>Wan 通义万相 / HunyuanVideo <span class="by">阿里巴巴 / 腾讯</span></h3><p class="slogan">中国开源视频模型双雄：把 Sora 级能力放进 ComfyUI</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球开源社区、独立创作者、需要私有化部署的视频团队</span></div>
+        <div class="row"><b>解决的问题</b><span>闭源视频 API 又贵又不可控——Wan2.1 开源即登顶 VBench（超越 Sora/HunyuanVideo/Minimax），把顶级视频能力变成可下载权重</span></div>
+        <div class="row"><b>产品方案</b><span>Wan2.1（开源登顶）→ Wan2.5（音画同步/口型匹配）→ Wan3.0"万物皆可生成视频"；腾讯混元 HunyuanVideo：开源系统性视频生成框架（权重+推理代码）</span></div>
+        <div class="row"><b>商业模式</b><span>开源权重免费 + 阿里云/火山引擎 API 收费 + 通义/混元 App 订阅</span></div>
+        <div class="row"><b>壁垒卡位</b><span>ComfyUI 社区反哺的生态位——开源策略直接压制闭源定价（与 DeepSeek 在语言层打法同构）</span></div>
+      </div>
+      <div class="chips"><span class="chip">Wan2.1 VBench 登顶</span><span class="chip">音画同步</span><span class="chip">开源权重</span></div>
+      <div class="pm-note"><b>PM 点评 </b>中国大厂在视频层重演了 DeepSeek 的剧本：用开源把"视频生成"从奢侈品打成公共品，再在云服务上收钱。</div>
+    </article>
+
+    <article class="card" data-k="海螺 hailuo minimax 视频 出海 talkie 诉讼">
+      <div class="chead"><span class="logo">🐚</span><div><h3>海螺 Hailuo <span class="by">MiniMax</span></h3><p class="slogan">中国 AI 出海收入冠军的核心引擎</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>海外创作者与全球 C 端用户（公司海外收入占比 73%）</span></div>
+        <div class="row"><b>解决的问题</b><span>国内 B 端价格战红海里杀出来：靠 C 端视频/陪伴产品直接向海外个人用户收费</span></div>
+        <div class="row"><b>产品方案</b><span>视频生成+音乐+Agent 矩阵（海螺/MiniMax Agent/Audio，2026.9 一起进入新加坡 Singtel AI Pass）；海外版上线首月登全球下载增速榜第一</span></div>
+        <div class="row"><b>商业模式</b><span>订阅制（最高档年费 10788 元引发争议，公司称"行业底价"）；MiniMax 2026H1 营收 $1.17 亿（+283%），半年超 2025 全年，C 端占 71%</span></div>
+        <div class="row"><b>壁垒卡位</b><span>出海运营能力+多产品矩阵；风险：好莱坞三大与爱奇艺的版权诉讼悬顶，2026H1 仍亏 $3.58 亿</span></div>
+      </div>
+      <div class="chips"><span class="chip">2026H1 营收 $1.17 亿</span><span class="chip">海外占 73%</span><span class="chip">版权诉讼进行中</span></div>
+      <div class="pm-note"><b>PM 点评 </b>海螺证明了中国 AI"收入在海外"的路径成立，但版权诉讼也提示：出海赚的钱里有一部分要补交"合规税"。</div>
+    </article>
+
+    <article class="card" data-k="world labs marble genie 3 世界模型 空间智能 李飞飞">
+      <div class="chead"><span class="logo">🧊</span><div><h3>World Labs Marble / Genie 3 <span class="by">World Labs（李飞飞）/ DeepMind</span></h3><p class="slogan">视频生成的下一站：可交互的 3D 世界模型</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>游戏/VFX 创作者、机器人仿真、AGI 研究路线</span></div>
+        <div class="row"><b>解决的问题</b><span>视频是"能看不能动"的平面——世界模型生成可探索、物理一致的 3D 环境，是空间智能与具身智能的训练场</span></div>
+        <div class="row"><b>产品方案</b><span>Marble：文本/图像/视频→可下载的持久 3D 世界（2025.11 预览，2026.9 正式发布）；Genie 3：文本→实时逐帧可玩的交互环境（研究预览）</span></div>
+        <div class="row"><b>商业模式</b><span>Marble 订阅/API；Genie 3 尚未商用，服务于 DeepMind AGI 路线</span></div>
+        <div class="row"><b>壁垒卡位</b><span>与 NVIDIA Cosmos、Meta V-JEPA 同列 2026 世界模型第一梯队——"空间智能"被普遍视为视频之后的下一个浪潮</span></div>
+      </div>
+      <div class="chips"><span class="chip">Marble 2026.9 发布</span><span class="chip">Genie 3 实时交互</span><span class="chip">世界模型赛道</span></div>
+      <div class="pm-note"><b>PM 点评 </b>从"生成像素"到"生成可驻留的世界"——这是判断视频赛道未来三年演化的关键坐标。</div>
+    </article>
+
+    <article class="card" data-k="sora openai 社交 cameo">
+      <div class="chead"><span class="logo">🎬</span><div><h3>Sora 2 <span class="by">OpenAI</span></h3><p class="slogan">视频生成 + 社交网络的一次豪赌</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>普通消费者（社交 App）+ 创作者（API）</span></div>
+        <div class="row"><b>解决的问题</b><span>视频创作的两重门槛：会拍会剪（模型解决）+ 没人看（社交分发解决）——Sora 2 同时下注两件事</span></div>
+        <div class="row"><b>产品方案</b><span>视频+同步音频一体生成；TikTok 式信息流 + Remix + Cameo（数字分身出镜）；因版权角色滥用加 rights-holder 控制</span></div>
+        <div class="row"><b>商业模式</b><span>随 ChatGPT 订阅；API 于 2026.9 退役，策略转向 C 端社交产品</span></div>
+        <div class="row"><b>壁垒卡位</b><span>模型+社交双飞轮的想象空间；争议与内容治理是其最大风险</span></div>
+      </div>
+      <div class="chips"><span class="chip">视频+音频一体</span><span class="chip">Cameo 数字分身</span><span class="chip">API 已退役</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"AI 版抖音"是对社交格局的正面进攻——生成只是手段，抢用户时长才是目的。</div>
+    </article>
+
+    <article class="card" data-k="veo flow google 视频">
+      <div class="chead"><span class="logo">🎥</span><div><h3>Veo 3.1 + Flow <span class="by">Google</span></h3><p class="slogan">专业创作者的 AI 视频工作台</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>影视创作者、广告公司、YouTube 生态</span></div>
+        <div class="row"><b>解决的问题</b><span>生成只是素材，成片需要"镜头语言"——Flow 把生成、剪辑、续拍、运镜控制做成工作流</span></div>
+        <div class="row"><b>产品方案</b><span>Veo 3.1（1080p/竖屏/音频）+ Flow 统一编辑台；AI Pro $19.99（1000 credits）与 Ultra $249.99 双档</span></div>
+        <div class="row"><b>商业模式</b><span>订阅（Pro/Ultra）+ API（约 $0.40/秒）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>YouTube 分发 + 影视级画质口碑；与 Sora 形成"专业工作流 vs 大众社交"两条路线</span></div>
+      </div>
+      <div class="chips"><span class="chip">$19.99/$249.99 双档</span><span class="chip">1080p</span><span class="chip">Flow 工作台</span></div>
+    </article>
+
+    <article class="card" data-k="runway gen-4 影视 api">
+      <div class="chead"><span class="logo">🛫</span><div><h3>Runway <span class="by">Runway AI</span></h3><p class="slogan">影视行业的 AI 特效与工作流老兵</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>影视/广告专业团队、企业创意部门、开发者</span></div>
+        <div class="row"><b>解决的问题</b><span>专业创作要的是一致性（角色/场景跨镜头不变）与可控性，不是单条惊艳视频</span></div>
+        <div class="row"><b>产品方案</b><span>Gen-4.5（2025.12）：提示词遵循、物理准确、角色表现力；全能力云工作台；Runway Dev 统一 API（视频/图像/音频/实时）</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + API/企业授权；好莱坞合作背书</span></div>
+        <div class="row"><b>壁垒卡位</b><span>专业工作流深度与开发者 API 先发</span></div>
+      </div>
+      <div class="chips"><span class="chip">Gen-4.5</span><span class="chip">Dev API 平台</span></div>
+    </article>
+
+    <article class="card" data-k="可灵 kling 快手 视频 商业化">
+      <div class="chead"><span class="logo">🐉</span><div><h3>可灵 Kling <span class="by">快手</span></h3><p class="slogan">全球最早规模化商业化的视频模型</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>国内创作者、电商商家、短剧团队；海外 via 国际版</span></div>
+        <div class="row"><b>解决的问题</b><span>短视频/电商内容产量需求爆炸，真人拍摄产能与预算跟不上</span></div>
+        <div class="row"><b>产品方案</b><span>可灵 3.0：原生 4K 直出、暗光与高光控制稳；图生视频/首尾帧/多模态编辑全家桶</span></div>
+        <div class="row"><b>商业模式</b><span>订阅+积分；2025.12 单月收入超 $2000 万——全球视频生成赛道第一个规模化盈利样本</span></div>
+        <div class="row"><b>壁垒卡位</b><span>先发的商业化与快手短视频生态反哺；与字节即梦形成"双强"竞争</span></div>
+      </div>
+      <div class="chips"><span class="chip">月收入 $20M+</span><span class="chip">4K 直出</span><span class="chip">可灵 3.0</span></div>
+      <div class="pm-note"><b>PM 点评 </b>当美国同行还在卷能力演示时，可灵证明了"卖给电商和短剧工厂"才是视频 AI 最快的回款路径。</div>
+    </article>
+
+    <article class="card" data-k="即梦 jimeng seedance 字节 视频">
+      <div class="chead"><span class="logo">🌱</span><div><h3>即梦 Dreamina <span class="by">字节跳动</span></h3><p class="slogan">Seedance 技术追击 + 剪映生态协同</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>短视频创作者、剪映用户、广告与短剧团队</span></div>
+        <div class="row"><b>解决的问题</b><span>让"人人会剪映"的用户顺手会用 AI 生成素材——生成与剪辑在同一工作流</span></div>
+        <div class="row"><b>产品方案</b><span>Seedance 2.0/2.5（2026.7.31 迭代）：电影级画质口碑；与剪映、豆包生态互通</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + 火山引擎 API 分发</span></div>
+        <div class="row"><b>壁垒卡位</b><span>字节模型能力（Seedance）+ 剪映国民级分发；声量与可灵不相上下</span></div>
+      </div>
+      <div class="chips"><span class="chip">Seedance 2.5</span><span class="chip">剪映生态协同</span></div>
+    </article>
+
+    <article class="card" data-k="heygen 数字人 口播 本地化">
+      <div class="chead"><span class="logo">🧑‍💼</span><div><h3>HeyGen <span class="by">HeyGen</span></h3><p class="slogan">数字人口播视频的量产机</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>跨境电商、营销团队、课程制作者</span></div>
+        <div class="row"><b>解决的问题</b><span>一条多语言口播视频的拍摄成本：数字人替身 + 口型同步 + 一键翻译本地化</span></div>
+        <div class="row"><b>产品方案</b><span> avatar 真实感与口型质量业内领先；$24/月起、提供免费层，适合大批量营销视频</span></div>
+        <div class="row"><b>商业模式</b><span>订阅按分钟/席位计费</span></div>
+        <div class="row"><b>壁垒卡位</b><span>真实感口碑 + 跨境电商刚需场景</span></div>
+      </div>
+      <div class="chips"><span class="chip">口型真实感领先</span><span class="chip">$24/月起</span></div>
+    </article>
+
+    <article class="card" data-k="synthesia 企业培训 数字人">
+      <div class="chead"><span class="logo">🎯</span><div><h3>Synthesia <span class="by">Synthesia（英国）</span></h3><p class="slogan">企业培训视频的"治理级"平台</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>企业 L&D（学习与发展）部门、HR、合规培训</span></div>
+        <div class="row"><b>解决的问题</b><span>企业培训视频更新慢、多语言成本高；需要品牌一致、可审计、能直接进 LMS 的生产线</span></div>
+        <div class="row"><b>产品方案</b><span>幻灯片式结构化编辑 + 10+ 语言 + LMS 直发 + 企业治理/合规；$18–29/月起</span></div>
+        <div class="row"><b>商业模式</b><span>企业席位订阅</span></div>
+        <div class="row"><b>壁垒卡位</b><span>企业合规与集成深度；与 HeyGen 的差异是"治理 vs 真实感"两条路线</span></div>
+      </div>
+      <div class="chips"><span class="chip">LMS 集成</span><span class="chip">企业治理强</span></div>
+    </article>
+
+    <article class="card" data-k="skyreels vidu 短剧 ai剧">
+      <div class="chead"><span class="logo">📺</span><div><h3>SkyReels / Vidu 等 <span class="by">昆仑万维 / 生数科技等</span></h3><p class="slogan">AI 短剧工厂：中国跑出的新物种</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>短剧出海团队、漫剧/动画工作室</span></div>
+        <div class="row"><b>解决的问题</b><span>短剧工业化的产能瓶颈：AI 全流程把"月产几部"变成"月产 30+ 部"</span></div>
+        <div class="row"><b>产品方案</b><span>SkyReels-V4（2026.3）+ DramaWave 发行平台：月活 8000 万、年化流水 $4.8 亿美元</span></div>
+        <div class="row"><b>商业模式</b><span>内容分账/订阅付费——AI 直接作为内容生产线赚钱，而非卖工具</span></div>
+        <div class="row"><b>壁垒卡位</b><span>中国短剧供应链 + 出海渠道；"卖铲子"与"自己挖矿"双线并举</span></div>
+      </div>
+      <div class="chips"><span class="chip">年化流水 $4.8 亿</span><span class="chip">月活 8000 万</span></div>
+      <div class="pm-note"><b>PM 点评 </b>最有意思的商业模式反转：当别人卖生成工具时，他们用工具自产内容直接赚内容的钱。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= AUDIO ================= -->
+<section id="audio" style="--cat:var(--c-audio)">
+  <div class="sec-head"><span class="no">07</span><h2>语音与音乐</h2><span class="cnt">3 款代表 · 从"能听"到"能打工"的语音 Agent</span></div>
+  <p class="sec-intro">两条线：<b>音乐生成</b>（Suno/Udio）完成从"被起诉"到"被授权"的惊险一跃；<b>语音 AI</b>（ElevenLabs）从 TTS 工具升级为企业语音 Agent 平台——客服、外呼、陪伴都可能被它重构。</p>
+  <div class="grid">
+
+    <article class="card" data-k="suno 音乐生成 诉讼 warner">
+      <div class="chead"><span class="logo">🎵</span><div><h3>Suno <span class="by">Suno AI</span></h3><p class="slogan">人人都能出专辑的音乐生成头部</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>音乐爱好者、独立创作者、短视频/游戏配乐需求者</span></div>
+        <div class="row"><b>解决的问题</b><span>写歌需要乐理、乐器、录音棚——一句话生成带人声的完整歌曲</span></div>
+        <div class="row"><b>产品方案</b><span>文本→完整歌曲（词曲编唱）；与 Warner 达成和解+授权，从版权对抗转向合作</span></div>
+        <div class="row"><b>商业模式</b><span>订阅分层 + 商用授权</span></div>
+        <div class="row"><b>壁垒卡位</b><span>品类心智 + 版权合规化后的合法商用地位；估值 $2.45B</span></div>
+      </div>
+      <div class="chips"><span class="chip">估值 $2.45B</span><span class="chip">与 Warner 和解授权</span></div>
+      <div class="pm-note"><b>PM 点评 </b>2026 年 AI 版权的标志性转向：与其在法庭上赌生死，不如把版权方变成股东和渠道。</div>
+    </article>
+
+    <article class="card" data-k="udio 音乐 umg 授权">
+      <div class="chead"><span class="logo">🎧</span><div><h3>Udio <span class="by">Udio</span></h3><p class="slogan">率先与环球音乐"停战"的音乐生成</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>创作者与音乐平台（与 UMG 合作开发正版 AI 音乐产品）</span></div>
+        <div class="row"><b>解决的问题</b><span>同 Suno，但选择了"先和解、再共研"的路线：2025.10 与 UMG 达成首个里程碑和解</span></div>
+        <div class="row"><b>产品方案</b><span>生成引擎 + 与唱片公司的授权合作产品（听众可创作/改编正版曲库）</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + 与版权方分成的合作产品</span></div>
+        <div class="row"><b>壁垒卡位</b><span>与大厂牌的独家合作通道</span></div>
+      </div>
+      <div class="chips"><span class="chip">UMG 首个和解</span><span class="chip">Warner/Universal 授权</span></div>
+    </article>
+
+    <article class="card" data-k="elevenlabs 语音 tts agent 客服">
+      <div class="chead"><span class="logo">🗣️</span><div><h3>ElevenLabs <span class="by">ElevenLabs</span></h3><p class="slogan">从 TTS 之王到企业语音 Agent 平台</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>内容创作者（TTS/配音）→ 企业（客服/外呼语音 Agent）</span></div>
+        <div class="row"><b>解决的问题</b><span>语音是下一代交互界面：克隆音色、多语言配音、全天候接线的人工客服替代</span></div>
+        <div class="row"><b>产品方案</b><span>TTS/配音/音效 + Agents Platform（构建、监控、评估语音 Agent）；2026.2 Conversational AI 降价近半抢市场</span></div>
+        <div class="row"><b>商业模式</b><span>用量计费 + 企业订阅；$500M D 轮（2026.3，估值 $11B，后续报道达 $22B）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>音色质量心智 + 全链路语音平台化；面对 OpenAI Realtime 等降维竞争以价格战应对</span></div>
+      </div>
+      <div class="chips"><span class="chip">D 轮 $500M</span><span class="chip">估值 $11B+</span><span class="chip">语音 Agent 平台</span></div>
+      <div class="pm-note"><b>PM 点评 </b>教科书级的第二曲线：TTS 是流量入口，真正的生意是"把公司的 400 电话换成 AI"。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= PRODUCTIVITY ================= -->
+<section id="prod" style="--cat:var(--c-prod)">
+  <div class="sec-head"><span class="no">08</span><h2>办公与知识工作</h2><span class="cnt">6 款代表 · 把"写、记、讲、设计"的成本打下来</span></div>
+  <p class="sec-intro">这一组的共同打法：<b>寄生在已有工作流里做 AI 原生重构</b>——知识库（Notion）、资料消化（NotebookLM）、演示文稿（Gamma）、会议（Otter/Fireflies/Granola）、平面设计（Canva/Figma）。其中 Gamma 证明了一件事：AI 时代的"办公软件"可以完全绕开微软。</p>
+  <div class="grid">
+
+    <article class="card" data-k="wps ai 钉钉 金山 办公 agent 悟空 国产">
+      <div class="chead"><span class="logo">🏛️</span><div><h3>WPS AI / 钉钉 AI <span class="by">金山办公 / 阿里</span></h3><p class="slogan">国产办公 AI 双雄：胜负手是组织数据</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>中国政企与中小企业的办公场景（WPS 从个人到跨国企业全覆盖）</span></div>
+        <div class="row"><b>解决的问题</b><span>写文档/做表是显性需求，真正的护城河是审批、考勤、日程、组织架构这些"企业数字神经"</span></div>
+        <div class="row"><b>产品方案</b><span>WPS：25 项企业 IM 能力与钉钉双向嵌入，Comate 企业助手接内部知识库；钉钉：协同 Agent"悟空"（2026.3）+组织数据打通的会议摘要/表单填写/任务跟进</span></div>
+        <div class="row"><b>商业模式</b><span>WPS 会员+企业版（金山上半年营收近 50 亿押注 AI）；钉钉免费+生态导流</span></div>
+        <div class="row"><b>壁垒卡位</b><span>行业趋势：飞书/钉钉/企微正从"办公入口"降维成"Agent 的配套设施"——平台之争变成 Agent 之争</span></div>
+      </div>
+      <div class="chips"><span class="chip">25 项 IM 能力互通</span><span class="chip">钉钉悟空 Agent</span><span class="chip">金山半年营收近 50 亿</span></div>
+      <div class="pm-note"><b>PM 点评 </b>中国办公 AI 的关键洞察：模型可以换，但审批流和组织架构换不了——谁攥着组织数据，谁就攥着 Agent 的入场券。</div>
+    </article>
+
+    <article class="card" data-k="腾讯 ima 知识库 copilot 记忆 微信">
+      <div class="chead"><span class="logo">📚</span><div><h3>腾讯 ima <span class="by">腾讯</span></h3><p class="slogan">个人知识库 + 记忆：元宝没占住的生态位</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>知识工作者、学生、需要"个人资料库+AI"的重度读者</span></div>
+        <div class="row"><b>解决的问题</b><span>收藏≠学会：ima 把微信文章、文档、网页收进个人知识库，实现"搜—读—写"一站闭环</span></div>
+        <div class="row"><b>产品方案</b><span>知识 Agent Copilot（超 10 万人排队后 2026.5 全面开放）：用户档案/长期记忆/经验技巧四大记忆模块；接 WorkBuddy 实现"知识沉淀+AI 执行"；知识号生态引入机构库</span></div>
+        <div class="row"><b>商业模式</b><span>免费+会员增值；为腾讯内容生态与混元模型导流</span></div>
+        <div class="row"><b>壁垒卡位</b><span>微信/公众号独家内容管道 + 知识库的沉淀粘性（资料越多越离不开）</span></div>
+      </div>
+      <div class="chips"><span class="chip">Copilot 10 万人排队</span><span class="chip">四大记忆模块</span><span class="chip">搜读写一体</span></div>
+    </article>
+
+    <article class="card" data-k="notion ai 工作区 笔记">
+      <div class="chead"><span class="logo">📓</span><div><h3>Notion AI <span class="by">Notion</span></h3><p class="slogan">工作区原生 AI：从插件变成标配</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>团队协作与个人知识管理用户</span></div>
+        <div class="row"><b>解决的问题</b><span>写、总结、翻译、跨页问答不用跳出工作区；2026 起 AI 并入付费版（不再是加购）</span></div>
+        <div class="row"><b>产品方案</b><span>工作区级 AI（搜索/写作/Agent 自动化）+ Google Workspace 等集成</span></div>
+        <div class="row"><b>商业模式</b><span>订阅捆绑（AI 进套餐）——把 AI 从"增收项"变为"留存项"的代表性决策</span></div>
+        <div class="row"><b>壁垒卡位</b><span>已有工作流数据与模板生态</span></div>
+      </div>
+      <div class="chips"><span class="chip">AI 并入付费版</span><span class="chip">Agent 协作工作区</span></div>
+    </article>
+
+    <article class="card" data-k="notebooklm 播客 音频概览 google">
+      <div class="chead"><span class="logo">📻</span><div><h3>NotebookLM <span class="by">Google</span></h3><p class="slogan">把你的资料变成一档播客节目</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>学生、研究者、需要消化大量资料的人</span></div>
+        <div class="row"><b>解决的问题</b><span>"存了一堆资料从不看"——上传文档，它生成摘要、脑图、报告，甚至双人播客对谈</span></div>
+        <div class="row"><b>产品方案</b><span>基于用户资料的" grounded "问答（不瞎编）+ Audio Overview（双 AI 主持播客）/Video Overview/Lecture Mode/Mind Maps</span></div>
+        <div class="row"><b>商业模式</b><span>免费 + NotebookLM Business；为 Google 生态留存服务</span></div>
+        <div class="row"><b>壁垒卡位</b><span>Audio Overview 这一"现象级功能"的心智 + 只基于你的资料、不编造的信任感</span></div>
+      </div>
+      <div class="chips"><span class="chip">双主持播客</span><span class="chip">Video Overview</span><span class="chip">Lecture Mode</span></div>
+      <div class="pm-note"><b>PM 点评 </b>一个功能（音频概览）带火一款产品——证明 AI 产品的爆发点常常是"意外用途"，PM 要有放大小功能的能力。</div>
+    </article>
+
+    <article class="card" data-k="gamma ppt 演示 幻灯片">
+      <div class="chead"><span class="logo">🎞️</span><div><h3>Gamma <span class="by">Gamma</span></h3><p class="slogan">AI 时代的 PPT：盈利的 $100M ARR 神话</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>学生、职场人、中小商家——所有要做演示但不做设计的人</span></div>
+        <div class="row"><b>解决的问题</b><span>PPT 的"排版地狱"：给个主题/文档，直接出成套设计好的演示页/网页/文档</span></div>
+        <div class="row"><b>产品方案</b><span>主题→成稿的生成式演示 + 卡片式编辑 + 数据图表美化 + 品牌套用</span></div>
+        <div class="row"><b>商业模式</b><span>freemium 订阅；2025.11 即达 $100M ARR、盈利、$2.1B 估值；2026.3 用户逼近 1 亿</span></div>
+        <div class="row"><b>壁垒卡位</b><span>"AI 原生演示"心智与病毒式增长；正被微软/谷歌的办公 AI 从上往下压</span></div>
+      </div>
+      <div class="chips"><span class="chip">$100M ARR 盈利</span><span class="chip">用户 ~1 亿</span><span class="chip">估值 $2.1B</span></div>
+      <div class="pm-note"><b>PM 点评 </b>用 20 人团队在微软眼皮底下赚走 $100M ARR——细分场景"单点极致"仍是 AI 创业最优解。</div>
+    </article>
+
+    <article class="card" data-k="会议 otter fireflies granola 转写">
+      <div class="chead"><span class="logo">🎙️</span><div><h3>Otter / Fireflies / Granola <span class="by">三强格局</span></h3><p class="slogan">会议记录的三个流派：实时 / 集成 / 无感</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span> Otter：重转写协作；Fireflies：销售团队；Granola：开会多的高管/PM</span></div>
+        <div class="row"><b>解决的问题</b><span>会议开完就忘、行动项没人跟——自动转写+摘要+行动项提取</span></div>
+        <div class="row"><b>产品方案</b><span>三条路线分野：Otter 实时协作转写（免费 300 分钟/月）；Fireflies CRM 深度集成（$10/席/月）；Granola 无会议 Bot 的本地录音+笔记（$14/席/月）</span></div>
+        <div class="row"><b>商业模式</b><span>席位订阅；Granola 2026.3 融 $125M C 轮、估值 $1.5B</span></div>
+        <div class="row"><b>壁垒卡位</b><span>无技术壁垒的赛道，胜负手在分发与场景绑定（销售 CRM/日历）</span></div>
+      </div>
+      <div class="chips"><span class="chip">Granola $1.5B 估值</span><span class="chip">Bot-free 路线</span></div>
+      <div class="pm-note"><b>PM 点评 </b>同质化红海里靠"体验哲学"差异化（要不要进会当 Bot）——用户对"被记录"的介意程度被严重低估。</div>
+    </article>
+
+    <article class="card" data-k="deepl 翻译 write 语言 欧洲">
+      <div class="chead"><span class="logo">🌐</span><div><h3>DeepL <span class="by">DeepL（德国）</span></h3><p class="slogan">翻译起家的语言 AI 平台，低调的利润机器</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>跨境企业与专业译者（20 万+ 企业客户）</span></div>
+        <div class="row"><b>解决的问题</b><span>机器翻译的"质量天花板"：靠翻译质量口碑从工具长成企业语言平台（翻译+DeepL Write 润色+2026 发力 Agent）</span></div>
+        <div class="row"><b>产品方案</b><span>翻译 API+桌面/网页端+Write 写作改进；2025.12 调研称 69% 高管预计 AI Agent 在 2026 重塑业务，顺势转型语言 Agent</span></div>
+        <div class="row"><b>商业模式</b><span>免费引流+订阅+API 按量；2024 年 $2B 估值，2025.10 传出考虑 $5B IPO</span></div>
+        <div class="row"><b>壁垒卡位</b><span>欧洲市场深耕+翻译质量的用户心智；"单一场景做到极致"的欧洲打法代表</span></div>
+      </div>
+      <div class="chips"><span class="chip">20 万+ 企业客户</span><span class="chip">考虑 $5B IPO</span><span class="chip">翻译→Agent 转型</span></div>
+    </article>
+
+    <article class="card" data-k="canva 设计 magic studio 非设计师">
+      <div class="chead"><span class="logo">🎨</span><div><h3>Canva Magic Studio <span class="by">Canva</span></h3><p class="slogan">非设计师的全能设计台，AI 全家桶化</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>营销、运营、教师、中小企业——99% 不用专业设计软件的人</span></div>
+        <div class="row"><b>解决的问题</b><span>设计执行（排版/改尺寸/抠图/配图）——Magic Design 一句话出全套、一键适配 8 个平台尺寸</span></div>
+        <div class="row"><b>产品方案</b><span>25 万+ 模板 × AI 生成/改写/扩图/抠图；Pro ~$12–18/月</span></div>
+        <div class="row"><b>商业模式</b><span>订阅（个人/团队/企业）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>模板资产与"不会设计的人"的心智；与 Figma 分属"快消设计"与"专业设计"两个市场</span></div>
+      </div>
+      <div class="chips"><span class="chip">25 万+ 模板</span><span class="chip">Magic Resize</span></div>
+    </article>
+
+    <article class="card" data-k="figma ai ui ux 设计师">
+      <div class="chead"><span class="logo">🧠</span><div><h3>Figma AI <span class="by">Figma</span></h3><p class="slogan">专业 UI/UX 工作流的 AI 增强</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>产品设计师、设计系统团队</span></div>
+        <div class="row"><b>解决的问题</b><span>设计系统维护、组件生成、设计到代码的翻译成本</span></div>
+        <div class="row"><b>产品方案</b><span>2026 年稳居"专业 UI/UX + AI"评测第一梯队：设计工作流内生成与重构，而非模板套壳</span></div>
+        <div class="row"><b>商业模式</b><span>专业席位订阅 + AI 能力溢价</span></div>
+        <div class="row"><b>壁垒卡位</b><span>专业协作网络效应；被 v0/Lovart 等 AI 原生工具从边缘蚕食</span></div>
+      </div>
+      <div class="chips"><span class="chip">专业设计第一梯队</span><span class="chip">设计系统友好</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= COMPANION ================= -->
+<section id="companion" style="--cat:var(--c-comp)">
+  <div class="sec-head"><span class="no">09</span><h2>情感陪伴</h2><span class="cnt">1 款代表 · 最被低估的用户时长怪物</span></div>
+  <p class="sec-intro">解决的是<b>孤独</b>——这个非工具性需求撑起了惊人的留存与时长，也带来最大的伦理与监管争议。面向 Gen Z/Alpha 的 AI 陪伴已是独立品类。</p>
+  <div class="grid">
+
+    <article class="card" data-k="character.ai 陪伴 角色扮演 replika">
+      <div class="chead"><span class="logo">🎭</span><div><h3>Character.AI <span class="by">Character.AI（Google 投资背景）</span></h3><p class="slogan">最大的 AI 角色宇宙与陪伴社区</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Gen Z/Alpha 用户，情感陪伴、角色扮演、陪聊练口语</span></div>
+        <div class="row"><b>解决的问题</b><span>随时在线、永不评判、记得你说过的每件事的"人"——工具型 AI 给不了的情绪价值</span></div>
+        <div class="row"><b>产品方案</b><span>海量 UGC 角色库 + 长期记忆 + 语音/群聊；2026 年多份横评"综合最佳 AI 陪伴 App"</span></div>
+        <div class="row"><b>商业模式</b><span>c.ai+ 订阅 + 广告尝试； young 用户安全与内容管控是最大合规风险</span></div>
+        <div class="row"><b>壁垒卡位</b><span>角色生态网络效应；25+ 替代品（Replika、Chai、Kindroid 等）在细分场景分流，说明品类大而护城河浅</span></div>
+      </div>
+      <div class="chips"><span class="chip">陪伴品类第一</span><span class="chip">UGC 角色宇宙</span></div>
+      <div class="pm-note"><b>PM 点评 </b>AI 陪伴是"高留存、高争议、低客单"的品类：增长不愁，愁的是未成年人保护和监管边界。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= VERTICAL ================= -->
+<section id="vertical" style="--cat:var(--c-vert)">
+  <div class="sec-head"><span class="no">10</span><h2>垂直行业 AI</h2><span class="cnt">6 款代表 · 高价值场景里的"AI 专家"</span></div>
+  <p class="sec-intro">通用模型够用之后，钱在垂直场景：<b>法律、客服、医疗、教育</b>。共性打法：行业数据/工作流/合规三重壁垒，卖的是"替代一个高薪岗位的外包量"，客单价与续费率都远高于通用工具。</p>
+  <div class="grid">
+
+    <article class="card" data-k="salesforce agentforce crm 企业 agent">
+      <div class="chead"><span class="logo">☁️</span><div><h3>Salesforce Agentforce <span class="by">Salesforce</span></h3><p class="slogan">CRM 巨头的 Agent 平台：$800M ARR 的企业级落地</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Salesforce 存量企业客户（销售/服务/营销部门）</span></div>
+        <div class="row"><b>解决的问题</b><span>把 CRM 数据变成"会干活的 Agent"：销售跟进、服务工单、营销执行自动流转</span></div>
+        <div class="row"><b>产品方案</b><span>Agent 模板 + Data Cloud 数据底座 + 低代码编排；企业报告 30–40% 效率提升；从 POC 到规模部署的赋能体系</span></div>
+        <div class="row"><b>商业模式</b><span>按对话/用量+平台订阅；Agentforce ~$800M ARR、增速 169%（2026.4 报道）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>CRM 数据与组织锁定是 SaaS 最深的护城河之一；阻力：企业数据准备度不足、AI 成功指标不清</span></div>
+      </div>
+      <div class="chips"><span class="chip">ARR ~$800M</span><span class="chip">增速 169%</span><span class="chip">效率 +30–40%</span></div>
+      <div class="pm-note"><b>PM 点评 </b>老牌 SaaS 的 Agent 化样本：不推翻自己的席位制，而是把 Agent 叠加在数据资产上——与 Microsoft 一样，先解决"卖出去"，再解决"用起来"。</div>
+    </article>
+
+    <article class="card" data-k="intercom fin decagon 客服 按解决付费">
+      <div class="chead"><span class="logo">🧾</span><div><h3>Intercom Fin / Decagon <span class="by">Intercom / Decagon</span></h3><p class="slogan">客服 AI：把"按结果付费"变成行业标准</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Fin：Intercom 存量客服团队；Decagon：需要语音/邮件/聊天全渠道的大型企业</span></div>
+        <div class="row"><b>解决的问题</b><span>客服坐席是纯人力成本——AI 客服的承诺是"解决一个收费一个"的可核算 ROI</span></div>
+        <div class="row"><b>产品方案</b><span>Fin：$0.99/次解决的透明定价+席位计划叠加（50 次月起步）；Decagon：企业定制，多模态 AI concierge（VC 热捧新贵）</span></div>
+        <div class="row"><b>商业模式</b><span>按解决量/对话量计费——outcome-based 定价在客服赛道已成默认</span></div>
+        <div class="row"><b>壁垒卡位</b><span>Fin 吃平台存量，Decagon 拼企业标杆客户；与 Sierra 同赛道，正面对撞</span></div>
+      </div>
+      <div class="chips"><span class="chip">Fin $0.99/次解决</span><span class="chip">全渠道（Decagon）</span></div>
+      <div class="pm-note"><b>PM 点评 </b>客服是"按结果付费"最先行跑通的赛道——因为"解决一个工单"这件事天然可数、可审计。</div>
+    </article>
+
+    <article class="card" data-k="clay gtm 销售 增长 数据 enrichment">
+      <div class="chead"><span class="logo">🧱</span><div><h3>Clay <span class="by">Clay</span></h3><p class="slogan">GTM 团队的 AI 数据工厂：两年从 $1M 到 $200M ARR</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>销售/增长团队、"GTM 工程师"这个新工种</span></div>
+        <div class="row"><b>解决的问题</b><span>获客要跨几十个数据源洗数据——Clay 把 enrichment+外联+AI 研究编排成可视化流水线，甚至组"AI 销售团队"</span></div>
+        <div class="row"><b>产品方案</b><span>数据 enrichment 网络 + AI Agent 编排 + 表格式工作流；17000+ 团队在用</span></div>
+        <div class="row"><b>商业模式</b><span>订阅按积分；$100M ARR（2026 初）→ ~$200M（2026.9）；2026.9 融 $115M、估值 $7.1B（一年翻倍）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>数据网络效应+GTM 工程师社区（自下而上增长）；阴影：2026 定价调整引发社区反弹</span></div>
+      </div>
+      <div class="chips"><span class="chip">ARR ~$200M</span><span class="chip">估值 $7.1B</span><span class="chip">17000+ 团队</span></div>
+    </article>
+
+    <article class="card" data-k="ramp 财务 企业卡 报销 ai">
+      <div class="chead"><span class="logo">💳</span><div><h3>Ramp <span class="by">Ramp（ fintech ）</span></h3><p class="slogan">AI 财务自动化：$44B 估值的"省钱机器"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>美国中小企业的财务团队（125k+ 企业）</span></div>
+        <div class="row"><b>解决的问题</b><span>企业花钱的地方全是手工流程：报销、账单、采购——Ramp 用卡+AI 自动化把"支出"变成可分析可干预的数据</span></div>
+        <div class="row"><b>产品方案</b><span>免年费企业卡+支出管理+账单支付；Ramp for Agents 把 AI Agent 接进财务工作流（自动审单、异常拦截）</span></div>
+        <div class="row"><b>商业模式</b><span> interchange 收入+订阅；$750M F 轮、$44B 估值（2026.6，约 29 倍收入）；2026 预计营收 ~$1.4B</span></div>
+        <div class="row"><b>壁垒卡位</b><span>支出数据飞轮（越用越懂你的企业）+免费卡的获客机器；对手 Mercury（$5.2B）/Brex</span></div>
+      </div>
+      <div class="chips"><span class="chip">估值 $44B</span><span class="chip">F 轮 $750M</span><span class="chip">125k+ 企业</span></div>
+      <div class="pm-note"><b>PM 点评 </b>fintech + AI 的正确次序：先用"免费省钱"拿到入场券，再用沉淀的支出数据把 AI 变现——数据飞轮是卡组织的护城河，不是模型。</div>
+    </article>
+
+    <article class="card" data-k="mercor 招聘 人才市场 数据标注 专家">
+      <div class="chead"><span class="logo">🧑‍🏫</span><div><h3>Mercor <span class="by">Mercor</span></h3><p class="slogan">给模型"打工"的人才市场：$10B 估值的新物种</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>模型公司（买专家训练数据）+ 专业人士（医生/律师/程序员给模型当老师）</span></div>
+        <div class="row"><b>解决的问题</b><span>前沿模型需要高质量专家数据，但供给散落全球无组织——Mercor 用 AI 面试+匹配做成双边市场</span></div>
+        <div class="row"><b>产品方案</b><span>AI 筛选/面试 + 专家池匹配 + 项目管理；本质是 human-in-the-loop 数据服务</span></div>
+        <div class="row"><b>商业模式</b><span>市场抽成（~35% take rate）；第三方追踪毛 ARR ~$2B（2026 中，净收入约 $700M，非官方口径）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>高端专家供给池 + 模型公司续约粘性；2025.10 融 $350M、估值 $10B</span></div>
+      </div>
+      <div class="chips"><span class="chip">估值 $10B</span><span class="chip">毛 ARR ~$2B*</span><span class="chip">抽成 ~35%</span></div>
+      <div class="pm-note"><b>PM 点评 </b>AI 把"人类专家"变成了模型的供应链——Mercor 是这条供应链的"一级市场"。*第三方面板口径，非官方审计数据。</div>
+    </article>
+
+    <article class="card" data-k="abridge 医疗 scribe 病历 epic 医院">
+      <div class="chead"><span class="logo">🩹</span><div><h3>Abridge <span class="by">Abridge</span></h3><p class="slogan">医疗 ambient AI scribe 龙头：把"听医生说话"工业化</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>大型医院系统与临床医生（Epic 深度集成）</span></div>
+        <div class="row"><b>解决的问题</b><span>医生 2 小时问诊、2 小时写病历——ambient scribe 把医患对话实时转成结构化病历，还给医生下班时间</span></div>
+        <div class="row"><b>产品方案</b><span>环境聆听→病历草稿→Epic 病历直写；扩展到 Care Signals 等临床智能；Best in KLAS 2025&2026</span></div>
+        <div class="row"><b>商业模式</b><span>企业级订阅 ~$2,500–7,200+/医生/年；累计融资 ~$7.6 亿、估值 $5B+；ARR 估 $100–117M</span></div>
+        <div class="row"><b>壁垒卡位</b><span>Epic 集成+医院采购惯性；赛道热度：2025 前 7 个月 ambient scribe 融资 $9.75 亿（约 11 倍于 2023 全年）</span></div>
+      </div>
+      <div class="chips"><span class="chip">估值 $5B+</span><span class="chip">Best in KLAS 双年</span><span class="chip">Epic 集成</span></div>
+      <div class="pm-note"><b>PM 点评 </b>医疗 AI 里最先跑通商业化的不是诊断，而是"文档苦役"——ROI 直接等于医生加班时间的减少，医院愿为此真金白银买单。</div>
+    </article>
+
+    <article class="card" data-k="harvey 法律 律所 合同">
+      <div class="chead"><span class="logo">⚖️</span><div><h3>Harvey <span class="by">Harvey（OpenAI 初期扶持）</span></h3><p class="slogan">顶级律所的 AI 合伙人</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>律所律师、企业法务（~1300 家机构、10 万+ 律师在用）</span></div>
+        <div class="row"><b>解决的问题</b><span>律师每小时 $500+：合同审查、尽职调查、法律检索是大所最大的成本项</span></div>
+        <div class="row"><b>产品方案</b><span>法律研究/起草/审查工作流 + 领域微调 + 行业安全合规（客户数据隔离）</span></div>
+        <div class="row"><b>商业模式</b><span>企业订阅（按席位/用量）；ARR $190M，2026.3 估值 $11B（后续报道 $15.6B）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>律所信任与工作流绑定——法律行业换供应商极慢，先发者滚雪球</span></div>
+      </div>
+      <div class="chips"><span class="chip">ARR $190M</span><span class="chip">10 万+ 律师</span><span class="chip">估值 $11B+</span></div>
+      <div class="pm-note"><b>PM 点评 </b>垂直 AI 的样板：不抢通用聊天，只做行业工作流里的"最贵环节"。</div>
+    </article>
+
+    <article class="card" data-k="sierra 客服 bret taylor agent">
+      <div class="chead"><span class="logo">🎧</span><div><h3>Sierra <span class="by">Sierra（Bret Taylor 创立）</span></h3><p class="slogan">企业客服 Agent：按结果付费的先行者</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>大型品牌客服/CX 团队</span></div>
+        <div class="row"><b>解决的问题</b><span>7×24 多语言客服人力成本 + 外包质量不可控；AI Agent 直接上岗接线</span></div>
+        <div class="row"><b>产品方案</b><span>品牌专属语音/文字 Agent + 护栏与审计 + 多语言；强调"Agent 也要有 KPI"</span></div>
+        <div class="row"><b>商业模式</b><span>按解决量/用量计费（ outcome-based 倾向）；ARR $150M+，2026.5 融 $950M、估值 $15B+（两年从 $4.5B→$15B）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>创始团队声望（前 Salesforce 联席 CEO）+ 企业 CX 标杆客户</span></div>
+      </div>
+      <div class="chips"><span class="chip">估值 $15B+</span><span class="chip">ARR $150M+</span><span class="chip">按结果计费</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"按解决一个问题收多少钱"——Agent 商业模式真正成立的标志，值得所有 B 端 AI 产品抄作业。</div>
+    </article>
+
+    <article class="card" data-k="openevidence 医生 循证 医疗">
+      <div class="chead"><span class="logo">🩺</span><div><h3>OpenEvidence <span class="by">OpenEvidence</span></h3><p class="slogan">美国医生的循证临床问答引擎</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>临床医生（40% 的美国医生在用）</span></div>
+        <div class="row"><b>解决的问题</b><span>医生没时间读文献：把最新医学证据变成 30 秒可查的带引用答案</span></div>
+        <div class="row"><b>产品方案</b><span>医学证据检索/合成 + 语音问询（2026.5）；面向医生免费（广告/药企模式争议中增长）</span></div>
+        <div class="row"><b>商业模式</b><span>~$300M 年化 run-rate；估值 $12B</span></div>
+        <div class="row"><b>壁垒卡位</b><span>医生信任与“查得动文献”的心智；专业人群网络效应</span></div>
+      </div>
+      <div class="chips"><span class="chip">40% 美国医生使用</span><span class="chip">~$300M run-rate</span></div>
+      <div class="pm-note"><b>PM 点评 </b>To-doctor 免费模式（对标 UpToDate 的广告化重构）——专业人群的高价值注意力本身就是生意。</div>
+    </article>
+
+    <article class="card" data-k="hippocratic 患者语音 agent 护理">
+      <div class="chead"><span class="logo">🤝</span><div><h3>Hippocratic AI <span class="by">Hippocratic AI</span></h3><p class="slogan">患者侧的"安全优先"语音护理 Agent</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>医疗机构、慢病管理与随访场景</span></div>
+        <div class="row"><b>解决的问题</b><span>护士缺口：电话随访、用药提醒、护理导航等低风险高频率工作无人做</span></div>
+        <div class="row"><b>产品方案</b><span>安全导向的患者语音 Agent（不诊断、只导航与陪伴）+ Homeward Health 等落地合作</span></div>
+        <div class="row"><b>商业模式</b><span>医疗机构按用量订阅</span></div>
+        <div class="row"><b>壁垒卡位</b><span>"安全"作为产品设计核心（专职安全团队、临床审核）——医疗 AI 的信任即壁垒</span></div>
+      </div>
+      <div class="chips"><span class="chip">患者语音 Agent</span><span class="chip">慢病管理落地</span></div>
+    </article>
+
+    <article class="card" data-k="khanmigo 教育 辅导 可汗 苏格拉底">
+      <div class="chead"><span class="logo">🎓</span><div><h3>Khanmigo <span class="by">Khan Academy</span></h3><p class="slogan">不给答案的 AI 家教</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>K12 学生、家长、学校（一年内从 4 万涨到 70 万学生）</span></div>
+        <div class="row"><b>解决的问题</b><span>一对一辅导太贵；普通 AI 直接给答案毁学习——Khanmigo 用苏格拉底式追问"教而不代"</span></div>
+        <div class="row"><b>产品方案</b><span>基于可汗课程库的辅导/写作/编程引导 + 教师备课助手 + 家校管理后台</span></div>
+        <div class="row"><b>商业模式</b><span>家庭订阅 + 学校采购（对教育市场低价/补贴）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>教育内容资产 + "不作弊"的价值观心智——教育场景里"不帮倒忙"就是产品力</span></div>
+      </div>
+      <div class="chips"><span class="chip">学生 4万→70万</span><span class="chip">苏格拉底式</span></div>
+    </article>
+
+    <article class="card" data-k="duolingo max 语言 学习 ai">
+      <div class="chead"><span class="logo">🦉</span><div><h3>Duolingo（Max） <span class="by">Duolingo</span></h3><p class="slogan">1.4 亿月活的AI 语言学习</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球语言学习者（137.8M 月活）</span></div>
+        <div class="row"><b>解决的问题</b><span>口语陪练没有对象：Duolingo Max 用 AI 视频对话角色做"无限耐心外教"</span></div>
+        <div class="row"><b>产品方案</b><span>游戏化学习底座 + AI 对话/错题解释（GPT-4 系）订阅解锁</span></div>
+        <div class="row"><b>商业模式</b><span>订阅（Super/Max）+ 广告——AI 能力直接抬升订阅溢价</span></div>
+        <div class="row"><b>壁垒卡位</b><span>学习数据飞轮 + 游戏化习惯养成；"AI in 老产品"的增收标杆</span></div>
+      </div>
+      <div class="chips"><span class="chip">月活 1.378 亿</span><span class="chip">Max 订阅溢价</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= HARDWARE ================= -->
+<section id="hardware" style="--cat:var(--c-hw)">
+  <div class="sec-head"><span class="no">11</span><h2>AI 硬件</h2><span class="cnt">2 款代表 · 2026 被称为"AI 眼镜爆发之年"</span></div>
+  <p class="sec-intro">在 Humane AI Pin、Rabbit R1 等"独立 AI 硬件"折戟后，行业收敛出共识：<b>AI 硬件要长在已经成立的形态上</b>——眼镜。Meta 用 200 万副销量验证了需求，2026 年谷歌、阿里、华为、字节全部入场。</p>
+  <div class="grid">
+
+    <article class="card" data-k="plaud omi limitless 录音 吊坠 穿戴">
+      <div class="chead"><span class="logo">🎙️</span><div><h3>Plaud / Omi <span class="by">Plaud / Open Vision Eng.</span></h3><p class="slogan">AI 录音硬件：卖爆百万台的"外挂记忆"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>开会多的职场人、访谈者、销售——不想带手机进会又要记录的人</span></div>
+        <div class="row"><b>解决的问题</b><span>会议/对话的完整记录+AI 摘要：卡片式录音器（Plaud Note）与吊坠（NotePin S $179）做到"无感佩戴、事后自动成稿"</span></div>
+        <div class="row"><b>产品方案</b><span>Plaud 自 2023 Kickstarter 起累计销量 100 万台+，配套转写订阅（Pro 1200 分钟/年）；竞品 Omi 获 Accel/YC $11M（2026.6）；Limitless 吊坠 2025.12 被 Meta 收购后停售</span></div>
+        <div class="row"><b>商业模式</b><span>硬件一次性收入 + 转写/摘要订阅（耗材化）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>品类先发的销量与渠道；门槛不高，胜负在品牌与订阅续费</span></div>
+      </div>
+      <div class="chips"><span class="chip">Plaud 100 万台+</span><span class="chip">NotePin S $179</span><span class="chip">Limitless 被 Meta 收购</span></div>
+      <div class="pm-note"><b>PM 点评 </b>AI 穿戴设备的幸存者公式：不替代手机，只做手机的"外挂记忆"+订阅耗材——对比 Humane/Rabbit 的教训，这是唯一被验证的形态。</div>
+    </article>
+
+    <article class="card" data-k="rabbit r1 humane ai pin 失败 教训 复盘">
+      <div class="chead"><span class="logo">⚰️</span><div><h3>Rabbit R1 / Humane AI Pin <span class="by">失败案例复盘</span></h3><p class="slogan">AI 硬件的"反面教材双雄"</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>（曾经的）早期尝鲜消费者</span></div>
+        <div class="row"><b>解决的问题</b><span>号称"替代手机屏幕"——这正是它们失败的核心：没有解决真问题，也不比口袋里的手机好用</span></div>
+        <div class="row"><b>产品方案</b><span>Humane：$700 设备+激光投影+订阅，发热/续航/投影全面翻车，$2.3 亿融资后 2025.2 卖身 HP、设备变砖，进了"失败博物馆"；Rabbit R1 被评为年度最过度炒作 gadget，靠情怀更新"活过坟场"</span></div>
+        <div class="row"><b>商业模式</b><span>硬件+订阅，均未跑通；Humane 关停连订阅费都不退</span></div>
+        <div class="row"><b>壁垒卡位</b><span>无。四条公认教训：别跟手机抢 / 先解决真问题 / 别带病发布 / 云依赖设备要有存续方案</span></div>
+      </div>
+      <div class="chips"><span class="chip">融资 $2.3 亿→卖身 HP</span><span class="chip">设备变砖</span><span class="chip">失败博物馆藏品</span></div>
+      <div class="pm-note"><b>PM 点评 </b>给所有 AI 硬件团队的一页纸考卷：Meta 眼镜先是一副好眼镜、Plaud 先是一个好录音器——形态创新永远不能补偿任务价值的缺失。</div>
+    </article>
+
+    <article class="card" data-k="meta glasses 眼镜 rayban luna">
+      <div class="chead"><span class="logo">🕶️</span><div><h3>Meta Glasses <span class="by">Meta × EssilorLuxottica</span></h3><p class="slogan">AI 眼镜的规模验证者：$299 起的新系列</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>大众消费者（不戴墨镜的也开始关心了）</span></div>
+        <div class="row"><b>解决的问题</b><span>掏手机太慢：看到什么问什么、听到什么译什么——AI + 摄像头 + 音频的免手入口</span></div>
+        <div class="row"><b>产品方案</b><span>2026.6 新系列 $299 起（比二代更便宜）、三种镜框；计划推无摄像头 AI 眼镜 Luna 解决隐私顾虑；实时 AI 对话</span></div>
+        <div class="row"><b>商业模式</b><span>硬件 + 订阅潜力；Ray-Ban Meta 累计销量 200 万+ 副验证品类成立</span></div>
+        <div class="row"><b>壁垒卡位</b><span>眼镜时尚品牌资源（依视路）+ 规模成本；独立 AI 硬件前车之鉴：没有生态的 AI 硬件是玩具</span></div>
+      </div>
+      <div class="chips"><span class="chip">新系列 $299 起</span><span class="chip">累计 200 万副+</span><span class="chip">无摄像头 Luna</span></div>
+      <div class="pm-note"><b>PM 点评 </b>AI Pin 之死与 Meta 眼镜之活，对比出硬件 PM 的第一性原理：先做一个合格的眼镜，再做 AI。</div>
+    </article>
+
+    <article class="card" data-k="谷歌 xreal project aura 阿里 华为 字节 眼镜 国产">
+      <div class="chead"><span class="logo">🌏</span><div><h3>谷歌 Project Aura 及国产眼镜军团 <span class="by">Google / 阿里 / 华为 / 字节 / 雷鸟等</span></h3><p class="slogan">2026：巨头齐发的 AI 眼镜元年</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>消费电子用户与中国供应链生态</span></div>
+        <div class="row"><b>解决的问题</b><span>下一代个人计算入口卡位——都怕错过"iPhone 时刻"，All in 试错</span></div>
+        <div class="row"><b>产品方案</b><span>谷歌联手 XREAL 推 Project Aura（2026 上市，开放平台）；阿里（天猫精灵团队，AI/AI+AR 双版本）、华为、字节跟进；雷鸟 X3 Pro 全球首款 eSIM 独立联网双目全彩 AR</span></div>
+        <div class="row"><b>商业模式</b><span>硬件 + 生态服务；竞争焦点"软硬一体易成，生态入口难夺"</span></div>
+        <div class="row"><b>壁垒卡位</b><span>中国供应链成本优势 + 大厂 AI 助手（夸克/元宝/小艺）预装分发</span></div>
+      </div>
+      <div class="chips"><span class="chip">Project Aura 2026 上市</span><span class="chip">阿里/华为/字节入场</span></div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= RISING / 小众黑马 ================= -->
+<section id="rising" style="--cat:#f97316">
+  <div class="sec-head"><span class="no">13</span><h2>小众黑马：搜索半径之外的快速上升产品</h2><span class="cnt">11 款 · 主流叙事之外的增速样本（数据截至 2026.9）</span></div>
+  <p class="sec-intro">前十二章讲的是"人人都知道"的产品，本章专门收录<b>媒体搜索半径之外、但增速或变现数据扎眼的黑马</b>。入选标准：① 不与前文已收录产品重复；② 必须有公开第三方数据佐证（a16z Top 100 第 6 期、Sensor Tower、AI产品榜、QuestMobile、TechCrunch 等）；③ "小众"≠小数据——有的盘子不大但增速极猛，有的是主流视野外的地理/品类盲区。注意：Higgsfield 等厂商口径的 ARR 数据未经审计，仅供量级参考。</p>
+  <div class="grid">
+
+    <article class="card" data-k="openclaw clawdbot 开源 个人 agent 收购 github stars whatsapp telegram 消息">
+      <div class="chead"><span class="logo">🦞</span><div><h3>OpenClaw <span class="by">开源社区 → OpenAI</span></h3><p class="slogan">数周登顶 GitHub 星榜的开源个人 Agent</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>极客开发者 → 被"住在聊天软件里的私人 AI 员工"种草的普通专业人士</span></div>
+        <div class="row"><b>上升速度</b><span>数周拿下 68k GitHub stars，2026.3 初成为 GitHub star 数第一的项目；a16z 估算若赶上 1 月数据截点可进消费榜 Top 30</span></div>
+        <div class="row"><b>产品方案</b><span>开源个人 Agent：跑在用户自己的设备上，通过 WhatsApp/Telegram/短信直接指挥它干活（读邮件、订票、盯日程），插件与模板生态社区共建</span></div>
+        <div class="row"><b>商业模式</b><span>开源免费 + 用户自付模型 API 费用；2026.2 被 OpenAI 收购，团队与生态并入</span></div>
+        <div class="row"><b>壁垒卡位</b><span>先发社区网络效应（模板/插件/教程）+ "住在你已有的聊天窗口里"的心智占位；被收购后叠加模型厂官方加持</span></div>
+      </div>
+      <div class="chips"><span class="chip">68k stars 数周</span><span class="chip">GitHub 星榜第一（2026.3）</span><span class="chip">被 OpenAI 收购</span></div>
+      <div class="pm-note"><b>PM 点评 </b>a16z 把它列为"Agent 从应用走向消息层"的头号证据：下一代入口可能不是 App 也不是浏览器，而是你已经在用的聊天窗口。开源爆款的终局大概率是被模型厂商收编。</div>
+    </article>
+
+    <article class="card" data-k="higgsfield 视频特效 预设 soul 运镜 子弹时间 arr 估值">
+      <div class="chead"><span class="logo">🎬</span><div><h3>Higgsfield <span class="by">Higgsfield（硅谷）</span></h3><p class="slogan">把电影感做成一键预设：11 个月 $300M ARR</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>短视频创作者、MCN、广告主——要"大片感"但不会运镜的人</span></div>
+        <div class="row"><b>上升速度</b><span>上线数周 $10M ARR → 11 个月 $300M → 2026.6 约 $500M、2026.8 年化约 $700M（厂商口径未审计）；$400M B 轮、$5.4B 估值，Goldman Sachs/Intel 参投；仅约 60 名工程师、号称现金流为正</span></div>
+        <div class="row"><b>产品方案</b><span>预设化视频特效平台：把子弹时间、crash zoom、希区柯克变焦等运镜封装成一键效果，配 Soul 图像模型与 Drag 交互；每个效果都为社交传播设计（竖屏、强视觉钩子）</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + 额度制；750M+ 条视频生成量的 UGC 自传播，获客近乎零成本</span></div>
+        <div class="row"><b>壁垒卡位</b><span>"效果模板"的运营速度与品牌心智；底座是自研+第三方混合模型，技术护城河弱于叙事护城河</span></div>
+      </div>
+      <div class="chips"><span class="chip">年化 ~$700M（2026.8）</span><span class="chip">$5.4B 估值</span><span class="chip">60 人团队</span></div>
+      <div class="pm-note"><b>PM 点评 </b>年度最猛收入曲线背后的产品哲学只有一条：把模型能力封装成"一眼看懂、一键复现、值得转发"的预设。它的壁垒不是模型，是模板运营与 TikTok 分发效率。</div>
+    </article>
+
+    <article class="card" data-k="yandex alice gigachat 俄罗斯 sber 第三极 浏览器 助手">
+      <div class="chead"><span class="logo">🪆</span><div><h3>Yandex Alice / GigaChat <span class="by">Yandex / Sber（俄罗斯）</span></h3><p class="slogan">被忽视的第三极：71M 月活的浏览器寄生 AI</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>俄语区用户（Yandex 搜索/浏览器/出租车全家桶生态）</span></div>
+        <div class="row"><b>上升速度</b><span>Alice（内置于 Yandex Browser）71M 月活，进入 a16z 全球移动 AI 前十；GigaChat 首次进入 a16z 网页榜——俄罗斯被 a16z 判定为与中美并列的"第三极"市场</span></div>
+        <div class="row"><b>产品方案</b><span>Alice = YandexGPT 塞进国民级浏览器与搜索；GigaChat = Sber 银行系助手（SaluteBot 生态）。共性：寄生在成熟超级应用上，而非独立 App</span></div>
+        <div class="row"><b>商业模式</b><span>生态内免费引流 + 广告/金融/云交叉变现；制裁后加速本土技术闭环</span></div>
+        <div class="row"><b>壁垒卡位</b><span>地缘隔离形成的保护市场：西方产品退出后几乎无外部竞争，模型自给（YandexGPT/GigaChat）</span></div>
+      </div>
+      <div class="chips"><span class="chip">Alice 71M 月活</span><span class="chip">全球移动 AI Top10</span><span class="chip">第三极市场</span></div>
+      <div class="pm-note"><b>PM 点评 </b>多数人的世界地图只有中美两块，而 a16z 提醒：俄罗斯是第三极、新加坡人均采用率全球第一。出海选市场时，"地缘真空区"的竞争烈度可能比红海低一个量级。</div>
+    </article>
+
+    <article class="card" data-k="猫箱 字节 ai陪伴 星野 反超 沉浸式 剧情角色 新规 监管">
+      <div class="chead"><span class="logo">🐈</span><div><h3>猫箱 <span class="by">字节跳动</span></h3><p class="slogan">半年月活涨 5 倍、反超星野的陪伴黑马</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Z 世代（女性向为主）沉浸式角色扮演用户</span></div>
+        <div class="row"><b>上升速度</b><span>2025.7 月活反超 MiniMax 星野成为国内 AI 陪伴第一（2024.12 还是 537 万 vs 星野 664 万）；豆包/猫箱半年月活涨约 5 倍（投资报告口径）；行业前五名合计吃下 98.8% 份额</span></div>
+        <div class="row"><b>产品方案</b><span>捏角色 + 沉浸式剧情对话（第一人称视角、语音、场景卡），依托豆包系模型与抖音流量池；头部格局：猫箱/星野/筑梦岛</span></div>
+        <div class="row"><b>商业模式</b><span>会员订阅 + 剧情卡/道具付费；2026.7.15《人工智能拟人化互动服务管理暂行办法》（全球首部 AI 情感陪伴国家级新规）生效后转向内容合规化</span></div>
+        <div class="row"><b>壁垒卡位</b><span>字节"模型 + 抖音分发"双引擎；但增速最猛的赛道也是监管最先落锤的赛道</span></div>
+      </div>
+      <div class="chips"><span class="chip">月活反超星野（2025.7）</span><span class="chip">半年涨 5 倍</span><span class="chip">前五占 98.8%</span></div>
+      <div class="pm-note"><b>PM 点评 </b>新规生效后豆包/千问直接下线了用户自定义智能体。做陪伴类产品的 PM 要把"合规架构"写进 P0 需求——它和增长曲线一样能决定产品生死。</div>
+    </article>
+
+    <article class="card" data-k="talkie polybuzz linky 角色扮演 出海 陪伴 长尾 minimax ugc">
+      <div class="chead"><span class="logo">🎭</span><div><h3>Talkie / PolyBuzz <span class="by">MiniMax / SocialApps 等（出海军团）</span></h3><p class="slogan">大厂看不上、海外狂赚钱的陪伴长尾</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>欧美/东南亚 Z 世代 roleplay 用户（PolyBuzz 宣称 2000 万+ 用户自建角色）</span></div>
+        <div class="row"><b>上升速度</b><span>Talkie（星野海外版）约 45M 海外月活、2025 年收入 $32.2M；PolyBuzz 常驻 a16z Top 100，与 Linky 等构成第二梯队；行业月活曾同比 +373%（钛媒体口径）</span></div>
+        <div class="row"><b>产品方案</b><span>Talkie = MiniMax 模型直出的 UGC 角色社区；PolyBuzz = 免费进 + 广告 + 订阅、网页/App 双端超轻量。共性：UGC 角色市场 + 灰度内容变现</span></div>
+        <div class="row"><b>商业模式</b><span>订阅（PolyBuzz 最高 $29.90/月）+ 广告；买量 ROI 极高——"模型用二线，增长靠投流"</span></div>
+        <div class="row"><b>壁垒卡位</b><span>最怕两件事：苹果/谷歌内容政策收紧（Linky 已陷儿童安全争议），以及模型代差——Talkie 已被投资方点名"增速远低于用量增速"</span></div>
+      </div>
+      <div class="chips"><span class="chip">Talkie 45M 月活</span><span class="chip">PolyBuzz 2000 万角色</span><span class="chip">年增 373%</span></div>
+      <div class="pm-note"><b>PM 点评 </b>长尾证明"情感陪伴"是付费意愿最强、也最不讲技术的赛道：模型一般也能收钱。但监管与平台政策随时掀桌——利润高，命门握在别人手里。</div>
+    </article>
+
+    <article class="card" data-k="umax looksmax rizz app mafia blake anderson 颜值 评分 looksmaxxing tiktok gen-z">
+      <div class="chead"><span class="logo">🤳</span><div><h3>Umax / LooksMax AI / RIZZ <span class="by">独立开发者 Blake Anderson 等"App Mafia"</span></h3><p class="slogan">几个年轻人的颜值评分 App，杀进 a16z Top 50</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>Gen-Z（尤其青少年男性）——looksmaxxing"变帅文化"人群</span></div>
+        <div class="row"><b>上升速度</b><span>a16z 排名 LooksMax #43、Umax #44、RIZZ #49——一个开发者占三席；Umax 约 $6M ARR、累计 7M+ 下载；Rizz 靠 12 亿 TikTok 播放起量、峰值月流水 $80K；Anderson 系产品累计收入 $10M+</span></div>
+        <div class="row"><b>产品方案</b><span>自拍 → AI 评分（下颌线/面部比例）→ 付费解锁"改善计划"；Rizz = 聊天截图 → 生成撩人回复。全套是"上传-评分-焦虑-订阅"的最短闭环</span></div>
+        <div class="row"><b>商业模式</b><span>周订阅制（Gen-Z 不爱年费）+ TikTok 病毒素材投放，获客成本近乎为零</span></div>
+        <div class="row"><b>壁垒卡位</b><span>无技术壁垒，壁垒是趋势嗅觉与素材迭代速度；同时顶着"向青少年贩卖容貌焦虑"的媒体批判</span></div>
+      </div>
+      <div class="chips"><span class="chip">a16z #43/#44/#49</span><span class="chip">Umax $6M ARR</span><span class="chip">12 亿 TikTok 播放</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"App Mafia"（与 Cal AI 互相导量的年轻开发者圈子）验证了 2026 年独立开发的黄金公式：社会趋势 × AI 封装 × TikTok 素材工业化。产品一周就能被抄走，但他们一年能出三个。</div>
+    </article>
+
+    <article class="card" data-k="cal ai 卡路里 拍照 热量 myfitnesspal 收购 健身 健康 青少年创业">
+      <div class="chead"><span class="logo">🍽️</span><div><h3>Cal AI <span class="by">青少年创业 → MyFitnessPal 收购</span></h3><p class="slogan">拍照算卡路里：$30M 累计收入卖身老牌</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>健身/减脂人群——嫌手动记录热量太麻烦的人</span></div>
+        <div class="row"><b>上升速度</b><span>首月收入 $28K → 次月 $115K → 月流水 $1.4M；累计 15M+ 下载、$30M+ 累计收入；2026.3 被 MyFitnessPal 收购（TechCrunch）</span></div>
+        <div class="row"><b>产品方案</b><span>拍一张餐盘照片 → 视觉模型估算热量与三大营养素 → 一键修正 + 健康数据闭环。几个高中生做出来的产品</span></div>
+        <div class="row"><b>商业模式</b><span>订阅制 + TikTok 达人矩阵投放；创始人 16-19 岁</span></div>
+        <div class="row"><b>壁垒卡位</b><span>场景卡位好（高频刚需 + 老牌体验差），但识别精度无护城河——最终归宿是卖给"有用户没 AI"的老牌</span></div>
+      </div>
+      <div class="chips"><span class="chip">15M 下载</span><span class="chip">$30M+ 累计收入</span><span class="chip">2026.3 被 MFP 收购</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"AI 杀死旧工具"的经典剧本反过来演：老牌的最大资产是用户与品牌，最大负债是旧交互——MyFitnessPal 买 Cal AI 买的就是新交互。这是 AI 时代最常见的并购逻辑。</div>
+    </article>
+
+    <article class="card" data-k="rosebud ai日记 journaling 日记 心理健康 bessemer 订阅 留存">
+      <div class="chead"><span class="logo">🌹</span><div><h3>Rosebud <span class="by">Rosebud（Just Imagine）</span></h3><p class="slogan">AI 日记：Bessemer 押注的小赛道样本</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>心理健康与自我成长人群、已有 journaling 习惯的人</span></div>
+        <div class="row"><b>上升速度</b><span>约 $2.1M ARR（社区追踪口径）、早期做到 10 万用户；$6M 种子轮由 Bessemer 领投（776/Avenir 参投）</span></div>
+        <div class="row"><b>产品方案</b><span>对话式 AI 日记：写完即有 AI 回应与反思引导，长期记忆做"人生回顾"；与 Mindsera 等结构化 prompt 工具错位竞争</span></div>
+        <div class="row"><b>商业模式</b><span>订阅制；盘子小但留存极高——日记是天然高频 + 强习惯场景</span></div>
+        <div class="row"><b>壁垒卡位</b><span>用户日记数据的迁移成本 + 隐私信任；最大威胁是 ChatGPT 的免费替代</span></div>
+      </div>
+      <div class="chips"><span class="chip">~$2.1M ARR</span><span class="chip">$6M 种子轮</span><span class="chip">Bessemer 领投</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"小而美"的估值逻辑：不追月活，追留存与情绪价值。当大模型把"能聊天"打成免费公共品，垂直日记的护城河只剩一样东西——用户两年前写下的 800 篇日记。</div>
+    </article>
+
+    <article class="card" data-k="pixverse 爱诗科技 拍我ai 视频 模板 第二梯队 盈利 阿里">
+      <div class="chead"><span class="logo">🎞️</span><div><h3>PixVerse <span class="by">爱诗科技（前字节 AI Lab 总监王长虎创立）</span></h3><p class="slogan">视频第二梯队的盈利样本：1600 万月活</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>全球短视频创作者与特效模板消费者（海外 PixVerse + 国内拍我 AI 双品牌）</span></div>
+        <div class="row"><b>上升速度</b><span>MAU 1500 万（2025.3）→ 1600 万（2025.6）；a16z 点名与可灵/海螺并列"有真实牵引力"的视频 App；2025.9 阿里领投 $60M+ B 轮</span></div>
+        <div class="row"><b>产品方案</b><span>特效模板驱动的视频生成：把生成能力包装成 TikTok 友好的模板玩法，模板化降低门槛、天然适配社交传播</span></div>
+        <div class="row"><b>商业模式</b><span>订阅收入已覆盖公司绝大部分运营成本（36氪报道，接近盈亏平衡）——在烧钱最狠的赛道里罕见</span></div>
+        <div class="row"><b>壁垒卡位</b><span>模板运营速度 + 双市场对冲；自研+开源混用模型，头部代差（Sora/Veo/可灵）是持续压力</span></div>
+      </div>
+      <div class="chips"><span class="chip">1600 万 MAU</span><span class="chip">订阅覆盖大部分成本</span><span class="chip">阿里领投 $60M</span></div>
+      <div class="pm-note"><b>PM 点评 </b>视频生成的主战场是巨头军备赛，PixVerse 的启示是第二梯队的活法：不拼模型拼模板，用健康的单位经济模型换时间——等代差收敛，或者被收编。</div>
+    </article>
+
+    <article class="card" data-k="photoroom remini pixelcut 修图 抠图 老照片修复 bending spoons 电商 api 现金牛">
+      <div class="chead"><span class="logo">🖼️</span><div><h3>Photoroom / Remini 系 <span class="by">Photoroom（法国）/ Bending Spoons（意大利）</span></h3><p class="slogan">从不进头条、常年霸榜的修图现金牛</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>电商卖家（Photoroom：产品图一键抠图换背景）与大众用户（Remini：老照片修复/画质增强）</span></div>
+        <div class="row"><b>上升速度</b><span>两家都是 a16z Top 100 常驻（榜单最古老的成员之列）；Bending Spoons 应用组合（Remini/Splice/Evernote 等）年营收 $5 亿+；AI 图像编辑市场 2024 约 $21 亿 → 2034 预计 $89 亿</span></div>
+        <div class="row"><b>产品方案</b><span>单点功能做到极致（抠图/修复/增强）+ API 化：Photoroom 给 Shopify 等电商 SaaS 当基础设施</span></div>
+        <div class="row"><b>商业模式</b><span>订阅 + API 按量计费；"老照片修复"是社交裂变永动机，每逢节日定期爆一波</span></div>
+        <div class="row"><b>壁垒卡位</b><span>场景垄断与极成熟的买量回收模型；风险是被 ChatGPT/豆包的免费修图能力吞掉单点价值</span></div>
+      </div>
+      <div class="chips"><span class="chip">a16z 常驻</span><span class="chip">Bending Spoons $5 亿+ 年收</span><span class="chip">API 基础设施化</span></div>
+      <div class="pm-note"><b>PM 点评 </b>每轮"a16z 新面孔"报道都在追新品，真正的长青者却是这些"无聊"的修图工具——它们把 AI 当成本优化而非叙事，反而活得最久。</div>
+    </article>
+
+    <article class="card" data-k="办公智能体 workbuddy 百度搭子 扣子 qoder 纳米work 联想天禧 新品类 办公">
+      <div class="chead"><span class="logo">🏢</span><div><h3>国内 AI 办公智能体军团 <span class="by">腾讯 / 百度 / 字节 / 360 / 阿里 / 联想</span></h3><p class="slogan">新品类半年成型：总月活 3316 万的办公智能体</p></div></div>
+      <div class="rows">
+        <div class="row"><b>目标用户</b><span>被"通用助手"太泛、被"专业 Agent"太贵夹在中间的办公室人群</span></div>
+        <div class="row"><b>上升速度</b><span>2026.8 中国十大 AI 办公智能体总月活 3316 万；2026.7 桌面端 AI 办公智能体月活近 3000 万；360 纳米 AI 上线不到两个月月访问 1.57 亿、登顶首个智能体榜</span></div>
+        <div class="row"><b>产品方案</b><span>腾讯 WorkBuddy（领跑）、百度搭子、字节 Trae/扣子、千问办公、联想天禧、360 纳米 Work、阿里 Qoder 等——全是"办公套件的 Agent 化重组"，绑定文档/表格/会议场景</span></div>
+        <div class="row"><b>商业模式</b><span>大厂生态免费引流 + 高级订阅；体量还在爬坡（3316 万 vs 通用助手的数亿）</span></div>
+        <div class="row"><b>壁垒卡位</b><span>办公数据属地与协同网络（腾讯/阿里生态优势）；差异化尚未拉开，榜单位次每季重排</span></div>
+      </div>
+      <div class="chips"><span class="chip">总月活 3316 万</span><span class="chip">十强名单半年三换</span><span class="chip">纳米 AI 两月登顶</span></div>
+      <div class="pm-note"><b>PM 点评 </b>"Agent 元年"最有观测价值的品类实验场：通用助手做不到深、垂直 Agent 卖不动量，中间的办公智能体正用免费 + 生态强推测出真实需求密度——半年后的榜单位次就是需求答案。</div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ================= CHARTS ================= -->
+<section id="charts" style="--cat:#0f172a">
+  <div class="sec-head"><span class="no">📊</span><h2>数据对比：一图看清竞争格局</h2></div>
+  <p class="sec-intro">两组关键数据：<b>中国 AI 助手月活格局</b>（QuestMobile 2026 上半年口径）与<b>海外代表产品年化收入</b>（公开报道估算，口径不一，仅供量级参考）。</p>
+  <div class="charts">
+    <div class="chartbox">
+      <h3>中国 AI 原生 App 月活（2026H1）</h3>
+      <p class="src">来源：QuestMobile（经网易/凤凰网转述），单位：亿</p>
+      <div class="bar-row"><span class="lbl">豆包</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div></div><span class="val">3.82 亿</span></div>
+      <div class="bar-row"><span class="lbl">千问</span><div class="bar-track"><div class="bar-fill" style="width:44%;background:linear-gradient(90deg,#f59e0b,#f97316)"></div></div><span class="val">1.67 亿</span></div>
+      <div class="bar-row"><span class="lbl">DeepSeek</span><div class="bar-track"><div class="bar-fill" style="width:34%;background:linear-gradient(90deg,#0ea5e9,#38bdf8)"></div></div><span class="val">1.30 亿</span></div>
+      <div class="bar-row"><span class="lbl">腾讯元宝</span><div class="bar-track"><div class="bar-fill" style="width:30%;background:linear-gradient(90deg,#14b8a6,#2dd4bf)"></div></div><span class="val">1.14 亿*</span></div>
+      <p class="chart-note">* 元宝为 2026.2 春节红包峰值（DAU 5000 万+），QuestMobile 3 月口径中被归为"行业老四"，红包拉新后回落。千问同比增速 +4241%，为榜单增长最快。</p>
+    </div>
+    <div class="chartbox">
+      <h3>海外代表产品年化收入（公开报道估算）</h3>
+      <p class="src">口径与时间不一（2025Q4–2026Q3），单位：美元，仅供量级参考</p>
+      <div class="bar-row"><span class="lbl">ChatGPT</span><div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#10a37f,#34d399)"></div></div><span class="val">~$25B</span></div>
+      <div class="bar-row"><span class="lbl">Cursor</span><div class="bar-track"><div class="bar-fill" style="width:16%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div></div><span class="val">~$4B</span></div>
+      <div class="bar-row"><span class="lbl">Glean</span><div class="bar-track"><div class="bar-fill" style="width:2.2%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div><span class="val">$300M+</span></div>
+      <div class="bar-row"><span class="lbl">OpenEvidence</span><div class="bar-track"><div class="bar-fill" style="width:2.2%;background:linear-gradient(90deg,#ef4444,#f87171)"></div></div><span class="val">~$300M</span></div>
+      <div class="bar-row"><span class="lbl">Harvey</span><div class="bar-track"><div class="bar-fill" style="width:1.6%;background:linear-gradient(90deg,#3b82f6,#60a5fa)"></div></div><span class="val">$190M</span></div>
+      <div class="bar-row"><span class="lbl">Sierra</span><div class="bar-track"><div class="bar-fill" style="width:1.3%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div><span class="val">$150M+</span></div>
+      <div class="bar-row"><span class="lbl">Gamma</span><div class="bar-track"><div class="bar-fill" style="width:0.9%;background:linear-gradient(90deg,#ec4899,#f472b6)"></div></div><span class="val">$100M</span></div>
+      <p class="chart-note">注意力放在"档位"而非条长：ChatGPT（250 亿）与 Cursor（40 亿）独占头部；$1–3 亿档扎堆垂直与生产力产品。可灵 2025.12 单月收入 $20M+（年化 ~$2.4 亿量级）未列入。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TRENDS ================= -->
+<section id="trends" style="--cat:#7c3aed">
+  <div class="sec-head"><span class="no">💡</span><h2>产品经理趋势洞察：从 50+ 款产品里读出的 8 条规律</h2></div>
+  <div class="trend"><div class="n">1</div><div><h4>入口之战全面开打：聊天框 → 浏览器 → 眼镜</h4><p>OpenAI 出 Atlas 浏览器，Perplexity 出 Comet 并报价 345 亿美元买 Chrome，Google 把 AI Mode 免费塞进搜索框，Meta/谷歌/阿里在眼镜上开战。逻辑一致：AI 能力会同质化，谁能占据"离用户最近的那个入口"，谁就拥有下一个十年的分发权。</p></div></div>
+  <div class="trend"><div class="n">2</div><div><h4>所有产品都在 Agent 化，但"按结果付费"才是真拐点</h4><p>从 Copilot Cowork、Claude Code 到 Sierra、Manus，产品形态从"对话给建议"变成"接任务给结果"。商业模式随之进化：Sierra 按解决量计费、Manus 按积分计费、Copilot 开始对 Agent 用量分层收费——"卖答案"正在变成"卖完成"。</p></div></div>
+  <div class="trend"><div class="n">3</div><div><h4>编码是 AI 商业化最成功的赛道，没有之一</h4><p>Cursor 年化 ~$4B、Claude Code 榜单领跑、GitHub Copilot 2000 万席位。原因：用户付费能力最强、ROI 可精确计算（省下的是工程师时薪）、反馈闭环最清晰。给创业者的启示：找"用户已经为解决这个问题花大钱"的场景切入。</p></div></div>
+  <div class="trend"><div class="n">4</div><div><h4>广告成为 AI 的第二增长曲线</h4><p>ChatGPT Ads 一年做到 $1B ARR 并全球扩张，Perplexity 在答案页试广告，Google 把广告搬进 AI Mode。"免费规模 + 广告"这套被验证 20 年的打法，正在 AI 上重演——订阅制 AI 产品将普遍面临免费+广告的降维竞争。</p></div></div>
+  <div class="trend"><div class="n">5</div><div><h4>开源改写定价权：模型层通缩，应用层繁荣</h4><p>DeepSeek、Kimi K3（2.8T MoE 开放权重）、FLUX.2（32B）把前沿能力做成公共品，模型 API 价格持续通缩。PM 层面的结论：不要再赌"我的模型更好"，要么做模型之上的工作流与数据壁垒，要么做模型之外的体验与分发。</p></div></div>
+  <div class="trend"><div class="n">6</div><div><h4>版权从对抗走向交易，内容工业开始与 AI 共生</h4><p>Suno 与 Warner 和解、Udio 与环球签约、Midjourney 与 Meta 达成分发合作——2026 年没有新增标志性诉讼，全是授权协议。预示着"授权分成"将成为 AI 内容产品的标准合规基础设施，先和解者先拿到商用市场门票。</p></div></div>
+  <div class="trend"><div class="n">7</div><div><h4>企业市场：席位制的繁荣与"36% 使用率"的隐忧</h4><p>Microsoft 20M 席位、Fortune 500 覆盖 90%+，但实际活跃使用率只有 ~36%；Claude 则靠安全叙事在企业采用率上反超 OpenAI。B 端 AI 的产品课：卖出去（license）和用起来（activation）是两场完全不同的仗，激活率会是下一轮续约谈判的核心变量。</p></div></div>
+  <div class="trend"><div class="n">8</div><div><h4>中国打法：免费拿量、出海造血、硬件卡位</h4><p>豆包 3.82 亿月活（投放+免费+语音降门槛）、可灵单月 $20M+ 收入（卖给电商与短剧）、MiniMax 海外收入占比 73%（Hailuo/Talkie 出海）、Manus 卖身 Meta、Kimi 模型进美国云——中国 AI 产品矩阵里，"量的战场在国内，钱的战场在全球"。</p></div></div>
+
+  <div class="timeline">
+    <h3>📅 2026 年大事记（本报告检索覆盖的关键节点）</h3>
+    <div class="tl-item"><b>2026.02</b><span>ChatGPT 周活 ~9 亿、腾讯元宝红包拉新冲上 MAU 1.14 亿、Nano Banana 2（Gemini 3.1 Flash Image）发布、开源个人 Agent OpenClaw 被 OpenAI 收购（数周 68k stars 出圈）</span></div>
+    <div class="tl-item"><b>2026.03</b><span>Google AI Mode 个人免费开放、Granola C 轮 $1.5B 估值、Harvey 估值 $11B、Microsoft Copilot Wave 3 发布、SkyReels-V4 上线</span></div>
+    <div class="tl-item"><b>2026.04</b><span>SpaceX 抛出 Cursor $60B 收购选项、Claude 企业采用率反超 OpenAI、Claude Design 发布</span></div>
+    <div class="tl-item"><b>2026.05</b><span>Sierra 融资 $950M（$15B+ 估值）、Meta Glasses 新系列 $299 起、Glean ARR 破 $300M、Perplexity 竞购 Chrome 报道持续发酵</span></div>
+    <div class="tl-item"><b>2026.06–07</b><span>Midjourney V8.1/V8.2 连发、可灵 3.0 与即梦 Seedance 2.0 正面竞争、夸克网盘 AI 助手上阵、Kimi K3 开放权重（2.8T MoE）、《人工智能拟人化互动服务管理暂行办法》7.15 生效（AI 陪伴赛道强监管，豆包/千问下线自定义智能体）</span></div>
+    <div class="tl-item"><b>2026.08–09</b><span>QuestMobile：豆包 3.82 亿月活居首、Grok 4.3 + SuperGrok Plus $100 档、Claude Opus 4.6（百万上下文）普及、MiniMax 三产品进入 Singtel AI Pass、Meta 发布 Meta One 订阅、Clay 估值 $7.1B、World Labs Marble 正式发布、Ramp F 轮 $44B 估值</span></div>
+    <div class="tl-item"><b>论坛线</b><span>Reddit r/LocalLLaMA 与 HN 贯穿全年的主线：本地模型运行时（Ollama/LM Studio）随开源权重繁荣；Cline/Aider 等 BYOK 开源 Agent 作为商业工具涨价后的"逃离舱门"；Product Hunt 2026 榜单由 Agent 类（ZeroHuman、Clawdi、Cue by Manus）与 Gemini Personal Intelligence 领跑</span></div>
+  </div>
+</section>
+
+<!-- ================= SOURCES ================= -->
+<section id="sources" style="--cat:#475569">
+  <div class="sec-head"><span class="no">📚</span><h2>方法与来源说明</h2></div>
+  <p class="sec-intro">本报告基于 2026 年 10 月 3 日前后 60+ 轮公开网络检索整理（第二轮补充检索定向覆盖 Reddit、Hacker News、Product Hunt、知乎等社区与官方渠道），覆盖官方公告、科技媒体与第三方评测。所有数据为<b>公开报道口径</b>：厂商数据未经审计，第三方数据（月活/ARR/估值）存在口径与时效差异，仅作量级参考；标注"~ / 据报道 / 第三方追踪"的数字请谨慎引用。</p>
+  <div class="srcs">
+    <div>OpenAI 官方公告与博客（ChatGPT Ads、Sora、Atlas、Pulse）</div>
+    <div>Anthropic 官方（Opus 4.6、Claude Design、企业采用）</div>
+    <div>Google 官方博客 / Workspace Updates（AI Mode、Nano Banana、Veo/Flow）</div>
+    <div>xAI / grok.com（Grok 4.3、SuperGrok 定价）</div>
+    <div>TechCrunch / CNBC（Nano Banana 2、Kimi K3、Gamma）</div>
+    <div>MarketWatch / Yahoo Finance（Atlas、Sora、AI 市场）</div>
+    <div>QuestMobile 数据（经网易、凤凰网、新浪财经转述，2026.7-8）</div>
+    <div>36氪 / 腾讯新闻 / 21 世纪经济报道（Manus-Meta、智谱/MiniMax 上市、Kimi 转型）</div>
+    <div>新浪财经 / 凤凰网（可灵商业化、元宝用户数据、混元 3.0）</div>
+    <div>The Next Web（Granola C 轮、Kimi K3 云托管谈判）</div>
+    <div>Billboard / fox2now（Suno/Udio 版权和解）</div>
+    <div>Hatty AI / Ortem Tech / Bland AI（ElevenLabs 融资与产品）</div>
+    <div>AIonX / Delivvo / AIoPicks（HeyGen vs Synthesia 横评）</div>
+    <div>MightyBot / Faros.ai / aitoolsreview（编码 Agent 榜单对比）</div>
+    <div>newmarketpitch / thinking.inc（Cursor 收入、AI 编辑器市场）</div>
+    <div>huntersandunicorns（SpaceX-Cursor 交易）</div>
+    <div>Futurum Group / EnterpriseDNA / glean.com（Glean ARR 与估值）</div>
+    <div>copilot-experts / getpanto / Avantiico（M365 Copilot 席位与使用率）</div>
+    <div>StartEngine / buildmvpfast（Harvey ARR 与估值）</div>
+    <div>ai.engineer（Sierra 融资）；metix.ai / towardshealthcare（OpenEvidence）</div>
+    <div>Forasoft / Kiniai / Teachfloor（Khanmigo、Duolingo 教育数据）</div>
+    <div>OctaveHQ / alphacorp / agentcorps（n8n vs Zapier 工作流格局）</div>
+    <div>vibecoding.app / adalo / clientcues（Lovable/Bolt/v0 对比）</div>
+    <div>知乎专栏 / CSDN / 什么值得买（Trae、通义灵码、秘塔、可灵 vs 即梦 中文评测）</div>
+    <div>smzdm / uisdc（Midjourney V8 中文评测、国产模型 7.31 发布潮）</div>
+    <div>sina 科技 / beeble / CES 2026 报道（Meta Glasses、AI 眼镜元年）</div>
+    <div><b>论坛与社区渠道（第二轮补充）：</b>Reddit 社区共识与 r/LocalLLaMA 生态（本地 LLM 双雄口碑）</div>
+    <div>Hacker News / dev.to / Contabo / Sitepoint（Ollama vs LM Studio、开源编码 Agent 横评）</div>
+    <div>Product Hunt 2026 榜单与 Marble 发布页（ZeroHuman、Clawdi、Cue by Manus）</div>
+    <div>swarm.beetlix / openweightthoughts / tokenade（Cline vs Roo Code vs Aider）</div>
+    <div>AICoding / Kanopy Labs（Zed、ACP 协议、55k stars）</div>
+    <div>TechCrunch / diabrowser.com（Dia 发布时间线与集成）</div>
+    <div>aireviewcore / techradar（Brave Leo、Opera Aria 2026 AI 浏览器横评）</div>
+    <div>Meta Newsroom（Meta One 订阅）+ AI Business Weekly / GetPanto（Meta AI 12 亿月活、家族日活）</div>
+    <div>moneycontrol / MacRumors / apple.com（Siri 2026 跳票与 EU DMA 延迟）</div>
+    <div>aichatdaily / usagepricing（Poe 多模型聚合格局）</div>
+    <div>CX Today / Yahoo Finance（Agentforce $800M ARR、采用挑战）</div>
+    <div>shyft.ai / G2（Fin $0.99 每解决、Decagon 定价模式）</div>
+    <div>arr.club / LeadGenius（Clay ARR 与 $7.1B 估值）；eesel（Lindy 2026 定价）</div>
+    <div>X @eglyman / Sacra / AInvest（Ramp $44B 估值与营收预估）</div>
+    <div>TechFundingNews / ValueAdd VC（Mercor $10B 估值、毛 ARR 第三方追踪）</div>
+    <div>SVIC / KLAS 报道（Abridge 融资、Best in KLAS、ambient scribe 赛道 $975M）</div>
+    <div>deepl.com press（DeepL 2026 Agent 研究与 IPO 传闻）</div>
+    <div>Plaud 官网 / layer3labs / ticnote（Plaud 百万台、Omi 融资、Limitless 被 Meta 收购）</div>
+    <div>CNET / Inc. / Medium / Yahoo Tech（Humane AI Pin 与 Rabbit R1 失败复盘）</div>
+    <div>Product Hunt / alignify / yourstory（Marble 2026.9 发布、Genie 3 世界模型格局）</div>
+    <div>storyflow / leifii / glad-ia-tor（Ideogram/Recraft/Krea 设计三强对比）</div>
+    <div>GDC 2026 / aivyber / quby（Meshy、Tripo 3D 生成格局）</div>
+    <div>阿里云 / GitHub / 知乎（Wan 2.1 登顶 VBench→3.0、HunyuanVideo 开源框架）</div>
+    <div>TMTPost / 亿欧 / OFweek（海螺 AI 出海、MiniMax 2026H1 营收 $1.17 亿）</div>
+    <div>搜狐 / 网易 / 新浪财经（讯飞星火 X2、医疗 V3.5、开发者 1000 万）</div>
+    <div>CSDN / SegmentFault / 钛媒体 / OFweek（WPS AI 25 项 IM 能力、钉钉悟空、办公平台 Agent 化）</div>
+    <div>新浪财经 / OSCHINA / 中国日报网（腾讯 ima Copilot 10 万人排队、知识号生态）</div>
+    <div>网经社 / aibase（智谱清言 2500 万用户、GLM-5 开源、港股 2513 市值 511 亿港元）</div>
+    <div><b>小众黑马章节数据源（第三轮定向检索）：</b>a16z Top 100 Gen AI Apps 第 6 期（2026.3 发布，移动数据截至 2026.1）</div>
+    <div>TechCrunch / CNBC（Cal AI 被 MyFitnessPal 收购、青少年创业收入轨迹）</div>
+    <div>PR Newswire / SaaStr / Reuters 转述（Higgsfield B 轮 $5.4B 估值与 ARR，厂商口径未审计）</div>
+    <div>Binance Square / pickful（a16z 榜单转述：Yandex Alice 71M 月活、三极格局）</div>
+    <div>Udonis / Demandsage / Fortune / Appmagic / yumaueno（Talkie、PolyBuzz、Umax/Rizz 等 App Mafia 收入数据）</div>
+    <div>财经十一人 / 36氪 / 财联社 / 南都（爱诗科技 PixVerse MAU 与 B 轮、Monica/蝴蝶效应背景）</div>
+    <div>华声在线 / 新华系（拟人化互动新规 2026.7.15 生效、豆包/千问下线智能体）</div>
+    <div>QuestMobile / 艾瑞转述 / AI产品榜 aicpb.com（办公智能体 3316 万月活、纳米 AI 登顶、国内增速数据）</div>
+    <div>Preqin / Crunchbase（Rosebud 种子轮）；AvocAIdo（AI 图像编辑市场规模）</div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>AI 产品全景 2026 · 产品经理视角解构报告 · 检索整理于 2026-10-03</p>
+  <p style="margin-top:6px;opacity:.7">数据来自公开网络报道，仅供学习研究参考；引用请以官方披露为准。</p>
+</footer>
+
+<button id="backtop" title="返回顶部" aria-label="返回顶部">↑</button>
+
+<div id="noresult">没有匹配的产品，换个关键词试试（如：编程、视频、客服、月活）</div>
+
+<script>
+  // 搜索过滤
+  const q = document.getElementById('q');
+  const cards = Array.from(document.querySelectorAll('.card'));
+  const nores = document.getElementById('noresult');
+  q.addEventListener('input', () => {
+    const kw = q.value.trim().toLowerCase();
+    let hits = 0;
+    cards.forEach(c => {
+      const hay = (c.dataset.k + ' ' + c.textContent).toLowerCase();
+      const ok = !kw || hay.includes(kw);
+      c.classList.toggle('hidden', !ok);
+      if (ok) hits++;
+    });
+    // 隐藏空分类
+    document.querySelectorAll('main > section').forEach(sec => {
+      if (sec.id === 'framework' || sec.id === 'charts' || sec.id === 'trends' || sec.id === 'sources') return;
+      const has = sec.querySelectorAll('.card:not(.hidden)').length > 0;
+      sec.style.display = has ? '' : 'none';
+    });
+    nores.style.display = (kw && hits === 0) ? 'block' : 'none';
+  });
+
+  // 返回顶部
+  const bt = document.getElementById('backtop');
+  window.addEventListener('scroll', () => bt.classList.toggle('show', window.scrollY > 600), {passive:true});
+  bt.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+</script>
+</body>
+</html>

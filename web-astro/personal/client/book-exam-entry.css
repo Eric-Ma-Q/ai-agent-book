@@ -1,0 +1,13 @@
+/* Header button for the book exam. Mirrors the Harness entry sizing and adds
+   only the selected state, leaving the base .icon-button untouched. */
+.book-exam-entry[aria-current='page'] {
+  background: var(--surface);
+  border-color: var(--muted);
+}
+
+@media (max-width: 400px) {
+  .book-exam-entry {
+    width: 36px;
+    height: 36px;
+  }
+}

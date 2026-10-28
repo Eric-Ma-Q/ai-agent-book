@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code 的产品设计 2026：把「终端里的 Agent」做成一套操作系统</title>
+<meta name="description" content="基于 65 篇官方文档、550 条 npm 版本数据、Agent SDK（MIT）与 sandbox-runtime（Apache-2.0）源码，拆解 Claude Code 的定位、会话生命周期、工具、权限沙箱、上下文、扩展、多代理与商业化，附 39 条来源。">
+<script>
+
+/* 主题预置：在 CSS 绘制前挂上 dark 类，避免闪白 */
+(function(){try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}})();
+
+</script>
+<style>
+
+:root{
+  --paper:#f5f1e8;
+  --paper-2:#efe9dc;
+  --card:#fffdf8;
+  --ink:#17181c;
+  --ink-2:#34363d;
+  --muted:#6d6a61;
+  --line:#dcd5c6;
+  --line-2:#c9c0ad;
+  --accent:#b23a2e;
+  --accent-2:#8f2b22;
+  --accent-soft:#f2e0db;
+  --green:#2f5d50;
+  --green-soft:#e2ece7;
+  --blue:#33587a;
+  --blue-soft:#e4ebf2;
+  --gold:#9a6b1f;
+  --shadow:0 18px 50px rgba(40,32,20,.08);
+  --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong","SimSun",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  color-scheme:light;
+}
+html.dark{
+  --paper:#141519;
+  --paper-2:#191b20;
+  --card:#1d1f25;
+  --ink:#f1eee6;
+  --ink-2:#d3cec2;
+  --muted:#a39d90;
+  --line:#33363d;
+  --line-2:#454951;
+  --accent:#e06a5b;
+  --accent-2:#f08a7d;
+  --accent-soft:#3a2422;
+  --green:#7fbfa9;
+  --green-soft:#1e2f2a;
+  --blue:#8db4d6;
+  --blue-soft:#1d2a36;
+  --gold:#d8ad63;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(178,58,46,.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(51,88,122,.07), transparent 55%),
+    var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+::selection{background:var(--accent-soft);color:var(--ink)}
+a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--accent)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--card);color:var(--ink);padding:10px 16px;z-index:200}
+.skip:focus{left:12px;top:12px}
+#progress{position:fixed;left:0;top:0;height:3px;width:0;background:var(--accent);z-index:120;transition:width .1s linear}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.hero{padding:66px 0 34px;border-bottom:1px solid var(--line)}
+.hero-inner{position:relative}
+.kicker{
+  margin:0 0 18px;font:700 11px/1.4 var(--sans);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.kicker::before{content:"";width:26px;height:1px;background:var(--accent);display:inline-block}
+h1{
+  margin:0;font-family:var(--serif);font-weight:700;text-wrap:balance;
+  font-size:clamp(36px,5.4vw,68px);line-height:1.06;letter-spacing:-.02em
+}
+h1 em{display:block;font-style:normal;color:var(--accent);margin-top:10px;font-size:.78em}
+.lede{
+  max-width:820px;margin:22px 0 0;font-size:18px;line-height:1.9;color:var(--ink-2)
+}
+.meta{
+  display:flex;flex-wrap:wrap;gap:8px 20px;margin:26px 0 0;
+  font:500 12.5px/1.6 var(--sans);color:var(--muted)
+}
+.meta span{display:inline-flex;align-items:center;gap:7px}
+.meta i{width:4px;height:4px;border-radius:50%;background:var(--accent);display:inline-block}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 15px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font:600 13px/1 var(--sans);text-decoration:none;cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.layout{
+  display:grid;grid-template-columns:250px minmax(0,1fr);
+  gap:56px;align-items:start;padding:40px 0 20px
+}
+.toc{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding-right:4px;min-width:0}
+.toc-title{
+  margin:0 0 12px;font:700 10.5px/1.4 var(--sans);letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted)
+}
+.toc nav{display:flex;flex-direction:column;gap:2px;min-width:0;max-width:100%}
+.toc a{
+  display:block;padding:7px 10px 7px 12px;border-left:2px solid transparent;
+  color:var(--muted);text-decoration:none;font:500 13px/1.55 var(--sans);
+  transition:color .15s ease,border-color .15s ease,background .15s ease
+}
+.toc a:hover{color:var(--ink);background:var(--paper-2)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.toc .sub{padding-left:24px;font-size:12.5px}
+.toc-note{
+  margin:18px 0 0;padding:12px 12px;border:1px solid var(--line);
+  background:var(--card);font:500 11.5px/1.7 var(--sans);color:var(--muted)
+}
+main{min-width:0}
+section{padding:6px 0 42px;border-bottom:1px solid var(--line);scroll-margin-top:24px}
+section:last-of-type{border-bottom:0}
+h2{
+  display:flex;align-items:baseline;gap:14px;margin:26px 0 12px;
+  font-family:var(--serif);font-size:clamp(27px,3.1vw,38px);line-height:1.25;font-weight:700;letter-spacing:-.01em
+}
+h2 .num{
+  font:700 11px/1 var(--sans);letter-spacing:.14em;color:var(--accent);
+  border:1px solid currentColor;padding:5px 6px;flex:0 0 auto;position:relative;top:-2px
+}
+h2 .h2-text{flex:1 1 auto;min-width:0;text-wrap:balance}
+h3{margin:30px 0 8px;font-family:var(--serif);font-size:21px;line-height:1.45;font-weight:700}
+h4{margin:22px 0 6px;font:700 15px/1.5 var(--sans);color:var(--ink)}
+p{margin:12px 0;color:var(--ink-2);font-size:16.5px;line-height:1.95}
+strong{color:var(--ink);font-weight:700}
+.nowrap{white-space:nowrap}
+.hl{background:linear-gradient(transparent 58%,rgba(178,58,46,.20) 58%);padding:0 1px}
+html.dark .hl{background:linear-gradient(transparent 58%,rgba(224,106,91,.24) 58%)}
+.small{font-size:13.5px;line-height:1.75;color:var(--muted)}
+.cite{
+  font:700 10.5px/1 var(--sans);color:var(--accent);text-decoration:none;
+  vertical-align:super;margin-left:2px;white-space:nowrap
+}
+.cite:hover{color:var(--accent-2);text-decoration:underline}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:30px 0 6px}
+.stat{
+  position:relative;padding:16px 16px 14px;background:var(--card);
+  border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden
+}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(25px,3vw,34px);line-height:1.05;letter-spacing:-.02em}
+.stat span{display:block;margin-top:7px;font:600 12px/1.55 var(--sans);color:var(--ink-2)}
+.stat small{display:block;margin-top:6px;font:500 10.5px/1.5 var(--sans);color:var(--muted)}
+.callout{
+  margin:22px 0;padding:16px 20px;background:var(--card);
+  border:1px solid var(--line);border-left:3px solid var(--accent);box-shadow:var(--shadow)
+}
+.callout.green{border-left-color:var(--green)}
+.callout.blue{border-left-color:var(--blue)}
+.callout.gold{border-left-color:var(--gold)}
+.callout .label{
+  display:block;margin-bottom:6px;font:700 10.5px/1.4 var(--sans);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent)
+}
+.callout.green .label{color:var(--green)}
+.callout.blue .label{color:var(--blue)}
+.callout.gold .label{color:var(--gold)}
+.callout p{margin:4px 0;font-size:15px;line-height:1.85}
+.callout p:last-child{margin-bottom:0}
+blockquote{
+  margin:22px 0;padding:18px 22px;background:var(--paper-2);
+  border-left:3px solid var(--ink);font-family:var(--serif);
+  font-size:18px;line-height:1.85;color:var(--ink)
+}
+blockquote p{margin:0;color:var(--ink);font-size:inherit;line-height:inherit}
+blockquote cite{
+  display:block;margin-top:9px;font:500 11.5px/1.6 var(--sans);
+  font-style:normal;color:var(--muted)
+}
+.timeline{list-style:none;margin:24px 0 0;padding:0;position:relative}
+.timeline::before{content:"";position:absolute;left:96px;top:8px;bottom:8px;width:1px;background:var(--line-2)}
+.timeline li{position:relative;display:grid;grid-template-columns:82px 1fr;gap:28px;padding:0 0 22px}
+.timeline li:last-child{padding-bottom:0}
+.timeline .date{text-align:right;padding-top:1px;font:700 12.5px/1.5 var(--sans);color:var(--accent)}
+.timeline .dot{
+  position:absolute;left:90px;top:6px;width:13px;height:13px;border-radius:50%;
+  background:var(--paper);border:2px solid var(--accent);box-shadow:0 0 0 3px var(--paper)
+}
+.timeline .body{padding:0 0 0 16px}
+.timeline .body b{display:block;font:700 15px/1.6 var(--sans);color:var(--ink)}
+.timeline .body span{display:block;margin-top:2px;font-size:14px;line-height:1.75;color:var(--ink-2)}
+.table-wrap{
+  margin:18px 0;border:1px solid var(--line);background:var(--card);
+  overflow-x:auto;box-shadow:var(--shadow)
+}
+table{border-collapse:collapse;width:100%;min-width:640px}
+.mobile-only{display:none}
+caption{caption-side:top;text-align:left;padding:12px 14px 0;font:700 11px/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.72}
+th{background:var(--paper-2);color:var(--ink);font-weight:700;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{min-width:88px;white-space:nowrap;font-weight:700}
+td strong{color:var(--ink)}
+td .yes{color:var(--green);font-weight:700}
+td .no{color:var(--accent);font-weight:700}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.card{background:var(--card);border:1px solid var(--line);padding:16px 18px}
+.card h3{margin:0 0 5px;font-size:17px}
+.card p{margin:0;font-size:14px;line-height:1.8}
+.card .tag{display:inline-block;margin-bottom:8px;font:700 10px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0}
+.flow .step{
+  position:relative;padding:14px;background:var(--card);border:1px solid var(--line);
+  font:600 13px/1.65 var(--sans);color:var(--ink-2)
+}
+.flow .step b{display:block;margin-bottom:4px;color:var(--ink);font-size:14px}
+.flow .step::after{
+  content:"→";position:absolute;right:-9px;top:50%;transform:translateY(-50%);
+  color:var(--accent);font-weight:700;background:var(--paper);padding:0 2px;z-index:1
+}
+.flow .step:last-child::after{display:none}
+ul,ol{margin:12px 0;padding-left:1.35em}
+li{margin:7px 0;color:var(--ink-2);font-size:16px;line-height:1.85}
+li strong{color:var(--ink)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:10px 18px;margin:16px 0;padding:16px 18px;background:var(--card);border:1px solid var(--line)}
+.kv dt{font:700 12.5px/1.7 var(--sans);color:var(--muted);letter-spacing:.04em}
+.kv dd{margin:0;font-size:15px;line-height:1.8;color:var(--ink-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.two .box{padding:16px 18px;border:1px solid var(--line);background:var(--card)}
+.two .box h3{margin:0 0 8px;font-size:16px}
+.two .box.good{border-top:3px solid var(--green)}
+.two .box.bad{border-top:3px solid var(--accent)}
+.two .box ul{margin:0;padding-left:1.1em}
+.two .box li{font-size:14px;line-height:1.8;margin:5px 0}
+.pill{display:inline-block;padding:2px 7px;border:1px solid var(--line-2);background:var(--paper-2);font:600 10.5px/1.6 var(--sans);color:var(--muted);margin:0 4px 4px 0}
+ol.sources{list-style:none;counter-reset:src;margin:20px 0 0;padding:0}
+ol.sources li{
+  counter-increment:src;position:relative;padding:14px 0 14px 46px;
+  border-bottom:1px solid var(--line);scroll-margin-top:24px
+}
+ol.sources li::before{
+  content:"[" counter(src) "]";position:absolute;left:0;top:14px;
+  font:700 11px/1.6 var(--mono);color:var(--accent)
+}
+ol.sources li:target{background:var(--accent-soft)}
+ol.sources .src-title{display:block;font:700 14.5px/1.6 var(--sans);color:var(--ink)}
+ol.sources .src-meta{display:block;margin-top:2px;font:500 11.5px/1.6 var(--sans);color:var(--muted)}
+ol.sources .src-link{display:inline-block;margin-top:5px;font:600 11.5px/1.6 var(--sans);word-break:break-all}
+footer{border-top:1px solid var(--line);margin-top:10px;padding:28px 0 56px;background:var(--paper-2)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font:500 12px/1.7 var(--sans);color:var(--muted)}
+#themeFab{
+  position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease
+}
+#themeFab:hover{transform:scale(1.08);border-color:var(--accent)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;gap:0;padding-top:26px}
+  .toc{position:static;max-height:none;overflow:visible;margin-bottom:18px;padding:0}
+  .toc nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding-bottom:8px;border-bottom:1px solid var(--line);width:100%}
+  .toc a{white-space:nowrap;border-left:0;border-bottom:2px solid transparent;padding:7px 10px}
+  .toc a.active{border-left:0;border-bottom-color:var(--accent)}
+  .toc .sub{display:none}
+  .toc-note{display:none}
+  .stats{grid-template-columns:1fr 1fr}
+}
+@media (max-width:680px){
+  .wrap{padding:0 18px}
+  .hero{padding:44px 0 26px}
+  .lede{font-size:16.5px}
+  h2{font-size:27px}
+  .stats{grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:13px 13px 12px}
+  .timeline::before{left:8px}
+  .timeline li{grid-template-columns:1fr;gap:2px;padding-left:26px}
+  .timeline .date{text-align:left}
+  .timeline .dot{left:2px;top:8px}
+  .timeline .body{padding-left:0}
+  .cards,.two{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr}
+  .flow .step::after{display:none!important}
+  .kv{grid-template-columns:1fr;gap:4px}
+  .kv dt{margin-top:8px}
+  .kv dt:first-child{margin-top:0}
+  table{min-width:560px}
+  .mobile-only{display:inline}
+}
+@media print{
+  :root,html.dark{
+    --paper:#fff;--paper-2:#fff;--card:#fff;--ink:#000;--ink-2:#111;--muted:#555;
+    --line:#bbb;--line-2:#999;--accent:#000;--accent-2:#000;--accent-soft:#fff;
+    --green:#000;--green-soft:#fff;--blue:#000;--blue-soft:#fff;--gold:#000;--shadow:none;
+  }
+  body{background:#fff;color:#000;font-size:11pt}
+  .toc,.hero-actions,#themeFab,#progress,.skip,footer{display:none!important}
+  .layout{display:block;padding:0}
+  .hero{border-bottom:1px solid #999;padding:0 0 12pt}
+  h1{font-size:26pt}
+  h1 em{color:#000}
+  h2{font-size:18pt;break-after:avoid}
+  h3{break-after:avoid}
+  section{break-inside:avoid;border-bottom:1px solid #ccc;padding-bottom:14pt}
+  .callout,.card,.stat,blockquote,.table-wrap{box-shadow:none}
+  a{color:#000;text-decoration:none}
+  .cite{color:#000}
+  ol.sources li{break-inside:avoid}
+}
+
+code{font-family:var(--mono);font-size:.88em;background:var(--paper-2);border:1px solid var(--line);padding:1px 5px;border-radius:3px;color:var(--ink-2);white-space:nowrap}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<div id="progress" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <p class="kicker">产品拆解 · Claude Code · 2026-10</p>
+    <h1>Claude Code 的产品设计<em>把「终端里的 Agent」做成一套操作系统</em></h1>
+    <p class="lede">
+      2025 年 2 月它还是一个「有限研究预览」的命令行工具；2026 年 10 月的 v2.1.305 已经有
+      <strong>46 个工具条目、33 个 hook 事件、6 种权限模式、9 个运行界面，年化收入超过 25 亿美元。</strong>
+      核心闭源，但 Agent SDK（MIT）与 sandbox-runtime（Apache-2.0）可以下载、阅读、跑测试。
+      本文用官方文档、版本数据和这两份开源代码，复原它的产品结构：它到底在卖什么，哪些是设计取舍，哪些只是实现细节。
+    </p>
+    <div class="meta">
+      <span><i></i>数据截至 2026-10-21</span>
+      <span><i></i>39 条来源</span>
+      <span><i></i>官方文档 / 开源代码 / npm 元数据</span>
+      <span><i></i>阅读约 26 分钟</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn primary" href="#summary">先看结论</a>
+      <a class="btn" href="#opensource">开源边界与验证</a>
+      <button class="btn" id="btnPrint" type="button">打印 / 导出 PDF</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <aside class="toc" aria-label="目录">
+    <p class="toc-title">目录</p>
+    <nav>
+      <a href="#summary">一页看懂</a>
+      <a href="#timeline">时间线</a>
+      <a href="#positioning">定位与边界</a>
+      <a href="#users">用户与场景</a>
+      <a href="#loop">一次会话的六段</a>
+      <a href="#tools">工具层</a>
+      <a href="#trust">权限与沙箱</a>
+      <a href="#context">上下文工程</a>
+      <a href="#extend">扩展体系</a>
+      <a href="#multi">多代理</a>
+      <a href="#surfaces">多界面</a>
+      <a href="#business">商业与分发</a>
+      <a href="#opensource">开源边界</a>
+      <a href="#principles">设计原则</a>
+      <a href="#compare">竞品对照</a>
+      <a href="#risks">风险与启示</a>
+      <a href="#sources">来源</a>
+    </nav>
+    <p class="toc-note">文中 <b>[n]</b> 可点击跳到来源。官方文档、官方博客、仓库元数据分开标注；社区逆向文章不进入事实链。</p>
+  </aside>
+
+  <main id="main">
+    <section id="summary">
+      <h2><span class="num">00</span><span class="h2-text">一页看懂</span></h2>
+      <div class="stats">
+        <div class="stat"><b>550</b><span>npm 发布次数</span><small>2025-02-24 至 2026-10-20，月均约 27 次 <a class="cite" href="#s20">[20]</a></small></div>
+        <div class="stat"><b>45</b><span>在册内置工具</span><small>文档列出 46 条，TaskOutput 已移除 <a class="cite" href="#s3">[3]</a></small></div>
+        <div class="stat"><b>33</b><span>hook 事件</span><small>5 类执行器：command / http / mcp_tool / prompt / agent <a class="cite" href="#s7">[7]</a></small></div>
+        <div class="stat"><b>6</b><span>权限模式</span><small>v2.1.283 起 auto 成为内置默认 <a class="cite" href="#s4">[4]</a></small></div>
+        <div class="stat"><b>9</b><span>运行界面</span><small>CLI / Desktop / VS Code / JetBrains / Web / Mobile / Slack / Chrome / CI <a class="cite" href="#s13">[13]</a></small></div>
+        <div class="stat"><b>$2.5B</b><span>年化收入</span><small>2026-02 官方口径，企业收入超过一半 <a class="cite" href="#s27">[27]</a></small></div>
+      </div>
+
+      <div class="callout">
+        <span class="label">一句话结论</span>
+        <p><strong>Claude Code 卖的不是模型能力，而是一套把「不确定的模型」变成「可交付工作」的 harness：工具给行动，上下文给注意力，权限给信任，多界面给场景。</strong></p>
+        <p>模型会持续变强，harness 的每一层假设都会过期；因此它的产品设计不是「加功能」，而是不断把该由模型决定的事交还模型，把该由系统保证的事（权限、回退、成本）留给自己。<a class="cite" href="#s28">[28]</a></p>
+      </div>
+
+      <ul>
+        <li><strong>产品本体是 harness，不是模型。</strong>官方定义里，Claude Code 是「模型外面那层提供工具、管理上下文的东西」；模型换代时，这层要跟着改。<a class="cite" href="#s2">[2]</a></li>
+        <li><strong>设计主轴是「减少打断」。</strong>从逐次审批走到「默认 auto + 系统级沙箱 + 可回退检查点」：不可逆的动作才拦，可逆的让它跑。<a class="cite" href="#s4">[4]</a><a class="cite" href="#s6">[6]</a><a class="cite" href="#s26">[26]</a></li>
+        <li><strong>先做可组合的扩展点，再做产品化。</strong>hooks 先作为通用事件总线存在，后来才长出「mods」这种直接改终端界面的插件；subagents 先解决上下文隔离，后来才变成 agent teams。<a class="cite" href="#s7">[7]</a><a class="cite" href="#s9">[9]</a></li>
+        <li><strong>内核只有一套，表面在扩散。</strong>同一个循环、同一套工具与权限规则，跑在终端、IDE、桌面、浏览器、手机、Slack、CI 与云会话里。<a class="cite" href="#s13">[13]</a></li>
+        <li><strong>开源的是骨架，闭源的是编排。</strong>SDK 暴露 49 个选项，沙箱 49 个 TypeScript 文件可读；主循环、提示词、权限分类器、云端服务不公开。<a class="cite" href="#s22">[22]</a><a class="cite" href="#s23">[23]</a><a class="cite" href="#s21">[21]</a></li>
+      </ul>
+    </section>
+
+    <section id="timeline">
+      <h2><span class="num">01</span><span class="h2-text">时间线：18 个月，四次形态变化</span></h2>
+      <p><strong>它没有一次性设计成现在这样，而是每半年换一次形态。</strong>版本节奏本身就是一个产品信号：550 次发布意味着团队在用「每天可发版」的方式做 agent，而不是按季度交付一个大版本。<a class="cite" href="#s20">[20]</a></p>
+
+      <ol class="timeline">
+        <li><span class="date">2025-02-24</span><span class="dot"></span><div class="body"><b>研究预览：一个会自己跑命令的终端工具</b><span>随 Claude 3.7 Sonnet 发布，「有限研究预览」，能读代码、改文件、跑测试、提交并推送 GitHub。定位是「研究开发者怎么用 Claude 写代码」。<a class="cite" href="#s24">[24]</a></span></div></li>
+        <li><span class="date">2025-05-22</span><span class="dot"></span><div class="body"><b>正式可用：从实验品变成产品</b><span>随 Claude 4 开放给所有用户，开始进入团队采购视野。<a class="cite" href="#s25">[25]</a></span></div></li>
+        <li><span class="date">2025-09-29</span><span class="dot"></span><div class="body"><b>2.0：把「长任务」当成核心场景</b><span>原生 VS Code 扩展、检查点（Esc 两次回退）、子代理、hooks、后台任务；Claude Code SDK 更名为 Claude Agent SDK。<a class="cite" href="#s26">[26]</a></span></div></li>
+        <li><span class="date">2025-10-20</span><span class="dot"></span><div class="body"><b>上云：浏览器里开并行会话</b><span>Claude Code on the web 研究预览，每个任务跑在隔离沙箱里，自动开 PR；同期上线 iOS。<a class="cite" href="#s32">[32]</a></span></div></li>
+        <li><span class="date">2026-01</span><span class="dot"></span><div class="body"><b>外溢：从写代码扩到知识工作</b><span>Anthropic 单月发布 30 多个产品与功能，Cowork 把 Claude Code 的工程能力带进更广的知识工作。<a class="cite" href="#s27">[27]</a></span></div></li>
+        <li><span class="date">2026-02-12</span><span class="dot"></span><div class="body"><b>商业化验证：25 亿美元年化</b><span>Series G 披露 Claude Code 年化收入超过 25 亿美元、企业收入过半、商业订阅自年初翻两番。<a class="cite" href="#s27">[27]</a></span></div></li>
+        <li><span class="date">2026-10</span><span class="dot"></span><div class="body"><b>平台化：默认 auto、mods、多代理</b><span>v2.1.305；auto 成为内置默认权限模式（v2.1.283 起），mods 允许插件直接绘制终端界面，agent teams 仍处实验阶段。<a class="cite" href="#s19">[19]</a><a class="cite" href="#s4">[4]</a><a class="cite" href="#s9">[9]</a><a class="cite" href="#s35">[35]</a></span></div></li>
+      </ol>
+
+      <div class="callout blue">
+        <span class="label">读法</span>
+        <p>这四次变化分别对应四个产品命题：<strong>能不能自主行动</strong>（2025 上半年）→ <strong>敢不敢交给它长任务</strong>（2.0）→ <strong>能不能离开这台机器</strong>（云端与移动）→ <strong>能不能被组织规模化采用</strong>（权限、计费、控制面）。</p>
+      </div>
+    </section>
+
+    <section id="positioning">
+      <h2><span class="num">02</span><span class="h2-text">定位：三个「不做」定义了它是什么</span></h2>
+      <p><strong>官方给它的定义很克制：一个住在终端里、能读代码库、改文件、跑命令、处理 git 工作流的 agent。</strong><a class="cite" href="#s21">[21]</a>
+      但更准确的说法在文档里：模型负责推理，Claude Code 是模型外面那层「提供工具、管理上下文」的东西，也就是 agentic harness。<a class="cite" href="#s2">[2]</a></p>
+
+      <div class="cards">
+        <div class="card"><span class="tag">不做模型</span><h3>模型是上游，产品是 harness</h3><p>它不训练模型，也不锁死一个模型：会话内可切换，企业可走 Bedrock、Vertex、Foundry 或自建网关。产品价值落在「怎么用模型」而不是「用哪个模型」。<a class="cite" href="#s1">[1]</a></p></div>
+        <div class="card"><span class="tag">不做 IDE</span><h3>把 IDE 当宿主，不当对手</h3><p>VS Code 与 JetBrains 都是扩展：内联 diff、终端会话、文件上下文，会话仍由 CLI 内核驱动。桌面端补的是「并行会话 + 视觉审查」，不是编辑器。<a class="cite" href="#s13">[13]</a><a class="cite" href="#s26">[26]</a></p></div>
+        <div class="card"><span class="tag">不做一次性生成</span><h3>做长会话与可恢复状态</h3><p>检查点、会话恢复与分支、压缩、后台任务、云端续跑：假设任务会跨小时、跨设备、被打断。一次性补全的产品不需要这些。<a class="cite" href="#s26">[26]</a><a class="cite" href="#s36">[36]</a></p></div>
+        <div class="card"><span class="tag">做平台</span><h3>把「怎么用」变成可配置</h3><p>CLAUDE.md、skills、hooks、subagents、MCP、plugins、mods：同一套能力既能被个人改，也能被组织统一下发。<a class="cite" href="#s10">[10]</a></p></div>
+      </div>
+
+      <div class="callout gold">
+        <span class="label">定位一句话</span>
+        <p>给已经在终端里工作的人，一个能自己读代码、改代码、验证结果的同事；先从一条命令开始，再逐步长成团队的基础设施。</p>
+        <p>它的扩张顺序也印证了这一点：先个人、再团队、再组织；先本地、再云端；先编码、再知识工作。<a class="cite" href="#s27">[27]</a></p>
+      </div>
+
+      <p><strong>代价是「边界感」变弱。</strong>当它同时是 CLI、IDE 插件、桌面应用、云会话、Slack 机器人、CI 步骤时，用户很难一句话说清「Claude Code 是什么」。产品用「同一个引擎，不同交互密度」来回答这个问题，而不是给每个表面起新名字。<a class="cite" href="#s13">[13]</a></p>
+    </section>
+
+    <section id="users">
+      <h2><span class="num">03</span><span class="h2-text">用户与场景：四类人，四种交互密度</span></h2>
+      <p><strong>同一个内核被包装成四种工作方式。</strong>判断一个界面该不该做，标准不是「能不能跑」，而是「这类用户的交互密度是否匹配」。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>角色</th><th>典型任务</th><th>首选界面</th><th>关键机制</th><th>证据</th></tr></thead>
+          <tbody>
+            <tr><td><b>个人开发者</b></td><td>探索代码、修 bug、重构、写测试</td><td>CLI、VS Code、JetBrains</td><td>plan 模式、检查点、/rewind、子代理隔离上下文</td><td><a class="cite" href="#s4">[4]</a><a class="cite" href="#s26">[26]</a></td></tr>
+            <tr><td><b>团队</b></td><td>PR 审查、CI 修复、批量维护</td><td>Code Review、GitHub Actions、Slack</td><td>多代理审查 + 验证步骤 + 内联评论；不阻断合并</td><td><a class="cite" href="#s16">[16]</a></td></tr>
+            <tr><td><b>平台 / 安全</b></td><td>统一策略、隔离、成本与审计</td><td>托管设置、网关、分析面板、云会话</td><td>managed settings、沙箱、OTel 指标、provider 路由</td><td><a class="cite" href="#s1">[1]</a><a class="cite" href="#s6">[6]</a><a class="cite" href="#s18">[18]</a></td></tr>
+            <tr><td><b>非工程角色</b></td><td>改文案、跑预览、看 diff、做原型</td><td>Desktop、Web、手机</td><td>可视化 diff、应用预览、artifacts、computer use</td><td><a class="cite" href="#s14">[14]</a><a class="cite" href="#s27">[27]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>谁不适合：</strong>要求完全离线、不接受订阅制、需要零数据留存（ZDR）或特定合规配置的组织。文档明确把 Code Review、ultrareview 等能力排除在 ZDR / HIPAA / CMEK 场景之外。<a class="cite" href="#s16">[16]</a><a class="cite" href="#s17">[17]</a></p>
+
+      <div class="two">
+        <div class="box good"><h3>产品做对的地方</h3><ul>
+          <li>让同一份配置（CLAUDE.md、MCP、权限）跨本地表面共享，降低切换成本。<a class="cite" href="#s13">[13]</a></li>
+          <li>把「审查」做成可视化：diff 面板、应用预览、PR 监控，而不是让用户读终端日志。<a class="cite" href="#s14">[14]</a></li>
+          <li>给非工程角色一个不碰终端的入口，但不另造一套 agent。<a class="cite" href="#s27">[27]</a></li>
+        </ul></div>
+        <div class="box bad"><h3>仍然存在的摩擦</h3><ul>
+          <li>能力按订阅计划与 provider 切分，读者需要一张对照表才知道自己能用什么。<a class="cite" href="#s1">[1]</a></li>
+          <li>云端与本地是两套执行模型，迁移靠 <code>--cloud</code> / <code>--teleport</code> 之类的命令，心智负担不低。<a class="cite" href="#s13">[13]</a></li>
+          <li>多界面意味着同一功能要在多处维护一致性，文档里大量「仅某端可用」的注脚就是代价。</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <section id="loop">
+      <h2><span class="num">04</span><span class="h2-text">一次会话的六段：产品把设计放在哪里</span></h2>
+      <p><strong>agent 产品的体验不是「回答得好不好」，而是六段里每一段有没有替用户省掉一次操作。</strong>下面按时间顺序拆，每段给出机制与设计意图。</p>
+
+      <div class="flow">
+        <div class="step"><b>1 启动</b>预载项目记忆、自动记忆、MCP 工具名、skill 描述</div>
+        <div class="step"><b>2 输入</b>自然语言、<code>/</code> 命令、<code>@</code> 文件、plan 模式</div>
+        <div class="step"><b>3 循环</b>收集上下文 → 行动 → 验证，反复直到完成</div>
+        <div class="step"><b>4 干预</b>Esc 打断、消息排队、结构化提问、权限裁决</div>
+        <div class="step"><b>5 收口</b>diff 审查、/rewind、/goal、Stop hook</div>
+        <div class="step"><b>6 恢复</b>恢复会话、分支、导出 transcript</div>
+      </div>
+
+      <dl class="kv">
+        <dt>1 启动</dt><dd>每轮会话开始时加载：CLAUDE.md（建议 200 行以内）、自动记忆（前 200 行或 25 KB）、MCP 工具名、skill 描述、输出风格与 git 状态快照。<strong>设计意图：把「每次都要解释」的东西前置，但给常驻内容设上限。</strong><a class="cite" href="#s11">[11]</a><a class="cite" href="#s12">[12]</a></dd>
+        <dt>2 输入</dt><dd>斜杠命令与 CLI 旗标是两套入口：本机运行 v2.1.305 的 <code>--help</code> 列出 67 个可见旗标，<code>--permission-mode</code> 给出 6 个取值；plan 模式先出方案再改代码，ExitPlanMode 需要批准。<strong>设计意图：把「模糊需求」变成「可批准的计划」。</strong><a class="cite" href="#s4">[4]</a><a class="cite" href="#s39">[39]</a></dd>
+        <dt>3 循环</dt><dd>模型自己决定何时读文件、何时改、何时跑测试；工具结果回灌，直到它判断完成。<strong>设计意图：不把步骤写死在 harness 里，步骤由模型按证据决定。</strong><a class="cite" href="#s2">[2]</a></dd>
+        <dt>4 干预</dt><dd>随时 Esc 打断；工作期间可以排队消息；AskUserQuestion 用选项而不是追问；权限请求可按工具与参数规则放行。<strong>设计意图：人只在「方向错了」或「有风险」时介入。</strong><a class="cite" href="#s3">[3]</a><a class="cite" href="#s5">[5]</a></dd>
+        <dt>5 收口</dt><dd>每次用户回合前自动存检查点（保留最近 100 个）；/rewind 可只回退代码、只回退对话或两者；/goal 用独立模型逐轮判定完成条件。<strong>设计意图：让「交给它长任务」变成可撤销的决定。</strong><a class="cite" href="#s26">[26]</a><a class="cite" href="#s33">[33]</a></dd>
+        <dt>6 恢复</dt><dd>会话可命名、恢复、分支；transcript 落盘，可导出。<strong>设计意图：任务跨天、跨设备、跨人交接。</strong><a class="cite" href="#s36">[36]</a></dd>
+      </dl>
+
+      <div class="callout">
+        <span class="label">最容易被忽略的设计</span>
+        <p><strong>第 5 段和第 6 段才是「敢用」的来源。</strong>大多数同类产品把力气花在第 3 段（循环与工具），但真正让用户把复杂任务交出去的是「错了能退、断了能续」。检查点与恢复不是辅助功能，是产品的前提。<a class="cite" href="#s26">[26]</a></p>
+      </div>
+    </section>
+
+    <section id="tools">
+      <h2><span class="num">05</span><span class="h2-text">工具层：45 个工具，一套命名空间</span></h2>
+      <p><strong>工具不是「功能列表」，而是模型能做的动作集合。</strong>文档列出 46 条工具条目（TaskOutput 已于 v2.1.277 移除，在册 45 个），按代理权分成五类：文件、搜索、执行、Web、代码智能，另有编排类工具负责分工与提问。<a class="cite" href="#s3">[3]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>类别</th><th>代表工具</th><th>默认是否询问</th><th>设计意图</th></tr></thead>
+          <tbody>
+            <tr><td>文件</td><td><code>Read</code> <code>Write</code> <code>Edit</code> <code>NotebookEdit</code></td><td>读不询问；写/改询问</td><td>读便宜、写昂贵；编辑用「精确替换」而不是整文件重写</td></tr>
+            <tr><td>搜索</td><td><code>Glob</code> <code>Grep</code> <code>LSP</code></td><td>不询问</td><td>先定位再读，减少上下文浪费；LSP 补符号级导航</td></tr>
+            <tr><td>执行</td><td><code>Bash</code> <code>PowerShell</code> <code>Monitor</code></td><td>询问</td><td>一个通用执行器覆盖编译、测试、git、脚本；可被沙箱包住</td></tr>
+            <tr><td>Web</td><td><code>WebFetch</code> <code>WebSearch</code></td><td>询问</td><td>只在需要外部事实时用，避免默认联网</td></tr>
+            <tr><td>编排</td><td><code>Agent</code> <code>SendMessage</code> <code>Task*</code> <code>Workflow</code> <code>AskUserQuestion</code></td><td>多数不询问</td><td>把「分工、等待、提问」也做成工具，让模型自己编排</td></tr>
+            <tr><td>会话</td><td><code>EnterPlanMode</code> <code>EnterWorktree</code> <code>ReportFindings</code> <code>Artifact</code></td><td>视工具而定</td><td>把工作流状态（计划、隔离目录、审查结果）显式化</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>三条设计规则</h3>
+      <ul>
+        <li><strong>一个工具一个动词。</strong>不做一个「万能 shell 工具」包办所有事，而是让权限规则、hook matcher、子代理工具清单都能引用同一个工具名。<a class="cite" href="#s3">[3]</a></li>
+        <li><strong>工具名是稳定接口。</strong>权限规则写 <code>Bash(git push *)</code>，hook 匹配 <code>PreToolUse</code> 加 matcher，子代理用 <code>tools:</code> 列表；三处共用一套名字，配置才能复用。<a class="cite" href="#s5">[5]</a><a class="cite" href="#s7">[7]</a><a class="cite" href="#s8">[8]</a></li>
+        <li><strong>用模型最熟的原语。</strong>Anthropic 明确说 Claude Code 建立在 Bash 与文本编辑器两个工具上：它们不是为 agent 设计的，但模型见得最多、用得最好；把编排逻辑写进代码执行，能让中间结果不进上下文。<a class="cite" href="#s28">[28]</a></li>
+      </ul>
+
+      <div class="callout green">
+        <span class="label">一个可核验的收益</span>
+        <p>官方给出的对照：给 Opus 4.6 自行过滤工具输出的能力后，BrowseComp 准确率从 <strong>45.3% 提升到 61.6%</strong>；同一套「让模型自己编排」的思路也解释了为什么 Bash 比一堆窄工具更值钱。<a class="cite" href="#s28">[28]</a></p>
+      </div>
+
+      <p><strong>工具也会被删。</strong><code>TodoWrite</code> 正被 <code>TaskCreate/Get/List/Update</code> 取代，<code>TaskOutput</code> 直接移除，改成读后台任务的输出文件；<code>Glob</code>/<code>Grep</code> 在 macOS/Linux 上默认不提供。工具集不是越多越好，而是随模型能力与平台差异做减法。<a class="cite" href="#s3">[3]</a></p>
+    </section>
+
+    <section id="trust">
+      <h2><span class="num">06</span><span class="h2-text">权限与沙箱：把「问」换成「分层防御」</span></h2>
+      <p><strong>这是 2026 年最大的产品变化：默认不再逐次询问。</strong>v2.1.283 起，终端会话的内置默认权限模式是 <code>auto</code>：工具调用先过规则，再过一个分类器，只有「不可逆、破坏性、指向环境外」的动作才拦。<a class="cite" href="#s4">[4]</a><a class="cite" href="#s33">[33]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>模式</th><th>不经询问就能做什么</th><th>适用</th></tr></thead>
+          <tbody>
+            <tr><td><code>default</code>（Manual）</td><td>只读</td><td>敏感工作，逐次审查</td></tr>
+            <tr><td><code>acceptEdits</code></td><td>读、改文件、常见文件系统命令</td><td>正在审阅的代码迭代</td></tr>
+            <tr><td><code>plan</code></td><td>读，加分类器批准的只读命令</td><td>改代码前先摸清结构</td></tr>
+            <tr><td><code>auto</code></td><td>几乎所有动作，后台安全校验</td><td>长任务，减少提示疲劳（当前默认）</td></tr>
+            <tr><td><code>dontAsk</code></td><td>工作目录内读 + 预先批准的工具，其余直接拒绝</td><td>锁定的 CI 与脚本</td></tr>
+            <tr><td><code>bypassPermissions</code></td><td>全部</td><td>仅限隔离容器 / 虚拟机</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>三层防御，各管一段</h3>
+      <div class="cards">
+        <div class="card"><span class="tag">第一层 规则</span><h3>权限模式 + allow / ask / deny</h3><p>deny 与显式 ask 在分类器之前评估，任何模式都拦得住；allow 规则在 <code>bypassPermissions</code> 下反而无效。<a class="cite" href="#s5">[5]</a></p></div>
+        <div class="card"><span class="tag">第二层 分类器</span><h3>auto 模式的安全审查</h3><p>默认只信任工作目录与当前仓库的 remote；推送到公司组织、写团队云存储桶默认会被拦，除非加进 <code>autoMode.environment</code>。<a class="cite" href="#s33">[33]</a></p></div>
+        <div class="card"><span class="tag">第三层 系统沙箱</span><h3>OS 级边界 + 网络代理</h3><p>Bash、PowerShell、Monitor 及其子进程被包进沙箱：写限工作目录与临时目录，网络默认无直连、只走本机代理的白名单。<a class="cite" href="#s6">[6]</a></p></div>
+        <div class="card"><span class="tag">兜底</span><h3>检查点与保护路径</h3><p>每个用户回合前存快照，可只回退代码；关键路径的删除与受保护路径的写入，任何模式都不自动批准。<a class="cite" href="#s26">[26]</a><a class="cite" href="#s4">[4]</a></p></div>
+      </div>
+
+      <div class="callout">
+        <span class="label">设计取舍</span>
+        <p><strong>安全模型从「每次问」转向「默认放行 + 不可逆才拦 + 可回退」。</strong>代价是用户必须理解三件事的边界：规则管意图、分类器管风险、沙箱管影响范围。三者组合起来才成立，单独拿走任何一层都会出问题。</p>
+      </div>
+
+      <h3>沙箱不是「更严的权限」，是另一类东西</h3>
+      <p>权限决定「要不要批准」，沙箱决定「批准之后能碰到什么」。它只覆盖 Shell 命令：内置文件工具、MCP server、hooks、LSP 都在沙箱外，按各自的权限规则走。<a class="cite" href="#s6">[6]</a>
+      实现上，它用的是开源包 <code>@anthropic-ai/sandbox-runtime</code>：macOS 走 Seatbelt，Linux 走 bubblewrap，网络经本机代理逐 host 判定，凭据文件可单独遮蔽。<a class="cite" href="#s23">[23]</a></p>
+
+      <div class="two">
+        <div class="box good"><h3>这套设计解决了什么</h3><ul>
+          <li>长任务不再被几百次确认打断；<a class="cite" href="#s4">[4]</a></li>
+          <li>误操作可撤销，用户敢把「删文件、改配置」交给它；<a class="cite" href="#s26">[26]</a></li>
+          <li>企业可以按仓库、域名、云桶声明「可信基础设施」，而不是给人发一张万能白名单。<a class="cite" href="#s33">[33]</a></li>
+        </ul></div>
+        <div class="box bad"><h3>没解决什么</h3><ul>
+          <li>提示注入仍可能诱导模型做「规则允许但意图错误」的事；官方把防线放在沙箱与最小权限上，而不是「模型不会上当」。<a class="cite" href="#s6">[6]</a></li>
+          <li>沙箱外的工具（MCP、hooks、LSP）是更大的攻击面，插件即代码。<a class="cite" href="#s23">[23]</a></li>
+          <li>默认读权限覆盖大部分机器，凭据保护需要显式配置；默认值并不等于「安全默认」。<a class="cite" href="#s6">[6]</a></li>
+        </ul></div>
+      </div>
+    </section>
+
+    <section id="context">
+      <h2><span class="num">07</span><span class="h2-text">上下文工程：把窗口当预算，不当仓库</span></h2>
+      <p><strong>agent 的能力上限，很大程度是「注意力预算」的上限。</strong>Anthropic 的说法是：上下文是有限资源，边际收益递减，token 越多、召回越差（context rot）。产品设计要做的是决定「什么常驻、什么按需、什么丢掉」。<a class="cite" href="#s29">[29]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>内容</th><th>何时进入上下文</th><th>成本控制</th></tr></thead>
+          <tbody>
+            <tr><td>CLAUDE.md / AGENTS.md</td><td>会话启动，目录层级向上加载</td><td>官方建议 200 行以内；超出拆到 <code>.claude/rules/</code> 或 skills<a class="cite" href="#s11">[11]</a></td></tr>
+            <tr><td>自动记忆</td><td>会话启动</td><td>只注入前 200 行或 25 KB<a class="cite" href="#s12">[12]</a></td></tr>
+            <tr><td>MCP 工具名</td><td>会话启动</td><td>工具多时启用 tool search，按需加载<a class="cite" href="#s3">[3]</a></td></tr>
+            <tr><td>skill 描述</td><td>会话启动</td><td>只放 YAML 摘要，正文按需读取（渐进披露）<a class="cite" href="#s28">[28]</a></td></tr>
+            <tr><td>文件内容</td><td>模型主动读</td><td>子代理隔离大读取；压缩后最多重读 5 个文件<a class="cite" href="#s12">[12]</a></td></tr>
+            <tr><td>被调用的 skill 正文</td><td>调用时</td><td>压缩后重注入，单个上限 5,000 tokens、总计 25,000<a class="cite" href="#s12">[12]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>压缩不是「删历史」，是一次有规则的重建</h3>
+      <p>会话接近上限时自动压缩，/compact 可手动触发并指定焦点。压缩后哪些东西回来，文档给了明确清单：系统提示与输出风格继续生效；项目根 CLAUDE.md、无路径规则的 rules、自动记忆从磁盘重新注入；plan 模式写下的计划重新注入；最近改过的 5 个文件重新读取；后台命令与后台子代理继续跑，并提醒模型别重复启动。<a class="cite" href="#s12">[12]</a></p>
+
+      <div class="callout blue">
+        <span class="label">设计原则</span>
+        <p><strong>能重建的就不要常驻，能落盘的就不塞进窗口，能摘要的就不要留原文。</strong>这三句话解释了它为什么反复强调「从磁盘重注入」「最多重读 5 个文件」「skill 正文按需加载」。<a class="cite" href="#s12">[12]</a></p>
+      </div>
+
+      <p><strong>窗口也在变大，但产品没把宝押在窗口上。</strong>部分模型支持 100 万 token 上下文，压缩逻辑不变；prompt caching 把重复前缀缓存起来，/usage 会显示缓存命中率与失效原因。<a class="cite" href="#s12">[12]</a><a class="cite" href="#s18">[18]</a>
+      这是很克制的一步：窗口变大只降低压缩频率，不改变「上下文要被管理」这件事；Anthropic 在长任务 harness 的复盘里也把「上下文与验证」列为真正的瓶颈，而不是模型能力。<a class="cite" href="#s30">[30]</a></p>
+
+      <div class="cards">
+        <div class="card"><span class="tag">隔离</span><h3>子代理是上下文的垃圾桶</h3><p>研究类子代理在自己的窗口里读几十个文件，只把摘要交回主会话；官方实测在 BrowseComp 上比最佳单代理高 2.8%。<a class="cite" href="#s28">[28]</a></p></div>
+        <div class="card"><span class="tag">持久化</span><h3>记忆文件夹比检索系统更有效</h3><p>给模型一个可读写的记忆目录，让它在任务中自己决定记什么；官方对照里准确率从 60.4% 提升到 67.2%。<a class="cite" href="#s28">[28]</a></p></div>
+      </div>
+    </section>
+
+    <section id="extend">
+      <h2><span class="num">08</span><span class="h2-text">扩展体系：九种入口，按「触发时机」选</span></h2>
+      <p><strong>Claude Code 的扩展不是插件市场，而是一组按生命周期排布的入口。</strong>官方把它们放在一张表里，并用「你遇到什么情况」来决定先加哪个。<a class="cite" href="#s10">[10]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>入口</th><th>加载方式</th><th>常驻成本</th><th>什么时候用</th></tr></thead>
+          <tbody>
+            <tr><td>CLAUDE.md</td><td>每次会话</td><td>高（每轮都占）</td><td>「永远要这样做」的规则</td></tr>
+            <tr><td>输出风格</td><td>每次会话，单选</td><td>中</td><td>语气、角色、回答格式</td></tr>
+            <tr><td>Skill</td><td>描述常驻，正文按需</td><td>低</td><td>可复用流程、参考资料、<code>/deploy</code> 这类动作</td></tr>
+            <tr><td>Subagent</td><td>独立窗口</td><td>低（不占主窗口）</td><td>大读取、并行、专职工种</td></tr>
+            <tr><td>Hook</td><td>事件触发</td><td>无</td><td>「每次都要发生」的自动化与守卫</td></tr>
+            <tr><td>MCP</td><td>连接外部服务</td><td>中（工具名常驻）</td><td>接数据库、Slack、浏览器</td></tr>
+            <tr><td>Plugin / Marketplace</td><td>打包分发</td><td>取决于内容</td><td>跨仓库复用、团队分发</td></tr>
+            <tr><td>Mod</td><td>进程内事件处理器</td><td>取决于内容</td><td>改终端界面、插入自定义面板</td></tr>
+            <tr><td>Workflow</td><td>脚本编排</td><td>低</td><td>几十个子代理的批量任务</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>用「触发信号」而不是「功能清单」教用户扩展</h3>
+      <p>这是整套文档里最像产品设计的一段：不按功能罗列，而按用户已经发生的痛感给建议。<a class="cite" href="#s10">[10]</a></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>你观察到的信号</th><th>该加的扩展</th></tr></thead>
+          <tbody>
+            <tr><td>同一个约定或命令，Claude 错了两次</td><td>写进 CLAUDE.md</td></tr>
+            <tr><td>你反复要求「短一点 / 多解释 / 换格式」</td><td>设输出风格</td></tr>
+            <tr><td>你反复输入同一段开场提示</td><td>存成可调用的 skill</td></tr>
+            <tr><td>你第三次粘贴同一份多步流程</td><td>把它写成 skill</td></tr>
+            <tr><td>你总是从浏览器标签页复制数据给它</td><td>接一个 MCP server</td></tr>
+            <tr><td>它为了找一个符号定义读了很多文件</td><td>装 code intelligence 插件</td></tr>
+            <tr><td>某个旁支任务淹没了主对话</td><td>交给 subagent</td></tr>
+            <tr><td>你希望某件事每次都发生、不用问</td><td>写 hook</td></tr>
+            <tr><td>第二个仓库也需要同一套配置</td><td>打包成 plugin</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout gold">
+        <span class="label">产品洞察</span>
+        <p><strong>扩展体系真正的门槛不是「能不能写」，而是「知不知道该写哪个」。</strong>把九种入口映射到九个可观察的信号，用户不需要理解架构，只需要认出自己的痛。这比任何 plugin 市场都更能提升采用率。</p>
+      </div>
+
+      <p><strong>mods 是这条路的终点，也是新起点。</strong>它不再是「给模型加提示或工具」，而是运行在 Claude Code 进程内、能绘制面板、替换内置界面、拦截工具调用的插件。内置的 <code>/diff</code> 本身就是用 mod 实现的。<a class="cite" href="#s35">[35]</a>
+      当宿主允许插件重画自己的界面，它就不再只是一个 agent，而是一个可被第三方扩展的运行时。</p>
+    </section>
+
+    <section id="multi">
+      <h2><span class="num">09</span><span class="h2-text">多代理：从「隔离上下文」到「组织协作」</span></h2>
+      <p><strong>四级并行，解决的是四个不同问题。</strong>选错的成本很高：子代理便宜但不会商量，团队能商量但按实例计费，工作流能跑几十个但需要脚本，后台会话适合人不在场。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>机制</th><th>上下文</th><th>协调方式</th><th>适合</th><th>成本</th></tr></thead>
+          <tbody>
+            <tr><td>Subagent</td><td>独立窗口，结果回传</td><td>主代理统一管理</td><td>大读取、专职研究、并行小任务</td><td>低（只回摘要）<a class="cite" href="#s8">[8]</a></td></tr>
+            <tr><td>Agent team</td><td>各自独立</td><td>共享任务表 + 邮箱，成员直接对话</td><td>需要讨论、互相挑战的复杂工作</td><td>高（每个成员一个实例）<a class="cite" href="#s9">[9]</a></td></tr>
+            <tr><td>Dynamic workflow</td><td>每个子代理独立</td><td>Claude 写脚本编排，返回一个结果</td><td>几十个并行、批量审计</td><td>中高（脚本 + 子代理）<a class="cite" href="#s10">[10]</a></td></tr>
+            <tr><td>Agent view</td><td>每个后台会话独立</td><td>人调度，可 peek / attach</td><td>多任务并行、人不在场</td><td>按会话计费<a class="cite" href="#s34">[34]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>关键细节：让并行「可收场」</h3>
+      <ul>
+        <li><strong>工具限制。</strong>内置 Explore 与 Plan 只给只读工具，Write/Edit 被拒绝；它们启动时还不加载 CLAUDE.md 与 git 快照，为了快和便宜。<a class="cite" href="#s8">[8]</a></li>
+        <li><strong>文件系统隔离。</strong>EnterWorktree 创建独立 git worktree，多个代理改同一个仓库时不互相踩；路径在工作目录外会要求批准。<a class="cite" href="#s3">[3]</a></li>
+        <li><strong>协调原语是文件。</strong>团队的邮箱是 <code>~/.claude/teams/{team}/inboxes/{agent}.json</code>，任务表在 <code>~/.claude/tasks/</code>；写入成功才算送达。<a class="cite" href="#s9">[9]</a></li>
+        <li><strong>可观测性。</strong>agent view 用一屏列出「等你输入 / 进行中 / 已完成」，支持偷看与接管，避免人要在十几个终端窗口里找哪个卡住了。<a class="cite" href="#s34">[34]</a></li>
+      </ul>
+
+      <div class="callout">
+        <span class="label">设计教训</span>
+        <p><strong>并行的瓶颈不在生成，在合并与判断。</strong>官方自己把 agent teams 标成实验特性、默认关闭，并提醒「顺序任务、同文件编辑、强依赖场景用单会话更好」。这是一条很少见但诚实的边界说明。<a class="cite" href="#s9">[9]</a></p>
+      </div>
+    </section>
+
+    <section id="surfaces">
+      <h2><span class="num">10</span><span class="h2-text">多界面：执行位置与交互位置解耦</span></h2>
+      <p><strong>同一个引擎，九种入口。</strong>产品没有为每个界面重写一套 agent，而是把「在哪执行」和「在哪交互」拆成两个维度。<a class="cite" href="#s13">[13]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>界面</th><th>执行位置</th><th>交互方式</th><th>解决什么</th></tr></thead>
+          <tbody>
+            <tr><td>CLI</td><td>本机</td><td>终端，全功能</td><td>终端原生工作流、脚本、Agent SDK</td></tr>
+            <tr><td>VS Code / JetBrains</td><td>本机</td><td>编辑器内 diff、终端</td><td>不离开编辑器看改动</td></tr>
+            <tr><td>Desktop</td><td>本机 / 云 / SSH</td><td>多会话、diff 面板、应用预览</td><td>视觉审查、并行会话、非终端用户</td></tr>
+            <tr><td>Web</td><td>Anthropic 云</td><td>浏览器</td><td>长任务、离开电脑也继续</td></tr>
+            <tr><td>Mobile</td><td>云 / 本机（Remote Control）</td><td>手机</td><td>在路上启动、监控、批准</td></tr>
+            <tr><td>Slack / Claude Tag</td><td>云</td><td>频道里 @</td><td>从团队对话直接产出 PR</td></tr>
+            <tr><td>Chrome</td><td>本机浏览器</td><td>扩展</td><td>用已登录的会话测试 Web 应用</td></tr>
+            <tr><td>CI（Actions / GitLab）</td><td>Runner</td><td>事件触发</td><td>PR 审查、issue 分诊、定时维护</td></tr>
+            <tr><td>Cloud sessions / Projects</td><td>云</td><td>浏览器、API、定时</td><td>并行、离线、跨仓库协调</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two">
+        <div class="box good"><h3>解耦带来的自由</h3><ul>
+          <li>在笔记本上开始，在手机上批准，在浏览器里继续看；Remote Control 让执行留在本机，交互搬到任意设备，代码与文件始终不离开自己的电脑。<a class="cite" href="#s13">[13]</a><a class="cite" href="#s37">[37]</a></li>
+          <li>云端会话可以脱离终端跑，断开也继续；回到终端再用 <code>--teleport</code> 接回。<a class="cite" href="#s13">[13]</a></li>
+          <li>触发器有三种：时间（定时任务）、事件（PR / GitHub）、API（HTTP 调用），同一套配置复用。<a class="cite" href="#s38">[38]</a></li>
+        </ul></div>
+        <div class="box bad"><h3>解耦的代价</h3><ul>
+          <li>「我的代码在哪里跑」变成必须解释的问题；本地、云端、SSH、远程控制各有前提。<a class="cite" href="#s13">[13]</a></li>
+          <li>功能按界面和订阅计划切分，能力矩阵复杂到需要专门一页文档。<a class="cite" href="#s1">[1]</a></li>
+          <li>云端会话与本地会话的状态同步、凭据与网络策略，都是长期维护成本。</li>
+        </ul></div>
+      </div>
+    </section>
+
+    <section id="business">
+      <h2><span class="num">11</span><span class="h2-text">商业与分发：把「控制面」卖给组织</span></h2>
+      <p><strong>收入结构说明了产品结构。</strong>2026-02 官方披露：Claude Code 年化收入超过 25 亿美元，较年初翻倍以上；企业收入超过一半，商业订阅翻了两番。<a class="cite" href="#s27">[27]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>维度</th><th>做法</th><th>产品含义</th></tr></thead>
+          <tbody>
+            <tr><td>计费</td><td>订阅（Pro / Max / Team / Enterprise）+ API 按 token</td><td>个人用订阅，自动化与平台用 API；同一产品两套计价<a class="cite" href="#s18">[18]</a></td></tr>
+            <tr><td>成本基准</td><td>企业部署平均约 $13 / 开发者 / 活跃日；$150–250 / 月；90% 用户低于 $30 / 活跃日</td><td>定价与 ROI 讨论的锚点<a class="cite" href="#s18">[18]</a></td></tr>
+            <tr><td>企业接入</td><td>Bedrock、Claude Platform on AWS、Google Cloud Agent Platform、Microsoft Foundry、自建 LLM gateway</td><td>不锁模型供应商，锁工作流与治理<a class="cite" href="#s1">[1]</a></td></tr>
+            <tr><td>控制面</td><td>托管设置、组织级权限、分析面板、OTel 指标、预算与用量上限</td><td>企业版真正卖的是「可治理」<a class="cite" href="#s18">[18]</a></td></tr>
+            <tr><td>增值服务</td><td>Code Review（Team / Enterprise）、ultrareview（云沙箱多代理审查）</td><td>把「审查」从功能变成按次/按席位收费的服务<a class="cite" href="#s16">[16]</a><a class="cite" href="#s17">[17]</a></td></tr>
+            <tr><td>分发</td><td>curl 安装脚本、Homebrew、WinGet；npm 安装已弃用</td><td>摆脱 Node 运行时依赖，换成按平台分发的原生二进制<a class="cite" href="#s21">[21]</a></td></tr>
+            <tr><td>体积</td><td>darwin-arm64 单平台解包约 273 MB</td><td>为了启动速度与自带运行时，接受大体积<a class="cite" href="#s20">[20]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout green">
+        <span class="label">商业洞察</span>
+        <p><strong>它没有靠「多几个功能」收企业的钱，而是靠「让企业敢放开」。</strong>沙箱、托管设置、审计指标、provider 路由、预算上限——这些不提升单次任务质量，但决定一个组织能不能把 agent 铺到几百人。<a class="cite" href="#s1">[1]</a></p>
+      </div>
+
+      <p>分发方式的变化也值得注意：从 npm 包改成平台原生二进制，安装脚本一行搞定。对一个每天发版的 agent 来说，「用户能不能在 30 秒内用上最新版」比「包体积小」重要。<a class="cite" href="#s21">[21]</a></p>
+    </section>
+
+    <section id="opensource">
+      <h2><span class="num">12</span><span class="h2-text">开源边界：哪些能下载、能读、能验证</span></h2>
+      <p><strong>先给结论：Claude Code 核心不开源。</strong>GitHub 仓库的 LICENSE 写的是 “All rights reserved”，仓库里是插件、示例、变更记录与发布元数据，没有 CLI 源码；npm 包只装一个启动器与按平台分发的原生二进制。<a class="cite" href="#s21">[21]</a><a class="cite" href="#s20">[20]</a></p>
+
+      <div class="cards">
+        <div class="card"><span class="tag">可读 · MIT</span><h3>Claude Agent SDK（Python）</h3><p>8,311 stars；7 个 Python 文件共 4,628 行，其中 <code>types.py</code> 2,901 行，定义了 49 个会话选项与全部消息、hook 类型。它用子进程驱动 CLI，与 Claude Code 共享同一套工具、上下文与权限框架，是理解「harness 暴露什么」最直接的材料。<a class="cite" href="#s15">[15]</a><a class="cite" href="#s22">[22]</a></p></div>
+        <div class="card"><span class="tag">可读 · Apache-2.0</span><h3>sandbox-runtime（srt）</h3><p>5,613 stars、49 个 TypeScript 文件；macOS 用 Seatbelt、Linux 用 bubblewrap，网络走本机代理，逐 host 判定；还带凭据遮蔽、TLS 终止与 seccomp。<a class="cite" href="#s23">[23]</a></p></div>
+        <div class="card"><span class="tag">可读 · 包装层</span><h3>Agent SDK（TypeScript）</h3><p>仓库主要是类型与启动包装，真正的 SDK 由 npm 分发；与 Python SDK 共享同一套 CLI 协议。<a class="cite" href="#s22">[22]</a></p></div>
+        <div class="card"><span class="tag">不可读</span><h3>主循环、提示词、分类器、云端</h3><p>系统提示、工具实现、auto 模式分类器、云端沙箱与桌面 UI 都不在开源范围内。任何关于内部实现的断言都只能来自行为观察。<a class="cite" href="#s21">[21]</a></p></div>
+      </div>
+
+      <h3>SDK 的 49 个选项，就是产品的「可配置面」</h3>
+      <p>把这些选项按功能分组，能看出产品认为哪些东西应该由调用方决定：</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>分组</th><th>代表选项</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>权限与安全</td><td><code>permission_mode</code> <code>allowed_tools</code> <code>disallowed_tools</code> <code>can_use_tool</code> <code>sandbox</code></td><td>权限模式、工具白/黑名单、自定义审批回调、沙箱设置</td></tr>
+            <tr><td>会话与状态</td><td><code>resume</code> <code>fork_session</code> <code>session_store</code> <code>enable_file_checkpointing</code> <code>max_turns</code></td><td>恢复、分叉、自定义存储、检查点、轮次上限</td></tr>
+            <tr><td>扩展</td><td><code>agents</code> <code>hooks</code> <code>skills</code> <code>plugins</code> <code>mcp_servers</code> <code>setting_sources</code></td><td>子代理定义、hook 回调、技能、插件、MCP、配置来源</td></tr>
+            <tr><td>模型与预算</td><td><code>model</code> <code>effort</code> <code>thinking</code> <code>max_budget_usd</code> <code>task_budget</code> <code>output_format</code></td><td>模型、思考强度、预算上限、结构化输出</td></tr>
+            <tr><td>进程与调试</td><td><code>cwd</code> <code>add_dirs</code> <code>env</code> <code>cli_path</code> <code>stderr</code> <code>include_partial_messages</code></td><td>工作目录、环境变量、CLI 路径、流式输出</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>沙箱的架构：一个可复用的安全骨架</h3>
+      <p>sandbox-runtime 把「文件系统 + 网络 + 凭据」三件事拆开做：文件用 OS 原语（Seatbelt / bubblewrap）挂载与拒绝；网络不直接放行，而是让子进程连本机代理，代理逐 host 问一个独立的 <code>decider</code>；凭据可以在文件与进程代理里被替换成占位符，只在允许的域名上注入真值。<a class="cite" href="#s23">[23]</a>
+      这套结构比「给命令加白名单」重得多，但它解决了一个实际问题：命令会 fork、会起子进程、会走 curl，边界必须落在操作系统与网络上。</p>
+
+      <div class="callout blue">
+        <span class="label">我们实际验证了什么</span>
+        <p>下载三个仓库并统计：Python SDK 49 个选项、4,628 行代码；sandbox-runtime 49 个 TypeScript 文件、版本 0.0.81；npm registry 550 条发布时间、首次 2025-02-24；文档 46 条工具、33 个 hook 事件。还下载了 darwin-arm64 原生包在本机运行：<code>--version</code> 返回 2.1.305，<code>--help</code> 列出 67 个可见旗标与 6 种权限模式取值。命令与口径见随页的调研分册。<a class="cite" href="#s39">[39]</a><a class="cite" href="#s22">[22]</a><a class="cite" href="#s23">[23]</a><a class="cite" href="#s20">[20]</a></p>
+        <p><strong>没有验证：</strong>没有可用的 Anthropic 账号与 API key，未做端到端会话；页面里没有把「未运行」写成「已验证」。</p>
+      </div>
+
+      <p><strong>护城河的位置因此很清楚：</strong>骨架（SDK 接口、沙箱）会逐渐商品化，真正难复制的是编排——系统提示与工具设计、权限分类器、云端调度、多界面体验，以及「每天发一版」的迭代能力。<a class="cite" href="#s28">[28]</a></p>
+    </section>
+
+    <section id="principles">
+      <h2><span class="num">13</span><span class="h2-text">十条设计原则，每条都有证据</span></h2>
+      <p><strong>这些不是 Claude Code 自己写的「原则」，是从它的产品行为里反推出来的。</strong>每条都能在文档或开源代码里找到依据，也能直接拿去评审别的 agent 产品。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>原则</th><th>它怎么做的</th><th>证据</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><b>模型变强，harness 要敢删</b></td><td>把编排交还模型：让 Claude 自己决定工具顺序、自己过滤工具输出、自己开子代理；harness 只保留验证与边界</td><td><a class="cite" href="#s28">[28]</a></td></tr>
+            <tr><td>2</td><td><b>用模型最熟的原语</b></td><td>Bash + 文本编辑器作为底座，而不是为每个动作造窄工具；新能力优先做成「模型会用的组合」</td><td><a class="cite" href="#s28">[28]</a></td></tr>
+            <tr><td>3</td><td><b>上下文是预算</b></td><td>常驻内容设上限（CLAUDE.md 200 行、记忆 25 KB、skill 只放摘要），大块内容按需读</td><td><a class="cite" href="#s11">[11]</a><a class="cite" href="#s12">[12]</a><a class="cite" href="#s29">[29]</a></td></tr>
+            <tr><td>4</td><td><b>能重建的不常驻</b></td><td>压缩后从磁盘重注入记忆、规则、计划；最多重读 5 个文件；后台任务继续跑并提醒</td><td><a class="cite" href="#s12">[12]</a></td></tr>
+            <tr><td>5</td><td><b>减少打断，而不是减少控制</b></td><td>默认 auto + 分类器 + 沙箱；规则先于分类器；检查点让「错」可撤销</td><td><a class="cite" href="#s4">[4]</a><a class="cite" href="#s33">[33]</a><a class="cite" href="#s26">[26]</a></td></tr>
+            <tr><td>6</td><td><b>不可逆才拦</b></td><td>受保护路径、关键路径删除、跨环境写入才强制人工；普通编辑与本地命令放行</td><td><a class="cite" href="#s4">[4]</a><a class="cite" href="#s6">[6]</a></td></tr>
+            <tr><td>7</td><td><b>按触发信号教扩展</b></td><td>九种入口对应九个可观察的痛感，而不是一张功能清单</td><td><a class="cite" href="#s10">[10]</a></td></tr>
+            <tr><td>8</td><td><b>同一内核，多表面</b></td><td>执行位置与交互位置解耦：本地跑、云端跑、本机跑但从手机控</td><td><a class="cite" href="#s13">[13]</a></td></tr>
+            <tr><td>9</td><td><b>协调要能收场</b></td><td>worktree 隔离、共享任务表、邮箱文件、agent view 一屏可观测</td><td><a class="cite" href="#s9">[9]</a><a class="cite" href="#s34">[34]</a></td></tr>
+            <tr><td>10</td><td><b>开源骨架，闭源编排</b></td><td>SDK 与沙箱开放，主循环、提示词、分类器、云端不开放</td><td><a class="cite" href="#s21">[21]</a><a class="cite" href="#s22">[22]</a><a class="cite" href="#s23">[23]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="label">如果只记一条</span>
+        <p><strong>把「不确定」留给模型，把「不可逆」留给自己。</strong>模型的判断可以错，所以要有检查点、沙箱、预算和审计；但不要用规则把模型的判断也锁死，否则模型变强时产品不会跟着变强。<a class="cite" href="#s28">[28]</a></p>
+      </div>
+    </section>
+
+    <section id="compare">
+      <h2><span class="num">14</span><span class="h2-text">竞品对照：开放度决定叙事</span></h2>
+      <p><strong>2026 年的 coding agent 市场分成两类：开源可改的，和闭源但深的。</strong>Claude Code 走的是后者，用产品深度换开放度；对手用开放度换生态与信任。数据截至 2026-10-21。<a class="cite" href="#s31">[31]</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>产品</th><th>许可</th><th>语言</th><th>Stars</th><th>差异点</th></tr></thead>
+          <tbody>
+            <tr><td><b>Claude Code</b></td><td>专有（All rights reserved）</td><td>TypeScript 仓库 / 原生二进制</td><td>152.7k</td><td>产品面最宽：9 个界面、云端会话、审查服务、企业控制面；核心不可改<a class="cite" href="#s21">[21]</a></td></tr>
+            <tr><td>Codex CLI</td><td>Apache-2.0</td><td>Rust</td><td>130.2k</td><td>开源、单二进制、强调本地执行与审批粒度；可自行编译<a class="cite" href="#s31">[31]</a></td></tr>
+            <tr><td>Gemini CLI</td><td>Apache-2.0</td><td>TypeScript</td><td>107.5k</td><td>开源、免费额度大、与 Google 生态绑定；扩展模型偏 MCP<a class="cite" href="#s31">[31]</a></td></tr>
+            <tr><td>Qwen Code</td><td>Apache-2.0</td><td>TypeScript</td><td>28.6k</td><td>Gemini CLI 分支演化，面向 Qwen 模型与中文场景<a class="cite" href="#s31">[31]</a></td></tr>
+            <tr><td>Aider</td><td>Apache-2.0</td><td>Python</td><td>49.7k</td><td>更早的结对编程形态，git 集成深，交互更「人主导」<a class="cite" href="#s31">[31]</a></td></tr>
+            <tr><td>GitHub Copilot CLI</td><td>专有（Other）</td><td>Shell 包装</td><td>11.3k</td><td>绑定 GitHub 与 Copilot 订阅，企业分发强<a class="cite" href="#s31">[31]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout gold">
+        <span class="label">怎么看这张表</span>
+        <p>Stars 不是产品质量，是叙事传播度。真正要对照的是三件事：<strong>能不能改（许可）、能不能带走（provider 与数据）、能不能治理（权限与审计）</strong>。Claude Code 在前两项让分，在第三项领先。</p>
+      </div>
+    </section>
+
+    <section id="risks">
+      <h2><span class="num">15</span><span class="h2-text">风险、反模式与可迁移结论</span></h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>风险</th><th>表现</th><th>产品上的应对</th></tr></thead>
+          <tbody>
+            <tr><td>提示注入</td><td>网页、issue、依赖说明里藏指令，诱导模型外发数据</td><td>沙箱限制影响范围、最小权限、网络白名单；不假设模型不会上当<a class="cite" href="#s6">[6]</a></td></tr>
+            <tr><td>权限疲劳</td><td>用户为了少点确认，直接开 bypass</td><td>默认 auto + 分类器；把「问」留给不可逆动作<a class="cite" href="#s4">[4]</a></td></tr>
+            <tr><td>上下文膨胀</td><td>CLAUDE.md 越写越长、MCP 工具越接越多，注意力被稀释</td><td>设上限、按需加载、/doctor 体检并建议瘦身<a class="cite" href="#s12">[12]</a></td></tr>
+            <tr><td>多代理成本</td><td>并行看起来快，账单和合并冲突一起涨</td><td>默认关闭 agent teams；worktree 隔离；agent view 可观测<a class="cite" href="#s9">[9]</a></td></tr>
+            <tr><td>锁定</td><td>配置、插件、云端流程绑定单一厂商</td><td>支持多家 provider 与自建网关；配置以文件形式留在仓库<a class="cite" href="#s1">[1]</a></td></tr>
+            <tr><td>质量证明</td><td>审查结果看起来专业，但没有基准；官方明确「审查不批准也不阻断合并」</td><td>把审查当辅助信号，保留人类合并决定<a class="cite" href="#s16">[16]</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two">
+        <div class="box good"><h3>可迁移（6 条）</h3><ul>
+          <li>把「可回退」做成第一版就有的能力，而不是事后补。</li>
+          <li>用触发信号组织扩展入口，降低用户的学习成本。</li>
+          <li>给常驻上下文设硬上限，其余按需加载。</li>
+          <li>权限规则与工具名共用一套命名空间，配置才能复用。</li>
+          <li>并行先解决隔离（目录 / 分支 / 任务表），再谈加速。</li>
+          <li>把「执行位置」与「交互位置」解耦，多端才有意义。</li>
+        </ul></div>
+        <div class="box bad"><h3>不可迁移（4 条）</h3><ul>
+          <li>默认 auto 依赖一个足够强的安全分类器与模型判断力。</li>
+          <li>1M 上下文与 prompt caching 的经济性来自自家模型与基础设施。</li>
+          <li>云端沙箱、跨设备控制、审查服务需要大规模基础设施。</li>
+          <li>「每天发一版」的节奏依赖一支能承受高频发布的团队。</li>
+        </ul></div>
+      </div>
+
+      <div class="callout green">
+        <span class="label">结论</span>
+        <p><strong>Claude Code 的产品设计可以概括为一句话：用可组合的扩展覆盖长尾，用分层防御换取自主，用可恢复状态换取信任。</strong>它没有试图让模型「更听话」，而是让系统在模型不听话时仍然可控。这也是它从工具长成平台的原因。</p>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2><span class="num">16</span><span class="h2-text">来源与方法</span></h2>
+      <p>抓取日期 2026-10-21；版本基线 v2.1.305。官方文档用于功能与数字；npm / GitHub 元数据用于版本、许可与规模；官方博客用于定位与设计理念。社区逆向文章只作背景，不进入事实链。随页附<a href="research/19-claude-code-product-design.md">调研分册</a>，记录抓取命令与数字口径。</p>
+      <ol class="sources">
+        <li id="s1"><span class="src-title">Claude Code Docs — Overview</span><span class="src-meta">Anthropic · 官方文档 · 持续更新，抓取于 2026-10-21</span><a class="src-link" href="https://code.claude.com/docs/en/overview">code.claude.com/docs/en/overview</a></li>
+        <li id="s2"><span class="src-title">How Claude Code works</span><span class="src-meta">Anthropic · 官方文档 · agentic loop、工具、环境与接口</span><a class="src-link" href="https://code.claude.com/docs/en/how-claude-code-works">code.claude.com/docs/en/how-claude-code-works</a></li>
+        <li id="s3"><span class="src-title">Tools reference</span><span class="src-meta">Anthropic · 官方文档 · 工具清单、权限要求与逐工具行为</span><a class="src-link" href="https://code.claude.com/docs/en/tools-reference">code.claude.com/docs/en/tools-reference</a></li>
+        <li id="s4"><span class="src-title">Choose a permission mode</span><span class="src-meta">Anthropic · 官方文档 · 六种模式与默认值</span><a class="src-link" href="https://code.claude.com/docs/en/permission-modes">code.claude.com/docs/en/permission-modes</a></li>
+        <li id="s5"><span class="src-title">Configure permissions</span><span class="src-meta">Anthropic · 官方文档 · 规则语法、工作目录、与沙箱的关系</span><a class="src-link" href="https://code.claude.com/docs/en/permissions">code.claude.com/docs/en/permissions</a></li>
+        <li id="s6"><span class="src-title">Configure the sandboxed Bash tool</span><span class="src-meta">Anthropic · 官方文档 · 沙箱边界、默认值与例外</span><a class="src-link" href="https://code.claude.com/docs/en/sandboxing">code.claude.com/docs/en/sandboxing</a></li>
+        <li id="s7"><span class="src-title">Hooks reference</span><span class="src-meta">Anthropic · 官方文档 · 33 个事件与 5 类执行器</span><a class="src-link" href="https://code.claude.com/docs/en/hooks">code.claude.com/docs/en/hooks</a></li>
+        <li id="s8"><span class="src-title">Create custom subagents</span><span class="src-meta">Anthropic · 官方文档 · 内置 Explore / Plan、工具限制、记忆</span><a class="src-link" href="https://code.claude.com/docs/en/sub-agents">code.claude.com/docs/en/sub-agents</a></li>
+        <li id="s9"><span class="src-title">Orchestrate teams of Claude Code sessions</span><span class="src-meta">Anthropic · 官方文档 · 实验特性、任务表与邮箱</span><a class="src-link" href="https://code.claude.com/docs/en/agent-teams">code.claude.com/docs/en/agent-teams</a></li>
+        <li id="s10"><span class="src-title">Extend Claude Code</span><span class="src-meta">Anthropic · 官方文档 · 九种扩展入口与触发式采纳</span><a class="src-link" href="https://code.claude.com/docs/en/features-overview">code.claude.com/docs/en/features-overview</a></li>
+        <li id="s11"><span class="src-title">How Claude remembers your project</span><span class="src-meta">Anthropic · 官方文档 · CLAUDE.md 与自动记忆</span><a class="src-link" href="https://code.claude.com/docs/en/memory">code.claude.com/docs/en/memory</a></li>
+        <li id="s12"><span class="src-title">Explore the context window</span><span class="src-meta">Anthropic · 官方文档 · 预载、压缩与重注入规则</span><a class="src-link" href="https://code.claude.com/docs/en/context-window">code.claude.com/docs/en/context-window</a></li>
+        <li id="s13"><span class="src-title">Platforms and integrations</span><span class="src-meta">Anthropic · 官方文档 · 九个界面与执行位置</span><a class="src-link" href="https://code.claude.com/docs/en/platforms">code.claude.com/docs/en/platforms</a></li>
+        <li id="s14"><span class="src-title">Desktop application</span><span class="src-meta">Anthropic · 官方文档 · 并行会话、diff、预览与 SSH</span><a class="src-link" href="https://code.claude.com/docs/en/desktop">code.claude.com/docs/en/desktop</a></li>
+        <li id="s15"><span class="src-title">Agent SDK overview</span><span class="src-meta">Anthropic · 官方文档 · 与 CLI 共享的 harness</span><a class="src-link" href="https://code.claude.com/docs/en/agent-sdk/overview">code.claude.com/docs/en/agent-sdk/overview</a></li>
+        <li id="s16"><span class="src-title">Code Review</span><span class="src-meta">Anthropic · 官方文档 · 多代理审查 + 验证，不阻断合并</span><a class="src-link" href="https://code.claude.com/docs/en/code-review">code.claude.com/docs/en/code-review</a></li>
+        <li id="s17"><span class="src-title">Find bugs with ultrareview</span><span class="src-meta">Anthropic · 官方文档 · 云端多代理深度审查与计费</span><a class="src-link" href="https://code.claude.com/docs/en/ultrareview">code.claude.com/docs/en/ultrareview</a></li>
+        <li id="s18"><span class="src-title">Manage costs effectively</span><span class="src-meta">Anthropic · 官方文档 · 成本区间、用量归因与缓存统计</span><a class="src-link" href="https://code.claude.com/docs/en/costs">code.claude.com/docs/en/costs</a></li>
+        <li id="s19"><span class="src-title">Claude Code changelog</span><span class="src-meta">Anthropic · 官方文档 · 版本级变更记录</span><a class="src-link" href="https://code.claude.com/docs/en/changelog">code.claude.com/docs/en/changelog</a></li>
+        <li id="s20"><span class="src-title">npm: @anthropic-ai/claude-code</span><span class="src-meta">npm registry · 版本时间线 / 平台包体积 · 查询于 2026-10-21</span><a class="src-link" href="https://www.npmjs.com/package/@anthropic-ai/claude-code">npmjs.com/package/@anthropic-ai/claude-code</a></li>
+        <li id="s21"><span class="src-title">anthropics/claude-code</span><span class="src-meta">GitHub · 专有许可（All rights reserved）· 152,663 stars · 2026-10-21</span><a class="src-link" href="https://github.com/anthropics/claude-code">github.com/anthropics/claude-code</a></li>
+        <li id="s22"><span class="src-title">anthropics/claude-agent-sdk-python</span><span class="src-meta">GitHub · MIT · 8,311 stars · 49 个选项 / 4,628 行核心代码</span><a class="src-link" href="https://github.com/anthropics/claude-agent-sdk-python">github.com/anthropics/claude-agent-sdk-python</a></li>
+        <li id="s23"><span class="src-title">anthropics/sandbox-runtime</span><span class="src-meta">GitHub · Apache-2.0 · 5,613 stars · 49 个 TypeScript 文件 · v0.0.81</span><a class="src-link" href="https://github.com/anthropics/sandbox-runtime">github.com/anthropics/sandbox-runtime</a></li>
+        <li id="s24"><span class="src-title">Introducing Claude 3.7 Sonnet and Claude Code</span><span class="src-meta">Anthropic · 2025-02-24 · 「有限研究预览」</span><a class="src-link" href="https://www.anthropic.com/news/claude-3-7-sonnet">anthropic.com/news/claude-3-7-sonnet</a></li>
+        <li id="s25"><span class="src-title">Introducing Claude 4</span><span class="src-meta">Anthropic · 2025-05-22 · Claude Code 正式可用</span><a class="src-link" href="https://www.anthropic.com/research/claude-4">anthropic.com/research/claude-4</a></li>
+        <li id="s26"><span class="src-title">Enabling Claude Code to work more autonomously</span><span class="src-meta">Anthropic · 2025-09-29 · 2.0、检查点、VS Code、子代理与 hooks</span><a class="src-link" href="https://www.anthropic.com/news/enabling-claude-code-to-work-more-autonomously">anthropic.com/news/enabling-claude-code-to-work-more-autonomously</a></li>
+        <li id="s27"><span class="src-title">Anthropic raises $30B Series G at $380B valuation</span><span class="src-meta">Anthropic · 2026-02-12 · Claude Code 年化收入超 25 亿美元</span><a class="src-link" href="https://www.anthropic.com/news/anthropic-raises-30-billion-series-g-funding-380-billion-post-money-valuation">anthropic.com/news/anthropic-raises-30-billion-series-g</a></li>
+        <li id="s28"><span class="src-title">Agent Harness Design: 3 Patterns for Harnessing Claude's Intelligence</span><span class="src-meta">Anthropic / claude.com · 2026-04-02 · 三条 harness 设计模式与实测数字</span><a class="src-link" href="https://claude.com/resources/articles/harnessing-claudes-intelligence">claude.com/resources/articles/harnessing-claudes-intelligence</a></li>
+        <li id="s29"><span class="src-title">Effective context engineering for AI agents</span><span class="src-meta">Anthropic Engineering · 2025-09-29 · context rot 与注意力预算</span><a class="src-link" href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">anthropic.com/engineering/effective-context-engineering-for-ai-agents</a></li>
+        <li id="s30"><span class="src-title">Harness design for long-running application development</span><span class="src-meta">Anthropic Engineering · 2026-03-24 · 长任务 harness 的演进</span><a class="src-link" href="https://www.anthropic.com/engineering/harness-design-long-running-apps">anthropic.com/engineering/harness-design-long-running-apps</a></li>
+        <li id="s31"><span class="src-title">GitHub REST API：竞品仓库元数据</span><span class="src-meta">GitHub · 查询于 2026-10-21 · Codex / Gemini CLI / Qwen Code / Aider / Copilot CLI</span><a class="src-link" href="https://github.com/openai/codex">github.com/openai/codex</a></li>
+        <li id="s32"><span class="src-title">Claude Code on the web</span><span class="src-meta">Anthropic / claude.com · 2025-10-20 · 云端会话与 iOS 预览</span><a class="src-link" href="https://claude.com/resources/articles/claude-code-on-the-web">claude.com/resources/articles/claude-code-on-the-web</a></li>
+        <li id="s33"><span class="src-title">Configure auto mode</span><span class="src-meta">Anthropic · 官方文档 · 分类器、可信环境与 ask 规则优先级</span><a class="src-link" href="https://code.claude.com/docs/en/auto-mode-config">code.claude.com/docs/en/auto-mode-config</a></li>
+        <li id="s34"><span class="src-title">Manage multiple agents with agent view</span><span class="src-meta">Anthropic · 官方文档 · 后台会话、peek 与 attach</span><a class="src-link" href="https://code.claude.com/docs/en/agent-view">code.claude.com/docs/en/agent-view</a></li>
+        <li id="s35"><span class="src-title">Mods overview</span><span class="src-meta">Anthropic · 官方文档 · 进程内插件、面板与界面改造</span><a class="src-link" href="https://code.claude.com/docs/en/plugins/mods/overview">code.claude.com/docs/en/plugins/mods/overview</a></li>
+        <li id="s36"><span class="src-title">Manage sessions</span><span class="src-meta">Anthropic · 官方文档 · 恢复、命名、分支与 transcript</span><a class="src-link" href="https://code.claude.com/docs/en/sessions">code.claude.com/docs/en/sessions</a></li>
+        <li id="s37"><span class="src-title">Continue local sessions from any device with Remote Control</span><span class="src-meta">Anthropic · 官方文档 · 本机执行、远程交互</span><a class="src-link" href="https://code.claude.com/docs/en/remote-control">code.claude.com/docs/en/remote-control</a></li>
+        <li id="s38"><span class="src-title">Automate work with scheduled tasks</span><span class="src-meta">Anthropic · 官方文档 · 时间 / API / GitHub 三类触发器</span><a class="src-link" href="https://code.claude.com/docs/en/routines">code.claude.com/docs/en/routines</a></li>
+        <li id="s39"><span class="src-title">@anthropic-ai/claude-code-darwin-arm64（原生包）</span><span class="src-meta">npm registry · 本机下载并运行于 2026-10-21 · <code>--version</code> 返回 2.1.305，<code>--help</code> 列出 67 个可见旗标与 6 种权限模式</span><a class="src-link" href="https://www.npmjs.com/package/@anthropic-ai/claude-code-darwin-arm64">npmjs.com/package/@anthropic-ai/claude-code-darwin-arm64</a></li>
+      </ol>
+
+      <p class="small" style="margin-top:18px">维护说明：文档持续更新，数字以抓取日为准；发现偏差先改随页调研分册，再改正文与来源。页面不含外部脚本与追踪，离线可读。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <div><b>Claude Code 产品设计 2026</b> · 调研与写作 2026-10-21 · 版本基线 v2.1.305 · 39 条来源</div>
+    <div>产品拆解，不是官方文档 · 涉及内部实现的判断均标注证据边界 · 单点功能见随页调研分册</div>
+  </div>
+</footer>
+
+<script>
+
+(function(){
+  var printBtn=document.getElementById('btnPrint');
+  if(printBtn)printBtn.addEventListener('click',function(){window.print();});
+
+  var bar=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var sections=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));}).filter(Boolean);
+  function setActive(){
+    var pos=window.scrollY+140;
+    var cur=sections[0];
+    sections.forEach(function(sec){if(sec.offsetTop<=pos)cur=sec;});
+    links.forEach(function(a){
+      a.classList.toggle('active',a.getAttribute('href')==='#'+cur.id);
+    });
+    var doc=document.documentElement;
+    var max=doc.scrollHeight-window.innerHeight;
+    var pct=max>0?Math.min(100,Math.max(0,(window.scrollY/max)*100)):0;
+    if(bar)bar.style.width=pct+'%';
+  }
+  window.addEventListener('scroll',setActive,{passive:true});
+  window.addEventListener('resize',setActive);
+  setActive();
+})();
+
+</script>
+</body>
+</html>
