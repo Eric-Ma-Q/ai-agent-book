@@ -1,0 +1,285 @@
+---
+// Requirement 009: interactive, offline workbench for the archived
+// mini-harness lab. The simulator is a pure browser module; this page renders
+// the static shell, mechanisms and no-script fallback, then the client script
+// fills the controls, timeline, inspector and eval bench.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import {
+  HARNESS_PATH,
+  HARNESS_SITE_PATH,
+  MINI_HARNESS_PATH,
+} from '../routes.mjs';
+import { SCENARIOS, SOURCE_DEFAULTS, STAGES } from '../harness/mini-harness/engine.mjs';
+import '../client/harness/mini-harness.css';
+
+const labBase = `${HARNESS_SITE_PATH}labs/mini-harness/`;
+const readmeUrl = withBase(`${labBase}README.md`);
+const fileUrl = (file: string) => withBase(`${labBase}${file}`);
+const stageFiles = (stage: { id: string; file: string }) =>
+  stage.id === 'S7' ? ['harness/sessions.py', 'harness/memory.py'] : [stage.file];
+const staticScenarios = SCENARIOS.map((scenario) => ({
+  id: scenario.id,
+  title: scenario.title,
+  task: scenario.task,
+  badge: scenario.badge,
+}));
+---
+
+<Layout locale="zh-CN" title="mini-harness 交互运行台 · Harness 实验">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width mh-page" data-mh-root>
+    <header class="mh-hero">
+      <div class="mh-hero-copy">
+        <p class="eyebrow">实验 009 · mini-harness</p>
+        <h1>把一条 Agent 循环<br />拆成一步一步给你看</h1>
+        <p class="mh-lead">
+          mini-harness 的浏览器运行台：用脚本化 FakeModel 和内存工作区复刻完整流程，
+          单步查看消息、裁决、压缩、落盘、子代理、记忆与判分。不联网、不执行真实命令、不写读者数据。
+        </p>
+        <div class="mh-hero-actions">
+          <a class="harness-button" href="#workbench">进入运行台 →</a>
+          <a class="harness-link" href={readmeUrl}>读实验说明</a>
+          <a class="harness-link" href={withBase(HARNESS_PATH)}>← Harness 目录</a>
+        </div>
+      </div>
+      <dl class="mh-stats" aria-label="运行台统计">
+        <div><dt>机制</dt><dd>7 <small>主循环到记忆闸门</small></dd></div>
+        <div><dt>场景</dt><dd>{staticScenarios.length} <small>含裁决分支</small></dd></div>
+        <div><dt>Eval</dt><dd>5 <small>脚本 5/5 · 空操作 0/5</small></dd></div>
+        <div><dt>网络请求</dt><dd>0 <small>离线可跑</small></dd></div>
+      </dl>
+    </header>
+
+    <aside class="mh-note">
+      <strong>这是模拟器，不是解释器。</strong>
+      每个工具都在内存工作区里“假装”执行；生产默认值是压缩 {SOURCE_DEFAULTS.contextTokenLimit.toLocaleString('en-US')} tokens、
+      落盘 {SOURCE_DEFAULTS.spillChars.toLocaleString('en-US')} 字符，页面为了短演示调低了阈值。
+      结论以 <a href={readmeUrl}>归档源码与 README</a> 为准。
+    </aside>
+
+    <noscript>
+      <style>[data-mh-workbench] { display: none; }</style>
+      <div class="mh-noscript">
+        <p>
+          交互运行台需要 JavaScript。你仍然可以阅读四个场景任务、七个机制卡，
+          或直接打开 <a href={readmeUrl}>mini-harness 实验说明</a>。
+        </p>
+        <h2>四个场景</h2>
+        <ol class="mh-noscript-scenarios">
+          {staticScenarios.map((scenario) => (
+            <li><strong>{scenario.title}</strong><span>{scenario.task}</span></li>
+          ))}
+        </ol>
+      </div>
+    </noscript>
+
+    <section class="mh-workbench" id="workbench" aria-label="mini-harness 运行台" data-mh-workbench>
+      <aside class="mh-panel mh-controls" aria-labelledby="mh-controls-title">
+        <div class="mh-panel-head">
+          <p class="mh-kicker">控制台</p>
+          <h2 id="mh-controls-title">选一条路径</h2>
+        </div>
+        <div class="mh-scenario-list" data-mh-scenarios></div>
+
+        <div class="mh-fieldset">
+          <p class="mh-fieldset-title">开关</p>
+          <div class="mh-options" data-mh-options>
+            <p class="mh-muted">加载脚本后可调整权限、压缩、落盘、子代理与记忆闸门。</p>
+          </div>
+        </div>
+
+        <div class="mh-run-buttons">
+          <button class="mh-button mh-button-primary" type="button" data-mh-step>单步执行</button>
+          <button class="mh-button" type="button" data-mh-play aria-pressed="false">自动播放</button>
+          <button class="mh-button" type="button" data-mh-reset>重置</button>
+        </div>
+        <label class="mh-speed">
+          <span>播放速度</span>
+          <select data-mh-speed>
+            <option value="1100">0.5x</option>
+            <option value="650" selected>1x</option>
+            <option value="350">2x</option>
+          </select>
+        </label>
+        <p class="mh-hint">
+          空格 播放 / 暂停，← / → 单步。遇到 <code>ask</code> 会停下来等裁决；
+          无人值守时真实 harness 默认拒绝。
+        </p>
+      </aside>
+
+      <section class="mh-stage" aria-labelledby="mh-stage-title">
+        <div class="mh-stage-head">
+          <div>
+            <p class="mh-kicker" data-mh-current-stage>S1 · 准备</p>
+            <h2 id="mh-stage-title" data-mh-current-title>载入实验配置</h2>
+            <p class="mh-current-summary" data-mh-current-summary>
+              选择一个场景，然后点「单步执行」。
+            </p>
+          </div>
+          <p class="mh-progress" data-mh-progress aria-live="polite">事件 0 / 0</p>
+        </div>
+
+        <div class="mh-rail" data-mh-rail role="group" aria-label="七个机制阶段">
+          {
+            STAGES.map((stage) => (
+              <button
+                type="button"
+                class="mh-rail-step"
+                data-mh-rail-stage={stage.id}
+                aria-pressed="false"
+                title={`${stage.id} ${stage.name}`}
+              >
+                <span>{stage.id}</span>
+                <strong>{stage.name}</strong>
+              </button>
+            ))
+          }
+        </div>
+        <div class="mh-progressbar" aria-hidden="true"><span data-mh-progressbar></span></div>
+
+        <div class="mh-ask" data-mh-ask hidden>
+          <div class="mh-ask-head">
+            <span class="mh-ask-mark" aria-hidden="true">ASK</span>
+            <div>
+              <h3>这一步需要人工裁决</h3>
+              <p data-mh-ask-reason></p>
+            </div>
+          </div>
+          <pre class="mh-code" data-mh-ask-args></pre>
+          <div class="mh-ask-actions">
+            <button class="mh-button mh-button-primary" type="button" data-mh-approve>批准并继续</button>
+            <button class="mh-button mh-button-deny" type="button" data-mh-deny>拒绝并继续</button>
+          </div>
+          <p class="mh-hint">批准后命令才会执行；拒绝后原因会作为工具结果回给模型。</p>
+        </div>
+
+        <div class="mh-timeline-wrap">
+          <ol class="mh-timeline" data-mh-timeline aria-label="事件时间线"></ol>
+          <p class="mh-timeline-empty" data-mh-timeline-empty>还没有事件。</p>
+        </div>
+
+        <div class="mh-stage-foot">
+          <div class="mh-foot-actions">
+            <button class="mh-text-button" type="button" data-mh-back>← 上一步</button>
+            <button class="mh-text-button" type="button" data-mh-jump>跳到结尾 →</button>
+          </div>
+          <span data-mh-foot-status>离线模拟 · 无真实副作用</span>
+        </div>
+      </section>
+
+      <aside class="mh-panel mh-inspector" aria-labelledby="mh-inspector-title">
+        <div class="mh-inspector-head">
+          <div>
+            <p class="mh-kicker">检查器</p>
+            <h2 id="mh-inspector-title" data-mh-inspector-title>载入实验配置</h2>
+            <p class="mh-inspector-meta" data-mh-inspector-meta>事件 0 · S1</p>
+          </div>
+        </div>
+        <div class="mh-tabs" role="tablist" aria-label="检查器视图">
+          <button type="button" role="tab" aria-selected="true" data-mh-tab="context" id="mh-tab-context" aria-controls="mh-pane-context">上下文</button>
+          <button type="button" role="tab" aria-selected="false" data-mh-tab="state" id="mh-tab-state" aria-controls="mh-pane-state">状态</button>
+          <button type="button" role="tab" aria-selected="false" data-mh-tab="raw" id="mh-tab-raw" aria-controls="mh-pane-raw">原始 JSON</button>
+        </div>
+        <div class="mh-pane" data-mh-pane="context" id="mh-pane-context" role="tabpanel" aria-labelledby="mh-tab-context">
+          <p class="mh-muted">运行后在这里查看当时的消息列表。</p>
+        </div>
+        <div class="mh-pane" data-mh-pane="state" id="mh-pane-state" role="tabpanel" aria-labelledby="mh-tab-state" hidden>
+          <p class="mh-muted">运行后在这里查看工作区、记忆与会话记录。</p>
+        </div>
+        <div class="mh-pane" data-mh-pane="raw" id="mh-pane-raw" role="tabpanel" aria-labelledby="mh-tab-raw" hidden>
+          <p class="mh-muted">点击时间线事件查看原始数据。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="mh-eval" id="eval" aria-labelledby="mh-eval-title">
+      <div class="mh-section-head">
+        <div>
+          <p class="eyebrow">S6 · 迷你 eval</p>
+          <h2 id="mh-eval-title">判分器不会被“脚本全过”骗到</h2>
+          <p class="mh-section-lead">
+            5 个本地任务，期望值从 fixture 现算；脚本模型写对答案，空操作模型不写文件。
+            前者 5/5，后者必须 0/5，才说明判分器真的在判分。
+          </p>
+        </div>
+        <div class="mh-eval-actions">
+          <button class="mh-button mh-button-primary" type="button" data-mh-eval-run>运行脚本模型</button>
+          <button class="mh-button" type="button" data-mh-eval-noop>运行空操作模型</button>
+          <button class="mh-button" type="button" data-mh-eval-reset>重置</button>
+        </div>
+      </div>
+      <div class="mh-eval-card">
+        <div class="mh-eval-bar">
+          <p data-mh-eval-status>尚未运行。点「运行脚本模型」逐行看判分。</p>
+          <strong data-mh-eval-count>—</strong>
+        </div>
+        <div class="mh-table-wrap">
+          <table class="mh-table">
+            <thead>
+              <tr><th scope="col">任务</th><th scope="col">结果</th><th scope="col">步数</th><th scope="col">工具</th><th scope="col">tokens</th><th scope="col">判分说明</th></tr>
+            </thead>
+            <tbody data-mh-eval-body></tbody>
+          </table>
+        </div>
+        <p class="mh-eval-note">
+          空操作模型 0/5 是判分器的下闸门；独立参考解 5/5 是上闸门。两者都在 Python 测试里，
+          这里只把结果逐行展示出来。
+        </p>
+      </div>
+    </section>
+
+    <section class="mh-mechanisms" id="mechanisms" aria-labelledby="mh-mechanisms-title">
+      <div class="mh-section-head">
+        <div>
+          <p class="eyebrow">完整流程 · S1–S7</p>
+          <h2 id="mh-mechanisms-title">七个机制，各自回答一个问题</h2>
+          <p class="mh-section-lead">
+            每张卡给出“解决什么问题 / 怎么实现 / 代价 / 源码”。点「在运行台看」会切到最能展示它的场景，
+            并把游标移到对应事件；S6 跳到上面的判分台。
+          </p>
+        </div>
+      </div>
+      <ol class="mh-mechanism-grid">
+        {
+          STAGES.map((stage) => (
+            <li class="mh-mechanism" data-mh-mechanism={stage.id}>
+              <div class="mh-mechanism-head">
+                <span class="mh-stage-badge">{stage.id}</span>
+                <h3>{stage.name}</h3>
+                <span class="mh-mechanism-short">{stage.short}</span>
+              </div>
+              <p class="mh-mechanism-question">{stage.question}</p>
+              <dl class="mh-mechanism-facts">
+                <div><dt>怎么做</dt><dd>{stage.how}</dd></div>
+                <div><dt>代价 / 局限</dt><dd>{stage.cost}</dd></div>
+              </dl>
+              <div class="mh-mechanism-foot">
+                <span class="mh-code-inline">{stageFiles(stage).map((file) => <a href={fileUrl(file)}><code>{file}</code></a>)}</span>
+                <button class="mh-text-button" type="button" data-mh-see-stage={stage.id}>
+                  {stage.id === 'S6' ? '去做评测 →' : '在运行台看 →'}
+                </button>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <footer class="mh-foot">
+      <p>
+        模拟器复刻的是流程与关键判断，不是逐行解释器；阈值与脚本为教学演示服务。
+        真实实验在本机手动运行，命令见 <a href={readmeUrl}>mini-harness README</a>。
+      </p>
+      <p class="harness-foot-links">
+        <a href={withBase(HARNESS_PATH)}>Harness 目录</a>
+        <a href={withBase(MINI_HARNESS_PATH)}>本页</a>
+        <a href={withBase('/')}>回到阅读器</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    import '../client/harness/mini-harness.ts';
+  </script>
+</Layout>

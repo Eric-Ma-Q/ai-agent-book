@@ -1,0 +1,218 @@
+---
+// Dev-only page: the Harness learning archive (requirement 006). The 14 pages
+// stay untouched under /harness/site/; this page only adds discovery: groups,
+// search, a reading path and the two runnable labs.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import {
+  HARNESS_FAVORITES_PATH,
+  HARNESS_LIBRARY_PATH,
+  HARNESS_SITE_PATH,
+  INTERVIEW_PATH,
+} from '../routes.mjs';
+import { LABS, PAGES, PAGE_GROUPS, PRACTICE, READING_PATH, STATS } from '../harness/catalog.mjs';
+import { readExamFavorites } from '../harness/favorites-store.mjs';
+import { personalRoot } from '../paths.mjs';
+
+type Page = {
+  slug: string;
+  title: string;
+  description: string;
+  sitePath: string;
+  group: string;
+  kind: string;
+  tags: string[];
+};
+type Group = { id: string; title: string; description: string };
+const pages = PAGES as Page[];
+const pageGroups = PAGE_GROUPS as Group[];
+const kinds = [...new Set(pages.map((page: Page) => page.kind))];
+const searchBlob = (page: Page) =>
+  [page.title, page.description, page.kind, ...page.tags, pageGroups.find((g) => g.id === page.group)?.title]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+const byGroup = pageGroups.map((group) => ({
+  ...group,
+  pages: pages.filter((page: Page) => page.group === group.id),
+}));
+const pageUrl = (sitePath: string) => withBase(`${HARNESS_SITE_PATH}${sitePath}`);
+let favoriteCount = 0;
+try {
+  favoriteCount = readExamFavorites(personalRoot()).items.length;
+} catch (error) {
+  console.warn(`Harness favorites could not be read: ${error instanceof Error ? error.message : error}`);
+}
+---
+
+<Layout locale="zh-CN" title="Harness 学习 · 归档目录">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width">
+    <header class="harness-head">
+      <p class="eyebrow">需求 006 · 离线学习归档</p>
+      <h1>Harness 学习</h1>
+      <p class="harness-lead">
+        从 Anthropic 的工程报告出发，把编码 Agent 的循环、工具、安全、记忆、多智能体、评测与成本逐个拆开，
+        再用两个可运行的实验亲手实现一遍。页面保留原来的单文件形态，目录页只负责找到它们。
+      </p>
+      <dl class="harness-stats">
+        <div><dt>内容页</dt><dd>{STATS.pages}</dd></div>
+        <div><dt>调研分册</dt><dd>{STATS.research}</dd></div>
+        <div><dt>可运行实验</dt><dd>{STATS.labs}</dd></div>
+        <div><dt>分组</dt><dd>{STATS.topics}</dd></div>
+      </dl>
+      <p class="harness-quick">
+        <a class="harness-button" href={withBase(HARNESS_LIBRARY_PATH)}>打开资料库</a>
+        <a class="harness-link" href={withBase(HARNESS_FAVORITES_PATH)}>
+          我的收藏{favoriteCount ? `（${favoriteCount}）` : ''} →
+        </a>
+        <a class="harness-link" href={withBase(INTERVIEW_PATH)}>
+          AI 产品经理模拟面试 →
+        </a>
+        <a class="harness-link" href={pageUrl('index.html')}>原始页面总览 →</a>
+      </p>
+    </header>
+
+    <section class="harness-block" aria-labelledby="harness-path-title">
+      <h2 id="harness-path-title">先读什么</h2>
+      <ol class="harness-path">
+        {
+          READING_PATH.map((step) => (
+            <li>
+              <span class="harness-step" aria-hidden="true">{step.step}</span>
+              <a href={withBase(step.href)}>{step.title}</a>
+              <p>{step.description}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="harness-block" aria-labelledby="harness-pages-title">
+      <div class="harness-block-head">
+        <h2 id="harness-pages-title">全部内容页</h2>
+        <p class="harness-count" data-harness-count aria-live="polite">显示 {pages.length} / {pages.length}</p>
+      </div>
+      <div class="harness-controls">
+        <label class="harness-search">
+          <span class="harness-search-label">搜索标题、说明或标签</span>
+          <input type="search" data-harness-search placeholder="例如：记忆、评测、MCP" autocomplete="off" />
+        </label>
+        <div class="harness-filters" role="group" aria-label="按分组筛选" data-harness-filters="group">
+          <button type="button" data-harness-filter data-dim="group" data-value="all" aria-pressed="true">全部分组</button>
+          {
+            pageGroups.map((group) => (
+              <button type="button" data-harness-filter data-dim="group" data-value={group.id} aria-pressed="false">
+                {group.title}
+              </button>
+            ))
+          }
+        </div>
+        <div class="harness-filters" role="group" aria-label="按类型筛选" data-harness-filters="kind">
+          <button type="button" data-harness-filter data-dim="kind" data-value="all" aria-pressed="true">全部类型</button>
+          {
+            kinds.map((kind) => (
+              <button type="button" data-harness-filter data-dim="kind" data-value={kind} aria-pressed="false">
+                {kind}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+      <p class="harness-empty" data-harness-empty hidden>没有匹配的页面，换个关键词或点「全部分组」。</p>
+
+      {
+        byGroup.map((group) => (
+          <section class="harness-group" data-harness-group={group.id} aria-labelledby={`harness-group-${group.id}`}>
+            <div class="harness-group-head">
+              <h3 id={`harness-group-${group.id}`}>{group.title}</h3>
+              <p>{group.description}</p>
+            </div>
+            {group.id === 'pm' && (
+              <div class="harness-practice">
+                <a class="harness-practice-card" href={withBase(PRACTICE.href)}>
+                  <span class="harness-practice-kind">{PRACTICE.kind}</span>
+                  <strong>{PRACTICE.title}</strong>
+                  <span class="harness-practice-desc">{PRACTICE.description}</span>
+                  <span class="harness-tags">
+                    {PRACTICE.tags.map((tag: string) => <span class="harness-tag">{tag}</span>)}
+                  </span>
+                  <span class="harness-practice-arrow" aria-hidden="true">→</span>
+                </a>
+              </div>
+            )}
+            <ul class="harness-cards">
+              {group.pages.map((page) => (
+                <li>
+                  <a
+                    class="harness-card"
+                    href={pageUrl(page.sitePath)}
+                    data-harness-card
+                    data-group={page.group}
+                    data-kind={page.kind}
+                    data-search={searchBlob(page)}
+                  >
+                    <span class="harness-kind">{page.kind}</span>
+                    <span class="harness-card-title">{page.title}</span>
+                    <span class="harness-card-desc">{page.description}</span>
+                    <span class="harness-tags">
+                      {page.tags.map((tag) => <span class="harness-tag">{tag}</span>)}
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </section>
+
+    <section class="harness-block" aria-labelledby="harness-labs-title">
+      <div class="harness-block-head">
+        <h2 id="harness-labs-title">实验：亲手实现一遍</h2>
+        <p class="harness-count">本机手动运行，不常驻</p>
+      </div>
+      <ul class="harness-labs">
+        {
+          LABS.map((lab) => (
+            <li class="harness-lab">
+              <div class="harness-lab-head">
+                <h3>{lab.title}</h3>
+                <span class="harness-kind">{lab.tests} 个测试</span>
+              </div>
+              <p>{lab.summary}</p>
+              <p class="harness-tags">
+                {lab.tags.map((tag) => <span class="harness-tag">{tag}</span>)}
+              </p>
+              <pre class="harness-command"><code>{lab.command}</code></pre>
+              <p class="harness-lab-links">
+                {lab.workbench && (
+                  <a class="harness-button harness-lab-run" href={withBase(lab.workbench)}>
+                    打开交互运行台 →
+                  </a>
+                )}
+                <a href={pageUrl(lab.readme)}>实验说明与代码清单 →</a>
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <footer class="harness-foot">
+      <p>
+        归档内容只读；改页面、重建产物与校验命令见
+        <code>web-astro/personal/harness/README.md</code>。
+      </p>
+      <p class="harness-foot-links">
+        <a href={withBase(HARNESS_LIBRARY_PATH)}>资料库</a>
+        <a href={pageUrl('index.html')}>原始页面总览</a>
+        <a href={withBase('/')}>回到阅读器</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    import '../client/harness/main.ts';
+  </script>
+</Layout>

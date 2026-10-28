@@ -1,0 +1,432 @@
+---
+// Requirement 013: AI PM mock interview. Dev-only page; the reader owns the
+// profile, plan and transcript, the lab only answers one turn at a time.
+import { fileURLToPath } from 'node:url';
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import {
+  HARNESS_FAVORITES_PATH,
+  HARNESS_PATH,
+  HARNESS_SITE_PATH,
+  SETTINGS_PATH,
+} from '../routes.mjs';
+import {
+  LEVELS,
+  MODES,
+  ROLES,
+  ROUNDS,
+  TOPICS,
+  buildCandidateProfile,
+  resourceFor,
+  reviewOptions,
+} from '../harness/interview-profile.mjs';
+import { readAllInterviewSessions, summarizeSession } from '../harness/interview-store.mjs';
+import { readExamProgress } from '../harness/exam-progress-store.mjs';
+import { readExamQuestions } from '../harness/questions.mjs';
+import { personalRoot } from '../paths.mjs';
+import '../client/harness/harness.css';
+import '../client/harness/interview.css';
+import '../client/harness/interview-chat.css';
+
+const ARCHIVE = fileURLToPath(new URL('../harness/archive/', import.meta.url));
+const EXAMS = fileURLToPath(new URL('../exams/', import.meta.url));
+const root = personalRoot();
+const formatDate = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+};
+
+let loadError = '';
+let progress: { exists: boolean; store?: any } = { exists: false };
+try {
+  progress = readExamProgress(root, 'ai-pm');
+} catch (error) {
+  loadError = `考试进度读取失败：${error instanceof Error ? error.message : String(error)}`;
+}
+
+let questions: any[] = [];
+try {
+  questions = readExamQuestions(ARCHIVE, { bookRoot: EXAMS }).filter((question) => question.exam === 'ai-pm');
+} catch (error) {
+  loadError = `${loadError ? `${loadError}；` : ''}题库读取失败：${error instanceof Error ? error.message : String(error)}`;
+}
+
+let all = { sessions: [] as any[], warnings: [] as string[] };
+try {
+  all = readAllInterviewSessions(root);
+} catch (error) {
+  loadError = `${loadError ? `${loadError}；` : ''}面试记录读取失败：${error instanceof Error ? error.message : String(error)}`;
+}
+const pastSessions = (all.sessions as any[]).filter((session) => session.status === 'finished');
+const profile = buildCandidateProfile({ examProgress: progress, questions, pastSessions });
+const summaries = all.sessions.map(summarizeSession);
+// A session is loaded by the client from ?session=...; injected Astro routes
+// do not receive the query string on the server in this dev setup.
+const session: any = null;
+
+const resources = reviewOptions().map((item) => ({
+  ...item,
+  href: withBase(`${HARNESS_SITE_PATH}${resourceFor(item.id).href}`),
+}));
+const topics = TOPICS.map((topic) => ({ id: topic.id, label: topic.label }));
+const defaults = {
+  role: 'ai-pm',
+  round: 'resume',
+  level: profile.levelSuggestion,
+  mode: 'practice',
+  questionCount: 6,
+  focusTopics: profile.focusSuggestion ?? [],
+  modelProfile: '',
+};
+const bootstrap = {
+  profile,
+  sessions: summaries,
+  session,
+  resources,
+  topics,
+  defaults,
+  warnings: all.warnings,
+  loadError,
+  examHref: withBase(`${HARNESS_SITE_PATH}ai-pm-exam.html`),
+  favoritesHref: withBase(HARNESS_FAVORITES_PATH),
+  settingsHref: withBase(SETTINGS_PATH),
+};
+const jsonForScript = (value: unknown) =>
+  JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+const focusLabels = (defaults.focusTopics as string[])
+  .map((id) => topics.find((topic) => topic.id === id)?.label)
+  .filter(Boolean);
+const sessionLinks = summaries.map((summary: any) => ({
+  ...summary,
+  date: formatDate(summary.updatedAt),
+  roundLabel: ROUNDS[summary.round as keyof typeof ROUNDS]?.label ?? summary.round,
+  modeLabel: MODES[summary.mode as keyof typeof MODES]?.label ?? summary.mode,
+  levelLabel: LEVELS[summary.level as keyof typeof LEVELS]?.label ?? summary.level,
+}));
+---
+
+<Layout locale="zh-CN" title="AI 产品经理 · 模拟面试">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width iv-page" data-iv-root>
+    <header class="harness-head iv-head">
+      <p class="eyebrow">需求 013 · AI 产品经理</p>
+      <h1>模拟面试</h1>
+      <p class="harness-lead">
+        用 AI PM 结业考试的专题掌握度、错题和过往复盘出一场面试。一次只问一个问题，
+        练习模式当场点评，模拟模式结束统一复盘；模型从实验台的档案里选。
+      </p>
+      <dl class="harness-stats iv-stats">
+        <div><dt>题库</dt><dd>{questions.length || 105}<small> AI PM</small></dd></div>
+        <div><dt>专题</dt><dd>{TOPICS.length}<small> 个</small></dd></div>
+        <div><dt>面试记录</dt><dd>{summaries.length}<small> 场</small></dd></div>
+        <div><dt>复盘维度</dt><dd>5<small> 项</small></dd></div>
+      </dl>
+      <p class="harness-quick iv-quick">
+        <a class="harness-button" href="#iv-setup">开一场面试</a>
+        <a class="harness-link" href={bootstrap.examHref}>AI PM 结业考试 →</a>
+        <a class="harness-link" href={bootstrap.favoritesHref}>我的收藏 →</a>
+        <a class="harness-link" href={bootstrap.settingsHref}>设置 · 模型档案 →</a>
+        <a class="harness-link" href={withBase(HARNESS_PATH)}>← Harness 目录</a>
+      </p>
+    </header>
+
+    {loadError && <p class="iv-banner iv-banner--error" role="alert">{loadError}</p>}
+    {all.warnings.length > 0 && (
+      <p class="iv-banner iv-banner--warn" role="status">
+        有 {all.warnings.length} 条面试记录无法读取，已跳过；删除对应文件后可恢复列表。
+      </p>
+    )}
+
+    <section class="iv-setup" id="iv-setup" data-iv-setup aria-labelledby="iv-setup-title">
+      <div class="iv-setup-main">
+        <div class="iv-section-head">
+          <div>
+            <p class="iv-kicker">开一场面试</p>
+            <h2 id="iv-setup-title">先定岗位、轮次和重点</h2>
+          </div>
+          <p class="iv-hint">不选重点专题时，按最近考试的薄弱专题推荐。</p>
+        </div>
+        <form class="iv-form" data-iv-form>
+          <div class="iv-grid">
+            <label class="iv-field">
+              <span>目标岗位</span>
+              <select name="role" data-iv-field="role">
+                {Object.entries(ROLES).map(([id, item]) => (
+                  <option value={id} selected={defaults.role === id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+            <label class="iv-field">
+              <span>面试轮次</span>
+              <select name="round" data-iv-field="round">
+                {Object.entries(ROUNDS).map(([id, item]) => (
+                  <option value={id} selected={defaults.round === id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+            <label class="iv-field">
+              <span>难度</span>
+              <select name="level" data-iv-field="level">
+                {Object.entries(LEVELS).map(([id, item]) => (
+                  <option value={id} selected={defaults.level === id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+            <label class="iv-field">
+              <span>模式</span>
+              <select name="mode" data-iv-field="mode">
+                {Object.entries(MODES).map(([id, item]) => (
+                  <option value={id} selected={defaults.mode === id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+            <label class="iv-field">
+              <span>题量</span>
+              <select name="questionCount" data-iv-field="questionCount">
+                {[4, 6, 8, 10].map((count) => (
+                  <option value={count} selected={defaults.questionCount === count}>{count} 个环节</option>
+                ))}
+              </select>
+            </label>
+            <label class="iv-field">
+              <span>起始模型</span>
+              <select name="modelProfile" data-iv-model data-iv-field="modelProfile" aria-label="起始模型">
+                <option value="">默认模型</option>
+              </select>
+            </label>
+          </div>
+          <p class="iv-model-note" data-iv-model-note>正在读取模型档案……</p>
+          <p class="iv-banner iv-banner--error" data-iv-model-error hidden></p>
+
+          <fieldset class="iv-topics-field">
+            <legend>重点专题 <small data-iv-topic-count>最多 4 个</small></legend>
+            <div class="iv-topics" data-iv-topics>
+              {topics.map((topic) => (
+                <label class="iv-chip">
+                  <input
+                    type="checkbox"
+                    value={topic.id}
+                    data-iv-topic
+                    checked={defaults.focusTopics.includes(topic.id)}
+                  />
+                  <span>{topic.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label class="iv-field iv-field--wide">
+            <span>简历或项目摘要 <small>可选，最多 2000 字；只随本次面试发给所选模型</small></span>
+            <textarea
+              name="resumeHighlights"
+              data-iv-field="resumeHighlights"
+              rows="4"
+              maxlength="2000"
+              placeholder="例如：负责报销流程改造，做过规则配置和异常处理；想重点练 AI 边界与人工接管。"
+            ></textarea>
+          </label>
+
+          <div class="iv-resume-signals" data-iv-resume-signals hidden>
+            <label class="iv-check">
+              <input type="checkbox" data-iv-use-resume />
+              <span>把简历自检结果用于本次出题</span>
+            </label>
+            <p class="iv-hint" data-iv-resume-text></p>
+          </div>
+
+          <div class="iv-form-foot">
+            <button class="harness-button iv-start" type="submit" data-iv-start>开始面试</button>
+            <p class="iv-hint" data-iv-setup-status role="status" aria-live="polite">
+              模型调用发生在你点击开始或发送之后，不会后台自动运行。
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <aside class="iv-profile" data-iv-profile-card aria-labelledby="iv-profile-title">
+        <div class="iv-section-head">
+          <div>
+            <p class="iv-kicker">当前画像</p>
+            <h2 id="iv-profile-title">你现在的面试准备度</h2>
+          </div>
+        </div>
+        {profile.exam ? (
+          <>
+            <div class="iv-score-row">
+              <strong>{profile.exam.lastPct ?? '—'}<small>%</small></strong>
+              <div>
+                <span>最近一次 AI PM 考试</span>
+                <small>最好 {profile.exam.bestPct ?? '—'}% · 已做 {profile.exam.attempts} 次</small>
+              </div>
+            </div>
+            {profile.exam.weakTopics.length > 0 ? (
+              <div class="iv-topic-block">
+                <p class="iv-kicker">优先补</p>
+                <p class="iv-topic-tags">
+                  {profile.exam.weakTopics.map((topic: any) => (
+                    <span class="iv-tag iv-tag--weak">{topic.label}{topic.pct !== null ? ` ${topic.pct}%` : ''}</span>
+                  ))}
+                </p>
+              </div>
+            ) : (
+              <p class="iv-hint">最近一次没有明显薄弱专题，按轮次默认重点出题。</p>
+            )}
+            {profile.exam.strongTopics.length > 0 && (
+              <p class="iv-strong">较稳：{profile.exam.strongTopics.map((topic: any) => topic.label).join('、')}</p>
+            )}
+            {profile.exam.mistakeCount > 0 && (
+              <p class="iv-hint">错题本里还有 {profile.exam.mistakeCount} 道未掌握。</p>
+            )}
+          </>
+        ) : (
+          <div class="iv-baseline">
+            <p><strong>还没有 AI PM 考试记录。</strong></p>
+            <p>本次按基础画像出题；先做一次结业考试，专题掌握度会更准。</p>
+            <a class="harness-link" href={bootstrap.examHref}>去做结业考试 →</a>
+          </div>
+        )}
+        <p class="iv-resume-line" data-iv-resume-line>简历自检：未检测到（可选）。</p>
+        {profile.past.count > 0 && (
+          <p class="iv-hint">
+            过往模拟面试 {profile.past.count} 次，最近 {profile.past.lastOverall} 分
+            {profile.past.weakDimensions.length > 0
+              ? `；薄弱维度：${profile.past.weakDimensions.map((item: any) => item.label).join('、')}`
+              : ''}。
+          </p>
+        )}
+        {focusLabels.length > 0 && (
+          <p class="iv-hint">本次会优先练：{focusLabels.join('、')}。</p>
+        )}
+        <p class="iv-privacy">记录只存本机，不入库；导出需要手动下载。</p>
+      </aside>
+    </section>
+
+    <section class="iv-history" data-iv-history-section aria-labelledby="iv-history-title">
+      <div class="iv-section-head">
+        <div>
+          <p class="iv-kicker">面试记录</p>
+          <h2 id="iv-history-title">继续或回看</h2>
+        </div>
+        <p class="iv-hint">按更新时间倒序；未完成的面试可以从上次的环节继续。</p>
+      </div>
+      {sessionLinks.length > 0 ? (
+        <ul class="iv-history-list" data-iv-history>
+          {sessionLinks.map((summary: any) => (
+            <li class="iv-history-item" data-iv-history-item data-id={summary.id}>
+              <a class="iv-history-main" href={`?session=${encodeURIComponent(summary.id)}`}>
+                <span class="iv-history-title">
+                  {summary.roundLabel} · {summary.modeLabel}
+                  {summary.status === 'active' ? ' · 未完成' : ''}
+                </span>
+                <span class="iv-history-meta">
+                  {summary.date} · 已答 {summary.answered} / 计划 {summary.planned}
+                  {summary.overall !== null ? ` · ${summary.overall} 分` : ''}
+                  {summary.model ? ` · ${summary.model}` : ''}
+                </span>
+              </a>
+              <button class="iv-text-button" type="button" data-iv-delete data-id={summary.id}>删除</button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="iv-empty" data-iv-history-empty>还没有面试记录。选好岗位和轮次，开始第一场。</p>
+      )}
+    </section>
+
+    <section class="iv-session" data-iv-session hidden aria-label="面试对话">
+      <aside class="iv-rail">
+        <div class="iv-rail-head">
+          <p class="iv-kicker">面试进行中</p>
+          <h2 data-iv-session-title>AI 产品经理面试</h2>
+          <p class="iv-rail-meta" data-iv-session-meta></p>
+        </div>
+        <div class="iv-plan-head">
+          <span>环节</span>
+          <span data-iv-progress>0 / 0</span>
+        </div>
+        <ol class="iv-plan" data-iv-plan></ol>
+        <div class="iv-rail-focus">
+          <p class="iv-kicker">当前考察</p>
+          <p data-iv-focus>等待开始</p>
+        </div>
+        <div class="iv-rail-actions">
+          <button class="iv-text-button" type="button" data-iv-end>结束面试，生成复盘</button>
+          <button class="iv-text-button" type="button" data-iv-exit>返回设置（记录保留）</button>
+        </div>
+        <p class="iv-rail-timer">用时 <span data-iv-timer>00:00</span></p>
+      </aside>
+
+      <section class="iv-chat">
+        <header class="iv-chat-head">
+          <div>
+            <strong>AI 面试官</strong>
+            <span class="iv-chat-sub" data-iv-chat-mode></span>
+          </div>
+          <button class="iv-text-button" type="button" data-iv-end-mobile>结束面试</button>
+        </header>
+        <div class="iv-transcript" data-iv-transcript aria-live="polite"></div>
+        <div class="iv-save-warning" data-iv-save-warning hidden>
+          <span data-iv-save-text>记录未保存。</span>
+          <button class="iv-text-button" type="button" data-iv-save-retry>重试保存</button>
+        </div>
+        <form class="iv-composer" data-iv-composer>
+          <label class="iv-sr-only" for="iv-input">你的回答</label>
+          <textarea
+            id="iv-input"
+            data-iv-input
+            rows="2"
+            maxlength="4000"
+            placeholder="先想 30 秒，再分点回答。Enter 发送，Shift + Enter 换行。"
+          ></textarea>
+          <div class="iv-composer-bar">
+            <span class="iv-model-host" data-iv-model-host></span>
+            <span class="iv-composer-hint" data-iv-composer-hint>Enter 发送 · Shift + Enter 换行</span>
+            <button class="iv-text-button" type="button" data-iv-skip>跳过这题</button>
+            <button class="harness-button iv-send" type="submit" data-iv-send>发送</button>
+          </div>
+          <p class="iv-composer-status" data-iv-status role="status" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <aside class="iv-side">
+        <div class="iv-side-card">
+          <p class="iv-kicker">本轮提示</p>
+          <p>结论先行，再讲取舍、验证和失败后的兜底。不会就说不会，面试官会记录证据。</p>
+        </div>
+        <div class="iv-side-card">
+          <p class="iv-kicker">模型</p>
+          <p data-iv-side-model>默认模型</p>
+          <p class="iv-hint">切换只影响下一轮；每轮实际模型会记在记录里。</p>
+        </div>
+        <div class="iv-side-card">
+          <p class="iv-kicker">用量</p>
+          <p data-iv-cost>还没有调用。</p>
+          <p class="iv-hint">成本按模型档案单价估算；没填价格就是未知。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="iv-report" data-iv-report hidden aria-label="面试复盘">
+      <div class="iv-report-body" data-iv-report-body></div>
+    </section>
+
+    <noscript>
+      <p class="iv-noscript">
+        模拟面试需要 JavaScript（对话、保存和模型选择都在浏览器里完成）。
+        你仍然可以查看下方的能力画像与历史记录，或先去做
+        <a href={bootstrap.examHref}>AI PM 结业考试</a>。
+      </p>
+    </noscript>
+
+    <div class="iv-toast" data-iv-toast role="status" aria-live="polite" hidden></div>
+  </main>
+  <script type="application/json" data-iv-bootstrap is:inline set:html={jsonForScript(bootstrap)}></script>
+  <script>
+    import '../client/harness/interview.ts';
+  </script>
+</Layout>

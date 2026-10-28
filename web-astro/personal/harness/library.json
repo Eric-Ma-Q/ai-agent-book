@@ -1,0 +1,1362 @@
+{
+  "format": "harness-library",
+  "version": 1,
+  "generatedAt": "2026-10-28T10:57:28.279Z",
+  "sourceCommit": "4c1cbf265541b75e820bde70bd6503c6e82960a6",
+  "total": 184,
+  "metaCount": 4,
+  "categories": [
+    {
+      "id": "pages",
+      "label": "内容页",
+      "description": "18 个单文件长文与总览",
+      "count": 20,
+      "files": [
+        {
+          "path": "archive/agent-task-queue.html",
+          "source": "agent-task-queue.html",
+          "title": "任务队列：Agent 的第二条时间线",
+          "url": "/harness/site/agent-task-queue.html",
+          "bytes": 93859
+        },
+        {
+          "path": "archive/ai-agent-pm-career.html",
+          "source": "ai-agent-pm-career.html",
+          "title": "产品经理转 Agent · 面经、JD 与简历实战",
+          "url": "/harness/site/ai-agent-pm-career.html",
+          "bytes": 75826
+        },
+        {
+          "path": "archive/ai-expense-review-prd.html",
+          "source": "ai-expense-review-prd.html",
+          "title": "AI 报销审核 · 完整产品设计",
+          "url": "/harness/site/ai-expense-review-prd.html",
+          "bytes": 77285
+        },
+        {
+          "path": "archive/ai-failure-casebook.html",
+          "source": "ai-failure-casebook.html",
+          "title": "AI 产品失败复盘 · 从发现到修复",
+          "url": "/harness/site/ai-failure-casebook.html",
+          "bytes": 372526
+        },
+        {
+          "path": "archive/ai-harness-explained.html",
+          "source": "ai-harness-explained.html",
+          "title": "Harness 深度解读：以 Anthropic 工程报告为主线",
+          "url": "/harness/site/ai-harness-explained.html",
+          "bytes": 197230
+        },
+        {
+          "path": "archive/ai-harness-flow.html",
+          "source": "ai-harness-flow.html",
+          "title": "Harness 交互流程图解 · Agent 的完整工作循环",
+          "url": "/harness/site/ai-harness-flow.html",
+          "bytes": 118752
+        },
+        {
+          "path": "archive/ai-industry-research-2026-10.html",
+          "source": "ai-industry-research-2026-10.html",
+          "title": "AI 行业调研 2026-10 · 厂商问题 × 设计教训 × 前沿动态",
+          "url": "/harness/site/ai-industry-research-2026-10.html",
+          "bytes": 82820
+        },
+        {
+          "path": "archive/ai-pm-exam.html",
+          "source": "ai-pm-exam.html",
+          "title": "AI 产品经理系列 · 结业考试",
+          "url": "/harness/site/ai-pm-exam.html",
+          "bytes": 156620
+        },
+        {
+          "path": "archive/ai-pm-interview-questions.html",
+          "source": "ai-pm-interview-questions.html",
+          "title": "AI 产品经理 · 真实面经题库（716 条）",
+          "url": "/harness/site/ai-pm-interview-questions.html",
+          "bytes": 201723
+        },
+        {
+          "path": "archive/ai-pm-resume.html",
+          "source": "ai-pm-resume.html",
+          "title": "零 AI 经验 · AI 产品经理简历优化指南",
+          "url": "/harness/site/ai-pm-resume.html",
+          "bytes": 136047
+        },
+        {
+          "path": "archive/ai-products-pm-analysis.html",
+          "source": "ai-products-pm-analysis.html",
+          "title": "AI 产品全景 2026 · 产品经理视角的产品解构报告",
+          "url": "/harness/site/ai-products-pm-analysis.html",
+          "bytes": 182369
+        },
+        {
+          "path": "archive/anthropic-workflow-shift-2026-10.html",
+          "source": "anthropic-workflow-shift-2026-10.html",
+          "title": "Anthropic 工作流程转变 2025–2026：从写代码到管理 Agent",
+          "url": "/harness/site/anthropic-workflow-shift-2026-10.html",
+          "bytes": 65560
+        },
+        {
+          "path": "archive/ask-user-question-product.html",
+          "source": "ask-user-question-product.html",
+          "title": "ask_user_question 产品设计 · 把「猜」变成「选」",
+          "url": "/harness/site/ask-user-question-product.html",
+          "bytes": 64433
+        },
+        {
+          "path": "archive/claude-code-hooks-33.html",
+          "source": "claude-code-hooks-33.html",
+          "title": "Claude Code Hooks · 33 个事件的完整值班",
+          "url": "/harness/site/claude-code-hooks-33.html",
+          "bytes": 128801
+        },
+        {
+          "path": "archive/claude-code-product-design.html",
+          "source": "claude-code-product-design.html",
+          "title": "Claude Code 产品设计 2026 · 把终端 Agent 做成操作系统",
+          "url": "/harness/site/claude-code-product-design.html",
+          "bytes": 88857
+        },
+        {
+          "path": "archive/deepseek-harness-dsh.html",
+          "source": "deepseek-harness-dsh.html",
+          "title": "DeepSeek Harness（DSH）深度解读 · 一切皆插件",
+          "url": "/harness/site/deepseek-harness-dsh.html",
+          "bytes": 41764
+        },
+        {
+          "path": "archive/harness-engineering.html",
+          "source": "harness-engineering.html",
+          "title": "Harness 工程：从拆解到动手",
+          "url": "/harness/site/harness-engineering.html",
+          "bytes": 100234
+        },
+        {
+          "path": "archive/harness-exam.html",
+          "source": "harness-exam.html",
+          "title": "Harness 结业考试",
+          "url": "/harness/site/harness-exam.html",
+          "bytes": 156960
+        },
+        {
+          "path": "archive/harness-in-business.html",
+          "source": "harness-in-business.html",
+          "title": "Harness 上岗：公司里的 Agent 工程（2024–2026）",
+          "url": "/harness/site/harness-in-business.html",
+          "bytes": 114732
+        },
+        {
+          "path": "archive/index.html",
+          "source": "index.html",
+          "title": "Harness 项目 · 页面总览",
+          "url": "/harness/site/index.html",
+          "bytes": 20116
+        }
+      ]
+    },
+    {
+      "id": "research",
+      "label": "调研分册",
+      "description": "页面事实与出处的上游来源",
+      "count": 19,
+      "files": [
+        {
+          "path": "archive/research/01-global-vendors-problems.md",
+          "source": "research/01-global-vendors-problems.md",
+          "title": "国际大厂在推进 AI 进程中遇到的问题及解决方案（调研笔记）",
+          "url": "/harness/site/research/01-global-vendors-problems.md",
+          "bytes": 29540
+        },
+        {
+          "path": "archive/research/02-china-vendors-problems.md",
+          "source": "research/02-china-vendors-problems.md",
+          "title": "中国 AI 厂商在推进 AI 进程中遇到的问题及解决方案",
+          "url": "/harness/site/research/02-china-vendors-problems.md",
+          "bytes": 32791
+        },
+        {
+          "path": "archive/research/03-product-design-ux-lessons.md",
+          "source": "research/03-product-design-ux-lessons.md",
+          "title": "03 · AI 产品设计/交互设计中的问题与经验教训（设计 & UX 视角）",
+          "url": "/harness/site/research/03-product-design-ux-lessons.md",
+          "bytes": 27203
+        },
+        {
+          "path": "archive/research/04-product-engineering-lessons.md",
+          "source": "research/04-product-engineering-lessons.md",
+          "title": "AI 产品设计与构建过程中的问题与经验教训（工程 & 产品经理视角）",
+          "url": "/harness/site/research/04-product-engineering-lessons.md",
+          "bytes": 34250
+        },
+        {
+          "path": "archive/research/05-frontier-models-tech.md",
+          "source": "research/05-frontier-models-tech.md",
+          "title": "05 前沿模型与技术（截至 2026 年 10 月）",
+          "url": "/harness/site/research/05-frontier-models-tech.md",
+          "bytes": 25070
+        },
+        {
+          "path": "archive/research/06-frontier-products-business.md",
+          "source": "research/06-frontier-products-business.md",
+          "title": "06 前沿产品与商业（截至 2026 年 10 月）",
+          "url": "/harness/site/research/06-frontier-products-business.md",
+          "bytes": 22105
+        },
+        {
+          "path": "archive/research/07-pi-design-philosophy.md",
+          "source": "research/07-pi-design-philosophy.md",
+          "title": "pi 设计理念调研:极简编码 Agent 的完整解剖(Mario Zechner / badlogic)",
+          "url": "/harness/site/research/07-pi-design-philosophy.md",
+          "bytes": 27056
+        },
+        {
+          "path": "archive/research/08-harness-teardown-comparison.md",
+          "source": "research/08-harness-teardown-comparison.md",
+          "title": "主流编码 Agent Harness 横评拆解:同一个模型,换个壳为什么差很多",
+          "url": "/harness/site/research/08-harness-teardown-comparison.md",
+          "bytes": 60411
+        },
+        {
+          "path": "archive/research/09-tools-mcp-skills.md",
+          "source": "research/09-tools-mcp-skills.md",
+          "title": "工具层调研:工具设计、MCP、Skills 与\"代码即工具\"",
+          "url": "/harness/site/research/09-tools-mcp-skills.md",
+          "bytes": 60853
+        },
+        {
+          "path": "archive/research/10-agent-security-sandbox.md",
+          "source": "research/10-agent-security-sandbox.md",
+          "title": "Agent 安全调研:威胁模型、权限、沙箱与提示注入防御",
+          "url": "/harness/site/research/10-agent-security-sandbox.md",
+          "bytes": 49167
+        },
+        {
+          "path": "archive/research/11-memory-systems.md",
+          "source": "research/11-memory-systems.md",
+          "title": "Harness 记忆系统调研:agent 怎么\"记得\",又怎么\"忘掉\"",
+          "url": "/harness/site/research/11-memory-systems.md",
+          "bytes": 47566
+        },
+        {
+          "path": "archive/research/12-multi-agent-orchestration.md",
+          "source": "research/12-multi-agent-orchestration.md",
+          "title": "子 agent 与多智能体编排:什么时候该拆,什么时候不该",
+          "url": "/harness/site/research/12-multi-agent-orchestration.md",
+          "bytes": 51338
+        },
+        {
+          "path": "archive/research/13-agent-evals.md",
+          "source": "research/13-agent-evals.md",
+          "title": "Agent 评测调研:怎么给自己的 harness 建 eval",
+          "url": "/harness/site/research/13-agent-evals.md",
+          "bytes": 47173
+        },
+        {
+          "path": "archive/research/14-economics-observability.md",
+          "source": "research/14-economics-observability.md",
+          "title": "工程经济学与可观测性:一次 agent 会话的钱花在哪、怎么看见",
+          "url": "/harness/site/research/14-economics-observability.md",
+          "bytes": 46913
+        },
+        {
+          "path": "archive/research/15-ai-failure-cases-a.md",
+          "source": "research/15-ai-failure-cases-a.md",
+          "title": "15 · AI 失败案例续集 A：AI 替公司说话（对话与内容）",
+          "url": "/harness/site/research/15-ai-failure-cases-a.md",
+          "bytes": 74541
+        },
+        {
+          "path": "archive/research/16-ai-failure-cases-b.md",
+          "source": "research/16-ai-failure-cases-b.md",
+          "title": "16 · AI 产品失败案例续集 B：默认值、商业化与 agent 工具",
+          "url": "/harness/site/research/16-ai-failure-cases-b.md",
+          "bytes": 110055
+        },
+        {
+          "path": "archive/research/17-ai-failure-cases-c.md",
+          "source": "research/17-ai-failure-cases-c.md",
+          "title": "17 · AI 失败案例续集 C：AI 产出进入专业流程，与陪伴关系的改动",
+          "url": "/harness/site/research/17-ai-failure-cases-c.md",
+          "bytes": 95736
+        },
+        {
+          "path": "archive/research/18-ai-failure-cases-d.md",
+          "source": "research/18-ai-failure-cases-d.md",
+          "title": "18 · AI 失败案例续集 D：高风险场景里的自动化决策",
+          "url": "/harness/site/research/18-ai-failure-cases-d.md",
+          "bytes": 158940
+        },
+        {
+          "path": "archive/research/19-claude-code-product-design.md",
+          "source": "research/19-claude-code-product-design.md",
+          "title": "Claude Code 产品设计拆解 · 调研分册",
+          "url": "/harness/site/research/19-claude-code-product-design.md",
+          "bytes": 6476
+        }
+      ]
+    },
+    {
+      "id": "longform",
+      "label": "长文 Markdown",
+      "description": "行业调研与 MCP 历史的原文",
+      "count": 2,
+      "files": [
+        {
+          "path": "archive/ai-industry-research-2026-10.md",
+          "source": "ai-industry-research-2026-10.md",
+          "title": "AI 行业调研总笔记：厂商问题 · 产品设计教训 · 前沿动态",
+          "url": "/harness/site/ai-industry-research-2026-10.md",
+          "bytes": 31298
+        },
+        {
+          "path": "archive/mcp-history.md",
+          "source": "mcp-history.md",
+          "title": "MCP（Model Context Protocol）完整历史：从 Anthropic 内部标准到 Linux 基金会中立项目",
+          "url": "/harness/site/mcp-history.md",
+          "bytes": 27487
+        }
+      ]
+    },
+    {
+      "id": "labs",
+      "label": "实验",
+      "description": "mini-harness 与 SelfLoop 的代码与说明",
+      "count": 41,
+      "files": [
+        {
+          "path": "archive/labs/mini-harness/harness/__init__.py",
+          "source": "labs/mini-harness/harness/__init__.py",
+          "title": "__init__.py",
+          "url": "/harness/site/labs/mini-harness/harness/__init__.py",
+          "bytes": 1974
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/__main__.py",
+          "source": "labs/mini-harness/harness/__main__.py",
+          "title": "__main__.py",
+          "url": "/harness/site/labs/mini-harness/harness/__main__.py",
+          "bytes": 48
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/cli.py",
+          "source": "labs/mini-harness/harness/cli.py",
+          "title": "cli.py",
+          "url": "/harness/site/labs/mini-harness/harness/cli.py",
+          "bytes": 5339
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/compaction.py",
+          "source": "labs/mini-harness/harness/compaction.py",
+          "title": "compaction.py",
+          "url": "/harness/site/labs/mini-harness/harness/compaction.py",
+          "bytes": 3867
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/evals.py",
+          "source": "labs/mini-harness/harness/evals.py",
+          "title": "evals.py",
+          "url": "/harness/site/labs/mini-harness/harness/evals.py",
+          "bytes": 14216
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/loop.py",
+          "source": "labs/mini-harness/harness/loop.py",
+          "title": "loop.py",
+          "url": "/harness/site/labs/mini-harness/harness/loop.py",
+          "bytes": 9910
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/memory.py",
+          "source": "labs/mini-harness/harness/memory.py",
+          "title": "memory.py",
+          "url": "/harness/site/labs/mini-harness/harness/memory.py",
+          "bytes": 17694
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/models.py",
+          "source": "labs/mini-harness/harness/models.py",
+          "title": "models.py",
+          "url": "/harness/site/labs/mini-harness/harness/models.py",
+          "bytes": 6400
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/outputs.py",
+          "source": "labs/mini-harness/harness/outputs.py",
+          "title": "outputs.py",
+          "url": "/harness/site/labs/mini-harness/harness/outputs.py",
+          "bytes": 2632
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/permissions.py",
+          "source": "labs/mini-harness/harness/permissions.py",
+          "title": "permissions.py",
+          "url": "/harness/site/labs/mini-harness/harness/permissions.py",
+          "bytes": 5476
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/sessions.py",
+          "source": "labs/mini-harness/harness/sessions.py",
+          "title": "sessions.py",
+          "url": "/harness/site/labs/mini-harness/harness/sessions.py",
+          "bytes": 4161
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/subagent.py",
+          "source": "labs/mini-harness/harness/subagent.py",
+          "title": "subagent.py",
+          "url": "/harness/site/labs/mini-harness/harness/subagent.py",
+          "bytes": 8301
+        },
+        {
+          "path": "archive/labs/mini-harness/harness/tools.py",
+          "source": "labs/mini-harness/harness/tools.py",
+          "title": "tools.py",
+          "url": "/harness/site/labs/mini-harness/harness/tools.py",
+          "bytes": 7178
+        },
+        {
+          "path": "archive/labs/mini-harness/prompts/compact.md",
+          "source": "labs/mini-harness/prompts/compact.md",
+          "title": "compact.md",
+          "url": "/harness/site/labs/mini-harness/prompts/compact.md",
+          "bytes": 731
+        },
+        {
+          "path": "archive/labs/mini-harness/README.md",
+          "source": "labs/mini-harness/README.md",
+          "title": "mini-harness：从零写一个最小 Agent Harness（教学实验）",
+          "url": "/harness/site/labs/mini-harness/README.md",
+          "bytes": 41678
+        },
+        {
+          "path": "archive/labs/mini-harness/rules.example.json",
+          "source": "labs/mini-harness/rules.example.json",
+          "title": "rules.example.json",
+          "url": "/harness/site/labs/mini-harness/rules.example.json",
+          "bytes": 1156
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_models_http.py",
+          "source": "labs/mini-harness/tests/test_models_http.py",
+          "title": "test_models_http.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_models_http.py",
+          "bytes": 3707
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s1_loop.py",
+          "source": "labs/mini-harness/tests/test_s1_loop.py",
+          "title": "test_s1_loop.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s1_loop.py",
+          "bytes": 3976
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s2_permissions.py",
+          "source": "labs/mini-harness/tests/test_s2_permissions.py",
+          "title": "test_s2_permissions.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s2_permissions.py",
+          "bytes": 6058
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s3_compaction.py",
+          "source": "labs/mini-harness/tests/test_s3_compaction.py",
+          "title": "test_s3_compaction.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s3_compaction.py",
+          "bytes": 5551
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s4_spill.py",
+          "source": "labs/mini-harness/tests/test_s4_spill.py",
+          "title": "test_s4_spill.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s4_spill.py",
+          "bytes": 3398
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s5_subagent.py",
+          "source": "labs/mini-harness/tests/test_s5_subagent.py",
+          "title": "test_s5_subagent.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s5_subagent.py",
+          "bytes": 6938
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s6_evals.py",
+          "source": "labs/mini-harness/tests/test_s6_evals.py",
+          "title": "test_s6_evals.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s6_evals.py",
+          "bytes": 5929
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/test_s7_memory.py",
+          "source": "labs/mini-harness/tests/test_s7_memory.py",
+          "title": "test_s7_memory.py",
+          "url": "/harness/site/labs/mini-harness/tests/test_s7_memory.py",
+          "bytes": 17578
+        },
+        {
+          "path": "archive/labs/mini-harness/tests/tutil.py",
+          "source": "labs/mini-harness/tests/tutil.py",
+          "title": "tutil.py",
+          "url": "/harness/site/labs/mini-harness/tests/tutil.py",
+          "bytes": 907
+        },
+        {
+          "path": "archive/labs/selfloop/docs/ui-diff.png",
+          "source": "labs/selfloop/docs/ui-diff.png",
+          "title": "ui-diff.png",
+          "url": "/harness/site/labs/selfloop/docs/ui-diff.png",
+          "bytes": 647957
+        },
+        {
+          "path": "archive/labs/selfloop/docs/ui-overview.png",
+          "source": "labs/selfloop/docs/ui-overview.png",
+          "title": "ui-overview.png",
+          "url": "/harness/site/labs/selfloop/docs/ui-overview.png",
+          "bytes": 544237
+        },
+        {
+          "path": "archive/labs/selfloop/gitignore.txt",
+          "source": "labs/selfloop/.gitignore",
+          "title": "gitignore.txt",
+          "url": "/harness/site/labs/selfloop/gitignore.txt",
+          "bytes": 30
+        },
+        {
+          "path": "archive/labs/selfloop/README.md",
+          "source": "labs/selfloop/README.md",
+          "title": "SelfLoop",
+          "url": "/harness/site/labs/selfloop/README.md",
+          "bytes": 9114
+        },
+        {
+          "path": "archive/labs/selfloop/run.py",
+          "source": "labs/selfloop/run.py",
+          "title": "run.py",
+          "url": "/harness/site/labs/selfloop/run.py",
+          "bytes": 789
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/__init__.py",
+          "source": "labs/selfloop/selfloop/__init__.py",
+          "title": "__init__.py",
+          "url": "/harness/site/labs/selfloop/selfloop/__init__.py",
+          "bytes": 0
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/archive.py",
+          "source": "labs/selfloop/selfloop/archive.py",
+          "title": "archive.py",
+          "url": "/harness/site/labs/selfloop/selfloop/archive.py",
+          "bytes": 5653
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/loop.py",
+          "source": "labs/selfloop/selfloop/loop.py",
+          "title": "loop.py",
+          "url": "/harness/site/labs/selfloop/selfloop/loop.py",
+          "bytes": 12891
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/providers.py",
+          "source": "labs/selfloop/selfloop/providers.py",
+          "title": "providers.py",
+          "url": "/harness/site/labs/selfloop/selfloop/providers.py",
+          "bytes": 9994
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/server.py",
+          "source": "labs/selfloop/selfloop/server.py",
+          "title": "server.py",
+          "url": "/harness/site/labs/selfloop/selfloop/server.py",
+          "bytes": 10241
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/tasks.py",
+          "source": "labs/selfloop/selfloop/tasks.py",
+          "title": "tasks.py",
+          "url": "/harness/site/labs/selfloop/selfloop/tasks.py",
+          "bytes": 8230
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/verify.py",
+          "source": "labs/selfloop/selfloop/verify.py",
+          "title": "verify.py",
+          "url": "/harness/site/labs/selfloop/selfloop/verify.py",
+          "bytes": 9600
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/web/app.js",
+          "source": "labs/selfloop/selfloop/web/app.js",
+          "title": "app.js",
+          "url": "/harness/site/labs/selfloop/selfloop/web/app.js",
+          "bytes": 15588
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/web/index.html",
+          "source": "labs/selfloop/selfloop/web/index.html",
+          "title": "SelfLoop · 自举改进循环",
+          "url": "/harness/site/labs/selfloop/selfloop/web/index.html",
+          "bytes": 7065
+        },
+        {
+          "path": "archive/labs/selfloop/selfloop/web/style.css",
+          "source": "labs/selfloop/selfloop/web/style.css",
+          "title": "style.css",
+          "url": "/harness/site/labs/selfloop/selfloop/web/style.css",
+          "bytes": 11996
+        },
+        {
+          "path": "archive/labs/selfloop/tests/test_selfloop.py",
+          "source": "labs/selfloop/tests/test_selfloop.py",
+          "title": "test_selfloop.py",
+          "url": "/harness/site/labs/selfloop/tests/test_selfloop.py",
+          "bytes": 6783
+        }
+      ]
+    },
+    {
+      "id": "docs",
+      "label": "专题与规范",
+      "description": "学习专题、页面清单、功能梳理与开发规范",
+      "count": 21,
+      "files": [
+        {
+          "path": "archive/docs/README.md",
+          "source": "docs/README.md",
+          "title": "文档体系说明",
+          "url": "/harness/site/docs/README.md",
+          "bytes": 1848
+        },
+        {
+          "path": "archive/docs/使用文档/已有功能模块梳理.md",
+          "source": "docs/使用文档/已有功能模块梳理.md",
+          "title": "已有功能梳理",
+          "url": "/harness/site/docs/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3/%E5%B7%B2%E6%9C%89%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97%E6%A2%B3%E7%90%86.md",
+          "bytes": 4338
+        },
+        {
+          "path": "archive/docs/使用文档/页面清单.md",
+          "source": "docs/使用文档/页面清单.md",
+          "title": "页面清单",
+          "url": "/harness/site/docs/%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3/%E9%A1%B5%E9%9D%A2%E6%B8%85%E5%8D%95.md",
+          "bytes": 4121
+        },
+        {
+          "path": "archive/docs/学习专题/01-Hooks33事件/README.md",
+          "source": "docs/学习专题/01-Hooks33事件/README.md",
+          "title": "Hooks33 事件",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/01-Hooks33%E4%BA%8B%E4%BB%B6/README.md",
+          "bytes": 1373
+        },
+        {
+          "path": "archive/docs/学习专题/01-Hooks33事件/内容文档.md",
+          "source": "docs/学习专题/01-Hooks33事件/内容文档.md",
+          "title": "Hooks33 事件内容文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/01-Hooks33%E4%BA%8B%E4%BB%B6/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+          "bytes": 2143
+        },
+        {
+          "path": "archive/docs/学习专题/01-Hooks33事件/实现文档.md",
+          "source": "docs/学习专题/01-Hooks33事件/实现文档.md",
+          "title": "Hooks33 事件实现文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/01-Hooks33%E4%BA%8B%E4%BB%B6/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+          "bytes": 3896
+        },
+        {
+          "path": "archive/docs/学习专题/02-SelfLoop自举循环/README.md",
+          "source": "docs/学习专题/02-SelfLoop自举循环/README.md",
+          "title": "SelfLoop 自举循环",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/02-SelfLoop%E8%87%AA%E4%B8%BE%E5%BE%AA%E7%8E%AF/README.md",
+          "bytes": 1587
+        },
+        {
+          "path": "archive/docs/学习专题/02-SelfLoop自举循环/内容文档.md",
+          "source": "docs/学习专题/02-SelfLoop自举循环/内容文档.md",
+          "title": "SelfLoop 自举循环内容文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/02-SelfLoop%E8%87%AA%E4%B8%BE%E5%BE%AA%E7%8E%AF/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+          "bytes": 2152
+        },
+        {
+          "path": "archive/docs/学习专题/02-SelfLoop自举循环/实现文档.md",
+          "source": "docs/学习专题/02-SelfLoop自举循环/实现文档.md",
+          "title": "SelfLoop 自举循环实现文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/02-SelfLoop%E8%87%AA%E4%B8%BE%E5%BE%AA%E7%8E%AF/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+          "bytes": 4366
+        },
+        {
+          "path": "archive/docs/学习专题/03-Harness结业考试/README.md",
+          "source": "docs/学习专题/03-Harness结业考试/README.md",
+          "title": "Harness 结业考试",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/03-Harness%E7%BB%93%E4%B8%9A%E8%80%83%E8%AF%95/README.md",
+          "bytes": 1661
+        },
+        {
+          "path": "archive/docs/学习专题/03-Harness结业考试/内容文档.md",
+          "source": "docs/学习专题/03-Harness结业考试/内容文档.md",
+          "title": "Harness 结业考试内容文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/03-Harness%E7%BB%93%E4%B8%9A%E8%80%83%E8%AF%95/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+          "bytes": 2342
+        },
+        {
+          "path": "archive/docs/学习专题/03-Harness结业考试/实现文档.md",
+          "source": "docs/学习专题/03-Harness结业考试/实现文档.md",
+          "title": "Harness 结业考试实现文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/03-Harness%E7%BB%93%E4%B8%9A%E8%80%83%E8%AF%95/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+          "bytes": 4693
+        },
+        {
+          "path": "archive/docs/学习专题/04-AI产品经理考试/README.md",
+          "source": "docs/学习专题/04-AI产品经理考试/README.md",
+          "title": "AI 产品经理考试",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/04-AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E8%80%83%E8%AF%95/README.md",
+          "bytes": 1497
+        },
+        {
+          "path": "archive/docs/学习专题/04-AI产品经理考试/内容文档.md",
+          "source": "docs/学习专题/04-AI产品经理考试/内容文档.md",
+          "title": "AI 产品经理考试内容文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/04-AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E8%80%83%E8%AF%95/%E5%86%85%E5%AE%B9%E6%96%87%E6%A1%A3.md",
+          "bytes": 2143
+        },
+        {
+          "path": "archive/docs/学习专题/04-AI产品经理考试/实现文档.md",
+          "source": "docs/学习专题/04-AI产品经理考试/实现文档.md",
+          "title": "AI 产品经理考试实现文档",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/04-AI%E4%BA%A7%E5%93%81%E7%BB%8F%E7%90%86%E8%80%83%E8%AF%95/%E5%AE%9E%E7%8E%B0%E6%96%87%E6%A1%A3.md",
+          "bytes": 4695
+        },
+        {
+          "path": "archive/docs/学习专题/README.md",
+          "source": "docs/学习专题/README.md",
+          "title": "学习专题索引",
+          "url": "/harness/site/docs/%E5%AD%A6%E4%B9%A0%E4%B8%93%E9%A2%98/README.md",
+          "bytes": 1389
+        },
+        {
+          "path": "archive/docs/开发规范/业务模块文档模版.md",
+          "source": "docs/开发规范/业务模块文档模版.md",
+          "title": "学习专题文档编写规范",
+          "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E4%B8%9A%E5%8A%A1%E6%A8%A1%E5%9D%97%E6%96%87%E6%A1%A3%E6%A8%A1%E7%89%88.md",
+          "bytes": 4957
+        },
+        {
+          "path": "archive/docs/开发规范/已有功能模块梳理模板.md",
+          "source": "docs/开发规范/已有功能模块梳理模板.md",
+          "title": "已有功能模块梳理模板",
+          "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E5%B7%B2%E6%9C%89%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97%E6%A2%B3%E7%90%86%E6%A8%A1%E6%9D%BF.md",
+          "bytes": 684
+        },
+        {
+          "path": "archive/docs/开发规范/开发流程.md",
+          "source": "docs/开发规范/开发流程.md",
+          "title": "开发流程规范",
+          "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B.md",
+          "bytes": 3402
+        },
+        {
+          "path": "archive/docs/开发规范/核心数据位置.md",
+          "source": "docs/开发规范/核心数据位置.md",
+          "title": "核心数据位置",
+          "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E6%A0%B8%E5%BF%83%E6%95%B0%E6%8D%AE%E4%BD%8D%E7%BD%AE.md",
+          "bytes": 3251
+        },
+        {
+          "path": "archive/docs/开发规范/页面规范.md",
+          "source": "docs/开发规范/页面规范.md",
+          "title": "页面规范",
+          "url": "/harness/site/docs/%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83/%E9%A1%B5%E9%9D%A2%E8%A7%84%E8%8C%83.md",
+          "bytes": 2749
+        }
+      ]
+    },
+    {
+      "id": "collab",
+      "label": "协作存档",
+      "description": "BOARD、任务、报告与评审",
+      "count": 71,
+      "files": [
+        {
+          "path": "archive/collab/BOARD.md",
+          "source": "collab/BOARD.md",
+          "title": "任务看板（审核者维护）",
+          "url": "/harness/site/collab/BOARD.md",
+          "bytes": 10249
+        },
+        {
+          "path": "archive/collab/PROTOCOL.md",
+          "source": "collab/PROTOCOL.md",
+          "title": "协作协议（ZCode 执行者必读）",
+          "url": "/harness/site/collab/PROTOCOL.md",
+          "bytes": 5226
+        },
+        {
+          "path": "archive/collab/reports/F01-fix-04-attribution.report.md",
+          "source": "collab/reports/F01-fix-04-attribution.report.md",
+          "title": "F01-fix-04-attribution 完成报告",
+          "url": "/harness/site/collab/reports/F01-fix-04-attribution.report.md",
+          "bytes": 8097
+        },
+        {
+          "path": "archive/collab/reports/F02-small-errata.report.md",
+          "source": "collab/reports/F02-small-errata.report.md",
+          "title": "F02 完成报告 · T08-r1 与 T09a 审核遗留的 6 个小问题",
+          "url": "/harness/site/collab/reports/F02-small-errata.report.md",
+          "bytes": 13357
+        },
+        {
+          "path": "archive/collab/reports/F03-explained-mobile-overflow.report.md",
+          "source": "collab/reports/F03-explained-mobile-overflow.report.md",
+          "title": "F03 完成报告",
+          "url": "/harness/site/collab/reports/F03-explained-mobile-overflow.report.md",
+          "bytes": 4299
+        },
+        {
+          "path": "archive/collab/reports/T01-harness-teardown.report.md",
+          "source": "collab/reports/T01-harness-teardown.report.md",
+          "title": "T01 完成报告",
+          "url": "/harness/site/collab/reports/T01-harness-teardown.report.md",
+          "bytes": 6559
+        },
+        {
+          "path": "archive/collab/reports/T01-r1-harness-teardown.report.md",
+          "source": "collab/reports/T01-r1-harness-teardown.report.md",
+          "title": "T01-r1 完成报告(harness 横评分册小返工)",
+          "url": "/harness/site/collab/reports/T01-r1-harness-teardown.report.md",
+          "bytes": 8383
+        },
+        {
+          "path": "archive/collab/reports/T02-tools-mcp-skills.report.md",
+          "source": "collab/reports/T02-tools-mcp-skills.report.md",
+          "title": "T02 完成报告",
+          "url": "/harness/site/collab/reports/T02-tools-mcp-skills.report.md",
+          "bytes": 7041
+        },
+        {
+          "path": "archive/collab/reports/T03-r1-security-sandbox.report.md",
+          "source": "collab/reports/T03-r1-security-sandbox.report.md",
+          "title": "T03-r1 完成报告（安全分册返工）",
+          "url": "/harness/site/collab/reports/T03-r1-security-sandbox.report.md",
+          "bytes": 14234
+        },
+        {
+          "path": "archive/collab/reports/T03-security-sandbox.report.md",
+          "source": "collab/reports/T03-security-sandbox.report.md",
+          "title": "T03 完成报告",
+          "url": "/harness/site/collab/reports/T03-security-sandbox.report.md",
+          "bytes": 7278
+        },
+        {
+          "path": "archive/collab/reports/T04-memory.report.md",
+          "source": "collab/reports/T04-memory.report.md",
+          "title": "T04 完成报告",
+          "url": "/harness/site/collab/reports/T04-memory.report.md",
+          "bytes": 7602
+        },
+        {
+          "path": "archive/collab/reports/T05-multi-agent.report.md",
+          "source": "collab/reports/T05-multi-agent.report.md",
+          "title": "T05 完成报告",
+          "url": "/harness/site/collab/reports/T05-multi-agent.report.md",
+          "bytes": 7103
+        },
+        {
+          "path": "archive/collab/reports/T06-evals.report.md",
+          "source": "collab/reports/T06-evals.report.md",
+          "title": "T06 完成报告",
+          "url": "/harness/site/collab/reports/T06-evals.report.md",
+          "bytes": 7045
+        },
+        {
+          "path": "archive/collab/reports/T07-economics-observability.report.md",
+          "source": "collab/reports/T07-economics-observability.report.md",
+          "title": "T07 完成报告",
+          "url": "/harness/site/collab/reports/T07-economics-observability.report.md",
+          "bytes": 6250
+        },
+        {
+          "path": "archive/collab/reports/T08-ext-memory-lab.report.md",
+          "source": "collab/reports/T08-ext-memory-lab.report.md",
+          "title": "T08-ext 完成报告",
+          "url": "/harness/site/collab/reports/T08-ext-memory-lab.report.md",
+          "bytes": 13904
+        },
+        {
+          "path": "archive/collab/reports/T08-mini-harness-lab.report.md",
+          "source": "collab/reports/T08-mini-harness-lab.report.md",
+          "title": "T08 完成报告",
+          "url": "/harness/site/collab/reports/T08-mini-harness-lab.report.md",
+          "bytes": 8704
+        },
+        {
+          "path": "archive/collab/reports/T08-r1-mini-harness-lab.report.md",
+          "source": "collab/reports/T08-r1-mini-harness-lab.report.md",
+          "title": "T08-r1 完成报告（返工）",
+          "url": "/harness/site/collab/reports/T08-r1-mini-harness-lab.report.md",
+          "bytes": 8688
+        },
+        {
+          "path": "archive/collab/reports/T09a-research-fixups.report.md",
+          "source": "collab/reports/T09a-research-fixups.report.md",
+          "title": "T09a 完成报告",
+          "url": "/harness/site/collab/reports/T09a-research-fixups.report.md",
+          "bytes": 17637
+        },
+        {
+          "path": "archive/collab/reports/T09b-learning-pages.report.md",
+          "source": "collab/reports/T09b-learning-pages.report.md",
+          "title": "T09b 完成报告 · 学习页整合 + 题库扩充",
+          "url": "/harness/site/collab/reports/T09b-learning-pages.report.md",
+          "bytes": 14049
+        },
+        {
+          "path": "archive/collab/reports/T10-s7-pages-exam.report.md",
+          "source": "collab/reports/T10-s7-pages-exam.report.md",
+          "title": "T10 完成报告",
+          "url": "/harness/site/collab/reports/T10-s7-pages-exam.report.md",
+          "bytes": 11418
+        },
+        {
+          "path": "archive/collab/reports/T11a-failure-cases-conversation.report.md",
+          "source": "collab/reports/T11a-failure-cases-conversation.report.md",
+          "title": "T11a 完成报告",
+          "url": "/harness/site/collab/reports/T11a-failure-cases-conversation.report.md",
+          "bytes": 11619
+        },
+        {
+          "path": "archive/collab/reports/T11b-failure-cases-defaults-agents.report.md",
+          "source": "collab/reports/T11b-failure-cases-defaults-agents.report.md",
+          "title": "T11b 完成报告",
+          "url": "/harness/site/collab/reports/T11b-failure-cases-defaults-agents.report.md",
+          "bytes": 10215
+        },
+        {
+          "path": "archive/collab/reports/T11b-r1-failure-cases-deeplinks.report.md",
+          "source": "collab/reports/T11b-r1-failure-cases-deeplinks.report.md",
+          "title": "T11b-r1 完成报告（补深链）",
+          "url": "/harness/site/collab/reports/T11b-r1-failure-cases-deeplinks.report.md",
+          "bytes": 8835
+        },
+        {
+          "path": "archive/collab/reports/T11c-failure-cases-workflow-companion.report.md",
+          "source": "collab/reports/T11c-failure-cases-workflow-companion.report.md",
+          "title": "T11c 完成报告",
+          "url": "/harness/site/collab/reports/T11c-failure-cases-workflow-companion.report.md",
+          "bytes": 9821
+        },
+        {
+          "path": "archive/collab/reports/T11d-failure-cases-high-stakes.report.md",
+          "source": "collab/reports/T11d-failure-cases-high-stakes.report.md",
+          "title": "T11d 完成报告",
+          "url": "/harness/site/collab/reports/T11d-failure-cases-high-stakes.report.md",
+          "bytes": 10583
+        },
+        {
+          "path": "archive/collab/reports/T12-casebook-merge.report.md",
+          "source": "collab/reports/T12-casebook-merge.report.md",
+          "title": "T12 完成报告",
+          "url": "/harness/site/collab/reports/T12-casebook-merge.report.md",
+          "bytes": 14790
+        },
+        {
+          "path": "archive/collab/reviews/F01-fix-04-attribution.review.md",
+          "source": "collab/reviews/F01-fix-04-attribution.review.md",
+          "title": "F01 审核意见",
+          "url": "/harness/site/collab/reviews/F01-fix-04-attribution.review.md",
+          "bytes": 630
+        },
+        {
+          "path": "archive/collab/reviews/F02-small-errata.review.md",
+          "source": "collab/reviews/F02-small-errata.review.md",
+          "title": "F02 审核意见　**结论：通过**（2026-10-05）",
+          "url": "/harness/site/collab/reviews/F02-small-errata.review.md",
+          "bytes": 561
+        },
+        {
+          "path": "archive/collab/reviews/F03-explained-mobile-overflow.review.md",
+          "source": "collab/reviews/F03-explained-mobile-overflow.review.md",
+          "title": "F03 审核意见　**结论：通过**（2026-10-06）",
+          "url": "/harness/site/collab/reviews/F03-explained-mobile-overflow.review.md",
+          "bytes": 945
+        },
+        {
+          "path": "archive/collab/reviews/T01-harness-teardown.review.md",
+          "source": "collab/reviews/T01-harness-teardown.review.md",
+          "title": "T01 审核意见",
+          "url": "/harness/site/collab/reviews/T01-harness-teardown.review.md",
+          "bytes": 3940
+        },
+        {
+          "path": "archive/collab/reviews/T02-tools-mcp-skills.review.md",
+          "source": "collab/reviews/T02-tools-mcp-skills.review.md",
+          "title": "T02 审核意见",
+          "url": "/harness/site/collab/reviews/T02-tools-mcp-skills.review.md",
+          "bytes": 2409
+        },
+        {
+          "path": "archive/collab/reviews/T03-security-sandbox.review.md",
+          "source": "collab/reviews/T03-security-sandbox.review.md",
+          "title": "T03 审核意见",
+          "url": "/harness/site/collab/reviews/T03-security-sandbox.review.md",
+          "bytes": 5008
+        },
+        {
+          "path": "archive/collab/reviews/T04-memory.review.md",
+          "source": "collab/reviews/T04-memory.review.md",
+          "title": "T04 审核意见",
+          "url": "/harness/site/collab/reviews/T04-memory.review.md",
+          "bytes": 2271
+        },
+        {
+          "path": "archive/collab/reviews/T05-multi-agent.review.md",
+          "source": "collab/reviews/T05-multi-agent.review.md",
+          "title": "T05 审核意见",
+          "url": "/harness/site/collab/reviews/T05-multi-agent.review.md",
+          "bytes": 1980
+        },
+        {
+          "path": "archive/collab/reviews/T06-evals.review.md",
+          "source": "collab/reviews/T06-evals.review.md",
+          "title": "T06 审核意见",
+          "url": "/harness/site/collab/reviews/T06-evals.review.md",
+          "bytes": 1529
+        },
+        {
+          "path": "archive/collab/reviews/T07-economics-observability.review.md",
+          "source": "collab/reviews/T07-economics-observability.review.md",
+          "title": "T07 审核意见",
+          "url": "/harness/site/collab/reviews/T07-economics-observability.review.md",
+          "bytes": 1445
+        },
+        {
+          "path": "archive/collab/reviews/T08-ext-memory-lab.review.md",
+          "source": "collab/reviews/T08-ext-memory-lab.review.md",
+          "title": "T08-ext 审核意见 · S7 记忆层　**结论：通过**（2026-10-06）",
+          "url": "/harness/site/collab/reviews/T08-ext-memory-lab.review.md",
+          "bytes": 2131
+        },
+        {
+          "path": "archive/collab/reviews/T08-mini-harness-lab.review.md",
+          "source": "collab/reviews/T08-mini-harness-lab.review.md",
+          "title": "T08 审核意见 · 最小 harness 实验",
+          "url": "/harness/site/collab/reviews/T08-mini-harness-lab.review.md",
+          "bytes": 7585
+        },
+        {
+          "path": "archive/collab/reviews/T09a-research-fixups.review.md",
+          "source": "collab/reviews/T09a-research-fixups.review.md",
+          "title": "T09a 审核意见 · 分册收尾修订",
+          "url": "/harness/site/collab/reviews/T09a-research-fixups.review.md",
+          "bytes": 1864
+        },
+        {
+          "path": "archive/collab/reviews/T09b-learning-pages.review.md",
+          "source": "collab/reviews/T09b-learning-pages.review.md",
+          "title": "T09b 审核意见　**结论：通过**（2026-10-05）",
+          "url": "/harness/site/collab/reviews/T09b-learning-pages.review.md",
+          "bytes": 1097
+        },
+        {
+          "path": "archive/collab/reviews/T10-s7-pages-exam.review.md",
+          "source": "collab/reviews/T10-s7-pages-exam.review.md",
+          "title": "T10 审核意见（2026-10-06）",
+          "url": "/harness/site/collab/reviews/T10-s7-pages-exam.review.md",
+          "bytes": 1150
+        },
+        {
+          "path": "archive/collab/reviews/T11a-failure-cases-conversation.review.md",
+          "source": "collab/reviews/T11a-failure-cases-conversation.review.md",
+          "title": "T11a 审核意见",
+          "url": "/harness/site/collab/reviews/T11a-failure-cases-conversation.review.md",
+          "bytes": 1643
+        },
+        {
+          "path": "archive/collab/reviews/T11b-failure-cases-defaults-agents.review.md",
+          "source": "collab/reviews/T11b-failure-cases-defaults-agents.review.md",
+          "title": "T11b 审核意见",
+          "url": "/harness/site/collab/reviews/T11b-failure-cases-defaults-agents.review.md",
+          "bytes": 2474
+        },
+        {
+          "path": "archive/collab/reviews/T11c-failure-cases-workflow-companion.review.md",
+          "source": "collab/reviews/T11c-failure-cases-workflow-companion.review.md",
+          "title": "T11c 审核意见",
+          "url": "/harness/site/collab/reviews/T11c-failure-cases-workflow-companion.review.md",
+          "bytes": 2089
+        },
+        {
+          "path": "archive/collab/reviews/T11d-failure-cases-high-stakes.review.md",
+          "source": "collab/reviews/T11d-failure-cases-high-stakes.review.md",
+          "title": "T11d 审核意见",
+          "url": "/harness/site/collab/reviews/T11d-failure-cases-high-stakes.review.md",
+          "bytes": 2403
+        },
+        {
+          "path": "archive/collab/reviews/T12-casebook-merge.review.md",
+          "source": "collab/reviews/T12-casebook-merge.review.md",
+          "title": "T12 审核意见",
+          "url": "/harness/site/collab/reviews/T12-casebook-merge.review.md",
+          "bytes": 1329
+        },
+        {
+          "path": "archive/collab/ROADMAP.md",
+          "source": "collab/ROADMAP.md",
+          "title": "Harness 学习路线（审核者维护）",
+          "url": "/harness/site/collab/ROADMAP.md",
+          "bytes": 5934
+        },
+        {
+          "path": "archive/collab/tasks/F01-fix-04-attribution.md",
+          "source": "collab/tasks/F01-fix-04-attribution.md",
+          "title": "F01 · 修正 04 分册的两处出处错误",
+          "url": "/harness/site/collab/tasks/F01-fix-04-attribution.md",
+          "bytes": 1541
+        },
+        {
+          "path": "archive/collab/tasks/F02-small-errata.md",
+          "source": "collab/tasks/F02-small-errata.md",
+          "title": "F02 · 小勘误：T08-r1 与 T09a 审核遗留的 6 个小问题",
+          "url": "/harness/site/collab/tasks/F02-small-errata.md",
+          "bytes": 2979
+        },
+        {
+          "path": "archive/collab/tasks/F03-explained-mobile-overflow.md",
+          "source": "collab/tasks/F03-explained-mobile-overflow.md",
+          "title": "F03 · 修复 ai-harness-explained.html 手机端横向溢出",
+          "url": "/harness/site/collab/tasks/F03-explained-mobile-overflow.md",
+          "bytes": 1539
+        },
+        {
+          "path": "archive/collab/tasks/T01-harness-teardown.md",
+          "source": "collab/tasks/T01-harness-teardown.md",
+          "title": "T01 · 主流编码 Agent Harness 横评拆解",
+          "url": "/harness/site/collab/tasks/T01-harness-teardown.md",
+          "bytes": 2584
+        },
+        {
+          "path": "archive/collab/tasks/T01-r1-harness-teardown.md",
+          "source": "collab/tasks/T01-r1-harness-teardown.md",
+          "title": "T01-r1 · 横评分册小返工",
+          "url": "/harness/site/collab/tasks/T01-r1-harness-teardown.md",
+          "bytes": 740
+        },
+        {
+          "path": "archive/collab/tasks/T02-tools-mcp-skills.md",
+          "source": "collab/tasks/T02-tools-mcp-skills.md",
+          "title": "T02 · 工具层：工具设计、MCP、Skills 与\"代码即工具\"",
+          "url": "/harness/site/collab/tasks/T02-tools-mcp-skills.md",
+          "bytes": 2295
+        },
+        {
+          "path": "archive/collab/tasks/T03-r1-security-sandbox.md",
+          "source": "collab/tasks/T03-r1-security-sandbox.md",
+          "title": "T03-r1 · 安全分册返工",
+          "url": "/harness/site/collab/tasks/T03-r1-security-sandbox.md",
+          "bytes": 824
+        },
+        {
+          "path": "archive/collab/tasks/T03-security-sandbox.md",
+          "source": "collab/tasks/T03-security-sandbox.md",
+          "title": "T03 · Agent 安全：权限、沙箱与提示注入",
+          "url": "/harness/site/collab/tasks/T03-security-sandbox.md",
+          "bytes": 2303
+        },
+        {
+          "path": "archive/collab/tasks/T04-memory.md",
+          "source": "collab/tasks/T04-memory.md",
+          "title": "T04 · 记忆系统：agent 怎么\"记得\"，又怎么\"忘掉\"",
+          "url": "/harness/site/collab/tasks/T04-memory.md",
+          "bytes": 2662
+        },
+        {
+          "path": "archive/collab/tasks/T05-multi-agent.md",
+          "source": "collab/tasks/T05-multi-agent.md",
+          "title": "T05 · 子 agent 与多智能体编排：什么时候该拆，什么时候不该",
+          "url": "/harness/site/collab/tasks/T05-multi-agent.md",
+          "bytes": 2596
+        },
+        {
+          "path": "archive/collab/tasks/T06-evals.md",
+          "source": "collab/tasks/T06-evals.md",
+          "title": "T06 · Agent 评测：怎么给自己的 harness 建 eval",
+          "url": "/harness/site/collab/tasks/T06-evals.md",
+          "bytes": 2642
+        },
+        {
+          "path": "archive/collab/tasks/T07-economics-observability.md",
+          "source": "collab/tasks/T07-economics-observability.md",
+          "title": "T07 · 工程经济学与可观测性：一次 agent 会话的钱花在哪、怎么看见",
+          "url": "/harness/site/collab/tasks/T07-economics-observability.md",
+          "bytes": 2911
+        },
+        {
+          "path": "archive/collab/tasks/T08-ext-memory-lab.md",
+          "source": "collab/tasks/T08-ext-memory-lab.md",
+          "title": "T08-ext · 动手实验 S7：带写入闸门、可重建的记忆层",
+          "url": "/harness/site/collab/tasks/T08-ext-memory-lab.md",
+          "bytes": 5349
+        },
+        {
+          "path": "archive/collab/tasks/T08-mini-harness-lab.md",
+          "source": "collab/tasks/T08-mini-harness-lab.md",
+          "title": "T08 · 动手实验：从零写一个最小 harness",
+          "url": "/harness/site/collab/tasks/T08-mini-harness-lab.md",
+          "bytes": 3251
+        },
+        {
+          "path": "archive/collab/tasks/T08-r1-mini-harness-lab.md",
+          "source": "collab/tasks/T08-r1-mini-harness-lab.md",
+          "title": "T08-r1 · 返工：修判分器、补只读漏洞",
+          "url": "/harness/site/collab/tasks/T08-r1-mini-harness-lab.md",
+          "bytes": 1671
+        },
+        {
+          "path": "archive/collab/tasks/T09a-research-fixups.md",
+          "source": "collab/tasks/T09a-research-fixups.md",
+          "title": "T09a · 分册收尾修订：把各审核遗留的小问题一次修完",
+          "url": "/harness/site/collab/tasks/T09a-research-fixups.md",
+          "bytes": 3026
+        },
+        {
+          "path": "archive/collab/tasks/T09b-learning-pages.md",
+          "source": "collab/tasks/T09b-learning-pages.md",
+          "title": "T09b · 学习页整合 + 题库扩充",
+          "url": "/harness/site/collab/tasks/T09b-learning-pages.md",
+          "bytes": 6029
+        },
+        {
+          "path": "archive/collab/tasks/T10-s7-pages-exam.md",
+          "source": "collab/tasks/T10-s7-pages-exam.md",
+          "title": "T10 · 学习页与题库补 S7 记忆层",
+          "url": "/harness/site/collab/tasks/T10-s7-pages-exam.md",
+          "bytes": 3799
+        },
+        {
+          "path": "archive/collab/tasks/T11a-failure-cases-conversation.md",
+          "source": "collab/tasks/T11a-failure-cases-conversation.md",
+          "title": "T11a · AI 产品设计失败案例续集 A：AI 替公司说话（对话与内容）",
+          "url": "/harness/site/collab/tasks/T11a-failure-cases-conversation.md",
+          "bytes": 5228
+        },
+        {
+          "path": "archive/collab/tasks/T11b-failure-cases-defaults-agents.md",
+          "source": "collab/tasks/T11b-failure-cases-defaults-agents.md",
+          "title": "T11b · AI 产品设计失败案例续集 B：默认值、商业化与 agent 工具",
+          "url": "/harness/site/collab/tasks/T11b-failure-cases-defaults-agents.md",
+          "bytes": 5616
+        },
+        {
+          "path": "archive/collab/tasks/T11b-r1-failure-cases-deeplinks.md",
+          "source": "collab/tasks/T11b-r1-failure-cases-deeplinks.md",
+          "title": "T11b-r1 · 续集 B 小返工：把\"域名级\"引用补成可访问的文章链接",
+          "url": "/harness/site/collab/tasks/T11b-r1-failure-cases-deeplinks.md",
+          "bytes": 1525
+        },
+        {
+          "path": "archive/collab/tasks/T11c-failure-cases-workflow-companion.md",
+          "source": "collab/tasks/T11c-failure-cases-workflow-companion.md",
+          "title": "T11c · AI 产品设计失败案例续集 C：AI 产出进入专业流程，与陪伴关系的改动",
+          "url": "/harness/site/collab/tasks/T11c-failure-cases-workflow-companion.md",
+          "bytes": 5884
+        },
+        {
+          "path": "archive/collab/tasks/T11d-failure-cases-high-stakes.md",
+          "source": "collab/tasks/T11d-failure-cases-high-stakes.md",
+          "title": "T11d · AI 产品设计失败案例续集 D：高风险场景里的自动化决策",
+          "url": "/harness/site/collab/tasks/T11d-failure-cases-high-stakes.md",
+          "bytes": 6286
+        },
+        {
+          "path": "archive/collab/tasks/T12-casebook-merge.md",
+          "source": "collab/tasks/T12-casebook-merge.md",
+          "title": "T12 · 失败案例集并入：把续集 A/B/C 的 27 个案例并进 ai-failure-casebook.html",
+          "url": "/harness/site/collab/tasks/T12-casebook-merge.md",
+          "bytes": 4393
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "label": "构建源",
+      "description": "hooks-33 与幻灯片的构建脚本与源文件",
+      "count": 8,
+      "files": [
+        {
+          "path": "archive/_deck/build_deck.py",
+          "source": "_deck/build_deck.py",
+          "title": "build_deck.py",
+          "url": "/harness/site/_deck/build_deck.py",
+          "bytes": 48319
+        },
+        {
+          "path": "archive/_deck/checks.json",
+          "source": "_deck/checks.json",
+          "title": "checks.json",
+          "url": "/harness/site/_deck/checks.json",
+          "bytes": 783
+        },
+        {
+          "path": "archive/_deck/harness-tech-share-2026-10.pptx",
+          "source": "_deck/harness-tech-share-2026-10.pptx",
+          "title": "harness-tech-share-2026-10.pptx",
+          "url": "/harness/site/_deck/harness-tech-share-2026-10.pptx",
+          "bytes": 106448
+        },
+        {
+          "path": "archive/_deck/qa_layout.py",
+          "source": "_deck/qa_layout.py",
+          "title": "qa_layout.py",
+          "url": "/harness/site/_deck/qa_layout.py",
+          "bytes": 3097
+        },
+        {
+          "path": "archive/hooks-33/build.py",
+          "source": "hooks-33/build.py",
+          "title": "build.py",
+          "url": "/harness/site/hooks-33/build.py",
+          "bytes": 47056
+        },
+        {
+          "path": "archive/hooks-33/README.md",
+          "source": "hooks-33/README.md",
+          "title": "hooks-33 · 源文件",
+          "url": "/harness/site/hooks-33/README.md",
+          "bytes": 984
+        },
+        {
+          "path": "archive/hooks-33/style.css",
+          "source": "hooks-33/style.css",
+          "title": "style.css",
+          "url": "/harness/site/hooks-33/style.css",
+          "bytes": 18056
+        },
+        {
+          "path": "archive/hooks-33/template.html",
+          "source": "hooks-33/template.html",
+          "title": "迁移之夜 · 33 个 Claude Code Hook 的一次完整值班",
+          "url": "/harness/site/hooks-33/template.html",
+          "bytes": 15372
+        }
+      ]
+    },
+    {
+      "id": "artifacts",
+      "label": "产物",
+      "description": "技术分享 PPTX 与 PDF",
+      "count": 2,
+      "files": [
+        {
+          "path": "archive/harness-tech-share-2026-10.pdf",
+          "source": "harness-tech-share-2026-10.pdf",
+          "title": "harness-tech-share-2026-10.pdf",
+          "url": "/harness/site/harness-tech-share-2026-10.pdf",
+          "bytes": 1107398
+        },
+        {
+          "path": "archive/harness-tech-share-2026-10.pptx",
+          "source": "harness-tech-share-2026-10.pptx",
+          "title": "harness-tech-share-2026-10.pptx",
+          "url": "/harness/site/harness-tech-share-2026-10.pptx",
+          "bytes": 106448
+        }
+      ]
+    }
+  ]
+}

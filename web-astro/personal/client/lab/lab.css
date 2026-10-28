@@ -1,0 +1,385 @@
+/* Shared by the agent lab and the settings page: page shell, headings,
+   notices and form controls. Model-profile and price rules live in
+   client/settings/settings.css (requirement 029). */
+.lab-page {
+  padding-block: 36px 96px;
+  --lab-radius: 10px;
+  --lab-ok: #3f8f5a;
+  --lab-warn: #b7791f;
+  --lab-bad: #c0392b;
+  --lab-seg-system: #7c8db5;
+  --lab-seg-tools: #9b7cb5;
+  --lab-seg-user: #4f9d8f;
+  --lab-seg-assistant: #c9a24a;
+  --lab-seg-tool: #d07a5a;
+  font-family: var(--sans);
+}
+[data-theme='dark'] .lab-page {
+  --lab-ok: #6cc28a;
+  --lab-warn: #e0a84a;
+  --lab-bad: #ef7d6d;
+}
+.lab-head h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  line-height: 1.15;
+}
+.lab-lead {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.lab-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: 20px -12px 0;
+  padding: 8px 12px;
+  background: var(--header);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.lab-tab {
+  position: relative;
+  flex: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+.lab-tab:hover {
+  background: var(--hover-bg, var(--surface));
+  color: var(--ink);
+}
+.lab-tab[aria-current='page'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.lab-tab-count {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  font-size: 0.72rem;
+}
+.lab-root {
+  margin-top: 20px;
+}
+.lab-section {
+  margin-bottom: 32px;
+}
+.lab-h2 {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+}
+.lab-h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+.lab-h4 {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+.lab-muted {
+  color: var(--muted);
+}
+.lab-error {
+  color: var(--lab-bad);
+}
+.lab-warn {
+  color: var(--lab-warn);
+}
+.lab-spacer {
+  flex: 1;
+}
+.lab-nowrap {
+  white-space: nowrap;
+}
+.lab-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Notices */
+.lab-notice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+.lab-notice--error {
+  border-color: color-mix(in srgb, var(--lab-bad) 45%, var(--line));
+  color: var(--lab-bad);
+}
+.lab-notice--warn {
+  border-color: color-mix(in srgb, var(--lab-warn) 45%, var(--line));
+}
+.lab-notice--pending {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+/* Inputs and buttons */
+.lab-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.92rem;
+}
+.lab-input--num {
+  width: 8em;
+}
+.lab-question {
+  resize: vertical;
+  min-height: 3.2em;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.lab-btn {
+  padding: 7px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.lab-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+.lab-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.lab-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink, #fff);
+}
+.lab-btn--small {
+  padding: 4px 10px;
+  font-size: 0.82rem;
+}
+.lab-btn--tiny {
+  padding: 1px 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+.lab-btn--danger {
+  color: var(--lab-bad);
+}
+.lab-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+}
+.lab-chip:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+.lab-chips,
+.lab-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.lab-chip-static {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  font-size: 0.8rem;
+}
+.lab-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+/* Badges */
+.lab-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.lab-badge--ok,
+.lab-badge--done,
+.lab-badge--approved {
+  color: var(--lab-ok);
+  border-color: color-mix(in srgb, var(--lab-ok) 50%, var(--line));
+}
+.lab-badge--running,
+.lab-badge--pending {
+  color: var(--accent);
+}
+.lab-badge--max_turns,
+.lab-badge--budget_exceeded,
+.lab-badge--cancelled,
+.lab-badge--warn,
+.lab-badge--expired {
+  color: var(--lab-warn);
+  border-color: color-mix(in srgb, var(--lab-warn) 50%, var(--line));
+}
+.lab-badge--llm_error,
+.lab-badge--error,
+.lab-badge--failed,
+.lab-badge--aborted,
+.lab-badge--rejected {
+  color: var(--lab-bad);
+  border-color: color-mix(in srgb, var(--lab-bad) 50%, var(--line));
+}
+
+/* Ask layout */
+.lab-ask-form {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--lab-radius);
+  background: var(--surface);
+  margin-bottom: 20px;
+}
+.lab-ask-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 10px;
+}
+.lab-knob-wrap {
+  margin-top: 12px;
+}
+.lab-knob-wrap > summary,
+.lab-knob-group > summary,
+.lab-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.lab-knobs {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.lab-knob-basic {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+.lab-knob-nav {
+  /* Sticks just below the sticky .lab-tabs bar (about 52px tall). */
+  position: sticky;
+  top: 51px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: 8px -4px 0;
+  padding: 8px 4px;
+  background: var(--surface);
+  scrollbar-width: none;
+}
+.lab-knob-nav-label {
+  flex: none;
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.lab-knob-jump {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.lab-knob-jump:is(a) {
+  text-decoration: none;
+}
+.lab-knob-page {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+}
+.lab-knob-jump[aria-current] {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+.lab-knob-jump-count {
+  min-width: 1.4em;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--ink);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-align: center;
+}
+.lab-knob-group {
+  /* Added to the page's 6rem scroll-padding: lands below the tabs and the jump row. */
+  scroll-margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.lab-knob-summary {
+  margin: 6px 0 8px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.lab-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.86rem;
+}
+.lab-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.lab-field-label {
+  font-weight: 600;
+}
+.lab-field-wrap {
+  margin-bottom: 6px;
+}
+.lab-field-help {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.lab-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}

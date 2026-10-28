@@ -1,0 +1,35 @@
+{
+  "default": "allow",
+  "rules": [
+    {
+      "tool": "bash",
+      "match": { "type": "regex", "pattern": "\\brm\\b[^|;&]*\\s-{1,2}[a-zA-Z]*[rR][a-zA-Z]*" },
+      "decision": "deny",
+      "reason": "禁止递归删除（rm 带 -r/-R/--recursive 旗标，含旗标分开写的写法）。请改用更精确的删除方式，或让用户手动处理"
+    },
+    {
+      "tool": "bash",
+      "match": { "type": "regex", "pattern": "\\bfind\\b[^|;&]*\\s(-delete|-exec|-execdir|-ok|-okdir|-fprint)" },
+      "decision": "deny",
+      "reason": "find 的删除/执行/落盘旗标可写文件系统，只读场景禁止"
+    },
+    {
+      "tool": "bash",
+      "match": { "type": "regex", "pattern": "\\b(curl|wget|scp|ssh)\\b" },
+      "decision": "ask",
+      "reason": "联网/远程命令需用户确认"
+    },
+    {
+      "tool": "write_file",
+      "match": { "type": "outside_workspace" },
+      "decision": "deny",
+      "reason": "禁止写工作区之外的路径"
+    },
+    {
+      "tool": "bash",
+      "match": { "type": "regex", "pattern": "^npm (run )?test" },
+      "decision": "allow",
+      "reason": "测试命令放行"
+    }
+  ]
+}
