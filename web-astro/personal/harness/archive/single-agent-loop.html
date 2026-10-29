@@ -1,0 +1,1824 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>单 Agent 循环：什么时候把子 Agent 折回主循环</title>
+<meta name="description" content="基于 Anthropic 2026-10 指南、single-agent-loop-kit 与 17 条来源：拆解三个保留条件、四种处置、六步迁移、折叠推演与逐题翻转评测。">
+<script>
+/* 主题预置：在 CSS 绘制前挂上 dark 类，避免闪白 */
+(function(){try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}})();
+</script>
+<style>
+:root{
+  --paper:#f6f1e7;
+  --paper-2:#efe8da;
+  --card:#fffdf8;
+  --ink:#1a1a17;
+  --ink-2:#37352e;
+  --muted:#6f6a5f;
+  --line:#ded5c4;
+  --line-2:#c8bda8;
+  --accent:#b23a2e;
+  --accent-2:#8d2a21;
+  --accent-soft:#f3e2dd;
+  --green:#2f5d50;
+  --green-soft:#e3ece7;
+  --blue:#33587a;
+  --blue-soft:#e5ebf2;
+  --gold:#94651c;
+  --gold-soft:#f4ead7;
+  --red:#a33a32;
+  --red-soft:#f6e1de;
+  --shadow:0 18px 50px rgba(40,32,20,.08);
+  --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong","SimSun",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  color-scheme:light;
+}
+html.dark{
+  --paper:#141519;
+  --paper-2:#191b20;
+  --card:#1d1f25;
+  --ink:#f1eee6;
+  --ink-2:#d3cec2;
+  --muted:#a39d90;
+  --line:#33363d;
+  --line-2:#454951;
+  --accent:#e06a5b;
+  --accent-2:#f08a7d;
+  --accent-soft:#3a2422;
+  --green:#7fbfa9;
+  --green-soft:#1e2f2a;
+  --blue:#8db4d6;
+  --blue-soft:#1d2a36;
+  --gold:#d8ad63;
+  --gold-soft:#332918;
+  --red:#e58a80;
+  --red-soft:#3a2320;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(178,58,46,.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(51,88,122,.07), transparent 55%),
+    var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+::selection{background:var(--accent-soft);color:var(--ink)}
+a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--accent)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--card);color:var(--ink);padding:10px 16px;z-index:200}
+.skip:focus{left:12px;top:12px}
+#progress{position:fixed;left:0;top:0;height:3px;width:0;background:var(--accent);z-index:120;transition:width .1s linear}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(330px,.82fr);gap:48px;align-items:center}
+.kicker{
+  margin:0 0 18px;font:700 11px/1.5 var(--sans);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.kicker::before{content:"";width:26px;height:1px;background:var(--accent);display:inline-block}
+h1{
+  margin:0;font-family:var(--serif);font-weight:700;text-wrap:balance;
+  font-size:clamp(38px,5.2vw,66px);line-height:1.05;letter-spacing:-.02em
+}
+h1 em{display:block;font-style:normal;color:var(--accent);margin-top:10px;font-size:.66em;line-height:1.25}
+.lede{max-width:760px;margin:22px 0 0;font-size:17.5px;line-height:1.95;color:var(--ink-2)}
+.meta{
+  display:flex;flex-wrap:wrap;gap:8px 18px;margin:24px 0 0;
+  font:500 12.5px/1.6 var(--sans);color:var(--muted)
+}
+.meta span{display:inline-flex;align-items:center;gap:7px}
+.meta i{width:4px;height:4px;border-radius:50%;background:var(--accent);display:inline-block}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font:600 13px/1 var(--sans);text-decoration:none;cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ghost{background:transparent}
+.hero-visual{position:relative}
+.fold-stage{
+  border:1px solid var(--line);background:var(--card);padding:18px 18px 16px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden
+}
+.fold-stage:before{
+  content:"";position:absolute;inset:6px;border:1px solid var(--line);pointer-events:none;opacity:.55
+}
+.stage-label{position:relative;margin:0 0 10px;font:700 10px/1.4 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.agent-grid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.agent-chip{
+  border:1px solid var(--line);background:var(--paper-2);padding:7px 6px;
+  font:600 10.5px/1.3 var(--sans);text-align:center;color:var(--ink-2);
+  animation:chipOut .7s ease both
+}
+.agent-chip:nth-child(2){animation-delay:.04s}
+.agent-chip:nth-child(3){animation-delay:.08s}
+.agent-chip:nth-child(4){animation-delay:.12s}
+.agent-chip:nth-child(5){animation-delay:.16s}
+.agent-chip:nth-child(6){animation-delay:.2s}
+@keyframes chipOut{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fold-arrow{
+  position:relative;display:flex;align-items:center;gap:10px;margin:12px 0 10px;
+  color:var(--accent);font:700 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase
+}
+.fold-arrow:before,.fold-arrow:after{content:"";height:1px;background:var(--line-2);flex:1}
+.loop-card{
+  position:relative;border:1px solid var(--accent);background:var(--accent-soft);padding:12px 13px;
+  animation:loopIn .8s .3s ease both
+}
+@keyframes loopIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.loop-card b{display:block;font-family:var(--serif);font-size:15px;margin-bottom:6px}
+.loop-card .loop-chips{display:flex;flex-wrap:wrap;gap:4px}
+.loop-card .loop-chips span{font:600 9.5px/1 var(--sans);border:1px solid var(--line-2);background:var(--card);padding:4px 6px;color:var(--ink-2)}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-top:34px}
+.stat{background:var(--card);padding:15px 18px}
+.stat b{display:block;font-family:var(--serif);font-size:25px;line-height:1.1;color:var(--accent)}
+.stat span{display:block;margin-top:4px;font-size:12px;color:var(--muted);line-height:1.5}
+.layout{display:grid;grid-template-columns:228px minmax(0,1fr);gap:54px;align-items:start;padding:40px 0 24px}
+.toc{position:sticky;top:22px;max-height:calc(100vh - 44px);overflow:auto;padding-right:4px}
+.toc-title{margin:0 0 10px;font:700 10px/1.4 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.toc nav{display:flex;flex-direction:column;gap:1px}
+.toc a{
+  display:block;padding:5px 9px 5px 11px;border-left:1px solid var(--line);
+  color:var(--muted);text-decoration:none;font-size:12.5px;line-height:1.5
+}
+.toc a:hover{color:var(--ink);border-left-color:var(--line-2)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.toc .toc-sub{padding-left:22px;font-size:11.5px;opacity:.85}
+.main{min-width:0}
+.section{padding:6px 0 40px;border-bottom:1px solid var(--line);margin-bottom:40px;scroll-margin-top:18px}
+.section:last-of-type{border-bottom:0;margin-bottom:0}
+.sec-head{display:flex;gap:13px;align-items:baseline;margin-bottom:4px}
+.sec-no{font:700 11px/1.4 var(--mono);color:var(--accent);letter-spacing:.08em;flex:none}
+h2{font-family:var(--serif);font-size:clamp(28px,3.3vw,40px);line-height:1.18;margin:0 0 8px;text-wrap:balance}
+.dek{margin:0 0 22px;color:var(--muted);font-size:14.5px;line-height:1.8;max-width:62em}
+h3{font-family:var(--serif);font-size:21px;line-height:1.35;margin:30px 0 10px;text-wrap:balance}
+h4{font-size:15px;line-height:1.45;margin:0 0 6px}
+p{margin:0 0 14px}
+.lead{font-size:17px;line-height:1.9;color:var(--ink-2)}
+.small{font-size:12.5px;color:var(--muted);line-height:1.7}
+.callout{
+  border-left:4px solid var(--accent);background:var(--accent-soft);
+  padding:15px 18px;margin:20px 0;font-size:14px;line-height:1.8
+}
+.callout p:last-child{margin-bottom:0}
+.callout b{color:var(--accent-2)}
+.callout.note{border-left-color:var(--blue);background:var(--blue-soft)}
+.callout.note b{color:var(--blue)}
+.callout.warn{border-left-color:var(--gold);background:var(--gold-soft)}
+.callout.warn b{color:var(--gold)}
+.callout.vendor{border-left-color:var(--green);background:var(--green-soft)}
+.callout.vendor b{color:var(--green)}
+.callout .label{display:block;font:700 10px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;margin-bottom:5px;color:var(--muted)}
+.cards{display:grid;gap:14px;margin:18px 0}
+.cards.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cards.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cards.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{border:1px solid var(--line);background:var(--card);padding:17px 17px 15px;min-width:0}
+.card .num{display:block;font:700 10px/1.3 var(--mono);letter-spacing:.1em;color:var(--accent);margin-bottom:7px}
+.card h4{font-family:var(--serif);font-size:17px}
+.card p{font-size:13.5px;line-height:1.75;color:var(--ink-2);margin-bottom:0}
+.card p + p{margin-top:8px}
+.card ul{margin:8px 0 0;padding-left:18px;font-size:13px;line-height:1.7;color:var(--ink-2)}
+.card li + li{margin-top:4px}
+.card .foot{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}
+.chip{display:inline-block;border:1px solid var(--line-2);padding:2px 7px;font:600 10.5px/1.5 var(--sans);color:var(--muted);white-space:nowrap}
+.chip.warn{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.chip.bad{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+.chip.good{border-color:var(--green);color:var(--green);background:var(--green-soft)}
+.chip.blue{border-color:var(--blue);color:var(--blue);background:var(--blue-soft)}
+.arch{border:1px solid var(--line);background:var(--card);padding:18px;margin:20px 0}
+.arch-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.arch-main{border:1px solid var(--accent);background:var(--accent-soft);padding:9px 13px;font:700 13px/1.4 var(--sans);color:var(--accent-2)}
+.arch-note{font-size:12px;color:var(--muted)}
+.arch-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;position:relative;margin-top:12px}
+.arch-grid:before{content:"";position:absolute;left:6%;right:6%;top:-7px;height:1px;background:var(--line-2)}
+.agent-node{border:1px solid var(--line);background:var(--paper-2);padding:8px 7px;text-align:center;font-size:11px;line-height:1.4;color:var(--ink-2);position:relative}
+.agent-node:before{content:"";position:absolute;left:50%;top:-8px;width:1px;height:8px;background:var(--line-2)}
+.agent-node span{display:block;font-size:9px;color:var(--muted);margin-top:3px}
+.arch-foot{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.dispositions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}
+.disp{border:1px solid var(--line);background:var(--card);padding:14px;border-top:3px solid var(--line-2)}
+.disp.merge{border-top-color:var(--blue)}
+.disp.fold{border-top-color:var(--green)}
+.disp.tool{border-top-color:var(--gold)}
+.disp.keep{border-top-color:var(--red)}
+.disp h4{font-family:var(--serif);font-size:16px}
+.disp p{font-size:12.5px;line-height:1.7;color:var(--ink-2);margin-bottom:0}
+.disp .when{display:block;margin-top:8px;font-size:11.5px;color:var(--muted)}
+.wizard{border:1px solid var(--line);background:var(--card);margin:20px 0;padding:18px}
+.wizard-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap;margin-bottom:12px}
+.wizard-head h3{margin:0;font-size:20px}
+.wizard-q{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:10px 0;border-top:1px dashed var(--line)}
+.wizard-q p{margin:0;font-size:13.5px;line-height:1.65}
+.wizard-q small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.seg{display:inline-flex;border:1px solid var(--line-2);background:var(--paper-2)}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 12px/1 var(--sans);padding:8px 13px;cursor:pointer;min-width:44px}
+.seg button + button{border-left:1px solid var(--line-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.wizard-result{border:1px solid var(--line);background:var(--paper-2);padding:16px;margin-top:14px}
+.verdict-label{display:inline-block;font:700 10.5px/1.4 var(--sans);letter-spacing:.08em;padding:3px 9px;margin-bottom:8px;border:1px solid currentColor}
+.verdict--fold .verdict-label{color:var(--green);background:var(--green-soft)}
+.verdict--tool .verdict-label{color:var(--gold);background:var(--gold-soft)}
+.verdict--keep .verdict-label{color:var(--red);background:var(--red-soft)}
+.verdict--merge .verdict-label{color:var(--blue);background:var(--blue-soft)}
+.verdict--gate .verdict-label{color:var(--gold);background:var(--gold-soft)}
+.wizard-result h4{font-family:var(--serif);font-size:19px;margin-bottom:6px}
+.wizard-result p{font-size:13.5px;line-height:1.75}
+.wizard-result ul{margin:8px 0 12px;padding-left:18px;font-size:13px;line-height:1.7}
+.wizard-result li + li{margin-top:4px}
+.wizard-result .next{border-top:1px dashed var(--line-2);padding-top:10px;font-size:12.5px;color:var(--ink-2)}
+.flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;margin:18px 0}
+.flow-step{
+  appearance:none;border:1px solid var(--line);background:var(--card);color:inherit;text-align:left;
+  padding:10px 9px;cursor:pointer;font:inherit;min-height:84px
+}
+.flow-step:hover{border-color:var(--line-2)}
+.flow-step[aria-selected="true"]{border-color:var(--accent);box-shadow:inset 0 -3px 0 var(--accent)}
+.flow-step .n{display:block;font:700 9.5px/1.3 var(--mono);color:var(--accent);margin-bottom:5px}
+.flow-step b{display:block;font-size:11.5px;line-height:1.35}
+.flow-panel{border:1px solid var(--line);background:var(--card);padding:16px 18px;margin-bottom:18px}
+.flow-panel h4{font-family:var(--serif);font-size:18px}
+.flow-panel p{font-size:13.5px;line-height:1.75;margin-bottom:8px}
+.flow-panel .kv{display:grid;grid-template-columns:70px minmax(0,1fr);gap:4px 10px;font-size:12.5px;line-height:1.65}
+.flow-panel .kv b{color:var(--muted);font-weight:600}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);margin:16px 0;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.6;min-width:620px}
+caption{caption-side:top;text-align:left;padding:9px 11px;font:600 11.5px/1.4 var(--sans);color:var(--muted);border-bottom:1px solid var(--line)}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--paper-2);font-weight:700;color:var(--ink-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td b{font-weight:600}
+.code-tabs{margin:18px 0;border:1px solid var(--line);background:var(--card)}
+.code-tablist{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--line);background:var(--paper-2)}
+.code-tab{appearance:none;border:0;border-right:1px solid var(--line);background:transparent;color:var(--muted);font:600 11.5px/1.3 var(--mono);padding:9px 12px;cursor:pointer}
+.code-tab[aria-selected="true"]{background:var(--card);color:var(--accent)}
+.code-panel{padding:0}
+pre{margin:0;padding:15px 16px;overflow:auto;background:#1d1f25;color:#e9e4d7;font:12.2px/1.65 var(--mono);tab-size:2}
+html.dark pre{background:#0f1013;border-color:#2b2e34}
+pre .c{color:#989f9a}
+pre .k{color:#e6a06a}
+pre .s{color:#a8c7a0}
+.ledger{border:1px solid var(--line);background:var(--card);margin:20px 0;padding:18px}
+.ledger-grid{display:grid;grid-template-columns:290px minmax(0,1fr);gap:24px;align-items:start}
+.control-row{margin-bottom:12px}
+.control-row label{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--ink-2);margin-bottom:4px}
+.control-row output{font:700 12px/1 var(--mono);color:var(--accent)}
+input[type="range"]{width:100%;accent-color:var(--accent);margin:0}
+.switch{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin:7px 0;cursor:pointer}
+.switch input{accent-color:var(--accent);width:15px;height:15px}
+.presets{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 0}
+.preset{appearance:none;border:1px solid var(--line-2);background:var(--paper-2);color:var(--ink-2);font:600 10.5px/1.3 var(--sans);padding:5px 8px;cursor:pointer}
+.preset:hover{border-color:var(--accent);color:var(--accent)}
+.ledger-total{font-family:var(--serif);font-size:clamp(30px,4vw,44px);line-height:1.1;color:var(--accent);margin:0}
+.ledger-total small{font:600 12px/1 var(--sans);color:var(--muted);margin-left:6px}
+.ledger-relative{font-size:12px;color:var(--muted);margin:4px 0 12px}
+.ledger-hint{font-size:11.5px;color:var(--gold);line-height:1.5;min-height:1.15em;margin:-6px 0 8px}
+.ledger-bar{display:flex;height:34px;border:1px solid var(--line);background:var(--paper-2);overflow:hidden}
+.ledger-bar span{display:block;height:100%;min-width:0;transition:width .2s ease}
+.seg-history{background:var(--blue)}
+.seg-skills{background:var(--green)}
+.seg-tools{background:var(--gold)}
+.seg-subs{background:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:9px;font-size:11px;color:var(--muted)}
+.legend i{display:inline-block;width:8px;height:8px;margin-right:5px}
+.legend .l-history i{background:var(--blue)}
+.legend .l-skills i{background:var(--green)}
+.legend .l-tools i{background:var(--gold)}
+.legend .l-subs i{background:var(--red)}
+.sim{border:1px solid var(--line);background:var(--card);margin:20px 0;padding:18px}
+.tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.tab{appearance:none;border:1px solid var(--line);background:var(--paper-2);color:var(--muted);font:600 11.5px/1.3 var(--sans);padding:7px 10px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.stage-row{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 14px}
+.stage-btn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--ink-2);font:600 11.5px/1.3 var(--sans);padding:6px 9px;cursor:pointer}
+.stage-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.metric{border:1px solid var(--line);background:var(--paper-2);padding:10px 11px}
+.metric .m-label{display:block;font-size:10.5px;color:var(--muted);margin-bottom:2px}
+.metric .m-val{display:block;font:700 20px/1.2 var(--serif);color:var(--ink)}
+.metric .m-bar{display:block;height:5px;background:var(--line);margin-top:7px;overflow:hidden}
+.metric .m-bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s ease}
+.metric.good .m-bar i{background:var(--green)}
+.metric.warn .m-bar i{background:var(--gold)}
+.metric.bad .m-bar i{background:var(--red)}
+.metric.warn .m-val{color:var(--gold)}
+.metric.bad .m-val{color:var(--red)}
+.sim-note{font-size:11.5px;color:var(--muted);line-height:1.65;margin:10px 0 0}
+.sim-verdict{border-top:1px dashed var(--line-2);margin-top:12px;padding-top:11px;font-size:13px;line-height:1.7}
+.sim-verdict b{color:var(--accent-2)}
+.flips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:22px}
+.run-toggle{display:inline-flex;border:1px solid var(--line-2);margin-left:auto}
+.run-toggle[hidden]{display:none}
+.run-toggle button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 10.5px/1.2 var(--sans);padding:6px 8px;cursor:pointer}
+.run-toggle button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.sim-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sim-head h4{margin:0;font-family:var(--serif);font-size:18px}
+.matrix-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.matrix-box{border:1px solid var(--line);background:var(--paper-2);padding:12px}
+.matrix-box b{display:block;font:700 22px/1.2 var(--serif);color:var(--accent)}
+.matrix-box span{font-size:11.5px;color:var(--muted)}
+.cell-pass{background:var(--green-soft);color:var(--green);font-weight:600;text-align:center}
+.cell-fail{background:var(--red-soft);color:var(--red);font-weight:600;text-align:center}
+.cell-flip{outline:2px solid var(--gold);outline-offset:-2px}
+.checklist{border:1px solid var(--line);background:var(--card);margin:18px 0;padding:16px}
+.check-item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:9px 0;border-bottom:1px dashed var(--line)}
+.check-item:last-child{border-bottom:0}
+.check-item input{margin-top:5px;width:16px;height:16px;accent-color:var(--accent)}
+.check-item label{font-size:13.5px;line-height:1.7;cursor:pointer}
+.check-item small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+.check-progress{display:flex;align-items:center;gap:10px;margin-top:12px}
+.check-progress .bar{flex:1;height:6px;background:var(--paper-2);border:1px solid var(--line)}
+.check-progress .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s ease}
+.check-progress b{font:700 12px/1 var(--mono);color:var(--accent)}
+details{border:1px solid var(--line);background:var(--card);padding:0;margin:14px 0}
+details summary{cursor:pointer;padding:11px 14px;font:600 13px/1.5 var(--sans);color:var(--ink-2);list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary:before{content:"＋";display:inline-block;width:18px;color:var(--accent);font-weight:700}
+details[open] summary:before{content:"－"}
+details .details-body{padding:0 14px 14px;border-top:1px solid var(--line)}
+details .details-body p,details .details-body li{font-size:13px;line-height:1.75}
+.glossary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px}
+.glossary dt{font-weight:700;font-size:13px;margin-top:10px}
+.glossary dd{margin:2px 0 0;font-size:12.5px;line-height:1.7;color:var(--ink-2)}
+ol.sources{list-style:none;counter-reset:src;padding:0;margin:14px 0 0}
+ol.sources li{counter-increment:src;position:relative;padding:12px 0 12px 44px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.7}
+ol.sources li:before{content:"[" counter(src) "]";position:absolute;left:0;top:12px;font:700 11px/1.6 var(--mono);color:var(--accent)}
+ol.sources li b{font-size:13px}
+ol.sources li .src-meta{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+ol.sources li .src-use{display:block;color:var(--ink-2);font-size:12px;margin-top:3px}
+.footnote{font-size:11.5px;color:var(--muted);line-height:1.7;border-top:1px solid var(--line);padding-top:10px;margin-top:16px}
+.page-footer{border-top:1px solid var(--line);margin-top:10px;padding:24px 0 34px;font-size:12px;color:var(--muted)}
+.page-footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.theme-btn{
+  position:fixed;right:20px;bottom:22px;z-index:90;width:42px;height:42px;border-radius:50%;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(0,0,0,.16)
+}
+.theme-btn:hover{transform:scale(1.06)}
+.theme-btn svg{width:19px;height:19px}
+.theme-btn .i-sun{display:none}
+html.dark .theme-btn .i-moon{display:none}
+html.dark .theme-btn .i-sun{display:block}
+.mobile-hint{display:none;font-size:11px;color:var(--muted);margin:-8px 0 8px}
+@media (max-width:1080px){
+  .hero-grid{grid-template-columns:1fr;gap:32px}
+  .hero-visual{max-width:560px}
+  .layout{grid-template-columns:1fr;gap:22px}
+  .toc{position:static;max-height:none;overflow:visible;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
+  .toc-title{display:none}
+  .toc nav{flex-direction:row;flex-wrap:wrap}
+  .toc a{border:1px solid var(--line);border-left-width:1px;padding:5px 8px;font-size:11.5px;background:var(--card)}
+  .toc .toc-sub{display:none}
+  .dispositions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cards.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .flow{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:720px){
+  body{font-size:15.5px}
+  .wrap{padding:0 18px}
+  .hero{padding:46px 0 26px}
+  h1{font-size:clamp(34px,9vw,48px)}
+  .lede{font-size:16px}
+  .stat-strip{grid-template-columns:1fr 1fr}
+  .cards.two,.cards.three,.cards.four{grid-template-columns:1fr}
+  .arch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dispositions{grid-template-columns:1fr}
+  .wizard-q{grid-template-columns:1fr;gap:8px}
+  .flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ledger-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .matrix-summary{grid-template-columns:1fr}
+  .glossary{grid-template-columns:1fr}
+  .mobile-hint{display:block}
+  .toc a{font-size:11px}
+  .sec-head{gap:9px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  html{scroll-behavior:auto}
+}
+@media print{
+  :root, html.dark{
+    --paper:#fff;--paper-2:#fff;--card:#fff;--ink:#000;--ink-2:#222;--muted:#555;
+    --line:#bbb;--line-2:#999;--accent:#000;--accent-2:#000;--accent-soft:#fff;
+    --green:#000;--green-soft:#fff;--blue:#000;--blue-soft:#fff;--gold:#000;--gold-soft:#fff;
+    --red:#000;--red-soft:#fff;--shadow:none;color-scheme:light
+  }
+  html.dark body{background:#fff!important;color:#000}
+  body{background:#fff!important;font-size:10.5pt;line-height:1.6}
+  .wrap{max-width:none;padding:0}
+  #progress,.skip,.toc,.hero-actions,.theme-btn,.no-print,.tabs,.stage-row,.run-toggle,.seg,.presets,.check-progress,.stepper,.code-tablist,#harness-floating-nav,.pa-fab,.pa-panel,.pa-backdrop,#homeFab{display:none!important}
+  .fold-stage,.card,.callout,.arch,.wizard,.flow-panel,.ledger,.sim,table,pre,.stat-strip{box-shadow:none!important}
+  .layout{display:block;padding:0}
+  .ledger-grid{display:block}
+  .ledger-grid > div:first-child{display:none!important}
+  .hero{padding:0 0 12pt}
+  .hero-grid{display:block}
+  .hero-visual{max-width:100%;margin-top:10pt}
+  h1{font-size:28pt}
+  .section{border-bottom:0;padding:0;margin:0 0 14pt;break-inside:auto}
+  h2{font-size:18pt;break-after:avoid}
+  h3,h4{break-after:avoid}
+  .card,.callout,.arch,.wizard,.flow-panel,.ledger,.sim,table,pre{break-inside:avoid}
+  .code-panel[hidden],.tab-panel[hidden]{display:block!important}
+  pre{background:#fff!important;color:#000!important;border:1px solid #bbb}
+  pre .c,pre .k,pre .s{color:#000!important}
+  a{color:#000;text-decoration:none}
+  .theme-btn{display:none}
+  .page-footer{break-before:avoid}
+}
+</style>
+</head>
+<body id="top">
+<a class="skip" href="#main">跳到正文</a>
+<div id="progress" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <p class="kicker">AI 行业调研 · Agent Architecture · 2026-10</p>
+        <h1>单 Agent 循环<em>什么时候把子 Agent 折回主循环</em></h1>
+        <p class="lede">Anthropic 应用 AI 团队在 2026-10 给出一条反直觉建议：很多企业 Agent 并不需要一屋子专家子 Agent。一个主循环，加上按需加载的 skills 与 tools，常常质量更好、成本更低、延迟更短。但子 Agent 没有过时——它有且只有三个保留条件。本文把这份指南拆成可判断的信号、可执行的迁移和可验证的评测。</p>
+        <p class="meta"><span><i></i>原文 2026-10-22</span><span><i></i>整理 2026-10-29</span><span><i></i>17 条来源</span><span><i></i>约 20 分钟</span><span><i></i>单文件离线</span></p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#decision">先做一次判断</a>
+          <a class="btn" href="#migrate">看六步迁移</a>
+          <button class="btn ghost" type="button" id="printBtn">打印 / 存为 PDF</button>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="从多个子 Agent 折叠为一个主循环的示意">
+        <div class="fold-stage">
+          <p class="stage-label">现在：组织图长成架构图</p>
+          <div class="agent-grid" aria-hidden="true">
+            <div class="agent-chip">意图路由</div>
+            <div class="agent-chip">售前</div>
+            <div class="agent-chip">订单</div>
+            <div class="agent-chip">物流</div>
+            <div class="agent-chip">退款</div>
+            <div class="agent-chip">会员</div>
+          </div>
+          <div class="fold-arrow">折</div>
+          <div class="loop-card">
+            <b>目标：一个模型，一个上下文</b>
+            <div class="loop-chips"><span>计划在上下文</span><span>skills 按需</span><span>tools 按需</span><span>预算与闸门</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><b>12 → 1</b><span>常见的起点：十几个专家子 Agent 收成一个主循环</span></div>
+      <div class="stat"><b>15×</b><span>多 Agent 对普通聊天的 token 消耗；单 Agent 约 4×</span></div>
+      <div class="stat"><b>3</b><span>保留子 Agent 的条件，其余先折</span></div>
+      <div class="stat"><b>8</b><span>可动手的交互：决策、账本、推演、矩阵</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <details>
+    <summary>先统一七个词：主循环、子 Agent、渐进披露、skill、tool search、handoff、翻转</summary>
+    <div class="details-body">
+      <dl class="glossary">
+        <div><dt>主循环</dt><dd>一个模型、一个上下文窗口，反复“发工具调用 → 收结果 → 决定下一步”，直到回答或触预算。</dd></div>
+        <div><dt>子 Agent</dt><dd>拥有独立上下文、工具与指令，由编排者调用的 Agent；它可以并行、隔离上下文，也可以拥有独立权限。</dd></div>
+        <div><dt>渐进披露</dt><dd>先只把名称与描述放进上下文，真正需要时才加载完整说明、参考文件或工具定义。</dd></div>
+        <div><dt>Skill</dt><dd>把团队流程、规则与判断写成可按需加载的文件；它不是一段更长的系统提示词。</dd></div>
+        <div><dt>Tool search</dt><dd>把大量工具定义移出上下文，模型按需搜索并只加载当前要用的几个工具。</dd></div>
+        <div><dt>Handoff</dt><dd>把对话或任务交给另一个 Agent。每次交接都可能丢状态，并增加一次嵌套模型循环。</dd></div>
+        <div><dt>翻转</dt><dd>同一道 eval 题在改动前通过、改动后失败，或反之。总分不变时，翻转仍可能发生。</dd></div>
+      </dl>
+    </div>
+  </details>
+</div>
+
+<main id="main" class="wrap">
+  <div class="layout">
+    <aside class="toc" aria-label="目录">
+      <p class="toc-title">目录</p>
+      <nav>
+        <a href="#summary">01 · 30 秒结论</a>
+        <a href="#problem">02 · 组织图变成架构图</a>
+        <a href="#decision">03 · 三个条件与决策器</a>
+        <a href="#loop">04 · 单循环的六个部件</a>
+        <a href="#cost">05 · token、延迟与交接账</a>
+        <a href="#migrate">06 · 六步迁移与推演</a>
+        <a href="#cases">07 · 四个场景的答案</a>
+        <a href="#eval">08 · 评测：别只看总分</a>
+        <a href="#org">09 · 所有权与组织</a>
+        <a href="#limits">10 · 反方、证据与边界</a>
+        <a href="#actions">11 · 行动清单</a>
+        <a href="#sources">12 · 来源</a>
+      </nav>
+    </aside>
+
+    <div class="main">
+      <section class="section" id="summary">
+        <div class="sec-head"><span class="sec-no">01</span><h2>30 秒结论</h2></div>
+        <p class="dek">如果只记一段话：先把子 Agent 当成本，而不是能力。能用 skills 与 tools 在同一个上下文里解决的，不要新开一个上下文；只有当子 Agent 解决了单循环解决不了的问题，它才值得保留。</p>
+        <div class="callout">
+          <span class="label">一句话</span>
+          <p><b>默认单循环，按需加载；子 Agent 是例外，不是默认架构。</b> Anthropic 在多个企业部署的对比中观察到：一个主循环加 skills，质量常高于“一个大提示词”和“按域拆子 Agent”，成本与延迟往往更低。<a href="#s1">[1]</a></p>
+        </div>
+        <p class="small">证据类型：Anthropic 的企业部署观察与官方文档、Cognition 的反方原则、MAST 的论文分类。第 10 节逐条写清能支持与不能支持什么；不要把厂商数字当行业基准。</p>
+        <div class="cards three">
+          <div class="card">
+            <span class="num">01 / DEFAULT</span>
+            <h4>默认单循环</h4>
+            <p>一个模型、一个上下文、开放式工具循环。不是把系统提示词写得更长，而是把顺序与领域流程移进 skills，把硬约束移进 tools，把预算与审批留在 harness。<a href="#s1">[1]</a></p>
+          </div>
+          <div class="card">
+            <span class="num">02 / EXCEPTION</span>
+            <h4>三个条件才保留</h4>
+            <p>单循环因上下文膨胀出现可测退化；任务真并行且上下文可丢弃；单 Agent 难以选工具或提示词有冲突指令。三条都不满足，先折。<a href="#s1">[1]</a><a href="#s4">[4]</a></p>
+          </div>
+          <div class="card">
+            <span class="num">03 / DISPOSITION</span>
+            <h4>四种处置，不是二选一</h4>
+            <p>合并、折叠为 skill + tools、保留但作为工具调用、保留独立 Agent 接管对话。判错处置，比“多一个或少一个 Agent”更常见。</p>
+          </div>
+          <div class="card">
+            <span class="num">04 / MIGRATION</span>
+            <h4>一次只改一件事</h4>
+            <p>先审计，再建基线；先合并总是一起跑的，再折高频的；每折一个都跑同一套 eval。一次折三个，出问题不知道是谁。<a href="#s2">[2]</a></p>
+          </div>
+          <div class="card">
+            <span class="num">05 / EVAL</span>
+            <h4>总分不够</h4>
+            <p>同一套 10 题，基线 8/10、折叠后 8/10，仍可能有 3 题翻转。看逐题、看链路覆盖、跑 2–3 次，才知道改动有没有碰坏规则。</p>
+          </div>
+          <div class="card">
+            <span class="num">06 / READING</span>
+            <h4>怎么读这一页</h4>
+            <p>赶时间：做一次决策器，再看四个场景。要动手：读六步迁移与推演。要说服人：读成本账、评测与反方边界。</p>
+          </div>
+        </div>
+        <p class="small">站内延伸：<a href="anthropic-workflow-shift-2026-10.html">Anthropic 工作流程转变</a>、<a href="harness-in-business.html">Harness 上岗</a>、<a href="claude-code-product-design.html">Claude Code 产品设计</a> 分别讲组织流程、岗位落地与产品拆解；本页讲架构决策。</p>
+      </section>
+
+      <section class="section" id="problem">
+        <div class="sec-head"><span class="sec-no">02</span><h2>问题不是 Agent 太少，是边界画错</h2></div>
+        <p class="dek">企业想要一个统一入口，各团队拥有自己的能力，于是架构自然长成“每个团队一个子 Agent，再加一个编排器”。这看起来最省事，实际是把组织协调成本复制进了模型调用链。</p>
+        <p class="lead">Anthropic 文章描述的典型路径是：每个能力由不同团队拥有，各队先建自己的 Agent，中央平台团队再在上面加 orchestrator；或者把子 Agent 包装成 MCP 工具暴露给主 Agent。它立刻带来五个问题。<a href="#s1">[1]</a></p>
+
+        <div class="arch" aria-label="一个编排器连接十二个专家子 Agent 的示意图">
+          <div class="arch-top">
+            <span class="arch-main">主 Agent / Orchestrator</span>
+            <span class="arch-note">持有对话、购物车、偏好与历史；每次交接都要决定“给什么、留什么”</span>
+          </div>
+          <div class="arch-grid" aria-hidden="true">
+            <div class="agent-node">意图识别<span>分类器</span></div>
+            <div class="agent-node">售前<span>商品知识</span></div>
+            <div class="agent-node">订单<span>订单库</span></div>
+            <div class="agent-node">支付<span>支付网关</span></div>
+            <div class="agent-node">物流<span>承运商</span></div>
+            <div class="agent-node">退款<span>售后政策</span></div>
+            <div class="agent-node">会员<span>权益</span></div>
+            <div class="agent-node">推荐<span>排序</span></div>
+            <div class="agent-node">风控<span>规则</span></div>
+            <div class="agent-node">发票<span>财务</span></div>
+            <div class="agent-node">投诉<span>工单</span></div>
+            <div class="agent-node">知识库<span>检索</span></div>
+          </div>
+          <div class="arch-foot">
+            <span class="chip bad">上下文复制</span>
+            <span class="chip bad">有损摘要</span>
+            <span class="chip bad">嵌套模型循环</span>
+            <span class="chip bad">无全局 owner</span>
+            <span class="chip warn">按团队边界切分</span>
+          </div>
+        </div>
+
+        <div class="cards three">
+          <div class="card">
+            <h4>上下文管理</h4>
+            <p>要决定哪些上下文在 Agent 之间交换；来回几次，细节就丢了。每次 handoff 都是一次有损操作。<a href="#s1">[1]</a><a href="#s5">[5]</a></p>
+          </div>
+          <div class="card">
+            <h4>子 Agent 蔓延</h4>
+            <p>每个团队都发自己的子 Agent，最后出现数百个重叠能力，没有强制标准，也没有明确 owner。<a href="#s1">[1]</a></p>
+          </div>
+          <div class="card">
+            <h4>Frankenprompt</h4>
+            <p>每个团队往系统提示词加一句，规则互相冲突，品牌语气无法统一。提示词成了跨团队谈判的产物。</p>
+          </div>
+          <div class="card">
+            <h4>局部 eval</h4>
+            <p>每队只优化自己的子任务，分数很漂亮；没人维护端到端集合，管理层拿到的是一组被稀释的局部分数。<a href="#s1">[1]</a></p>
+          </div>
+          <div class="card">
+            <h4>延迟</h4>
+            <p>多 Agent 的架构复杂度会加延迟。一个客户把多 Agent harness 与单循环对比，后者运行时约快 2 倍。<a href="#s1">[1]</a></p>
+          </div>
+          <div class="card">
+            <h4>谁在承担判断</h4>
+            <p>很多结构是在模型能力不足时替模型做判断。模型变强后，固定流水线、用户分桶、独立推荐分支往往变成冗余。</p>
+          </div>
+        </div>
+
+        <div class="callout vendor">
+          <span class="label">Conway 定律</span>
+          <p>1968 年，Melvin Conway 观察到：设计系统的组织，受限于产出“组织沟通结构的复制品”。<a href="#s13">[13]</a> 当 Agent 架构按团队切分，你得到的是组织图，不是任务图。原文把这种现象直接称为“Conway 定律在起作用”。<a href="#s1">[1]</a></p>
+        </div>
+
+        <p class="small">站内延伸：<a href="/book/chapter10/">第 10 章 · 多 Agent 协作</a> 讲角色分工、消息与上下文边界；这一页补的是“什么时候不该拆、拆了怎么验”。</p>
+        <h3>两个真实症状</h3>
+        <p>一家公司的客服 Agent 里有十几个专家子 Agent，结果品牌语气很难保持一致，延迟也伤害了体验。另一类常见提案是“意图分类器 + 固定多步推理流水线 + 用户分群 + 独立推荐分支 + 多 Agent 编排”；Anthropic 的反馈是：其中大部分结构在做模型已经不需要做的工作，一个清晰的系统提示词、4–5 个薄数据工具和硬的输出护栏，就能覆盖多数场景。<a href="#s1">[1]</a></p>
+        <div class="callout note">
+          <span class="label">但不要读反</span>
+          <p>这不是说“结构越多越糟”。在模型能力不足、任务必须隔离、权限必须分域时，结构是必要的。原文的主张是：<b>先把结构当成假设，用 eval 验证它是否还在创造价值</b>；不是无条件拆除。</p>
+        </div>
+      </section>
+
+      <section class="section" id="decision">
+        <div class="sec-head"><span class="sec-no">03</span><h2>三个条件，决定子 Agent 是否还有必要</h2></div>
+        <p class="dek">原文只给了三个保留条件。把它们翻译成可测信号，再做一个六问决策器；答案不是“永远单循环”，而是“这次该用哪种处置”。</p>
+
+        <div class="cards three">
+          <div class="card">
+            <span class="num">CONDITION A</span>
+            <h4>上下文膨胀，且可测退化</h4>
+            <p>单循环在长任务后质量下降；某个子任务会产生 1,000 token 以上、且大部分与主任务无关的内容，需要先过滤再使用。<a href="#s1">[1]</a><a href="#s4">[4]</a></p>
+            <ul>
+              <li>信号：同一任务，加入该子任务后主任务分数下降。</li>
+              <li>反例：只是对话变长，压缩、记忆或更好的检索就能解决。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="num">CONDITION B</span>
+            <h4>真并行，且上下文可丢弃</h4>
+            <p>多个方向可以同时探索，各自用一份干净上下文，结果压缩后交回；研究工作是最典型的例子。<a href="#s1">[1]</a><a href="#s3">[3]</a></p>
+            <ul>
+              <li>信号：拆成 3–5 个独立分支后，覆盖明显变广，且分支之间不需要共享状态。</li>
+              <li>反例：分支要共享购物车、工单、订单或用户偏好，交接会丢状态。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <span class="num">CONDITION C</span>
+            <h4>工具选择困难，或指令冲突</h4>
+            <p>工具超过 30–50 个后选择准确率下降；系统提示词里同时要求“同理心客服”和“严格合规”，模型难以稳定切换。<a href="#s1">[1]</a><a href="#s8">[8]</a></p>
+            <ul>
+              <li>信号：加工具后旧任务变差；错误集中在“选错域”。</li>
+              <li>反例：只是工具描述写不清，先改描述与 skill，不必拆 Agent。</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>四种处置：合并、折叠、作为工具、保留</h3>
+        <p>“折回主循环”不是唯一动作。原文与配套迁移套件把判决分成四类；<b>判错处置</b>比“多一个或少一个 Agent”更常见。<a href="#s1">[1]</a><a href="#s2">[2]</a></p>
+        <div class="dispositions">
+          <div class="disp merge">
+            <h4>合并 · Merge</h4>
+            <p>两个子 Agent 总是一起跑、共享同一份数据、前后依赖强，合成一个领域 Agent。</p>
+            <span class="when">先合并，再谈折叠；从流量最高的一对开始。</span>
+          </div>
+          <div class="disp fold">
+            <h4>折叠 · Fold</h4>
+            <p>流程、规则、判断已知，且需要主循环里的完整上下文；提示词变 skill，API 调用变 tools。</p>
+            <span class="when">默认处置；一次折一个，跑同一套 eval。</span>
+          </div>
+          <div class="disp tool">
+            <h4>作为工具 · As tool</h4>
+            <p>任务独立、可并行、需要新鲜上下文，但仍要保持与用户的同一段对话；子 Agent 作为工具返回结构化结果。</p>
+            <span class="when">保留独立上下文，但把“对话所有权”留在主循环。</span>
+          </div>
+          <div class="disp keep">
+            <h4>保留 · Keep / handoff</h4>
+            <p>需要直接面对用户，或拥有独立权限、合规边界；让子 Agent 接管对话，直到任务完成。</p>
+            <span class="when">只有在它必须成为用户对话对象时才用。</span>
+          </div>
+        </div>
+
+        <div class="wizard" id="decisionWizard">
+          <div class="wizard-head">
+            <h3>六问决策器</h3>
+            <span class="small">点“是/否”，即时给判决；不是替你做决定，而是把依据摆出来。</span>
+          </div>
+          <div class="wizard-q" data-q="handoff">
+            <p>子 Agent 是否需要直接面对用户，或有独立合规/权限边界？<small>例如持牌顾问、独立审核方、必须由另一实体承担责任的流程。</small></p>
+            <div class="seg" role="group" aria-label="是否需要独立接管">
+              <button type="button" data-val="yes" aria-pressed="false">是</button>
+              <button type="button" data-val="no" aria-pressed="true">否</button>
+            </div>
+          </div>
+          <div class="wizard-q" data-q="cooccur">
+            <p>是否有多个子 Agent 总是一起跑、前后依赖强？<small>例如订单查询与物流查询总在同一轮出现，共享同一份订单数据。</small></p>
+            <div class="seg" role="group" aria-label="是否多个子 Agent 总是一起跑">
+              <button type="button" data-val="yes" aria-pressed="false">是</button>
+              <button type="button" data-val="no" aria-pressed="true">否</button>
+            </div>
+          </div>
+          <div class="wizard-q" data-q="shared">
+            <p>子任务是否共享同一段对话状态？<small>例如购物车、工单、订单、用户偏好、已说过的约束。</small></p>
+            <div class="seg" role="group" aria-label="是否共享对话状态">
+              <button type="button" data-val="yes" aria-pressed="false">是</button>
+              <button type="button" data-val="no" aria-pressed="true">否</button>
+            </div>
+          </div>
+          <div class="wizard-q" data-q="parallel">
+            <p>子任务能否彼此独立并行，结果用一次就丢？<small>例如多条互不依赖的检索、批量核查、独立验证。</small></p>
+            <div class="seg" role="group" aria-label="是否可独立并行">
+              <button type="button" data-val="yes" aria-pressed="false">是</button>
+              <button type="button" data-val="no" aria-pressed="true">否</button>
+            </div>
+          </div>
+          <div class="wizard-q" data-q="bloat">
+            <p>单循环是否已经出现可测的上下文膨胀退化？<small>同一任务在长对话后分数下降，而不是“感觉有点长”。</small></p>
+            <div class="seg" role="group" aria-label="是否有上下文膨胀退化">
+              <button type="button" data-val="yes" aria-pressed="false">是</button>
+              <button type="button" data-val="no" aria-pressed="true">否</button>
+            </div>
+          </div>
+          <div class="wizard-q" data-q="conflict">
+            <p>主 Agent 是否明显选错工具，或提示词里有冲突指令？<small>例如同时要求“先安抚”与“直接拒绝”，或工具超过 30–50 个。</small></p>
+            <div class="seg" role="group" aria-label="是否有工具或指令冲突">
+              <button type="button" data-val="yes" aria-pressed="false">是</button>
+              <button type="button" data-val="no" aria-pressed="true">否</button>
+            </div>
+          </div>
+          <div class="wizard-result verdict--fold" id="wizardResult" aria-live="polite">
+            <span class="verdict-label">建议：折叠</span>
+            <h4>先把提示词变成 skill，把 API 变成 tools</h4>
+            <p>当前六个回答都指向“没有必须保留子 Agent 的理由”。先在主循环里做渐进披露，再决定是否需要隔离上下文。</p>
+            <ul>
+              <li>没有共享状态、并行、膨胀、冲突、接管或共现信号。</li>
+              <li>默认单循环，用 eval 验证；不要一次折三个。</li>
+            </ul>
+            <div class="next"><b>下一步：</b>写 10 条端到端 golden tasks，先把其中一个子 Agent 折成 skill + tools；跑 3 次对比，再决定下一个。</div>
+            <p class="small" style="margin-top:10px">这是基于六问的启发式，不是自动决策。真实系统还要看流量、合规、组织所有权与单位任务经济性。</p>
+          </div>
+          <details>
+            <summary>没有 JavaScript 时的静态判断表</summary>
+            <div class="details-body">
+              <div class="table-wrap">
+                <table>
+                  <caption>按顺序命中，先满足的先决定</caption>
+                  <thead><tr><th>如果</th><th>那么</th><th>为什么</th></tr></thead>
+                  <tbody>
+                    <tr><td>需要直接面对用户，或有独立合规边界</td><td>保留 / 接管</td><td>对话所有权与责任边界不能拆</td></tr>
+                    <tr><td>多个子 Agent 总是一起跑、前后依赖强</td><td>合并</td><td>先减少交接，再判断合并后的域怎么处理</td></tr>
+                    <tr><td>共享对话状态，且不能独立并行</td><td>折叠</td><td>主循环的完整上下文就是优势</td></tr>
+                    <tr><td>可独立并行，且不需要共享状态</td><td>作为工具</td><td>新鲜上下文有用，但对话留在主循环</td></tr>
+                    <tr><td>有可测的上下文膨胀，或工具/指令冲突</td><td>先渐进披露，复测后再定</td><td>很多冲突不是 Agent 数量问题</td></tr>
+                    <tr><td>以上都不满足</td><td>折叠</td><td>默认单循环，用 eval 验证</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="section" id="loop">
+        <div class="sec-head"><span class="sec-no">04</span><h2>目标不是一个更大的提示词，而是一个更干净的主循环</h2></div>
+        <p class="dek">原文给的目标结构很克制：一个模型、一个上下文、开放式工具循环；计划写在上下文里，执行者就是计划者；顺序与领域流程进 skills，硬约束进 tools，预算与闸门留在 harness。</p>
+        <p class="lead">这六个部件里，最容易被误解的是“计划”。它不是编排器写一份计划再交给执行者，而是<b>写计划的模型自己执行</b>，所以可以在中途改计划。<a href="#s1">[1]</a></p>
+
+        <div class="flow" role="tablist" aria-label="单循环的六个部件">
+          <button class="flow-step" type="button" role="tab" id="flowTab0" aria-selected="true" aria-controls="loopPanel" data-step="0"><span class="n">01</span><b>计划写进上下文</b></button>
+          <button class="flow-step" type="button" role="tab" id="flowTab1" aria-selected="false" aria-controls="loopPanel" data-step="1"><span class="n">02</span><b>发一批工具调用</b></button>
+          <button class="flow-step" type="button" role="tab" id="flowTab2" aria-selected="false" aria-controls="loopPanel" data-step="2"><span class="n">03</span><b>并行执行，原样回填</b></button>
+          <button class="flow-step" type="button" role="tab" id="flowTab3" aria-selected="false" aria-controls="loopPanel" data-step="3"><span class="n">04</span><b>决定下一步</b></button>
+          <button class="flow-step" type="button" role="tab" id="flowTab4" aria-selected="false" aria-controls="loopPanel" data-step="4"><span class="n">05</span><b>预算与闸门</b></button>
+          <button class="flow-step" type="button" role="tab" id="flowTab5" aria-selected="false" aria-controls="loopPanel" data-step="5"><span class="n">06</span><b>可选验证</b></button>
+        </div>
+        <div class="flow-panel" id="loopPanel" role="tabpanel" aria-live="polite" aria-labelledby="flowTab0">
+          <h4>计划写进上下文</h4>
+          <p>第一轮就让模型写下目标、约束、已知信息与下一步。之后每次工具结果回来，它都可以改计划；不需要一个外部的“计划器”再同步一次。</p>
+          <div class="kv">
+            <b>为什么</b><span>计划者与执行者是同一个模型，才不会出现“计划在 orchestrator、执行在子 Agent”的信息断层。</span>
+            <b>失败模式</b><span>把计划留在编排器里，执行者只收到一句任务描述；或者计划写成不能改的固定流水线。</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>多 Agent 编排与单循环的结构差异</caption>
+            <thead><tr><th>维度</th><th>多 Agent 编排</th><th>单循环 + 渐进披露</th></tr></thead>
+            <tbody>
+              <tr><td>计划者与执行者</td><td>编排器计划，子 Agent 执行</td><td>同一个模型，边做边改</td></tr>
+              <tr><td>领域流程</td><td>写在各子 Agent 的提示词里</td><td>写进 skills，按需加载</td></tr>
+              <tr><td>硬约束</td><td>放在编排器或各子 Agent</td><td>放在 tools 与 harness 的闸门</td></tr>
+              <tr><td>上下文</td><td>按 Agent 切开，靠摘要交接</td><td>一个窗口，靠渐进披露控制体积</td></tr>
+              <tr><td>交接</td><td>每次 handoff 都可能丢细节</td><td>没有 handoff；只有工具结果回填</td></tr>
+              <tr><td>成本</td><td>复制上下文 + 嵌套循环</td><td>一份上下文 + 元数据 + 按需加载</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>四个可抄的骨架</h3>
+        <p>下面的代码是骨架，不是可直接上线的实现；重点看边界：计划、工具、skill、子 Agent 工具、eval case 各自放在哪一层。</p>
+        <div class="code-tabs">
+          <div class="code-tablist" role="tablist" aria-label="代码示例">
+            <button class="code-tab" type="button" role="tab" aria-selected="true" aria-controls="codeLoop" id="tabLoop">loop.py</button>
+            <button class="code-tab" type="button" role="tab" aria-selected="false" aria-controls="codeSkill" id="tabSkill">SKILL.md</button>
+            <button class="code-tab" type="button" role="tab" aria-selected="false" aria-controls="codeTool" id="tabTool">subagent_tool.json</button>
+            <button class="code-tab" type="button" role="tab" aria-selected="false" aria-controls="codeEval" id="tabEval">eval_case.json</button>
+          </div>
+          <div class="code-panel" id="codeLoop" role="tabpanel" aria-labelledby="tabLoop">
+<pre><code><span class="c"># 一个最小的单循环：计划、工具、预算、验证都在同一层</span>
+plan = model.write_plan(task)          <span class="c"># 第一轮就写进上下文</span>
+history = [task, plan]
+
+for turn in range(MAX_TURNS):
+    calls = model.next_calls(history)  <span class="c"># 一批，不是一条</span>
+    if not calls:
+        break
+    results = run_parallel(calls)      <span class="c"># 原样回填，不先总结</span>
+    history += results
+    if budget.exceeded(history):
+        break
+
+answer = model.answer(history)
+if verifier and not verifier.check(answer):
+    answer = model.revise(history, verifier.reason)</code></pre>
+          </div>
+          <div class="code-panel" id="codeSkill" role="tabpanel" aria-labelledby="tabSkill">
+<pre><code><span class="c">---</span>
+<span class="k">name</span>: delivery-eta
+<span class="k">description</span>: 查询订单配送时效；当用户问“什么时候到/是否延迟”时使用。
+<span class="c">---</span>
+1. 先读 order_id 与承运商，不要猜日期。
+2. 调用 shipping.quote，拿到承诺日期与来源。
+3. 若承运商缺数据，返回“需人工确认”，不要编造。
+4. 回答里保留承运商名称与查询时间。</code></pre>
+          </div>
+          <div class="code-panel" id="codeTool" role="tabpanel" aria-labelledby="tabTool">
+<pre><code>{
+  <span class="k">"name"</span>: <span class="s">"research_brief"</span>,
+  <span class="k">"description"</span>: <span class="s">"并行检索一个独立子问题，返回带出处的要点；不接管对话。"</span>,
+  <span class="k">"input_schema"</span>: {
+    <span class="k">"type"</span>: <span class="s">"object"</span>,
+    <span class="k">"properties"</span>: { <span class="k">"question"</span>: { <span class="k">"type"</span>: <span class="s">"string"</span> } },
+    <span class="k">"required"</span>: [<span class="s">"question"</span>]
+  },
+  <span class="k">"output_schema"</span>: {
+    <span class="k">"findings"</span>: [{ <span class="k">"claim"</span>: <span class="s">"string"</span>, <span class="k">"source"</span>: <span class="s">"string"</span> }],
+    <span class="k">"gaps"</span>: [<span class="s">"string"</span>]
+  }
+}</code></pre>
+          </div>
+          <div class="code-panel" id="codeEval" role="tabpanel" aria-labelledby="tabEval">
+<pre><code>{
+  <span class="k">"id"</span>: <span class="s">"T7"</span>,
+  <span class="k">"chain"</span>: [<span class="s">"order_lookup"</span>, <span class="s">"delivery_eta"</span>],
+  <span class="k">"prompt"</span>: <span class="s">"订单 12345 什么时候到？"</span>,
+  <span class="k">"must"</span>: [<span class="s">"引用承运商报价"</span>, <span class="s">"不编造日期"</span>],
+  <span class="k">"rubric"</span>: {
+    <span class="k">"pass"</span>: <span class="s">"给出日期且注明承运商与查询时间"</span>,
+    <span class="k">"fail"</span>: <span class="s">"未查配送或编造日期"</span>,
+    <span class="k">"unsure"</span>: <span class="s">"只给区间但未说明来源"</span>
+  }
+}</code></pre>
+          </div>
+        </div>
+
+        <p>Skill 的渐进披露通常分三层：元数据（名称与描述）、正文（SKILL.md）、参考文件与脚本；参考文件只在读取时进上下文，脚本只把输出放进上下文。早期技能文章给的是约 50 token 元数据，当前文档约 100 token，属于版本差异，不影响“按需加载”的结论。<a href="#s6">[6]</a><a href="#s7">[7]</a></p>
+        <p class="small">上下文为什么会膨胀、压缩与隔离的边界在哪里，见 <a href="/book/chapter2/">第 2 章 · 上下文工程</a>。</p>
+
+        <div class="callout warn">
+          <span class="label">关键差别</span>
+          <p>原文特别指出：<b>用代码重写计划的那一步不再需要</b>，因为每一步由模型决定；顺序与领域 procedure 进 skills；硬限制（校验、审批）与对话中才出现的东西（记忆查询）进 tools；代码仍可做便宜且几乎总相关的加载（例如实体解析），以及工具内部的机械活（拼 payload、解析流、恢复澄清）。<a href="#s1">[1]</a> 预算与闸门同理：任务预算可以是建议性的倒计时，硬上限仍是 max_tokens；写操作审批与危险工具拒绝必须是确定性的。<a href="#s9">[9]</a></p>
+        </div>
+      </section>
+
+          <section class="section" id="cost">
+        <div class="sec-head"><span class="sec-no">05</span><h2>三笔账：token、延迟与交接损失</h2></div>
+        <p class="dek">多 Agent 的主要优势是“用更多 token 换更全面”，不是免费并行。先把三个最容易混用的数字对齐基线，再决定这笔钱花得值不值。</p>
+
+        <div class="cards three">
+          <div class="card">
+            <span class="num">TOKEN / CHAT</span>
+            <h4>15× 与 4×</h4>
+            <p>Anthropic Research 的生产数据：Agent 约为普通聊天的 4 倍 token，多 Agent 约为 15 倍。<a href="#s3">[3]</a></p>
+            <p class="small">基线是“一次普通聊天”，不是“单 Agent 完成同一任务”。</p>
+          </div>
+          <div class="card">
+            <span class="num">TOKEN / SINGLE AGENT</span>
+            <h4>3–10×</h4>
+            <p>另一篇官方指南的口径：多 Agent 完成等效任务，通常比单 Agent 多 3–10 倍 token，来自上下文复制、协调消息与交接摘要。<a href="#s4">[4]</a></p>
+            <p class="small">与 15× 不是同一基线；两个数字可以同时为真。</p>
+          </div>
+          <div class="card">
+            <span class="num">LATENCY / SINGLE CASE</span>
+            <h4>约 2×</h4>
+            <p>一个客户把多 Agent harness 与单循环对比，后者运行时约快 2 倍。<a href="#s1">[1]</a></p>
+            <p class="small">单案例、客户自评，不是受控实验；只能说明方向。</p>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <span class="label">三个常见误读</span>
+          <p><b>90.2% 不是准确率，也不是速度。</b> 它是 Anthropic 内部研究 eval 上，多 Agent 相对单 Agent Opus 4 的提升。<a href="#s3">[3]</a><br>
+          <b>15× 不是延迟。</b> 它是 token；多 Agent 往往更全面，但总计算量更大，整体耗时可能更长。<a href="#s4">[4]</a><br>
+          <b>3–10× 与 15× 不能直接比较。</b> 一个对单 Agent 等效任务，一个对普通聊天；写方案时要先写清基线。</p>
+        </div>
+
+        <h3>成本不只在 token 单价</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>同一任务下，两种架构的成本项对照</caption>
+            <thead><tr><th>成本项</th><th>多 Agent 编排</th><th>单循环 + 渐进披露</th><th>备注</th></tr></thead>
+            <tbody>
+              <tr><td>上下文复制</td><td>每个子 Agent 一份</td><td>一份 + skill/tool 元数据</td><td>最容易被忽略的固定成本</td></tr>
+              <tr><td>交接摘要</td><td>每次 handoff 有损</td><td>无 handoff</td><td>丢掉的细节不可逆</td></tr>
+              <tr><td>模型调用</td><td>嵌套循环，至少多一层</td><td>一层循环</td><td>延迟随层数增加</td></tr>
+              <tr><td>工具定义</td><td>每个 Agent 一套</td><td>tool search 按需加载</td><td>30–50 个后选择退化<a href="#s8">[8]</a></td></tr>
+              <tr><td>评测</td><td>局部分数多，端到端少</td><td>一套端到端 + 每 skill 小集</td><td>局部 eval 会掩盖回归</td></tr>
+              <tr><td>组织</td><td>每个团队一个 owner</td><td>中央 prompt/eval + 领域 skill DRI</td><td>所有权不清时，两种都会烂</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>上下文账本：把“按需加载”算成体积</h3>
+        <p>下面的计算器用官方文档里的几个锚点做算术示意：skill 元数据约 100 token/个，正文触发后才加载；工具定义约 350 token/个，tool search 只加载 3–5 个。<a href="#s7">[7]</a><a href="#s8">[8]</a> 数字用于比较方向，不是你的系统实测。</p>
+        <div class="ledger" id="ledger">
+          <div class="ledger-grid">
+            <div>
+              <div class="control-row">
+                <label for="skillCount">Skills 数量 <output id="skillOut">12</output></label>
+                <input type="range" id="skillCount" min="0" max="30" step="1" value="12">
+              </div>
+              <div class="control-row">
+                <label for="toolCount">工具数量 <output id="toolOut">40</output></label>
+                <input type="range" id="toolCount" min="0" max="80" step="1" value="40">
+              </div>
+              <div class="control-row">
+                <label for="subCount">子 Agent 数量 <output id="subOut">0</output></label>
+                <input type="range" id="subCount" min="0" max="12" step="1" value="0">
+              </div>
+              <label class="switch"><input type="checkbox" id="progressive" checked> skill 按需加载（渐进披露）</label>
+              <label class="switch"><input type="checkbox" id="toolSearch" checked> 工具按需加载（tool search）</label>
+              <div class="presets">
+                <button class="preset" type="button" data-preset="full">全量塞入</button>
+                <button class="preset" type="button" data-preset="progressive">渐进披露</button>
+                <button class="preset" type="button" data-preset="multi">多 Agent 复制</button>
+              </div>
+            </div>
+            <div>
+              <p class="ledger-total"><span id="ledgerTotal" aria-live="polite" aria-atomic="true">14,700</span><small>token</small></p>
+              <p class="ledger-relative" id="ledgerRelative">相对默认渐进披露 14,700 ×1.0</p>
+              <p class="ledger-hint" id="ledgerHint"></p>
+              <div class="ledger-bar" id="ledgerBar" aria-hidden="true">
+                <span class="seg-history" style="width:54.4%"></span><span class="seg-skills" style="width:32.7%"></span><span class="seg-tools" style="width:12.9%"></span><span class="seg-subs" style="width:0"></span>
+              </div>
+              <div class="legend">
+                <span class="l-history"><i></i>对话历史 8,000</span>
+                <span class="l-skills"><i></i>Skills</span>
+                <span class="l-tools"><i></i>Tools</span>
+                <span class="l-subs"><i></i>子 Agent 复制</span>
+              </div>
+              <p class="sim-note">假设：对话历史 8,000；每个 skill 正文 1,800，最多同时激活 2 个；每个工具定义 350，tool search 加载 4 个 + 500 的搜索工具；每个子 Agent 复制 2,800 上下文 + 8 个工具定义。注意：skills 少于 3 个或 tools 少于 6 个时，按需加载的固定开销更大，这是口径拐点，不是开关失效。真实系统请用 tokenizer 实测。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>延迟：少一层，不等于一定更快</h3>
+        <p>任务完成延迟大致是“每轮 time-to-last-token + 工具处理”的总和。多 Agent 多一层嵌套循环、多几次序列化与等待；单循环少一层，但如果工具选错、轮次变多，也可能更慢。原文的建议是先把端到端延迟拆成轮次、工具、token 三段，再决定砍哪一段；先看 p50/p95，不要只看平均。<a href="#s1">[1]</a></p>
+        <div class="callout note">
+          <span class="label">产品判断</span>
+          <p>如果任务是“用户等着看结果”的强交互场景，延迟就是转化率；如果任务是“后台跑几分钟也无所谓”的研究，token 成本与覆盖度更重要。同一个架构选择，在两个场景里可能相反。</p>
+        </div>
+      </section>
+
+      <section class="section" id="migrate">
+        <div class="sec-head"><span class="sec-no">06</span><h2>六步迁移：先量，再合并，再折，一次一个</h2></div>
+        <p class="dek">配套的 single-agent-loop-kit 把迁移写成“measure → combine → fold”，并强调每一步都用同一套 eval 打分。<a href="#s2">[2]</a> 下面是把它落成六步的版本。</p>
+
+        <div class="stepper" id="stepper" role="tablist" aria-label="六步迁移">
+          <button class="tab" type="button" role="tab" id="stepTab0" aria-selected="true" aria-controls="stepPanel" data-step="0">00 审计</button>
+          <button class="tab" type="button" role="tab" id="stepTab1" aria-selected="false" aria-controls="stepPanel" data-step="1">01 基线</button>
+          <button class="tab" type="button" role="tab" id="stepTab2" aria-selected="false" aria-controls="stepPanel" data-step="2">02 合并</button>
+          <button class="tab" type="button" role="tab" id="stepTab3" aria-selected="false" aria-controls="stepPanel" data-step="3">03 折叠</button>
+          <button class="tab" type="button" role="tab" id="stepTab4" aria-selected="false" aria-controls="stepPanel" data-step="4">04 作为工具</button>
+          <button class="tab" type="button" role="tab" id="stepTab5" aria-selected="false" aria-controls="stepPanel" data-step="5">05 维护</button>
+        </div>
+        <div class="flow-panel" id="stepPanel" role="tabpanel" aria-live="polite" aria-labelledby="stepTab0">
+          <h4>00 · 审计：先给每个子 Agent 一个判决</h4>
+          <p>读编排代码与生产 trace，列出每个子 Agent 的调用链、流量、owner 与失败模式；给每个判决：合并、折叠、作为工具、保留。不要只看代码结构，要看它实际被谁调用、和谁总是一起跑。</p>
+          <div class="kv">
+            <b>输入</b><span>子 Agent 清单、调用链、最近 30 天流量、每个能力的 owner。</span>
+            <b>退出条件</b><span>每个子 Agent 都有一个判决与一句理由；高风险项有复核人。</span>
+            <b>常见错误</b><span>按团队边界而不是调用链判决；把“没人维护”误判成“可以删”。</span>
+          </div>
+        </div>
+        <div class="small" style="margin:-6px 0 18px">提示：套件会在审计后、付费运行前、基线后、每次改动后停下来，让你确认再继续。<a href="#s2">[2]</a></div>
+
+        <h3>折叠推演：总分、延迟、规则覆盖一起看</h3>
+        <p>下面四个场景的数字是教学推演，不是实测。它们用来演示一个判断顺序：先看质量，再看延迟与 token，最后看“必须守住的规则”有没有被总分掩盖。</p>
+        <div class="sim" id="simulator">
+          <div class="sim-head">
+            <h4 id="simTitle">客服中台</h4>
+            <div class="run-toggle" id="runToggle" role="group" aria-label="运行次数" hidden>
+              <button type="button" data-runs="1" aria-pressed="true">跑 1 次</button>
+              <button type="button" data-runs="3" aria-pressed="false">跑 3 次</button>
+            </div>
+          </div>
+          <div class="tabs" id="simTabs" role="tablist" aria-label="场景">
+            <button class="tab" type="button" role="tab" aria-selected="true" data-scenario="support">客服中台</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-scenario="commerce">电商导购</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-scenario="research">深度研究</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-scenario="coding">代码评审</button>
+          </div>
+          <div class="stage-row" id="simStages">
+            <button class="stage-btn" type="button" data-stage="0" aria-pressed="true">基线</button>
+            <button class="stage-btn" type="button" data-stage="1" aria-pressed="false">合并</button>
+            <button class="stage-btn" type="button" data-stage="2" aria-pressed="false">折叠</button>
+            <button class="stage-btn" type="button" data-stage="3" aria-pressed="false">作为工具</button>
+          </div>
+          <div class="metrics">
+            <div class="metric good"><span class="m-label">任务质量（示意）</span><span class="m-val" id="mQuality">78</span><span class="m-bar"><i id="bQuality" style="width:78%"></i></span></div>
+            <div class="metric warn"><span class="m-label">p95 延迟（秒）</span><span class="m-val" id="mLatency">12.4</span><span class="m-bar"><i id="bLatency" style="width:41%"></i></span></div>
+            <div class="metric warn"><span class="m-label">token / 任务（千）</span><span class="m-val" id="mTokens">18.2</span><span class="m-bar"><i id="bTokens" style="width:40%"></i></span></div>
+            <div class="metric good"><span class="m-label">必须守住的规则</span><span class="m-val" id="mGuards">12/12</span><span class="m-bar"><i id="bGuards" style="width:100%"></i></span></div>
+          </div>
+          <div class="sim-verdict" id="simVerdict"><b>基线：</b>12 个专家子 Agent，质量尚可，但一次任务要跨 3–5 次交接，延迟与上下文复制都高。先别折，先把调用链和规则覆盖写清楚。</div>
+          <div class="flips" id="simFlips"></div>
+          <p class="sim-note">推演数字按文章描述的方向构造，不代表任何真实系统；真实迁移以你的 eval 为准。规则覆盖指“必须守住的业务规则”，例如“报价必须来自承运商”。</p>
+        </div>
+        <details>
+          <summary>四个场景 × 四个阶段的完整推演表</summary>
+          <div class="details-body">
+            <div class="table-wrap">
+              <table>
+                <caption>教学推演，不是实测；质量 0–100，延迟为 p95 秒，token 为千/任务；客服折叠行按跑 3 次口径</caption>
+                <thead><tr><th>场景</th><th>阶段</th><th>质量</th><th>延迟</th><th>token</th><th>规则</th><th>翻转 / 风险</th></tr></thead>
+                <tbody>
+                  <tr><td>客服</td><td>基线</td><td>78</td><td>12.4</td><td>18.2</td><td>12/12</td><td>无</td></tr>
+                  <tr><td>客服</td><td>合并</td><td>80</td><td>10.8</td><td>15.1</td><td>12/12</td><td>无</td></tr>
+                  <tr><td>客服</td><td>折叠</td><td>86</td><td>8.2</td><td>11.3</td><td>11/12</td><td>T7 配送时效：3 次里失败 1 次</td></tr>
+                  <tr><td>客服</td><td>作为工具</td><td>84</td><td>9.6</td><td>14.0</td><td>12/12</td><td>无</td></tr>
+                  <tr><td>电商</td><td>基线</td><td>74</td><td>9.8</td><td>16.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>电商</td><td>合并</td><td>76</td><td>9.2</td><td>14.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>电商</td><td>折叠</td><td>83</td><td>6.4</td><td>9.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>电商</td><td>作为工具</td><td>81</td><td>7.8</td><td>11.2</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>研究</td><td>基线</td><td>88</td><td>26.0</td><td>42.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>研究</td><td>合并</td><td>88</td><td>25.0</td><td>40.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>研究</td><td>折叠</td><td>71</td><td>18.0</td><td>13.0</td><td>7/10</td><td>覆盖面变窄，来源变少</td></tr>
+                  <tr><td>研究</td><td>作为工具</td><td>87</td><td>24.0</td><td>38.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>代码评审</td><td>基线</td><td>85</td><td>14.0</td><td>20.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>代码评审</td><td>合并</td><td>85</td><td>13.6</td><td>19.0</td><td>10/10</td><td>无</td></tr>
+                  <tr><td>代码评审</td><td>折叠</td><td>79</td><td>9.0</td><td>10.0</td><td>8/10</td><td>失去独立审查视角</td></tr>
+                  <tr><td>代码评审</td><td>作为工具</td><td>84</td><td>12.8</td><td>18.0</td><td>10/10</td><td>无</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </details>
+
+        <div class="callout warn">
+          <span class="label">最重要的回归案例</span>
+          <p>Anthropic 在样本客服 Agent 上折了一个子 Agent，延迟降了，但一个原本通过的流程坏了：主 Agent 手里有订单查询工具，就自己回答了配送日期，没有去问物流专家。这个回归在两次运行里只出现一次。<a href="#s1">[1]</a> 所以：<b>每个生产链路至少一条 eval，每条不能破的规则至少一条 eval，每道题跑多次。</b></p>
+        </div>
+
+        <div class="callout vendor">
+          <span class="label">配套工具怎么用</span>
+          <p><a href="#s2">single-agent-loop-kit</a> 是 Apache-2.0 的参考实现，官方明确“不维护、不接受贡献”。它先审计、再基线、再合并/折叠/作为工具，每次改动都跑同一套 eval；支持离线 smoke（19 题，无需 API key），并在付费运行前给出 token 估算。把它当检查清单，不要当自动迁移。<a href="#s2">[2]</a></p>
+        </div>
+      </section>
+
+      <section class="section" id="cases">
+        <div class="sec-head"><span class="sec-no">07</span><h2>四个场景的答案：折、折、不折、作为工具</h2></div>
+        <p class="dek">同样是“多 Agent”，四个场景的答案不同。关键不是行业，而是：对话是否共享、子任务是否真并行、失败是否必须由独立上下文来发现。</p>
+        <div class="cards two">
+          <div class="card">
+            <span class="num">CASE 01 · 客服中台</span>
+            <h4>折叠：共享工单与订单，交接最伤</h4>
+            <p><b>起始架构：</b>12 个专家子 Agent，按售前、订单、物流、退款、会员等拆分。</p>
+            <p><b>判断：</b>同一通对话里频繁跨域；用户说“这个订单能退吗，什么时候到”，一次就要跨订单、退款、物流三个 Agent。每次交接都丢上下文，品牌语气也难统一。<a href="#s1">[1]</a><a href="#s5">[5]</a></p>
+            <p><b>处置：</b>折成一个主循环；退款政策、配送时效、会员权益变成 skills；订单、物流、退款 API 变成 tools；高风险退款保留写闸门。</p>
+            <p><b>看什么：</b>一次解决率、品牌语气一致率、p95 延迟、配送时效规则覆盖。</p>
+            <p class="foot">反例：把退款政策折进提示词，却不给退款工具，模型就开始猜日期。</p>
+          </div>
+          <div class="card">
+            <span class="num">CASE 02 · 电商导购</span>
+            <h4>折叠：购物车是一段连续会话</h4>
+            <p><b>起始架构：</b>搜索、比较、推荐、退货、促销各一个 Agent，外加 orchestrator。</p>
+            <p><b>判断：</b>购物车、偏好、已看过的商品、退货状态都共享；按品类或意图拆 Agent，用户每换一个问题就像换了一个人。Anthropic 的电商指南直接写：这类会话是“一段紧密耦合的跨意图会话”，应优先 skills 而不是子 Agent。<a href="#s5">[5]</a></p>
+            <p><b>处置：</b>一个主循环持有购物车与偏好；搜索/排序、库存、促销、退货作为 tools；导购话术与品类知识作为 skills。</p>
+            <p><b>看什么：</b>加购率、任务完成率、跨品类切换后的上下文保持、延迟。</p>
+            <p class="foot">反例：按品类拆 8 个 Agent，用户从“旅行箱”问到“登机规则”就换 Agent，前面选的型号丢了。</p>
+          </div>
+          <div class="card">
+            <span class="num">CASE 03 · 深度研究</span>
+            <h4>不折：广度优先，子 Agent 仍然赢</h4>
+            <p><b>起始架构：</b>lead agent 拆问题，3–5 个研究子 Agent 并行搜索，各自压缩后交回。</p>
+            <p><b>判断：</b>这是原文明确保留的场景：任务需要并行、每个分支要一份干净上下文、结果可以丢弃。Anthropic Research 的内部 eval 上，多 Agent 相对单 Agent Opus 4 提升 90.2%，代价是约 15 倍 token。<a href="#s1">[1]</a><a href="#s3">[3]</a></p>
+            <p><b>处置：</b>保留并行子 Agent；主循环负责拆题、验收与最终综合；子 Agent 以工具形式返回带出处的要点，不接管对话。</p>
+            <p><b>看什么：</b>覆盖度、来源质量、单位任务成本、p95 延迟；不要用“单 Agent 更便宜”一刀切。</p>
+            <p class="foot">反例：为了省 token 折成单循环，结果只查了三个来源就收尾，覆盖面明显变窄。</p>
+          </div>
+          <div class="card">
+            <span class="num">CASE 04 · 代码评审</span>
+            <h4>作为工具：独立审查需要新鲜上下文</h4>
+            <p><b>起始架构：</b>主 Agent 写代码，审查 Agent 在独立上下文里读 diff 与测试，给出问题清单。</p>
+            <p><b>判断：</b>审查的价值来自“没有写过这段代码”的独立视角；把审查折进主循环，主 Agent 容易为自己的实现辩护。Cognition 也把“子 Agent 只回答一个明确问题、不并行写代码”作为 Claude Code 的克制做法。<a href="#s11">[11]</a></p>
+            <p><b>处置：</b>保留审查 Agent，但作为工具调用：输入 diff、测试结果与验收标准，输出结构化问题清单；主 Agent 负责核实与修改，审查 Agent 不直接写代码。</p>
+            <p><b>看什么：</b>缺陷检出率、误报率、审查延迟、修复后回归率。</p>
+            <p class="foot">反例：让审查 Agent 接管对话并直接改代码，责任边界消失，主 Agent 也不再核实。</p>
+          </div>
+        </div>
+        <div class="callout note">
+          <span class="label">不要当模板</span>
+          <p>四个案例给的是判断方法，不是行业模板。同一个客服系统，如果退款必须由持牌机构处理，退款就可能应该“保留/接管”；同一个研究系统，如果问题很窄、来源很少，单循环也可能更划算。</p>
+        </div>
+      </section>
+
+      <section class="section" id="eval">
+        <div class="sec-head"><span class="sec-no">08</span><h2>评测：总分一样，系统可能已经换了一个</h2></div>
+        <p class="dek">原文建议的 eval 结构不复杂：一个中央团队拥有的共享端到端集，加上每个 skill 自带的小集；哪怕只有 10 条 golden examples 也可以开始。难的是克制——不要只看一个总分。</p>
+        <p class="lead">有 orchestrator 时，除了最终质量，还要看 routing accuracy（有没有选对子 Agent）。折叠之后，改看 skill/tool selection（有没有加载对的 skill、调对的工具），最终仍看 task completion。<a href="#s1">[1]</a></p>
+
+        <div class="cards four">
+          <div class="card">
+            <span class="num">LAYER 1</span>
+            <h4>端到端任务</h4>
+            <p>少而全，覆盖用户真正会提的任务；由中央团队拥有，跨团队共用。</p>
+          </div>
+          <div class="card">
+            <span class="num">LAYER 2</span>
+            <h4>链路覆盖</h4>
+            <p>生产里每条会一起跑的 Agent 链，至少一条 eval；折叠后链路变短，也要防止漏掉中间步骤。</p>
+          </div>
+          <div class="card">
+            <span class="num">LAYER 3</span>
+            <h4>Skill 小集</h4>
+            <p>每个 skill 由所属团队带自己的小集；上线前跑，改动后跑。</p>
+          </div>
+          <div class="card">
+            <span class="num">LAYER 4</span>
+            <h4>规则回归</h4>
+            <p>每条“绝不能破”的规则单独一题；例如“报价必须来自承运商”“退款必须二次确认”。</p>
+          </div>
+        </div>
+
+        <div class="eval-matrix" id="evalMatrix">
+          <div class="matrix-summary" id="matrixSummary">
+            <div class="matrix-box"><b>8/10</b><span>基线：三次全过的题数</span></div>
+            <div class="matrix-box"><b>8/10</b><span>折叠后：三次全过的题数</span></div>
+            <div class="matrix-box"><b>3</b><span>发生翻转的题：1 改善、1 回归、1 失败漂移</span></div>
+          </div>
+          <div class="tabs" id="matrixTabs" role="tablist" aria-label="矩阵视图">
+            <button class="tab" type="button" role="tab" id="matrixTabAggregate" aria-selected="true" aria-controls="matrixAggregate" data-view="aggregate">只看总分</button>
+            <button class="tab" type="button" role="tab" id="matrixTabDetail" aria-selected="false" aria-controls="matrixDetail" data-view="detail">看逐题翻转</button>
+          </div>
+          <div id="matrixAggregate" role="tabpanel" aria-labelledby="matrixTabAggregate">
+            <p style="font-size:13.5px">总分完全相同，但失败的位置换了：T4 从失败变通过，T5 从通过变失败，T7 的失败从第 1 次漂到第 3 次。只看 80% 对 80%，这三个变化都不会被看见。</p>
+            <p class="small">这也是为什么原文说：比较折叠前后，不要只看最终分数，要看“哪些任务翻转了”；一个折叠可能降低延迟，却弄坏一个原本通过的流程。<a href="#s1">[1]</a></p>
+          </div>
+          <div class="table-wrap" id="matrixDetail" role="tabpanel" aria-labelledby="matrixTabDetail">
+            <table>
+              <caption>10 题 × 3 次；严格通过 = 三次都通过；黄色描边 = 与基线同次运行相比发生翻转</caption>
+              <thead>
+                <tr><th>题</th><th>基线 R1</th><th>基线 R2</th><th>基线 R3</th><th>折叠 R1</th><th>折叠 R2</th><th>折叠 R3</th><th>判定</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>T1 订单查询</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+                <tr><td>T2 退款政策</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+                <tr><td>T3 会员权益</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+                <tr><td>T4 跨域换货</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-fail">失败</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass cell-flip">通过</td><td><span class="chip good">改善</span></td></tr>
+                <tr><td>T5 发票重开</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-fail cell-flip">失败</td><td class="cell-fail cell-flip">失败</td><td><span class="chip bad">回归</span></td></tr>
+                <tr><td>T6 优惠叠加</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+                <tr><td>T7 配送时效</td><td class="cell-fail">失败</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass cell-flip">通过</td><td class="cell-pass">通过</td><td class="cell-fail cell-flip">失败</td><td><span class="chip warn">漂移</span></td></tr>
+                <tr><td>T8 投诉升级</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+                <tr><td>T9 地址修改</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+                <tr><td>T10 人工转接</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td class="cell-pass">通过</td><td>稳定</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small">矩阵是教学示例；真实系统请记录每次运行的输入、工具结果、最终回答与评分理由。</p>
+        </div>
+
+        <h3>一张表看完要测什么</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>折叠前后都适用的指标；前三个看结果，后三个看代价</caption>
+            <thead><tr><th>指标</th><th>怎么测</th><th>折叠前</th><th>折叠后</th></tr></thead>
+            <tbody>
+              <tr><td>任务完成率</td><td>端到端 rubric，按题判定</td><td>必看</td><td>必看</td></tr>
+              <tr><td>规则通过率</td><td>每条“不能破”的规则单独一题</td><td>必看</td><td>必看</td></tr>
+              <tr><td>选择准确率</td><td>routing accuracy</td><td>选对子 Agent</td><td>选对 skill / tool</td></tr>
+              <tr><td>p50 / p95 延迟</td><td>按轮次拆 time-to-last-token + 工具</td><td>必看</td><td>必看</td></tr>
+              <tr><td>token / 成本</td><td>按任务统计，不按调用统计</td><td>必看</td><td>必看</td></tr>
+              <tr><td>翻转数</td><td>同一题改动前后逐次对比</td><td>基线</td><td>每次改动都记</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout note">
+          <span class="label">Rubric 写法</span>
+          <p>把“通过/失败”写成三档，比二元更能抓边界。例如配送时效题：<b>通过</b> = 给出日期且注明承运商与查询时间；<b>不确定</b> = 只给区间但未说明来源；<b>失败</b> = 未查配送或编造日期。评分理由要能回放到具体工具结果。</p>
+        </div>
+
+        <p>原文还提到一个很实用的内部做法：给重要事件打时间戳，之后回放成定向 eval；对于内部系统难以回放、用户参与难以模拟的环境，这比“造一个完美沙盒”更可行。<a href="#s1">[1]</a> MAST 的研究也说明，多 Agent 的失败大量集中在系统设计、Agent 间错位与任务验证，而不是单点模型能力；这正好对应上面的三层 eval。<a href="#s12">[12]</a></p>
+      </section>
+
+      <section class="section" id="org">
+        <div class="sec-head"><span class="sec-no">09</span><h2>架构问题，最后都会变成所有权问题</h2></div>
+        <p class="dek">如果每个团队继续拥有自己的子 Agent，折叠不会减少协调成本，只会把冲突搬进主循环。原文的建议是：中央小团队拥有系统提示词与端到端质量，领域团队把 ownership 从 Agent 转到 skill/tool，并对自己那部分 eval 负责。</p>
+        <div class="table-wrap">
+          <table>
+            <caption>折叠后的最小所有权表</caption>
+            <thead><tr><th>角色</th><th>拥有</th><th>必须签收</th><th>不拥有</th></tr></thead>
+            <tbody>
+              <tr><td><b>中央平台团队</b><br><span class="small">小团队</span></td><td>系统提示词、端到端 eval、工具与 skill 准入、预算/闸门</td><td>新 skill/tool 上线、跨域回归</td><td>领域细节与领域数据</td></tr>
+              <tr><td><b>领域团队</b></td><td>本域 skill、tools、局部 eval、DRI</td><td>本域规则与数据口径</td><td>全局提示词与端到端分数</td></tr>
+              <tr><td><b>安全 / 合规</b></td><td>权限检查、拒绝语义、审计</td><td>高风险工具与写操作</td><td>业务话术与增长指标</td></tr>
+              <tr><td><b>产品</b></td><td>任务完成定义、golden set、成本/延迟 SLO</td><td>验收标准与优先级</td><td>模型与工具实现</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="cards two">
+          <div class="card">
+            <h4>四种反模式</h4>
+            <ul>
+              <li><b>一个团队一个子 Agent</b>：架构复制组织图，交接成本变成固定税。</li>
+              <li><b>每个团队往系统提示词加一句</b>：Frankenprompt，规则冲突、语气不一致。</li>
+              <li><b>只维护局部 eval</b>：每队分数都高，端到端没人负责。</li>
+              <li><b>skill 无 owner</b>：skill sprawl 取代 subagent sprawl，只是换了一个文件夹。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>让能力继续属于领域团队</h4>
+            <p>折叠不是把权力收归中央，而是把“能力”从 Agent 变成可组合的 skill/tool：领域团队继续拥有知识与规则，中央团队拥有端到端结果与准入。<a href="#s1">[1]</a><a href="#s5">[5]</a></p>
+            <p>原文提到的两个工具：<b>/skill-creator</b> 用来起草与审计 skill，<b>/skill-doctor</b> 用来看每个 skill 的成本与使用频率、删掉死重量。<a href="#s1">[1]</a> 这比“再建一个 Agent 评审委员会”更可持续。</p>
+          </div>
+        </div>
+        <div class="callout vendor">
+          <span class="label">Conway 定律的第二次提醒</span>
+          <p>如果你保留 12 个子 Agent，是因为你有 12 个团队，而不是因为任务需要 12 份独立上下文，那你只是把组织图写进了模型调用链。折叠的真正难点不是代码，是让团队接受“能力还在，只是换了一个交付形态”。<a href="#s13">[13]</a></p>
+        </div>
+      </section>
+      <section class="section" id="limits">
+        <div class="sec-head"><span class="sec-no">10</span><h2>反方、证据与这条建议的边界</h2></div>
+        <p class="dek">这不是一篇“多 Agent 已死”的文章。原文自己保留了研究前沿的子 Agent；Cognition 从另一条路径反对天真的多 Agent；MAST 则用失败分类说明“加 Agent”不能替代契约与验证。</p>
+        <div class="cards three">
+          <div class="card">
+            <span class="num">COUNTERPOINT</span>
+            <h4>Cognition：先共享完整轨迹</h4>
+            <p>多 Agent 的根本风险是上下文不共享；动作携带隐含决策，两个子 Agent 的冲突假设会在合并时爆炸。除非能共享完整轨迹，否则默认排除这类架构；单线程线性 Agent 更可靠。<a href="#s11">[11]</a></p>
+            <p class="small">它反对的是“天真并行”，不是所有上下文隔离；超长任务仍需要压缩历史。</p>
+          </div>
+          <div class="card">
+            <span class="num">EVIDENCE</span>
+            <h4>MAST：失败常不在模型</h4>
+            <p>1600+ 条轨迹、7 个框架、14 种失败模式，聚成三类：系统设计、Agent 间错位、任务验证；150 条人工标注，κ=0.88。<a href="#s12">[12]</a></p>
+            <p class="small">这说明“多 Agent 更强”不是默认结论；失败往往来自契约、验证与协调设计。</p>
+          </div>
+          <div class="card">
+            <span class="num">COUNTEREXAMPLE</span>
+            <h4>研究前沿仍然需要多 Agent</h4>
+            <p>Anthropic Research 在广度优先任务上用 3–5 个并行子 Agent，内部 eval 相对单 Agent 提升 90.2%，代价是约 15 倍 token；复杂查询研究时间最多缩短 90%。<a href="#s3">[3]</a></p>
+            <p class="small">原文也明确：子 Agent 在研究前沿仍有位置。</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption>证据强度：能支持什么，不能支持什么</caption>
+            <thead><tr><th>证据</th><th>类型</th><th>能支持</th><th>不能支持</th></tr></thead>
+            <tbody>
+              <tr><td>S1 折叠指南</td><td>厂商文章 / 企业部署观察</td><td>方向、条件、迁移步骤、失败模式</td><td>行业基准、因果结论、精确收益</td></tr>
+              <tr><td>S2 迁移套件</td><td>开源参考实现</td><td>可执行的审计/基线/折叠流程</td><td>自动化迁移一定成功</td></tr>
+              <tr><td>S3 研究系统</td><td>生产系统复盘 + 内部 eval</td><td>研究任务的多 Agent 收益与 token 代价</td><td>所有任务都适用</td></tr>
+              <tr><td>S4 多 Agent 指南</td><td>厂商指南</td><td>三个适用场景、3–10× 成本</td><td>精确倍数可复现</td></tr>
+              <tr><td>S8 工具搜索文档</td><td>官方文档</td><td>30–50 阈值、55k/85% 的量级</td><td>所有模型、所有工具集</td></tr>
+              <tr><td>S10 上下文工程博客</td><td>工程博客</td><td>系统提示词可大幅削减</td><td>所有任务都无损</td></tr>
+              <tr><td>S11 Cognition</td><td>厂商博客 / 立场文章</td><td>共享上下文与隐含决策的风险</td><td>统计意义上的普遍结论</td></tr>
+              <tr><td>S12 MAST</td><td>学术论文</td><td>多 Agent 失败模式分类</td><td>单 Agent 一定更好</td></tr>
+              <tr><td>S14 Opus 5.5</td><td>厂商发布信息</td><td>模型能力/成本变化会移动边界</td><td>具体架构结论</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>三个必须写进方案的限定</h3>
+        <div class="cards three">
+          <div class="card">
+            <h4>厂商证据的限制</h4>
+            <p>原文没有公布企业案例名称、样本量、任务分布与评分 rubric；2 倍是单客户，90.2% 是内部 eval。它们能支持“值得试”，不能支持“必然更好”。</p>
+          </div>
+          <div class="card">
+            <h4>模型会移动边界</h4>
+            <p>从 Opus 4.5 开始，模型能在单循环里管理更多；Opus 5.5 又把 Fable 5.1 级能力带到更低成本。<a href="#s14">[14]</a> 今天的折叠结论，下一代模型可能反转；每次升级重跑同一套 eval。<a href="#s10">[10]</a></p>
+          </div>
+          <div class="card">
+            <h4>先简单，后复杂</h4>
+            <p>Anthropic 更早的总体建议仍是：先用简单方案，简单方案不够再加多步系统。<a href="#s16">[16]</a> 上下文是有限资源，压缩、隔离与检索都要有边界。<a href="#s17">[17]</a></p>
+          </div>
+        </div>
+
+        <div class="callout warn">
+          <span class="label">不要把这篇读成</span>
+          <p><b>“子 Agent 无用”</b>——研究、独立验证、权限隔离仍然需要它。<br>
+          <b>“单循环一定便宜”</b>——如果工具选错、轮次变多，单循环也可能更贵。<br>
+          <b>“所有团队都该合并”</b>——合规边界、对话所有权不能为了架构整洁而拆。<br>
+          <b>“提示词越短越好”</b>——删的是过时的约束，不是删掉必要的安全与业务规则。</p>
+        </div>
+        <p class="small">第三方分析也给出类似提醒：多 Agent 的收益主要集中在“读/研究”这类可并行的信息工作；多个 Agent 同时写代码或写内容时，冲突决策会产生难以合并的产物。<a href="#s15">[15]</a></p>
+      </section>
+
+      <section class="section" id="actions">
+        <div class="sec-head"><span class="sec-no">11</span><h2>行动清单：从明天能做的开始</h2></div>
+        <p class="dek">不要从“画一张新架构图”开始，从“把今天的系统量出来”开始。下面八项可以在一到两周内完成第一轮。</p>
+        <div class="checklist" id="checklist">
+          <div class="check-item"><input type="checkbox" id="c1"><label for="c1">列出所有子 Agent、调用链、最近 30 天流量与 owner。<small>没有 trace 就先补埋点；不要凭代码结构猜。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c2"><label for="c2">写 10 条 golden tasks，至少 2 条是“绝不能破”的规则。<small>每条写清输入、必须调用的工具、通过/不确定/失败三档。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c3"><label for="c3">给每个子 Agent 一个判决：合并、折叠、作为工具、保留。<small>判决旁边写一句理由与一个反例。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c4"><label for="c4">先合并总是一起跑、共享数据的一对。<small>从流量最高的一对开始，不要从最容易改的开始。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c5"><label for="c5">选流量最高的一个折叠，跑 3 次对比。<small>记录质量、延迟、token、规则覆盖与翻转题。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c6"><label for="c6">建翻转矩阵与链路覆盖，不只看总分。<small>每个生产链路至少一条 eval；每个 skill 至少一条小集。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c7"><label for="c7">指定中央 prompt/eval owner 与每个 skill 的 DRI。<small>没有 owner 的 skill，三个月后一定变成死重量。</small></label></div>
+          <div class="check-item"><input type="checkbox" id="c8"><label for="c8">下次模型升级时重跑同一套 eval。<small>模型能力变化会移动“该不该折”的边界。</small></label></div>
+          <div class="check-progress"><span class="small">进度</span><div class="bar"><i id="checkBar"></i></div><b id="checkCount" aria-live="polite" aria-atomic="true">0/8</b></div>
+        </div>
+
+        <div class="callout">
+          <span class="label">给管理层的一页纸</span>
+          <p><b>现状：</b>我们有 N 个子 Agent，其中 M 个在生产里总是一起跑；端到端 eval 只有 K 条。<br>
+          <b>判断：</b>先合并 M 个中最常用的两个，再折一个高频子 Agent；预期减少交接与上下文复制，风险是规则回归。<br>
+          <b>验收：</b>同一套 eval 跑 3 次，质量不降、规则覆盖不降、p95 延迟下降；任何翻转题都要有解释。<br>
+          <b>所有权：</b>中央团队拥有 prompt 与端到端分数；领域团队拥有 skill/tool 与局部 eval。</p>
+        </div>
+      </section>
+
+      <section class="section" id="sources">
+        <div class="sec-head"><span class="sec-no">12</span><h2>来源</h2></div>
+        <p class="dek">17 条来源，按“原文与配套工具 → 官方文档与工程博客 → 反方与研究 → 背景”排列。正文编号与下方条目一一对应；日期为页面标注或公开检索所得。</p>
+        <ol class="sources">
+          <li id="s1"><b><a href="https://claude.com/resources/articles/building-agents-when-to-fold-subagents-into-your-main-agent-loop" target="_blank" rel="noopener noreferrer">Building agents: When to fold subagents into your main agent loop</a></b><span class="src-meta">Anthropic Applied AI · 2026-10-22 · 原文</span><span class="src-use">主张、三个保留条件、失败模式、迁移步骤、客服回归案例。</span></li>
+          <li id="s2"><b><a href="https://github.com/anthropics/single-agent-loop-kit" target="_blank" rel="noopener noreferrer">single-agent-loop-kit</a></b><span class="src-meta">Anthropic · 2026-10 · Apache-2.0 参考实现，不维护</span><span class="src-use">measure / combine / fold；审计、基线、比较脚本；19 题离线 smoke。</span></li>
+          <li id="s3"><b><a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener noreferrer">How we built our multi-agent research system</a></b><span class="src-meta">Anthropic · 2025-06-13 · 工程复盘</span><span class="src-use">90.2% 内部 eval 提升、15×/4× token、80% 方差、并行研究。</span></li>
+          <li id="s4"><b><a href="https://claude.com/resources/articles/building-multi-agent-systems-when-and-how-to-use-them" target="_blank" rel="noopener noreferrer">Building multi-agent systems: When and how to use them</a></b><span class="src-meta">Anthropic · 2026 · 指南</span><span class="src-use">上下文保护、并行、专业化三个场景；3–10× token；协调成本。</span></li>
+          <li id="s5"><b><a href="https://claude.com/resources/articles/the-anatomy-of-effective-commerce-agents" target="_blank" rel="noopener noreferrer">A guide to the anatomy of effective commerce agents</a></b><span class="src-meta">Anthropic · 2026 · 指南</span><span class="src-use">skills not subagents；handoff 有损；对话所有权；深研究子 Agent 例外。</span></li>
+          <li id="s6"><b><a href="https://claude.com/resources/articles/building-agents-with-skills-equipping-agents-for-specialized-work" target="_blank" rel="noopener noreferrer">Building agents with Skills: Equipping agents for specialized work</a></b><span class="src-meta">Anthropic · 2025-10 · 文章</span><span class="src-use">渐进披露的三层结构；skill 作为领域 expertise 的载体。</span></li>
+          <li id="s7"><b><a href="https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview" target="_blank" rel="noopener noreferrer">Agent Skills overview</a></b><span class="src-meta">Claude Platform Docs · 2026-10 访问</span><span class="src-use">元数据约 100 token/个；正文触发后加载；资源按需。</span></li>
+          <li id="s8"><b><a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool" target="_blank" rel="noopener noreferrer">Tool search tool</a></b><span class="src-meta">Claude Platform Docs · 2026-10 访问</span><span class="src-use">30–50 个工具后选择退化；5 个 MCP 服务器约 55k；减少 85%+。</span></li>
+          <li id="s9"><b><a href="https://platform.claude.com/docs/en/build-with-claude/task-budgets" target="_blank" rel="noopener noreferrer">Task budgets</a></b><span class="src-meta">Claude Platform Docs · 2026-10 访问</span><span class="src-use">覆盖一轮 agentic loop 的建议性预算；倒计时；硬上限仍是 max_tokens。</span></li>
+          <li id="s10"><b><a href="https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/" target="_blank" rel="noopener noreferrer">The new rules of context engineering for Claude 5 generation models</a></b><span class="src-meta">Anthropic / claude.dev · 2026 · 工程博客</span><span class="src-use">Claude Code 系统提示词削减 80%+；验证/审查移入 skills；工具延迟加载。</span></li>
+          <li id="s11"><b><a href="https://cognition.com/blog/dont-build-multi-agents" target="_blank" rel="noopener noreferrer">Don’t Build Multi-Agents</a></b><span class="src-meta">Cognition / Walden Yan · 2025-06-12 · 反方</span><span class="src-use">共享完整轨迹；动作携带隐含决策；单线程线性 Agent；压缩历史。</span></li>
+          <li id="s12"><b><a href="https://arxiv.org/abs/2503.13657" target="_blank" rel="noopener noreferrer">Why Do Multi-Agent LLM Systems Fail?</a></b><span class="src-meta">Cemri et al. · 2025-03-17（v3 2025-10-26）· 论文</span><span class="src-use">MAST：1600+ 轨迹、7 框架、14 模式、3 类；κ=0.88。</span></li>
+          <li id="s13"><b><a href="https://www.melconway.com/research/committees.html" target="_blank" rel="noopener noreferrer">How Do Committees Invent?</a></b><span class="src-meta">Melvin E. Conway · 1968 · 论文</span><span class="src-use">Conway 定律：系统设计是组织沟通结构的复制品。</span></li>
+          <li id="s14"><b><a href="https://www.anthropic.com/claude-opus-5-5" target="_blank" rel="noopener noreferrer">Introducing Claude Opus 5.5</a></b><span class="src-meta">Anthropic · 2026-09-22 · 发布</span><span class="src-use">Fable 5.1 级能力；成本比 Opus 5 低 40%；模型能力变化移动架构边界。</span></li>
+          <li id="s15"><b><a href="https://www.langchain.com/blog/how-and-when-to-build-multi-agent-systems" target="_blank" rel="noopener noreferrer">How and when to build multi-agent systems</a></b><span class="src-meta">LangChain · 2026-06-15 · 第三方分析</span><span class="src-use">多 Agent 更适合读/研究；并行写代码或内容时冲突决策难合并。</span></li>
+          <li id="s16"><b><a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener noreferrer">Building effective agents</a></b><span class="src-meta">Anthropic · 2024-12-19 · 指南</span><span class="src-use">先用简单方案；简单方案不够再加多步 agentic 系统。</span></li>
+          <li id="s17"><b><a href="https://www.anthropic.com/research/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener noreferrer">Effective context engineering for AI agents</a></b><span class="src-meta">Anthropic · 2025-09-29 · 工程文章</span><span class="src-use">上下文是有限资源；压缩、隔离与检索都要有边界。</span></li>
+        </ol>
+        <p class="footnote">口径说明：S1、S4、S5、S6 为厂商文章或指南，含匿名企业案例与内部观察；S3 为生产系统复盘与内部 eval；S8–S10 为官方文档/工程博客；S11、S15 为厂商立场或第三方分析；S12、S13 为论文。页面中的推演数字均为教学示意，不来自上述来源的逐项实测。</p>
+      </section>
+    </div>
+  </div>
+</main>
+
+<footer class="page-footer">
+  <div class="wrap">
+    <span>单 Agent 循环 · 2026-10-29 · 内容依据公开资料整理，交互数字为教学示意</span>
+    <span><a href="#top">回到顶部</a> · <a href="index.html">页面总览</a></span>
+  </div>
+</footer>
+
+<button class="theme-btn" id="themeBtn" type="button" aria-label="切换明暗主题" aria-pressed="false">
+  <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"/></svg>
+  <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+</button>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(sel, root){ return (root || document).querySelector(sel); };
+  var $$ = function(sel, root){ return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+  /* ---------- 主题、进度、目录 ---------- */
+  var root = document.documentElement;
+  var themeBtn = $('#themeBtn');
+  var dark = root.classList.contains('dark');
+  if (themeBtn) {
+    themeBtn.setAttribute('aria-pressed', String(dark));
+    themeBtn.addEventListener('click', function(){
+      dark = !dark;
+      root.classList.toggle('dark', dark);
+      themeBtn.setAttribute('aria-pressed', String(dark));
+      try { localStorage.setItem('harness-theme', dark ? 'dark' : 'light'); } catch (e) {}
+    });
+  }
+
+  var progress = $('#progress');
+  function onScroll(){
+    if (!progress) return;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = h > 0 ? Math.min(100, window.scrollY / h * 100) + '%' : '0%';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  var tocLinks = $$('.toc a');
+  var tocSections = tocLinks.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  function updateToc(){
+    if (!tocSections.length) return;
+    var current = null;
+    tocSections.forEach(function(s){
+      if (s.getBoundingClientRect().top <= 140) current = s;
+    });
+    tocLinks.forEach(function(a){
+      var on = !!current && a.getAttribute('href') === '#' + current.id;
+      a.classList.toggle('active', on);
+      if (on) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  function refreshScroll(){ onScroll(); updateToc(); }
+  window.addEventListener('scroll', updateToc, { passive: true });
+  window.addEventListener('resize', refreshScroll);
+  document.addEventListener('toggle', refreshScroll, true);
+  refreshScroll();
+
+  var printBtn = $('#printBtn');
+  if (printBtn) printBtn.addEventListener('click', function(){ window.print(); });
+
+  /* ---------- 决策器 ---------- */
+  var WIZ = { handoff: 'no', cooccur: 'no', shared: 'no', parallel: 'no', bloat: 'no', conflict: 'no' };
+  var VERDICTS = {
+    merge: {
+      label: '建议：合并',
+      cls: 'verdict--merge',
+      title: '先把总是一起跑的子 Agent 合成一个域',
+      lead: '它们共享同一份数据、前后依赖强，拆开只会增加交接与状态复制；先合并，再判断合并后的域该折叠还是作为工具。',
+      next: '从流量最高、共现最强的一对开始合并；用同一套 eval 对比合并前后的质量、延迟与 token，再把合并后的域作为候选继续判断。',
+      caution: '合并不是终点；合并后仍要按“折叠 / 作为工具 / 保留”继续判断，别把合并当成架构整理。'
+    },
+    gate: {
+      label: '建议：先渐进披露',
+      cls: 'verdict--gate',
+      title: '先别拆上下文，先把按需加载做起来',
+      lead: '上下文膨胀或工具冲突不一定说明 Agent 数量错了；先用 skills、tool search 与更清楚的工具描述验证一轮。',
+      next: '把长期提示词拆成 skill，把工具改成按需搜索；用同一套 eval 复测。仍退化，再考虑把这一支隔离成工具或保留子 Agent。',
+      caution: '这是条件门，不是最终处置；复测后仍退化，再落到“作为工具 / 保留”。'
+    },
+    fold: {
+      label: '建议：折叠',
+      cls: 'verdict--fold',
+      title: '把提示词变成 skill，把 API 变成 tools',
+      lead: '主循环持有完整对话；用渐进披露控制上下文，而不是新开一个上下文。',
+      next: '写 10 条端到端 golden tasks，选一个高频子 Agent 折成 skill + tools；跑 3 次对比，再决定下一个。',
+      caution: '如果它和另一个子 Agent 总是一起跑、共享数据，先判合并，再折叠。'
+    },
+    tool: {
+      label: '建议：作为工具',
+      cls: 'verdict--tool',
+      title: '保留独立上下文，但把对话留在主循环',
+      lead: '让子 Agent 处理一个边界清楚、可独立验证的子问题，返回结构化结果；主 Agent 继续面对用户并核实结论。',
+      next: '定义共享响应 schema（结论、出处、缺口），加一条“主 Agent 必须核实”的 eval，再比较延迟与 token。',
+      caution: '不要让它接管整段对话；每次 handoff 都会丢状态，并多一层嵌套循环。'
+    },
+    keep: {
+      label: '建议：保留 / 接管',
+      cls: 'verdict--keep',
+      title: '对话所有权或责任边界不能拆',
+      lead: '当子 Agent 必须直接面对用户，或拥有独立合规、权限边界时，让它接管；主循环负责路由与交接说明。',
+      next: '写清交接条件、用户可见的过渡话术、失败回退到谁；把“接管后谁负责”写进 eval。',
+      caution: '保留不等于放任；接管前后的上下文仍要有损最少，并记录交接原因。'
+    }
+  };
+  var wizResult = $('#wizardResult');
+  function wizRender(){
+    if (!wizResult) return;
+    var verdict, reasons = [];
+    if (WIZ.handoff === 'yes') reasons.push('直接面对用户 / 独立合规边界：对话所有权必须留在子 Agent。');
+    if (WIZ.cooccur === 'yes') reasons.push('多个子 Agent 总是一起跑、前后依赖强：先合并成一个域，减少交接。');
+    if (WIZ.shared === 'yes') reasons.push('共享同一段对话状态：主循环的完整上下文是优势。');
+    if (WIZ.parallel === 'yes') reasons.push('任务可独立并行、结果用一次就丢：新鲜上下文有价值。');
+    if (WIZ.bloat === 'yes') reasons.push('存在可测的上下文膨胀：先用 skills / tool search 验证，不急着拆 Agent。');
+    if (WIZ.conflict === 'yes') reasons.push('存在工具或指令冲突：先改描述与 skill，仍冲突再拆独立上下文。');
+
+    if (WIZ.handoff === 'yes') verdict = VERDICTS.keep;
+    else if (WIZ.cooccur === 'yes') verdict = VERDICTS.merge;
+    else if (WIZ.shared === 'yes' && WIZ.parallel === 'no') verdict = VERDICTS.fold;
+    else if (WIZ.parallel === 'yes' && WIZ.shared === 'no') verdict = VERDICTS.tool;
+    else if (WIZ.bloat === 'yes' || WIZ.conflict === 'yes') verdict = VERDICTS.gate;
+    else verdict = VERDICTS.fold;
+
+    if (!reasons.length) reasons.push('六个问题都没有命中：默认单循环，用 eval 验证。');
+    if (WIZ.shared === 'yes' && WIZ.parallel === 'yes' && verdict === VERDICTS.fold) reasons.push('注意：共享状态与并行同时成立时，先折共享部分，独立分支再作为工具。');
+    if (WIZ.shared === 'yes' && (WIZ.bloat === 'yes' || WIZ.conflict === 'yes') && verdict === VERDICTS.fold) {
+      reasons.push('注意：共享状态优先判折叠，但膨胀/冲突仍是保留信号；先把渐进披露做完再复测。');
+    }
+    if (verdict === VERDICTS.tool && (WIZ.bloat === 'yes' || WIZ.conflict === 'yes')) {
+      reasons.push('注意：即使判为工具，也先做一轮渐进披露；隔离不是解决膨胀/冲突的唯一手段。');
+    }
+    if (WIZ.cooccur === 'yes' && WIZ.handoff === 'yes') {
+      reasons.push('注意：合并其他共现子 Agent 时，保留这个 handoff 边界，不要把责任边界合掉。');
+    }
+
+    wizResult.className = 'wizard-result ' + verdict.cls;
+    wizResult.innerHTML = '<span class="verdict-label">' + verdict.label + '</span>' +
+      '<h4>' + verdict.title + '</h4>' +
+      '<p>' + verdict.lead + '</p>' +
+      '<ul>' + reasons.map(function(r){ return '<li>' + r + '</li>'; }).join('') + '</ul>' +
+      '<div class="next"><b>下一步：</b>' + verdict.next + '</div>' +
+      '<p class="small" style="margin-top:10px">' + verdict.caution + '</p>' +
+      '<p class="small" style="margin-top:6px">这是基于六问的启发式，不是自动决策。真实系统还要看流量、合规、组织所有权与单位任务经济性。</p>';
+    refreshScroll();
+  }
+  $$('#decisionWizard .seg button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.wizard-q');
+      if (!q) return;
+      WIZ[q.getAttribute('data-q')] = btn.getAttribute('data-val');
+      $$('.seg button', q).forEach(function(b){ b.setAttribute('aria-pressed', String(b === btn)); });
+      wizRender();
+    });
+  });
+  wizRender();
+
+  /* ---------- 循环步骤 ---------- */
+  var LOOP = [
+    { t: '计划写进上下文', p: '第一轮就让模型写下目标、约束、已知信息与下一步。之后每次工具结果回来，它都可以改计划；不需要一个外部的“计划器”再同步一次。', why: '计划者与执行者是同一个模型，才不会出现“计划在 orchestrator、执行在子 Agent”的信息断层。', fail: '把计划留在编排器里，执行者只收到一句任务描述；或者计划写成不能改的固定流水线。' },
+    { t: '发一批工具调用', p: '每一轮模型可以发多个工具调用，harness 并行执行。不是一次一个、串行等待。', why: '复杂任务天然需要同时查多个来源；串行会把延迟堆起来。', fail: '每轮只允许一个工具；或者工具之间互相等待，批量能力形同虚设。' },
+    { t: '并行执行，原样回填', p: '工具结果原样回到同一个模型，不过度摘要、不先做二次加工。让模型自己判断什么重要。', why: '代码先总结再塞回，会丢掉模型可能需要的细节；原文强调“raw results”。', fail: '在 harness 里写一段“结果摘要”，把关键数字、错误码或出处过滤掉。' },
+    { t: '决定下一步', p: '模型决定：再调一批、问用户一个问题，还是给出回答。计划可以在这里改。', why: '固定流水线不能根据中间结果改路线；开放式循环可以。', fail: '每一轮都被路由表强制进入下一个节点；模型没有“停”或“问”的权限。' },
+    { t: '预算与闸门', p: 'turn 与 cost 预算、写操作审批、危险工具拒绝，都放在 harness，而不是只写在提示词里。任务预算可以是建议性的：模型看到剩余 token 倒计时，会自己收尾；硬上限仍是 max_tokens。<a href="#s9">[9]</a>', why: '提示词是建议，闸门是约束；高风险动作需要确定性。', fail: '只靠“请不要删除文件”这类提示词；或者预算只是事后统计，不能中断。' },
+    { t: '可选验证', p: '回答后跑 verifier 或 goal check；失败则重试、降级或转人工。验证器与主循环共享同一套成功标准。', why: '独立检查能抓住“看起来完成了”的答案；但不是每个任务都需要。', fail: '验证器用另一套标准，或者验证失败后仍然把答案发给用户。' }
+  ];
+  var loopPanel = $('#loopPanel');
+  function loopSelect(i){
+    var item = LOOP[i];
+    if (!item || !loopPanel) return;
+    $$('.flow-step').forEach(function(b){ b.setAttribute('aria-selected', String(Number(b.getAttribute('data-step')) === i)); });
+    loopPanel.setAttribute('aria-labelledby', 'flowTab' + i);
+    loopPanel.innerHTML = '<h4>' + item.t + '</h4><p>' + item.p + '</p>' +
+      '<div class="kv"><b>为什么</b><span>' + item.why + '</span><b>失败模式</b><span>' + item.fail + '</span></div>';
+    refreshScroll();
+  }
+  $$('.flow-step').forEach(function(btn){
+    btn.addEventListener('click', function(){ loopSelect(Number(btn.getAttribute('data-step'))); });
+  });
+  loopSelect(0);
+
+  /* ---------- 代码页签 ---------- */
+  var codeTabs = $$('.code-tab');
+  codeTabs.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      codeTabs.forEach(function(b){ b.setAttribute('aria-selected', String(b === btn)); });
+      $$('.code-panel').forEach(function(p){ p.hidden = p.id !== btn.getAttribute('aria-controls'); });
+      refreshScroll();
+    });
+  });
+  $$('.code-panel').forEach(function(p, i){ p.hidden = i !== 0; });
+
+  /* ---------- 上下文账本 ---------- */
+  var skillCount = $('#skillCount'), toolCount = $('#toolCount'), subCount = $('#subCount');
+  var progressive = $('#progressive'), toolSearch = $('#toolSearch');
+  var ledgerTotal = $('#ledgerTotal'), ledgerRelative = $('#ledgerRelative');
+  var ledgerBar = $('#ledgerBar'), ledgerHint = $('#ledgerHint');
+  var ledgerSegs = ledgerBar ? {
+    history: $('.seg-history', ledgerBar),
+    skills: $('.seg-skills', ledgerBar),
+    tools: $('.seg-tools', ledgerBar),
+    subs: $('.seg-subs', ledgerBar)
+  } : null;
+  function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+  function renderLedger(){
+    if (!skillCount || !ledgerTotal) return;
+    var nS = Number(skillCount.value), nT = Number(toolCount.value), nSub = Number(subCount.value);
+    var skills = progressive && progressive.checked ? nS * 100 + Math.min(2, nS) * 1800 : nS * 1800;
+    var tools = toolSearch && toolSearch.checked ? Math.min(4, nT) * 350 + (nT > 0 ? 500 : 0) : nT * 350;
+    var subs = nSub * (2800 + 8 * 350);
+    var history = 8000;
+    var total = history + skills + tools + subs;
+    var baseline = 8000 + 12 * 100 + 2 * 1800 + 4 * 350 + 500;
+    var outSkill = $('#skillOut'), outTool = $('#toolOut'), outSub = $('#subOut');
+    if (outSkill) outSkill.textContent = nS;
+    if (outTool) outTool.textContent = nT;
+    if (outSub) outSub.textContent = nSub;
+    ledgerTotal.textContent = fmt(total);
+    if (ledgerRelative) ledgerRelative.textContent = '相对默认渐进披露 ' + fmt(baseline) + ' ×' + (total / baseline).toFixed(1);
+    if (ledgerBar && ledgerSegs) {
+      [
+        ['history', history],
+        ['skills', skills],
+        ['tools', tools],
+        ['subs', subs]
+      ].forEach(function(pair){
+        var el = ledgerSegs[pair[0]];
+        if (el) el.style.width = (pair[1] / total * 100).toFixed(2) + '%';
+      });
+    }
+    if (ledgerHint) {
+      var notes = [];
+      if (progressive && progressive.checked && nS > 0 && nS < 3) notes.push('skills 少于 3 个');
+      if (toolSearch && toolSearch.checked && nT > 0 && nT < 6) notes.push('tools 少于 6 个');
+      var hintText = notes.length ? '当前规模下按需加载不划算：' + notes.join('、') + '时，固定开销会超过节省。' : '';
+      if (ledgerHint.textContent !== hintText) {
+        ledgerHint.textContent = hintText;
+        refreshScroll();
+      }
+    }
+  }
+  [skillCount, toolCount, subCount].forEach(function(el){ if (el) el.addEventListener('input', renderLedger); });
+  [progressive, toolSearch].forEach(function(el){ if (el) el.addEventListener('change', renderLedger); });
+  $$('.preset').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var p = btn.getAttribute('data-preset');
+      if (!skillCount || !toolCount || !subCount || !progressive || !toolSearch) return;
+      if (p === 'full') { skillCount.value = 12; toolCount.value = 40; subCount.value = 0; progressive.checked = false; toolSearch.checked = false; }
+      if (p === 'progressive') { skillCount.value = 12; toolCount.value = 40; subCount.value = 0; progressive.checked = true; toolSearch.checked = true; }
+      if (p === 'multi') { skillCount.value = 12; toolCount.value = 40; subCount.value = 8; progressive.checked = false; toolSearch.checked = false; }
+      renderLedger();
+    });
+  });
+  renderLedger();
+
+  /* ---------- 迁移步进 ---------- */
+  var STEPS = [
+    { t: '00 · 审计：先给每个子 Agent 一个判决', p: '读编排代码与生产 trace，列出每个子 Agent 的调用链、流量、owner 与失败模式；给每个判决：合并、折叠、作为工具、保留。不要只看代码结构，要看它实际被谁调用、和谁总是一起跑。', input: '子 Agent 清单、调用链、最近 30 天流量、每个能力的 owner。', exit: '每个子 Agent 都有一个判决与一句理由；高风险项有复核人。', bad: '按团队边界而不是调用链判决；把“没人维护”误判成“可以删”。' },
+    { t: '01 · 基线：先证明你今天能复现', p: '建一套共享端到端集，至少 10 条 golden tasks；每个 skill 再加一个小集；确保每条生产链路至少一条题。跑 2–3 次，记录质量、延迟、token 与成本。', input: '真实请求、可回放的工具结果、评分 rubric。', exit: '同一套 eval 能稳定复现今天的分数；失败题有解释。', bad: '没有 eval 就开折；或者只挑容易的题，基线虚高。' },
+    { t: '02 · 合并：先减少数量，不改变能力', p: '合并总是一起跑、共享同一份数据、前后依赖强的子 Agent；从流量最高的一对开始。合并后仍用同一套 eval 对比。', input: '调用链与共现矩阵；生产 trace 里“A 后面总是 B”的模式。', exit: '合并后端到端分数不降，调用链变短，交接次数减少。', bad: '按团队边界合并；或者把两个不相关的域硬塞进一个 Agent。' },
+    { t: '03 · 折叠：提示词变 skill，API 变 tools', p: '把子 Agent 的流程、规则与判断写成 skill；把它的 API 调用变成 tools；一次只折一个。折完与原来的子 Agent 在同一套 eval 上对比，逐题看翻转。', input: '子 Agent 的提示词、工具清单、失败案例、规则清单。', exit: '折叠版质量不差于原子 Agent，规则覆盖完整，延迟与 token 可接受。', bad: '一次折三个，出问题不知道是谁；或者只折提示词、不折工具。' },
+    { t: '04 · 作为工具：保留上下文，不放弃对话', p: '仍需要新鲜上下文的，保留为工具：定义共享响应 schema，主 Agent 核实结论，子 Agent 不接管对话。只把真正独立、可并行的任务留在外面。', input: '独立子问题的输入/输出、可接受的延迟、验证方式。', exit: '对话不断、结果可验证、延迟可接受；子 Agent 失败时主 Agent 能降级。', bad: '让子 Agent 接管对话，用户被转来转去；或者不做结论核实。' },
+    { t: '05 · 维护：折叠完才是开始', p: '缩系统提示词、清 skill、定 DRI、模型升级重跑。每个 skill 有 owner、有使用数据、有退出条件；每季度清理一次。', input: 'skill 使用率、成本、失败率、owner 名单。', exit: '每季度有清理记录；模型升级后同一套 eval 重跑。', bad: '折叠完就没人管；skill 变成新的 sprawl。' }
+  ];
+  var stepPanel = $('#stepPanel');
+  function stepSelect(i){
+    var s = STEPS[i];
+    if (!s || !stepPanel) return;
+    $$('#stepper .tab').forEach(function(b){ b.setAttribute('aria-selected', String(Number(b.getAttribute('data-step')) === i)); });
+    stepPanel.setAttribute('aria-labelledby', 'stepTab' + i);
+    stepPanel.innerHTML = '<h4>' + s.t + '</h4><p>' + s.p + '</p>' +
+      '<div class="kv"><b>输入</b><span>' + s.input + '</span><b>退出条件</b><span>' + s.exit + '</span><b>常见错误</b><span>' + s.bad + '</span></div>';
+    refreshScroll();
+  }
+  $$('#stepper .tab').forEach(function(btn){
+    btn.addEventListener('click', function(){ stepSelect(Number(btn.getAttribute('data-step'))); });
+  });
+  stepSelect(0);
+
+  /* ---------- 折叠推演 ---------- */
+  var SCENARIOS = {
+    support: {
+      title: '客服中台',
+      stages: [
+        { label: '基线', quality: 78, latency: 12.4, tokens: 18.2, guards: [12, 12], flipped: [], verdict: '<b>基线：</b>12 个专家子 Agent，质量尚可，但一次任务要跨 3–5 次交接，延迟与上下文复制都高。先别折，先把调用链和规则覆盖写清楚。' },
+        { label: '合并', quality: 80, latency: 10.8, tokens: 15.1, guards: [12, 12], flipped: [], verdict: '<b>合并：</b>先把总是一起跑的订单/物流合成一个域，交接少一层；语气与规则覆盖还没解决。' },
+        { label: '折叠', quality: 86, latency: 8.2, tokens: 11.3, guards: [11, 12], flipped: ['T7 配送时效：3 次里失败 1 次'], hiddenAt1: '本次全过；只跑 1 次，间歇失败可能被掩盖', verdict: '<b>折叠：</b>质量与延迟都变好，本次运行也全过；但只跑 1 次，先别下结论。切到“跑 3 次”看间歇失败。', verdict3: '<b>折叠：</b>3 次里 T7 配送时效失败 1 次。不要直接上线，先把“必须查承运商”写进工具前置条件，再复测。' },
+        { label: '作为工具', quality: 84, latency: 9.6, tokens: 14.0, guards: [12, 12], flipped: [], verdict: '<b>作为工具：</b>保留物流子 Agent 的独立上下文，但对话仍归主循环；规则覆盖回来了，延迟与 token 介于两者之间。' }
+      ]
+    },
+    commerce: {
+      title: '电商导购',
+      stages: [
+        { label: '基线', quality: 74, latency: 9.8, tokens: 16.0, guards: [10, 10], flipped: [], verdict: '<b>基线：</b>搜索、比较、推荐、退货各一个 Agent；用户换一个问题就像换了一个人。' },
+        { label: '合并', quality: 76, latency: 9.2, tokens: 14.0, guards: [10, 10], flipped: [], verdict: '<b>合并：</b>把导购与促销合并，少一次交接；购物车与偏好仍靠摘要传递。' },
+        { label: '折叠', quality: 83, latency: 6.4, tokens: 9.0, guards: [10, 10], flipped: [], verdict: '<b>折叠：</b>主循环持有购物车与偏好，搜索/库存/促销作为 tools；跨品类切换不再丢型号。' },
+        { label: '作为工具', quality: 81, latency: 7.8, tokens: 11.2, guards: [10, 10], flipped: [], verdict: '<b>作为工具：</b>把推荐保留为独立工具可以，但导购主线仍应在主循环；否则用户每换一个问题就换 Agent。' }
+      ]
+    },
+    research: {
+      title: '深度研究',
+      stages: [
+        { label: '基线', quality: 88, latency: 26.0, tokens: 42.0, guards: [10, 10], flipped: [], verdict: '<b>基线：</b>lead agent 拆题，3–5 个研究子 Agent 并行；覆盖广，token 高，延迟长。' },
+        { label: '合并', quality: 88, latency: 25.0, tokens: 40.0, guards: [10, 10], flipped: [], verdict: '<b>合并：</b>把重复检索的分支合并，收益有限；核心还是并行覆盖。' },
+        { label: '折叠', quality: 71, latency: 18.0, tokens: 13.0, guards: [7, 10], flipped: ['覆盖度：来源从 18 降到 7', 'T3 多跳检索：未覆盖第二跳'], verdict: '<b>折叠：</b>便宜、快，但广度明显变窄；研究任务的收益来自“多花 token 换覆盖”，不要为省成本一刀切。' },
+        { label: '作为工具', quality: 87, latency: 24.0, tokens: 38.0, guards: [10, 10], flipped: [], verdict: '<b>作为工具：</b>保留并行研究，但让子 Agent 返回带出处的结构化要点；主循环负责验收与综合。' }
+      ]
+    },
+    coding: {
+      title: '代码评审',
+      stages: [
+        { label: '基线', quality: 85, latency: 14.0, tokens: 20.0, guards: [10, 10], flipped: [], verdict: '<b>基线：</b>主 Agent 写代码，审查 Agent 在独立上下文读 diff 与测试；慢，但独立视角有价值。' },
+        { label: '合并', quality: 85, latency: 13.6, tokens: 19.0, guards: [10, 10], flipped: [], verdict: '<b>合并：</b>把审查并进主循环，省一层调用，但主 Agent 开始为自己的实现辩护。' },
+        { label: '折叠', quality: 79, latency: 9.0, tokens: 10.0, guards: [8, 10], flipped: ['独立审查：漏掉 2 个边界条件'], verdict: '<b>折叠：</b>快很多，但独立审查视角消失；这类任务的新鲜上下文不是成本，而是质量来源。' },
+        { label: '作为工具', quality: 84, latency: 12.8, tokens: 18.0, guards: [10, 10], flipped: [], verdict: '<b>作为工具：</b>审查 Agent 只回答“这段 diff 有什么问题”，返回结构化清单；主 Agent 核实与修改，责任边界清楚。' }
+      ]
+    }
+  };
+  var sim = { scenario: 'support', stage: 0, runs: 1 };
+  var simTitle = $('#simTitle'), simVerdict = $('#simVerdict'), simFlips = $('#simFlips');
+  var runToggle = $('#runToggle');
+  function setMetricTone(el, tone){
+    var box = el ? el.closest('.metric') : null;
+    if (box) box.className = 'metric ' + tone;
+  }
+  function renderSim(){
+    var sc = SCENARIOS[sim.scenario];
+    if (!sc) return;
+    var st = sc.stages[sim.stage];
+    if (!st) return;
+    var isSupportFold = sim.scenario === 'support' && sim.stage === 2;
+    var guards = isSupportFold && sim.runs === 1 ? [12, 12] : st.guards;
+    var verdict = isSupportFold && sim.runs === 3 ? (st.verdict3 || st.verdict) : st.verdict;
+    if (simTitle) simTitle.textContent = sc.title;
+    var q = $('#mQuality'), l = $('#mLatency'), t = $('#mTokens'), g = $('#mGuards');
+    if (q) q.textContent = st.quality;
+    if (l) l.textContent = st.latency.toFixed(1);
+    if (t) t.textContent = st.tokens.toFixed(1);
+    if (g) g.textContent = guards[0] + '/' + guards[1];
+    var bq = $('#bQuality'), bl = $('#bLatency'), bt = $('#bTokens'), bg = $('#bGuards');
+    if (bq) bq.style.width = st.quality + '%';
+    if (bl) bl.style.width = Math.min(100, st.latency / 30 * 100) + '%';
+    if (bt) bt.style.width = Math.min(100, st.tokens / 45 * 100) + '%';
+    if (bg) bg.style.width = (guards[0] / guards[1] * 100) + '%';
+    setMetricTone(q, st.quality >= sc.stages[0].quality ? 'good' : (st.quality >= sc.stages[0].quality - 8 ? 'warn' : 'bad'));
+    setMetricTone(g, guards[0] === guards[1] ? 'good' : ((guards[1] - guards[0]) === 1 ? 'warn' : 'bad'));
+    if (simVerdict) simVerdict.innerHTML = verdict;
+    if (simFlips) {
+      var html = '';
+      if (isSupportFold) {
+        html = sim.runs === 1
+          ? '<span class="chip warn">' + (st.hiddenAt1 || '本次全过；单次运行看不到间歇失败') + '</span>'
+          : st.flipped.map(function(x){ return '<span class="chip bad">' + x + '</span>'; }).join('');
+      } else if (st.flipped && st.flipped.length) {
+        html = st.flipped.map(function(x){ return '<span class="chip bad">' + x + '</span>'; }).join('');
+      } else {
+        html = '<span class="chip good">无翻转记录</span>';
+      }
+      simFlips.innerHTML = html;
+    }
+    if (runToggle) runToggle.hidden = !isSupportFold;
+    $$('#simStages .stage-btn').forEach(function(b){ b.setAttribute('aria-pressed', String(Number(b.getAttribute('data-stage')) === sim.stage)); });
+    $$('#simTabs .tab').forEach(function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-scenario') === sim.scenario)); });
+    refreshScroll();
+  }
+  $$('#simTabs .tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      sim.scenario = btn.getAttribute('data-scenario');
+      sim.stage = 0;
+      renderSim();
+    });
+  });
+  $$('#simStages .stage-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ sim.stage = Number(btn.getAttribute('data-stage')); renderSim(); });
+  });
+  $$('#runToggle button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      sim.runs = Number(btn.getAttribute('data-runs'));
+      $$('#runToggle button').forEach(function(b){ b.setAttribute('aria-pressed', String(b === btn)); });
+      renderSim();
+    });
+  });
+  renderSim();
+
+  /* ---------- 翻转矩阵 ---------- */
+  var matrixAggregate = $('#matrixAggregate');
+  var matrixDetail = $('#matrixDetail');
+  function setMatrixView(view){
+    $$('#matrixTabs .tab').forEach(function(b){ b.setAttribute('aria-selected', String(b.getAttribute('data-view') === view)); });
+    if (matrixAggregate) matrixAggregate.hidden = view !== 'aggregate';
+    if (matrixDetail) matrixDetail.hidden = view !== 'detail';
+    refreshScroll();
+  }
+  $$('#matrixTabs .tab').forEach(function(btn){
+    btn.addEventListener('click', function(){ setMatrixView(btn.getAttribute('data-view')); });
+  });
+  setMatrixView('aggregate');
+
+  /* ---------- 行动清单 ---------- */
+  var checks = $$('#checklist input[type="checkbox"]');
+  function renderChecks(){
+    var done = checks.filter(function(c){ return c.checked; }).length;
+    var count = $('#checkCount'), bar = $('#checkBar');
+    if (count) count.textContent = done + '/' + checks.length;
+    if (bar) bar.style.width = (checks.length ? done / checks.length * 100 : 0) + '%';
+  }
+  checks.forEach(function(c){ c.addEventListener('change', renderChecks); });
+  renderChecks();
+
+  /* ---------- 打印：展开 details 与代码面板 ---------- */
+  var printState = [];
+  window.addEventListener('beforeprint', function(){
+    printState = [];
+    $$('details').forEach(function(d){ printState.push([d, 'open', d.open]); d.open = true; });
+    $$('.code-panel').forEach(function(p){ printState.push([p, 'hidden', p.hidden]); p.hidden = false; });
+    if (matrixAggregate) { printState.push([matrixAggregate, 'hidden', matrixAggregate.hidden]); matrixAggregate.hidden = false; }
+    if (matrixDetail) { printState.push([matrixDetail, 'hidden', matrixDetail.hidden]); matrixDetail.hidden = false; }
+  });
+  window.addEventListener('afterprint', function(){
+    printState.forEach(function(item){
+      var el = item[0];
+      if (item[1] === 'open') el.open = item[2];
+      else el.hidden = item[2];
+    });
+    printState = [];
+  });
+})();
+</script>
+</body>
+</html>

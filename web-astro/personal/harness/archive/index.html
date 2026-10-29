@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness 项目 · 页面总览</title>
+<style>
+:root{
+  --ink:#26241f; --ink-soft:#5c574c; --paper:#faf8f4; --paper-2:#f3efe6;
+  --card:#ffffff; --accent:#b45309; --accent-deep:#8a3e06; --accent-soft:#fdf1e3;
+  --line:#e6e0d4; --shadow:0 10px 28px rgba(38,36,31,.10);
+}
+html.dark{
+  --ink:#e9e4d7; --ink-soft:#a8a193; --paper:#171512; --paper-2:#201d17;
+  --card:#211f19; --accent:#e29b52; --accent-deep:#f0b670; --accent-soft:rgba(226,155,82,.14);
+  --line:#3a362b; --shadow:0 10px 28px rgba(0,0,0,.5);
+}
+html.dark{color-scheme:dark}
+*{box-sizing:border-box}
+:where(body *){transition:background-color .22s ease,border-color .22s ease,color .22s ease}
+@media (prefers-reduced-motion: reduce){:where(body *){transition:none!important}}
+html{height:100%}
+body{
+  margin:0;min-height:100%;display:flex;flex-direction:column;
+  background:var(--paper);color:var(--ink);
+  font-family:"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  font-size:15.5px;line-height:1.7;
+}
+.wrap{width:min(880px,92vw);margin:0 auto}
+header.masthead{padding:64px 0 40px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:16px}
+.brand .tile{width:52px;height:52px;border-radius:14px;flex:none;
+  background:var(--accent-soft);color:var(--accent-deep);
+  display:flex;align-items:center;justify-content:center;
+  font-family:"Noto Serif SC","Songti SC",Georgia,serif;font-size:26px;font-weight:700}
+h1{margin:0;font-family:"Noto Serif SC","Songti SC",Georgia,serif;font-size:30px;line-height:1.3}
+.brand .kicker{margin:2px 0 0;font-size:12.5px;letter-spacing:.18em;color:var(--ink-soft)}
+.masthead .lede{margin:20px 0 0;max-width:44em;color:var(--ink-soft)}
+.masthead .lede b{color:var(--accent-deep);font-weight:600}
+main{flex:1;padding:8px 0 56px}
+.group{margin-top:40px}
+.group > h2{margin:0 0 6px;font-family:"Noto Serif SC","Songti SC",Georgia,serif;font-size:20px}
+.group > .gdesc{margin:0 0 18px;font-size:13.5px;color:var(--ink-soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.card{
+  display:flex;gap:16px;align-items:flex-start;text-decoration:none;
+  padding:20px 18px;border:1px solid var(--line);border-radius:14px;background:var(--card);
+  box-shadow:0 1px 3px rgba(0,0,0,.04);
+}
+.card:hover{transform:translateY(-2px);border-color:rgba(180,83,9,.45);box-shadow:var(--shadow)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.card .tile{width:46px;height:46px;border-radius:12px;flex:none;
+  background:var(--accent-soft);color:var(--accent-deep);
+  display:flex;align-items:center;justify-content:center;
+  font-family:"Noto Serif SC","Songti SC",Georgia,serif;font-size:22px;font-weight:700}
+.card-main{min-width:0;flex:1}
+.card h3{margin:0 0 6px;font-size:16.5px;line-height:1.45;color:var(--ink);font-weight:600}
+.card p{margin:0 0 12px;font-size:13.5px;color:var(--ink-soft)}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font-size:11.5px;color:var(--ink-soft);border:1px solid var(--line);
+  border-radius:999px;padding:2px 9px;white-space:nowrap}
+.go{margin-left:auto;font-size:13px;color:var(--accent-deep);white-space:nowrap;align-self:center}
+.go i{font-style:normal;display:inline-block;transition:transform .18s ease}
+.card:hover .go i{transform:translateX(4px)}
+footer{border-top:1px solid var(--line);padding:20px 0 28px;font-size:12.5px;color:var(--ink-soft)}
+footer p{margin:0}
+#themeFab{position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#themeFab:hover{transform:scale(1.08)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+@media (max-width:640px){
+  header.masthead{padding:44px 0 28px}
+  h1{font-size:24px}
+  .grid{grid-template-columns:1fr}
+  .card .go{display:none}
+}
+</style>
+<script>
+(function(){
+  var KEY='harness-theme';
+  var root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){
+    root.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeFab');
+    if(b){var l=t==='dark'?'切换为白天模式':'切换为黑夜模式';b.setAttribute('aria-label',l);b.setAttribute('title',l);}
+  }
+  apply(cur());
+  function init(){
+    var b=document.createElement('button');
+    b.id='themeFab';b.type='button';
+    b.innerHTML='<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    b.addEventListener('click',function(){
+      var t=root.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,t)}catch(e){}
+      apply(t);
+    });
+    (document.body||document.documentElement).appendChild(b);
+    apply(cur());
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  try{
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});
+    window.addEventListener('storage',function(e){if(e.key===KEY&&(e.newValue==='dark'||e.newValue==='light'))apply(e.newValue)});
+  }catch(e){}
+})();
+</script>
+</head>
+<body>
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand">
+      <div class="tile" aria-hidden="true">总</div>
+      <div>
+        <h1>Harness 项目 · 页面总览</h1>
+        <p class="kicker"><span id="pageCount">14</span> PAGES · OFFLINE · LIGHT / DARK</p>
+      </div>
+    </div>
+    <p class="lede">项目里全部页面的入口。所有页面都是<b>单文件、离线可用</b>；右下角按钮切换<b>白天 / 黑夜</b>，偏好会在各页面之间记忆同步（DeepSeek 篇自带切换按钮，偏好独立；Hooks 篇是深色单页，不参与主题同步）。</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="group" aria-labelledby="g1">
+    <h2 id="g1">Harness 深读系列</h2>
+    <p class="gdesc">围绕 Anthropic 工程报告《Effective context engineering for AI agents》与 DeepSeek DSH 的解读与伴读。</p>
+    <div class="grid">
+      <a class="card" href="ai-harness-explained.html">
+        <div class="tile" aria-hidden="true">解</div>
+        <div class="card-main">
+          <h3>Harness 深度解读：以 Anthropic 工程报告为主线</h3>
+          <p>长文正文：核心循环、上下文工程与工程化决策，随文可展开备注与深挖。</p>
+          <div class="meta"><span class="chip">长文</span><span class="chip">32 备注弹窗</span><span class="chip">5 个深挖 tab</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-harness-flow.html">
+        <div class="tile" aria-hidden="true">流</div>
+        <div class="card-main">
+          <h3>Harness 交互流程图解 · Agent 的完整工作循环</h3>
+          <p>可动手玩的伴读页：状态机支持自动演示 / 手动驾驶，含上下文压力仪表与崩溃续跑模拟。</p>
+          <div class="meta"><span class="chip">交互演示</span><span class="chip">伴读页</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="harness-engineering.html">
+        <div class="tile" aria-hidden="true">工</div>
+        <div class="card-main">
+          <h3>Harness 工程：从拆解到动手</h3>
+          <p>把七份调研分册与 mini-harness 实验压成一条学习路线：横评拆解、工具层、安全、记忆、多智能体、评测、成本、动手七阶段，每节固定"结论 → 内容 → 启示 → 延伸阅读"，坏工具改写与判分器 bug 两个案例课贯穿。</p>
+          <div class="meta"><span class="chip">长文</span><span class="chip">8 节 · 数据截至 2026-10</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="deepseek-harness-dsh.html">
+        <div class="tile" aria-hidden="true">插</div>
+        <div class="card-main">
+          <h3>DeepSeek Harness（DSH）深度解读 · 一切皆插件</h3>
+          <p>姊妹篇：DSH 的插件化架构拆解与工程取舍，与主线对照阅读。</p>
+          <div class="meta"><span class="chip">长文</span><span class="chip">自带主题切换</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ask-user-question-product.html">
+        <div class="tile" aria-hidden="true">择</div>
+        <div class="card-main">
+          <h3>ask_user_question 产品设计 · 把「猜」变成「选」</h3>
+          <p>把「选项 + 推荐」当一个产品来做：三条公理、VoI 门控、六个设计自由度、推荐的四义、七状态机、十条失败模式与度量口径，附 15 篇论文出处。</p>
+          <div class="meta"><span class="chip">产品设计</span><span class="chip">论文支撑</span><span class="chip">含界面稿</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="agent-task-queue.html">
+        <div class="tile" aria-hidden="true">队</div>
+        <div class="card-main">
+          <h3>任务队列：Agent 的第二条时间线</h3>
+          <p>四条车道、六个契约、九个状态：把 Claude Code、Cursor、Codex、Devin 的队列语义与 Postgres 实现放在一张图里，附 12 个失败模式与最小 worker。</p>
+          <div class="meta"><span class="chip">产品设计</span><span class="chip">实现</span><span class="chip">14 条来源</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="harness-exam.html">
+        <div class="tile" aria-hidden="true">考</div>
+        <div class="card-main">
+          <h3>Harness 结业考试</h3>
+          <p>97 道题检验学习成果：填空、判断、单选、多选、排序、连线、代码诊断、案例分析与开放论述，自动判分并按专题出掌握度报告（含 2026-10 新增的 harness 工程专题）。</p>
+          <div class="meta"><span class="chip">自测</span><span class="chip">错题本</span><span class="chip">记录本机保存</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="g2">
+    <h2 id="g2">产品功能拆解</h2>
+    <p class="gdesc">把单个产品功能拆到能直接抄的程度：全量事件、真实配置、边界与误用，不停在概念层。</p>
+    <div class="grid">
+      <a class="card" href="claude-code-hooks-33.html">
+        <div class="tile" aria-hidden="true">钩</div>
+        <div class="card-main">
+          <h3>Claude Code Hooks · 33 个事件的完整值班</h3>
+          <p>用一个夜间迁移案例把 33 个 hook 事件全部跑通：可点击的流程图、每个事件的中文名 / 触发时机 / 真实配置、七种典型误用，以及构建时断言校验过的完整 settings.json。</p>
+          <div class="meta"><span class="chip">功能手册</span><span class="chip">33 个事件</span><span class="chip">深色单页</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="g3">
+    <h2 id="g3">AI 产品经理系列</h2>
+    <p class="gdesc">从产品全景、业务流程设计到个人简历的实操指南。</p>
+    <div class="grid">
+      <a class="card" href="ai-agent-pm-career.html">
+        <div class="tile" aria-hidden="true">职</div>
+        <div class="card-main">
+          <h3>产品经理转 Agent · 面经、JD 与简历实战</h3>
+          <p>面向已有产品经验的转岗者：5 个面经样本、7 个 JD 对照、分阶段简历模板、项目证据与投递策略，来源与限制逐条标注。</p>
+          <div class="meta"><span class="chip">求职调研</span><span class="chip">2026-10-11</span><span class="chip">模板可复制</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-products-pm-analysis.html">
+        <div class="tile" aria-hidden="true">景</div>
+        <div class="card-main">
+          <h3>AI 产品全景 2026 · 产品经理视角的产品解构报告</h3>
+          <p>基于 60+ 轮公开信息检索，对 70+ 款主流 AI 产品拆解：目标用户、方案、商业化与护城河。</p>
+          <div class="meta"><span class="chip">报告</span><span class="chip">数据截至 2026-10</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-expense-review-prd.html">
+        <div class="tile" aria-hidden="true">审</div>
+        <div class="card-main">
+          <h3>AI 报销审核 · 完整产品设计</h3>
+          <p>在现有 OA 中增加 AI 审核：财务工作台、票据证据、规则与补件、人工决定，以及中断恢复和回写去重的完整闭环。</p>
+          <div class="meta"><span class="chip">产品设计</span><span class="chip">21 章</span><span class="chip">28 个验收场景</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-pm-resume.html">
+        <div class="tile" aria-hidden="true">简</div>
+        <div class="card-main">
+          <h3>零 AI 经验 · AI 产品经理简历优化指南</h3>
+          <p>六步把存量经验翻译成 AI PM 简历：30 天证据工厂、十项自检算分，勾选进度自动保存在本机。</p>
+          <div class="meta"><span class="chip">实操指南</span><span class="chip">进度本机保存</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-pm-interview-questions.html">
+        <div class="tile" aria-hidden="true">题</div>
+        <div class="card-main">
+          <h3>AI 产品经理 · 真实面经题库（716 条）</h3>
+          <p>首轮 659 条 + 2026-10-20 复搜 57 条：钉钉会议、抖音客服、千问主 Chat、小红书上下文工程、小米座舱等新面经按九个主题归类，可搜可筛；附必考 20 题框架与双源对比。</p>
+          <div class="meta"><span class="chip">面经题库</span><span class="chip">716 条</span><span class="chip">2026-10-20</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-pm-exam.html">
+        <div class="tile" aria-hidden="true">考</div>
+        <div class="card-main">
+          <h3>AI 产品经理系列 · 结业考试</h3>
+          <p>105 道题覆盖本系列四篇：填空、判断、单选、多选、排序、连线、材料诊断、案例分析与开放论述，自动判分并按 17 个专题出掌握度报告。</p>
+          <div class="meta"><span class="chip">自测</span><span class="chip">错题本</span><span class="chip">记录本机保存</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="group" aria-labelledby="g4">
+    <h2 id="g4">AI 行业调研</h2>
+    <p class="gdesc">2026-10 时点的行业横断面：厂商踩坑、设计教训、组织流程与前沿趋势，附 Markdown 详细分册；失败案例另有产品视角的深度复盘。</p>
+    <div class="grid">
+      <a class="card" href="ai-industry-research-2026-10.html">
+        <div class="tile" aria-hidden="true">研</div>
+        <div class="card-main">
+          <h3>AI 行业调研 2026-10 · 厂商问题 × 设计教训 × 前沿动态</h3>
+          <p>155 轮中英文检索、70+ 来源精读的合并报告：20 家厂商问题速查、10 类共性问题、16 类产品设计问题与技术 / 商业前沿。</p>
+          <div class="meta"><span class="chip">调研报告</span><span class="chip">数据截至 2026-10</span><span class="chip">附 md 分册</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="harness-in-business.html">
+        <div class="tile" aria-hidden="true">岗</div>
+        <div class="card-main">
+          <h3>Harness 上岗：公司里的 Agent 工程（2024–2026）</h3>
+          <p>13 个深度案例 + 9 个短线案例：运营、设计、产品与客服岗位上的 Agent 落地，含 4 个回退案例、5 条跨案例规律与 45 条来源。</p>
+          <div class="meta"><span class="chip">案例研究</span><span class="chip">数据截至 2026-10</span><span class="chip">45 条来源</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="anthropic-workflow-shift-2026-10.html">
+        <div class="tile" aria-hidden="true">转</div>
+        <div class="card-main">
+          <h3>Anthropic 工作流程转变 2025–2026 · 从写代码到管理 Agent</h3>
+          <p>基于三份内部报告、Scion 工程博客与 NBER/METR 外部研究：代码生产、评审、版本控制、招聘与研究流程的 before/after，附 14 条来源与争议。</p>
+          <div class="meta"><span class="chip">深度案例</span><span class="chip">数据截至 2026-10</span><span class="chip">14 条来源</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="single-agent-loop.html">
+        <div class="tile" aria-hidden="true">折</div>
+        <div class="card-main">
+          <h3>单 Agent 循环 · 什么时候把子 Agent 折回主循环</h3>
+          <p>基于 Anthropic 2026-10 指南与 17 条来源：三个保留条件、四种处置、六步迁移、折叠推演与逐题翻转评测，附 8 个交互。</p>
+          <div class="meta"><span class="chip">架构决策</span><span class="chip">数据截至 2026-10</span><span class="chip">17 条来源</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="claude-code-product-design.html">
+        <div class="tile" aria-hidden="true">码</div>
+        <div class="card-main">
+          <h3>Claude Code 产品设计 2026 · 把终端 Agent 做成操作系统</h3>
+          <p>基于 65 篇官方文档、550 条版本数据与两份开源代码：拆解定位、会话生命周期、工具、权限沙箱、上下文、扩展、多代理、商业化与开源边界。</p>
+          <div class="meta"><span class="chip">产品拆解</span><span class="chip">数据截至 2026-10</span><span class="chip">38 条来源</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+      <a class="card" href="ai-failure-casebook.html">
+        <div class="tile" aria-hidden="true">复</div>
+        <div class="card-main">
+          <h3>AI 产品失败复盘 · 从发现到修复</h3>
+          <p>42 个代表性失败案例（37 个 AI 应用层）的产品视角拆解：产品假设、谁先发现、根因四层、止血与修复，附 22 条跨案例规律与 64 项上线检查清单。</p>
+          <div class="meta"><span class="chip">案例分析</span><span class="chip">42 个案例</span><span class="chip">配套调研 05 节</span></div>
+        </div>
+        <span class="go">打开 <i>→</i></span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>主题偏好通过 localStorage（harness-theme）在页面间同步；未手动选择时跟随系统。整理于 2026-10。</p>
+  </div>
+</footer>
+<script>
+document.getElementById('pageCount').textContent = document.querySelectorAll('main .card').length;
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+---
+import ChapterFlow from './ChapterFlow.astro';
+import { chapterThreeFlows } from '../lib/chapter-three-flow';
+
+interface Props {
+  headings: { text: string; slug: string }[];
+}
+const views = chapterThreeFlows.map((view) => ({
+  ...view,
+  section:
+    view.id === 'maintenance'
+      ? '知识应该如何更新'
+      : view.id === 'rag'
+        ? 'RAG 基础：构建 Agent 的知识获取管道'
+        : '用户记忆系统',
+}));
+---
+
+<ChapterFlow
+  headings={Astro.props.headings}
+  id="chapter-three-flow"
+  prefix="flow"
+  mark="03"
+  title="用户记忆与知识库 · 全流程"
+  subtitle="从信息进入，到回答、更新与评估"
+  views={views}
+/>

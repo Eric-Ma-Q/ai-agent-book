@@ -1,0 +1,155 @@
+{
+ "version": 1,
+ "entries": {
+  "ac8b0a762357bff242be": [
+   {
+    "message": {
+     "content": "我先检索并阅读相关小节，确认原文表述。",
+     "reasoning_content": "Letme search the book for KVCachecontentinchapter 2.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"KV Cache 前缀 缓存\", \"chapter\": 2, \"top_k\": 6}",
+        "name": "search_book"
+       },
+       "id": "call_a0db39a220c244a58e42fc22",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2}",
+        "name": "list_chapters"
+       },
+       "id": "call_ae751b7116a74f57a06a6efc",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1295,
+     "cached_tokens": 0,
+     "completion_tokens": 130,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 1324,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "5b220247d6cba078edea": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme read the section \"kv-cache-的原理与约束\" fully.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2, \"section_id\": \"kv-cache-的原理与约束\"}",
+        "name": "read_section"
+       },
+       "id": "call_035d569b2da944ae8fb9e146",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 3997,
+     "cached_tokens": 1280,
+     "completion_tokens": 79,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 10242,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "02b089e3592e7b029c32": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Thesection's first paragraph is the \"要理解KV Cache 的价值，先看看没有它时会发生什么。...\" paragraph. I need toplacethe insertafter that paragraph.The \"after\" parametershouldbe the beginningof that paragraph, at least10 characters, verbatim.\n\nNowletme alsoread the \"kv-cache-友好的上下文设计\" section introand \"kv-cache-与-prompt-cache\"for supportingquotes. Actually Ihave enough.But let me check the parentsection intro for the \"前提是要复用的上下文token 前缀保持不变\" quote— that's from \"kv-cache-友好的上下文设计\" section. Let meread it to confirm verbatim.\n\nActuallythe searchsnippet gave:\"前提是要复用的上下文token 前缀保持不变——若token 序列从某个位置开始不同，首个不同 token 及其后的KV 状态需要重新计算；此前位置的KV 状态不受这次改动影响。\" That's fromsectionkv-cache-友好的上下文设计. Letme read it to be safe.\n\nAlso the Chat Templatesection quoteabout prefixsensitivity. Let me read thattoo.\n\nLetme read both.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2, \"section_id\": \"kv-cache-友好的上下文设计\"}",
+        "name": "read_section"
+       },
+       "id": "call_6c4d68e40aa64f4394f9f469",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2, \"section_id\": \"kv-cache-与-prompt-cache两个层级的缓存\"}",
+        "name": "read_section"
+       },
+       "id": "call_458ca9ba36f64990a79499f8",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 5571,
+     "cached_tokens": 3840,
+     "completion_tokens": 354,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 2181,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "43c74abc0f43e2540192": [
+   {
+    "message": {
+     "content": "已读完相关小节，下面把要点整理好并提交为待确认的补充。",
+     "reasoning_content": "NowI need to identifythe first paragraph of thesection \"KVCache 的原理与约束\". The first paragraph is:\"要理解KV Cache 的价值，先看看没有它时会发生什么。假设一个 Agent在进行第 6轮对话，上下文已经累积了 2000个 token。在没有缓存的情况下，模型每生成一个新 token，都需要重新计算这 2000个 token 的 K、V 向量——相当于重跑整个前缀的前向计算。尽管前 5轮的内容完全没变，第6 轮仍要像第 1 轮那样从头计算整个前缀，而且此时前缀更长，代价比第 1 轮大得多。无缓存时，prefill 阶段（即模型生成回复之前，处理输入的全部token 的阶段）的注意力计算量随上下文长度平方级增长，随着对话深入，延迟和成本都会急剧攀升。这对于需要几十轮工具调用的 Agent 任务来说是不可接受的。\"\n\nSo`after` should be thebeginningof that paragraph, atleast 10 characters,verbatim: \"要理解 KV Cache的价值，先看看没有它时会发生什么。\"\n\nNowwrite3 bulletpoints summarizingwhy prefixstability hitsthecache.Must be basedon bookcontent, with citations.\n\nKey points:\n1.KV Cache缓存的是每个 token 的 K、V，只在第一次进入上下文时计算一次，之后复用；因此复用的前提是前缀 token 序列不变。\n2. 模型是逐层串联的 Transformer，第 k个 token 变化后，k之前的状态不受影响，但从 k 开始的表示逐层受影响——所以缓存只能保留到首个不同token 之前。3. 跨请求层面（Prompt Cache）：服务商对请求前缀做匹配，前缀相同就直接复用已算好的 KVCache；缓存读取成本约为首次计算的十分之一。改动越靠前，需重算和计费的 token 越多。Citationsmust be verbatim 10-60chars from the text.\n\nCandidates:\n- \"每个 token的 K、V 只在它第一次进入上下文时计算一次，之后一直留在缓存里\" (from kv-cache-的原理与约束) — count: roughly40 chars. Good.- \"如果第 k个 token 发生变化（比如系统提示词改了一个字），k之前的状态不受影响，但从 k 开始的表示会逐层受到影响\" — that's long,~55chars. Letme count: 如果第k个 token 发生变化（比如系统提示词改了一个字），k 之前的状态不受影响，但从 k开始的表示会逐层受到影响— Chinese chars ~45 plus.Fine, under 60?Let's count carefully: \"如果第k个token发生变化（比如系统提示词改了一个字），k之前的状态不受影响，但从k开始的表示会逐层受到影响\" ≈50chars. OK.\n- \"实际复用时，缓存只能保留到首个不同 token 之前，从该位置起需要重新计算\"— good.\n- \"API 服务商对请求的前缀进行匹配，如果多次请求的前缀相同，就直接复用之前计算好的 KV Cache\" — good.\n- \"缓存读取的成本远低于首次计算，例如Anthropic、DeepSeek、GPT-5约为十分之一\" —good.\n- \"变动点越靠前，需要重新计算和计费的token 越多，延迟影响通常也越大\" —good.\n- \"前提是要复用的上下文token 前缀保持不变\"—20chars, good.\n\nNow themarkdown.Keep it concise, 3 points. Then propose_insert with chapter2, after = \"要理解 KV Cache 的价值，先看看没有它时会发生什么。\"Note: the sectionid inthe bookis \"kv-cache-的原理与约束\" — the user said「KV Cache 的原理与约束」 which matches.\n\nLet mewrite the markdown:**为什么前缀稳定就能命中缓存（三条要点）**\n\n1. **缓存的对象是每个token 的 K、V，只算一次。** ...[[ch2#kv-cache-的原理与约束|每个 token的 K、V只在它第一次进入上下文时计算一次，之后一直留在缓存里]]\n2. **层间串联决定了\"从首个不同token 起失效\"。**...[[ch2#kv-cache-的原理与约束|如果第 k个 token 发生变化（比如系统提示词改了一个字），k之前的状态不受影响，但从 k开始的表示会逐层受到影响]] ...[[ch2#kv-cache-的原理与约束|实际复用时，缓存只能保留到首个不同token 之前，从该位置起需要重新计算]]\n3. **跨请求层面由Prompt Cache 做前缀匹配。** ... [[ch2#kv-cache-与-prompt-cache两个层级的缓存|API服务商对请求的前缀进行匹配，如果多次请求的前缀相同，就直接复用之前计算好的 KV Cache]] ... [[ch2#kv-cache-与-prompt-cache两个层级的缓存|缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一]]\n\nAlso mention 代价取决于改动位置: [[ch2#kv-cache-的原理与约束|变动点越靠前，需要重新计算和计费的token 越多，延迟影响通常也越大]]Good. Nowcall propose_insert.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2, \"after\": \"要理解 KV Cache 的价值，先看看没有它时会发生什么。\", \"markdown\": \"**为什么前缀稳定就能命中缓存：三条要点**\\n\\n1. **缓存的对象是每个 token 的 K、V，且只算一次。** 每个 token 的键值对在它第一次进入上下文时计算一次，之后一直留在缓存里，后续生成直接取用；因此复用的前提是这段 token 序列本身不变——[[ch2#kv-cache-的原理与约束|每个 token 的 K、V 只在它第一次进入上下文时计算一次，之后一直留在缓存里]]，[[ch2#kv-cache-友好的上下文设计|前提是要复用的上下文 token 前缀保持不变]]。\\n\\n2. **层间串联决定了\\\"从首个不同 token 起失效\\\"。** 模型由多层 Transformer 串联而成，第 k 个 token 一变，k 之前的状态不受影响，但从 k 开始的表示会逐层被影响，所以实际复用时缓存只能保留到首个不同 token 之前——[[ch2#kv-cache-的原理与约束|如果第 k 个 token 发生变化（比如系统提示词改了一个字），k 之前的状态不受影响，但从 k 开始的表示会逐层受到影响]]，[[ch2#kv-cache-的原理与约束|实际复用时，缓存只能保留到首个不同 token 之前，从该位置起需要重新计算]]。代价与改动位置相关：[[ch2#kv-cache-的原理与约束|变动点越靠前，需要重新计算和计费的 token 越多，延迟影响通常也越大]]。\\n\\n3. **跨请求这一层由 Prompt Cache 做前缀匹配。** 服务商比对请求前缀，前缀相同就直接复用已算好的 KV Cache，而缓存读取远比首次计算便宜——[[ch2#kv-cache-与-prompt-cache两个层级的缓存|API 服务商对请求的前缀进行匹配，如果多次请求的前缀相同，就直接复用之前计算好的 KV Cache]]，[[ch2#kv-cache-与-prompt-cache两个层级的缓存|缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一]]。\\n\\n> 一句话：前缀稳定 → 已算过的 K、V 无需重算 → 单次请求内省掉前缀重算，跨请求还能命中 Prompt Cache；前缀一变，失效点之后的部分就得重算。\"}",
+        "name": "propose_insert"
+       },
+       "id": "call_b2dd977fed3648168b4d1743",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 7994,
+     "cached_tokens": 5376,
+     "completion_tokens": 1733,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 7645,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "3cdc8e9c12dd90e15f3c": [
+   {
+    "message": {
+     "content": "**结论**：前缀稳定之所以能命中缓存，本质是「K、V 只算一次 + 层间串联导致失效点之后必须重算 + 跨请求由 Prompt Cache 做前缀匹配」这三件事叠加的结果。\n\n**三条要点**\n\n1. **缓存的对象是每个 token 的 K、V，且只计算一次。** 每个 token 的键值对在它第一次进入上下文时算一次，之后一直留在缓存里，后续生成直接取用；所以复用的前提就是这段 token 序列本身不变。[[ch2#kv-cache-的原理与约束|每个 token 的 K、V 只在它第一次进入上下文时计算一次，之后一直留在缓存里]]，[[ch2#kv-cache-友好的上下文设计|前提是要复用的上下文 token 前缀保持不变]]\n\n2. **层间串联决定了「从首个不同 token 起失效」。** 模型由多层 Transformer 串联而成，第 k 个 token 一变，k 之前的状态不受影响，但从 k 开始的表示会逐层被影响，因此实际复用时缓存只能保留到首个不同 token 之前。代价还取决于改动位置：越靠前，要重算和计费的 token 越多。[[ch2#kv-cache-的原理与约束|如果第 k 个 token 发生变化（比如系统提示词改了一个字），k 之前的状态不受影响，但从 k 开始的表示会逐层受到影响]]，[[ch2#kv-cache-的原理与约束|实际复用时，缓存只能保留到首个不同 token 之前，从该位置起需要重新计算]]，[[ch2#kv-cache-的原理与约束|变动点越靠前，需要重新计算和计费的 token 越多，延迟影响通常也越大]]\n\n3. **跨请求这一层由 Prompt Cache 做前缀匹配。** 服务商比对请求前缀，前缀相同就直接复用已算好的 KV Cache，而缓存读取远比首次计算便宜。[[ch2#kv-cache-与-prompt-cache两个层级的缓存|API 服务商对请求的前缀进行匹配，如果多次请求的前缀相同，就直接复用之前计算好的 KV Cache]]，[[ch2#kv-cache-与-prompt-cache两个层级的缓存|缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一]]\n\n**补充说明**：书中还强调，缓存只认 token 字节序列，自行拼接消息只要前缀字节级稳定照样能命中，但根本问题在于偏离了训练格式；而滑动窗口、动态系统提示词等做法会破坏前缀一致性。[[ch2#kv-cache-友好的上下文设计|它只认 token 字节序列，只要拼出的前缀字节级稳定，照样能命中]]，[[ch2#kv-cache-的原理与约束|它会破坏上下文的前缀一致性，导致 KV Cache 失效]]\n\n**关于插入**：我已按你的要求，把上述三条要点整理成一段 Markdown 补充，提交到第 2 章「KV Cache 的原理与约束」第一段之后（请求 id `098dbd845f92`）。这只是待确认请求，**尚未写入**，请你在网页上确认后才会生效。",
+     "role": "assistant"
+    },
+    "usage": {
+     "prompt_tokens": 8643,
+     "cached_tokens": 7936,
+     "completion_tokens": 687,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 3167,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "stop"
+   }
+  ]
+ }
+}

@@ -1,0 +1,12 @@
+tasks:
+- id: reg-20261019-103147-8ec2
+  kind: qa_citation
+  input: 验收基线：什么算做完了——测试套件、CI 管道（持续集成流水线，代码提交后自动运行的一系列检查）、代码审查标准； 这里的ci管道 一般大家是怎么设计的
+  verifiers:
+  - type: status_ok
+  - type: citations_verified
+    min_count: 1
+  tags:
+  - regression
+  note: 状态 ok；引用 5 条，未通过核对 0 条
+  source_run: 20261019-103147-8ec2
