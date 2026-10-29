@@ -1,0 +1,17 @@
+# 读者运行时数据，仅本机保存
+notes/
+inserts/
+annotations/
+annotations-drafts/
+harness/
+harness/progress/
+harness/interview/
+lab/
+research/
+deploy/
+hooks/
+runs/
+evals/
+*.drafts.json
+*.keys.json
+*.log
