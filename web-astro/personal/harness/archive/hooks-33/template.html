@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>迁移之夜 · 33 个 Claude Code Hook 的一次完整值班</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <a class="back-link" href="index.html">← 页面总览</a>
+    <div class="eyebrow">Claude Code · Hooks · Full Coverage</div>
+    <h1>迁移之夜：<span class="grad">33 个 Hook</span><br>的一次完整值班</h1>
+    <p class="lead">
+      把 <code>acme/web-platform</code> 从 JavaScript 迁到 TypeScript strict：凌晨 2 点由 CI 拉起，
+      worktree 隔离，子代理按包并行，agent team 复核；中途上下文告急、模型限流降级、还有人试图改配置关掉监控。
+      33 个 hook 事件全部真实触发，一个不多、一个不少，且每个事件只使用它被允许的能力。
+    </p>
+
+    <div class="stats">
+      <div class="stat"><b>33</b><span>hook 事件，全量覆盖</span></div>
+      <div class="stat"><b>5</b><span>类执行器：command / http / mcp_tool / prompt / agent</span></div>
+      <div class="stat"><b>{{N_CONTROL}}</b><span>可干预的事件（阻止 / 改写 / 反馈 / 代替决策）</span></div>
+      <div class="stat"><b>6</b><span>个阶段，从 02:00 到 05:00</span></div>
+    </div>
+
+    <nav class="jump">
+      <a href="#flow">值班流程</a>
+      <a href="#hooks">33 个事件</a>
+      <a href="#audit">正确性自检</a>
+      <a href="#config">完整配置</a>
+    </nav>
+  </header>
+
+  <section id="flow">
+    <h2><span class="n">01</span>值班流程</h2>
+    <p class="sub">
+      横轴是时间，纵轴是同一阶段内的触发频率。颜色只表达一件事：<b>这个事件能不能改变 Claude Code 的走向</b>。
+      灰色的 9 个事件同样会执行脚本，只是它们的话没人听——这恰好是审计和告警最需要的性质。
+    </p>
+
+    <div class="panel">
+{{FLOW}}
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#f07178"></i>可干预（阻止 / 改写 / 反馈 / 代替决策）— {{N_CONTROL}} 个</span>
+      <span><i style="background:#35c4dd"></i>仅注入或提示（不能阻止）— {{N_INJECT}} 个</span>
+      <span><i style="background:#7e91a8"></i>仅观测（只能产生副作用）— {{N_OBSERVE}} 个</span>
+    </div>
+
+    <p class="flow-hint"><b>点击流程图上任意事件</b>，右侧抽屉会展开它的中文名、触发时机、执行器类型和实际配置片段。打开后可用「上一个 / 下一个」沿生命周期连续翻看全部 33 个；支持 Tab 聚焦 + 回车打开，Esc 关闭，也可跳到下方对应卡片。</p>
+
+    <div class="principles">
+      <div class="principle">
+        <b>能不能拦，由事件决定，不由脚本决定</b>
+        在 Notification 里写 <code>decision: "block"</code> 不会报错，只会被静默丢弃。选错事件比写错逻辑更常见。
+      </div>
+      <div class="principle">
+        <b>事后事件天生没有「拦截」这回事</b>
+        FileChanged 触发时文件已经改完，DirectoryAdded 触发时目录已经加好。它们不是被削弱，是本来就没有可阻止的对象。
+      </div>
+      <div class="principle">
+        <b>启动阶段一律用 command</b>
+        SessionStart / Setup 触发时 MCP client 尚未就绪，mcp_tool 类型的 hook 会被直接跳过，只留一条 debug log。
+      </div>
+    </div>
+  </section>
+
+  <section id="hooks">
+    <h2><span class="n">02</span>33 个事件逐个落地</h2>
+    <p class="sub">
+      每张卡片都是同一套结构：事件名、matcher、执行器类型、这一晚它具体干什么、真实可用的配置片段，
+      以及最容易踩的那条边界。卡片左侧的色条与流程图一致。
+    </p>
+
+    <div class="filters">
+      <button class="on" data-cap="all">全部 33</button>
+      <button data-cap="control">可干预 {{N_CONTROL}}</button>
+      <button data-cap="inject">仅注入 {{N_INJECT}}</button>
+      <button data-cap="observe">仅观测 {{N_OBSERVE}}</button>
+    </div>
+
+{{PHASES}}
+  </section>
+
+  <section id="audit">
+    <h2><span class="n">03</span>自检：为什么这 33 条没有用错</h2>
+    <p class="sub">
+      这一页不是手写的。事件清单、能力标注、执行器类型全部在构建时对照文档的约束表做断言，
+      任何一条越界都会让构建失败而不是渲染出一页好看的错误。
+    </p>
+
+    <ul class="checks">
+      <li>33 个事件恰好各出现一次，无重复、无遗漏、无拼写偏差</li>
+      <li>{{N_NO_MATCHER}} 个不支持 matcher 的事件，配置里全部没有出现 matcher 字段</li>
+      <li>执行器类型全部落在白名单内：12 个事件支持 5 种，<code>PermissionRequest</code> 不支持 agent，18 个事件只支持 command/http/mcp_tool，<code>SessionStart</code>/<code>Setup</code> 只支持 command/mcp_tool</li>
+      <li><code>if</code> 字段只出现在 5 个工具事件上——其他事件写了 <code>if</code> 将永远不会运行</li>
+      <li>9 个「无决策权」事件绝不输出决策字段；{{N_CONTROL}} 个可干预事件的决策字段与该事件文档逐条对应</li>
+    </ul>
+
+    <div class="block">
+      <h4>不支持 matcher 的 {{N_NO_MATCHER}} 个事件 <span>写了 matcher 不会报错，但语义是错的</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:200px">事件</th><th style="width:170px">本页配置</th><th>正确的过滤方式</th></tr></thead>
+        <tbody>
+{{NO_MATCHER_TABLE}}
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h4>{{N_CONTROL}} 个可干预事件及其决策字段 <span>字段名写错同样会被静默忽略</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:190px">事件</th><th style="width:410px">可用的决策字段</th><th>边界</th></tr></thead>
+        <tbody>
+{{CONTROL_TABLE}}
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h4>执行器类型不是随便挑的 <span>配了不支持的类型 = 静默跳过</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:260px">支持范围</th><th style="width:70px">事件数</th><th>事件</th></tr></thead>
+        <tbody>
+{{TYPE_TABLE}}
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h4>七种典型误用 <span>以及它们真实的后果</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:36%">错误写法</th><th style="width:34%">实际后果</th><th>正确做法</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>在 <code>Notification</code> 里返回 <code>decision:"block"</code>，想拦下通知</td>
+            <td class="bad">字段被丢弃，通知照发，也拿不到任何反馈</td>
+            <td>只做转发；要改终端提示用 <code>terminalSequence</code></td>
+          </tr>
+          <tr>
+            <td>在 <code>SessionEnd</code> 里 <code>exit 2</code>，想阻止会话退出</td>
+            <td class="bad">无效。会话此时已结束，stderr 只会显示给你看，不会改变退出</td>
+            <td>只做归档；耗时操作丢后台（共享 1.5s 预算）</td>
+          </tr>
+          <tr>
+            <td>给 <code>PostToolBatch</code> 配 <code>"matcher": "Edit"</code></td>
+            <td class="bad">该事件无 matcher，配置不报错但按全量触发，过滤逻辑失效</td>
+            <td>删掉 matcher，在脚本里读 <code>tool_calls</code> 自行筛选</td>
+          </tr>
+          <tr>
+            <td>在 <code>PreToolUse</code> 里返回 <code>updatedToolOutput</code>，想改工具结果</td>
+            <td class="bad">该字段属于 PostToolUse，此时还没有结果可改</td>
+            <td>改结果放 <code>PostToolUse</code>；改参数才用 <code>updatedInput</code></td>
+          </tr>
+          <tr>
+            <td>指望 <code>ElicitationResult</code> 再校验一次 <code>Elicitation</code> 的自动回答</td>
+            <td class="bad">自动回答路径直接回给 server，不触发 ElicitationResult</td>
+            <td>校验必须写在 <code>Elicitation</code> 内部</td>
+          </tr>
+          <tr>
+            <td>在 <code>Stop</code> 上写 <code>"if": "Bash(*)"</code></td>
+            <td class="bad">非工具事件，<code>if</code> 永不匹配，hook 永远不跑</td>
+            <td><code>if</code> 只用于 PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest / PermissionDenied</td>
+          </tr>
+          <tr>
+            <td>在 <code>SessionStart</code> 上挂 <code>type:"mcp_tool"</code> 想启动时打点</td>
+            <td class="bad">启动时 MCP client 未就绪，hook 被跳过，只留一条 debug log</td>
+            <td>改用 <code>type:"command"</code>，或把打点挪到 <code>InstructionsLoaded</code></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="config">
+    <h2><span class="n">04</span>完整配置</h2>
+    <p class="sub">
+      由同一份数据生成，与上面的卡片一一对应。脚本路径是示意，实际使用请换成你自己的实现。
+    </p>
+
+    <details>
+      <summary>展开 settings.json（33 个事件 · 一个都不少）<span>{{SETTINGS_SIZE}}</span></summary>
+      <pre>{{SETTINGS}}</pre>
+    </details>
+  </section>
+
+  <footer>
+    <b>案例设定</b>：acme/web-platform 是虚构仓库，所有脚本路径仅作示意，不保证可直接运行。<br>
+    <b>事实来源</b>：Claude Code Hooks reference（code.claude.com/docs/en/hooks），覆盖至 v2.1.295；PreModelSwitch / PostModelSwitch 需要 v2.1.251+。<br>
+    <b>正确性</b>：事件清单、matcher 支持、决策字段、执行器白名单均在构建时断言，违反即构建失败。
+  </footer>
+
+</div>
+
+<div class="drawer-scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="d-name">
+  <header class="drawer-head">
+    <div class="d-kicker"><span id="d-phase"></span><span id="d-cap" class="d-captop"></span></div>
+    <h3 id="d-name"></h3>
+    <code id="d-event" class="d-event"></code>
+    <button class="d-close" id="d-close" aria-label="关闭详情">×</button>
+  </header>
+  <div class="drawer-body">
+    <div class="d-when-box">
+      <span>触发时机</span>
+      <p id="d-when"></p>
+    </div>
+    <dl class="d-facts">
+      <div><dt>matcher</dt><dd><code id="d-matcher"></code></dd></div>
+      <div><dt>type</dt><dd><code id="d-type"></code></dd></div>
+      <div><dt>能力</dt><dd id="d-cap2"></dd></div>
+    </dl>
+    <h4>这一晚它做什么</h4>
+    <p id="d-role" class="d-text"></p>
+    <h4>实际配置</h4>
+    <pre class="d-code" id="d-code"></pre>
+    <h4>边界</h4>
+    <p id="d-detail" class="d-bound"></p>
+    <div class="d-nav">
+      <button id="d-prev">← 上一个</button>
+      <span id="d-count"></span>
+      <button id="d-next">下一个 →</button>
+    </div>
+    <button class="d-locate" id="d-locate">在下方卡片中定位 →</button>
+  </div>
+</aside>
+
+<script>window.HOOK_DATA = {{HOOK_DATA}};</script>
+
+<script>
+  const btns = document.querySelectorAll('.filters button');
+  const cards = document.querySelectorAll('.card');
+  btns.forEach(btn => btn.addEventListener('click', () => {
+    btns.forEach(b => b.classList.toggle('on', b === btn));
+    const cap = btn.dataset.cap;
+    cards.forEach(c => c.classList.toggle('hide', cap !== 'all' && c.dataset.cap !== cap));
+    document.querySelectorAll('.note').forEach(n => n.style.display = cap === 'all' ? '' : 'none');
+  }));
+
+  // ---- hook drawer ----
+  const DATA = window.HOOK_DATA || {};
+  const drawer = document.getElementById('drawer');
+  const scrim = document.getElementById('scrim');
+  const CAP_TEXT = { control: '阻止 / 改写 / 反馈 / 代替决策', inject: '只能注入或提示', observe: '只能产生副作用' };
+  const ORDER = Object.keys(DATA);
+  let currentEv = null, lastChip = null;
+
+  function openHook(ev, chip) {
+    const d = DATA[ev];
+    if (!d) return;
+    currentEv = ev;
+    lastChip = chip || null;
+    document.getElementById('d-phase').textContent = d.phaseNo + ' · ' + d.phase;
+    const cap = document.getElementById('d-cap');
+    cap.textContent = d.capLabel;
+    cap.className = 'd-captop cap-' + d.cap;
+    document.getElementById('d-name').textContent = d.name;
+    document.getElementById('d-event').textContent = ev;
+    const idx = ORDER.indexOf(ev);
+    document.getElementById('d-count').textContent = (idx + 1) + ' / ' + ORDER.length;
+    document.getElementById('d-when').textContent = d.when;
+    document.getElementById('d-matcher').textContent = d.matcher || '—（不支持 matcher）';
+    document.getElementById('d-type').textContent = d.type;
+    document.getElementById('d-cap2').textContent = d.capNote || (d.capLabel + ' · ' + CAP_TEXT[d.cap]);
+    document.getElementById('d-role').textContent = d.role;
+    document.getElementById('d-code').textContent = d.snippet;
+    document.getElementById('d-detail').textContent = d.detail;
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    scrim.classList.add('on');
+    document.querySelectorAll('g.chip').forEach(g => g.classList.toggle('active', g.dataset.event === ev));
+    document.getElementById('d-close').focus();
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    scrim.classList.remove('on');
+    document.querySelectorAll('g.chip').forEach(g => g.classList.remove('active'));
+    if (lastChip) lastChip.focus({ preventScroll: true });
+    currentEv = null;
+  }
+
+  const flowSvg = document.querySelector('#flow svg');
+  if (flowSvg) {
+    flowSvg.addEventListener('click', e => {
+      const g = e.target.closest('g.chip');
+      if (g) openHook(g.dataset.event, g);
+    });
+    flowSvg.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const g = e.target.closest('g.chip');
+      if (g) { e.preventDefault(); openHook(g.dataset.event, g); }
+    });
+  }
+  function step(delta) {
+    if (!currentEv) return;
+    const i = ORDER.indexOf(currentEv);
+    const next = ORDER[(i + delta + ORDER.length) % ORDER.length];
+    openHook(next, document.querySelector('g.chip[data-event="' + next + '"]'));
+  }
+  document.getElementById('d-prev').addEventListener('click', () => step(-1));
+  document.getElementById('d-next').addEventListener('click', () => step(1));
+  document.getElementById('d-close').addEventListener('click', closeDrawer);
+  scrim.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer(); });
+
+  document.getElementById('d-locate').addEventListener('click', () => {
+    if (!currentEv) return;
+    const target = document.querySelector('.card[data-event="' + currentEv + '"]');
+    if (!target) return;
+    closeDrawer();
+    target.scrollIntoView({ block: 'center' });
+    target.classList.add('flash');
+    setTimeout(() => target.classList.remove('flash'), 1800);
+  });
+</script>
+</body>
+</html>
