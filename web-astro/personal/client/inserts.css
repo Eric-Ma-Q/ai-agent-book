@@ -1,0 +1,127 @@
+/* The user's own passages read like book prose but are clearly set apart. */
+.prose figure.personal-insert {
+  margin: 1.4em 0;
+  padding: 0.2em 1.1em 0.4em;
+  border-left: 3px solid var(--accent);
+  background: var(--surface);
+  border-radius: 0 6px 6px 0;
+}
+.prose figure.personal-insert .personal-insert-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  margin: 0.6em 0 0.2em;
+  padding: 0;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.personal-insert-bar > span:first-child {
+  font-weight: 700;
+}
+.personal-insert-moved {
+  color: #b5651d;
+}
+.personal-insert-bar button {
+  margin-left: auto;
+  font: inherit;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.personal-insert-bar button:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+.personal-insert-body > :first-child {
+  margin-top: 0.4em;
+}
+.personal-insert-body > :last-child {
+  margin-bottom: 0.6em;
+}
+.prose figure.personal-unplaced {
+  margin: 3em 0 1em;
+  padding-top: 1em;
+  border-top: 1px dashed var(--line);
+}
+.personal-unplaced > p {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.personal-insert-end {
+  display: block;
+  margin: 1.5em 0 0;
+  padding: 0.6em 1em;
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.personal-insert-end:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+.personal-insert-error {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  color: #b3261e;
+}
+/* Mirrors the reader's #note-* rules, which are id-scoped to its own dialog. */
+.personal-insert-dialog {
+  width: min(720px, calc(100vw - 32px));
+}
+.personal-insert-dialog blockquote {
+  max-height: 120px;
+  overflow-y: auto;
+  margin: 4px 0 20px;
+  padding-inline-start: 14px;
+  border-inline-start: 3px solid var(--accent);
+  color: var(--muted);
+  font: 400 0.95rem/1.55 var(--serif);
+  overflow-wrap: anywhere;
+}
+.personal-insert-dialog label {
+  display: block;
+}
+.personal-insert-dialog textarea {
+  display: block;
+  width: 100%;
+  min-height: 240px;
+  resize: vertical;
+  margin: 8px 0 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 0.875rem/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.personal-insert-dialog [data-role='status'] {
+  color: var(--muted);
+  font-size: 0.75rem;
+  min-height: 2.5em;
+}
+.personal-insert-dialog [data-role='delete'] {
+  font-size: 0.75rem;
+  color: #b3261e;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.personal-insert-dialog [data-role='delete'][hidden] {
+  display: inline-block;
+  visibility: hidden;
+}
+.personal-insert-dialog [data-role='save'] {
+  min-height: 42px;
+  padding: 10px 18px;
+  font-size: 0.8125rem;
+}

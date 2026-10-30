@@ -1,0 +1,17 @@
+{
+ "A/r-calc": [
+  true
+ ],
+ "A/r-formula": [
+  false
+ ],
+ "A/r-insert": [
+  true
+ ],
+ "A/r-roles": [
+  true
+ ],
+ "A/r-safety": [
+  true
+ ]
+}
