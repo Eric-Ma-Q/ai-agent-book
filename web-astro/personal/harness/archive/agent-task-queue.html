@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>任务队列：Agent 的第二条时间线</title>
+<meta name="description" content="从 Claude Code、Cursor、Codex、Devin 到 Temporal 与 SQS：拆解 Agent 任务队列的四条车道、六个契约、九个状态与一套可落地的 Postgres 实现。">
+<script>
+(function(){try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}})();
+</script>
+<style>
+:root{
+  --paper:#f5f1e8;
+  --paper-2:#efe9dc;
+  --card:#fffdf8;
+  --ink:#17181c;
+  --ink-2:#34363d;
+  --muted:#6d6a61;
+  --line:#dcd5c6;
+  --line-2:#c9c0ad;
+  --accent:#b23a2e;
+  --accent-2:#8f2b22;
+  --accent-soft:#f2e0db;
+  --green:#2f5d50;
+  --green-soft:#e2ece7;
+  --blue:#33587a;
+  --blue-soft:#e4ebf2;
+  --gold:#9a6b1f;
+  --shadow:0 18px 50px rgba(40,32,20,.08);
+  --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong","SimSun",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  color-scheme:light;
+}
+html.dark{
+  --paper:#141519;
+  --paper-2:#191b20;
+  --card:#1d1f25;
+  --ink:#f1eee6;
+  --ink-2:#d3cec2;
+  --muted:#a39d90;
+  --line:#33363d;
+  --line-2:#454951;
+  --accent:#e06a5b;
+  --accent-2:#f08a7d;
+  --accent-soft:#3a2422;
+  --green:#7fbfa9;
+  --green-soft:#1e2f2a;
+  --blue:#8db4d6;
+  --blue-soft:#1d2a36;
+  --gold:#d8ad63;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(178,58,46,.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 20%, rgba(51,88,122,.07), transparent 55%),
+    var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+::selection{background:var(--accent-soft);color:var(--ink)}
+a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}
+a:hover{color:var(--accent)}
+.skip{position:absolute;left:-9999px;top:0;background:var(--card);color:var(--ink);padding:10px 16px;z-index:200}
+.skip:focus{left:12px;top:12px}
+#progress{position:fixed;left:0;top:0;height:3px;width:0;background:var(--accent);z-index:120;transition:width .1s linear}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.hero{padding:66px 0 34px;border-bottom:1px solid var(--line)}
+.hero-inner{position:relative}
+.kicker{
+  margin:0 0 18px;font:700 11px/1.4 var(--sans);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.kicker::before{content:"";width:26px;height:1px;background:var(--accent);display:inline-block}
+h1{
+  margin:0;font-family:var(--serif);font-weight:700;text-wrap:balance;
+  font-size:clamp(36px,5.4vw,68px);line-height:1.06;letter-spacing:-.02em
+}
+h1 em{display:block;font-style:normal;color:var(--accent);margin-top:10px;font-size:.72em}
+.lede{max-width:840px;margin:22px 0 0;font-size:18px;line-height:1.9;color:var(--ink-2)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;margin:26px 0 0;font:500 12.5px/1.6 var(--sans);color:var(--muted)}
+.meta span{display:inline-flex;align-items:center;gap:7px}
+.meta i{width:4px;height:4px;border-radius:50%;background:var(--accent);display:inline-block}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 15px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink);
+  font:600 13px/1 var(--sans);text-decoration:none;cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease
+}
+.btn:hover{transform:translateY(-1px);border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.primary:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:56px;align-items:start;padding:40px 0 20px}
+.toc{position:sticky;top:24px;max-height:calc(100vh - 48px);overflow:auto;padding-right:4px;min-width:0}
+.toc-title{margin:0 0 12px;font:700 10.5px/1.4 var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.toc nav{display:flex;flex-direction:column;gap:2px;min-width:0;max-width:100%}
+.toc a{
+  display:block;padding:7px 10px 7px 12px;border-left:2px solid transparent;
+  color:var(--muted);text-decoration:none;font:500 13px/1.55 var(--sans);
+  transition:color .15s ease,border-color .15s ease,background .15s ease
+}
+.toc a:hover{color:var(--ink);background:var(--paper-2)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.toc .sub{padding-left:24px;font-size:12.5px}
+.toc-note{margin:18px 0 0;padding:12px 12px;border:1px solid var(--line);background:var(--card);font:500 11.5px/1.7 var(--sans);color:var(--muted)}
+main{min-width:0}
+section{padding:6px 0 42px;border-bottom:1px solid var(--line);scroll-margin-top:24px}
+section:last-of-type{border-bottom:0}
+h2{display:flex;align-items:baseline;gap:14px;margin:26px 0 12px;font-family:var(--serif);font-size:clamp(27px,3.1vw,38px);line-height:1.25;font-weight:700;letter-spacing:-.01em}
+h2 .num{font:700 11px/1 var(--sans);letter-spacing:.14em;color:var(--accent);border:1px solid currentColor;padding:5px 6px;flex:0 0 auto;position:relative;top:-2px}
+h2 .h2-text{flex:1 1 auto;min-width:0;text-wrap:balance}
+h3{margin:30px 0 8px;font-family:var(--serif);font-size:21px;line-height:1.45;font-weight:700}
+h4{margin:22px 0 6px;font:700 15px/1.5 var(--sans);color:var(--ink)}
+p{margin:12px 0;color:var(--ink-2);font-size:16.5px;line-height:1.95}
+strong{color:var(--ink);font-weight:700}
+.nowrap{white-space:nowrap}
+.hl{background:linear-gradient(transparent 58%,rgba(178,58,46,.20) 58%);padding:0 1px}
+html.dark .hl{background:linear-gradient(transparent 58%,rgba(224,106,91,.24) 58%)}
+.small{font-size:13.5px;line-height:1.75;color:var(--muted)}
+.cite{font:700 10.5px/1 var(--sans);color:var(--accent);text-decoration:none;vertical-align:super;margin-left:2px;white-space:nowrap}
+.cite:hover{color:var(--accent-2);text-decoration:underline}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:30px 0 6px}
+.stat{position:relative;padding:16px 16px 14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);overflow:hidden}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.stat b{display:block;font-family:var(--serif);font-size:clamp(25px,3vw,34px);line-height:1.05;letter-spacing:-.02em}
+.stat span{display:block;margin-top:7px;font:600 12px/1.55 var(--sans);color:var(--ink-2)}
+.stat small{display:block;margin-top:6px;font:500 10.5px/1.5 var(--sans);color:var(--muted)}
+.callout{margin:22px 0;padding:16px 20px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);box-shadow:var(--shadow)}
+.callout.green{border-left-color:var(--green)}
+.callout.blue{border-left-color:var(--blue)}
+.callout.gold{border-left-color:var(--gold)}
+.callout .label{display:block;margin-bottom:6px;font:700 10.5px/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.callout.green .label{color:var(--green)}
+.callout.blue .label{color:var(--blue)}
+.callout.gold .label{color:var(--gold)}
+.callout p{margin:4px 0;font-size:15px;line-height:1.85}
+.callout p:last-child{margin-bottom:0}
+blockquote{margin:22px 0;padding:18px 22px;background:var(--paper-2);border-left:3px solid var(--ink);font-family:var(--serif);font-size:18px;line-height:1.85;color:var(--ink)}
+blockquote p{margin:0;color:var(--ink);font-size:inherit;line-height:inherit}
+blockquote cite{display:block;margin-top:9px;font:500 11.5px/1.6 var(--sans);font-style:normal;color:var(--muted)}
+.table-wrap{margin:18px 0;border:1px solid var(--line);background:var(--card);overflow-x:auto;box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;min-width:680px}
+caption{caption-side:top;text-align:left;padding:12px 14px 0;font:700 11px/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px;line-height:1.72}
+th{background:var(--paper-2);color:var(--ink);font-weight:700;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{min-width:96px;font-weight:700}
+td strong{color:var(--ink)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+.card{background:var(--card);border:1px solid var(--line);padding:16px 18px}
+.card h3{margin:0 0 5px;font-size:17px}
+.card p{margin:0;font-size:14px;line-height:1.8}
+.card .tag{display:inline-block;margin-bottom:8px;font:700 10px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.lanes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}
+.lane{position:relative;padding:16px 18px 14px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.lane::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:var(--accent)}
+.lane.follow::before{background:var(--blue)}
+.lane.task::before{background:var(--green)}
+.lane.approval::before{background:var(--gold)}
+.lane h3{margin:0 0 4px;font-size:18px}
+.lane .en{font:700 10.5px/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lane p{margin:8px 0 0;font-size:14px;line-height:1.8}
+.lane dl{display:grid;grid-template-columns:64px 1fr;gap:3px 10px;margin:12px 0 0;font-size:12.5px;line-height:1.65}
+.lane dt{color:var(--muted);font-weight:700}
+.lane dd{margin:0;color:var(--ink-2)}
+.ladder{display:grid;gap:8px;margin:20px 0}
+.ladder .rung{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:start;padding:12px 14px;background:var(--card);border:1px solid var(--line)}
+.ladder .rung b{font:700 12.5px/1.7 var(--sans);color:var(--accent)}
+.ladder .rung span{font-size:14px;line-height:1.8;color:var(--ink-2)}
+.stateflow{display:grid;gap:8px;margin:20px 0;padding:16px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.stateflow .row{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font:600 12px/1.6 var(--sans)}
+.stateflow .box{padding:5px 9px;border:1px solid var(--line-2);background:var(--paper-2);color:var(--ink)}
+.stateflow .box.start{border-color:var(--blue);color:var(--blue)}
+.stateflow .box.active{border-color:var(--green);color:var(--green)}
+.stateflow .box.bad{border-color:var(--accent);color:var(--accent)}
+.stateflow .arrow{color:var(--muted)}
+.stateflow .note{font:500 11.5px/1.7 var(--sans);color:var(--muted)}
+.badge{display:inline-block;padding:1px 6px;border:1px solid currentColor;font:700 10px/1.6 var(--mono);letter-spacing:.02em}
+.badge.q{color:var(--blue)}.badge.r{color:var(--green)}.badge.w{color:var(--gold)}.badge.d{color:var(--accent)}.badge.c{color:var(--muted)}
+pre{margin:16px 0;padding:16px 18px;background:#1c1e24;color:#e8e4da;border:1px solid #30343c;overflow:auto;font:12.5px/1.7 var(--mono);tab-size:2}
+html.dark pre{background:#0f1115;border-color:#2a2e36}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:inherit;white-space:pre}
+.code-label{display:flex;justify-content:space-between;gap:10px;margin:18px 0 -8px;font:700 10.5px/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+code{font-family:var(--mono);font-size:.88em;background:var(--paper-2);border:1px solid var(--line);padding:1px 5px;border-radius:3px;color:var(--ink-2);white-space:nowrap}
+ul,ol{margin:12px 0;padding-left:1.35em}
+li{margin:7px 0;color:var(--ink-2);font-size:16px;line-height:1.85}
+li strong{color:var(--ink)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:10px 18px;margin:16px 0;padding:16px 18px;background:var(--card);border:1px solid var(--line)}
+.kv dt{font:700 12.5px/1.7 var(--sans);color:var(--muted);letter-spacing:.04em}
+.kv dd{margin:0;font-size:15px;line-height:1.8;color:var(--ink-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.two .box{padding:16px 18px;border:1px solid var(--line);background:var(--card)}
+.two .box h3{margin:0 0 8px;font-size:16px}
+.two .box.good{border-top:3px solid var(--green)}
+.two .box.bad{border-top:3px solid var(--accent)}
+.two .box ul{margin:0;padding-left:1.1em}
+.two .box li{font-size:14px;line-height:1.8;margin:5px 0}
+.pill{display:inline-block;padding:2px 7px;border:1px solid var(--line-2);background:var(--paper-2);font:600 10.5px/1.6 var(--sans);color:var(--muted);margin:0 4px 4px 0}
+ol.sources{list-style:none;counter-reset:src;margin:20px 0 0;padding:0}
+ol.sources li{counter-increment:src;position:relative;padding:14px 0 14px 46px;border-bottom:1px solid var(--line);scroll-margin-top:24px}
+ol.sources li::before{content:"[" counter(src) "]";position:absolute;left:0;top:14px;font:700 11px/1.6 var(--mono);color:var(--accent)}
+ol.sources li:target{background:var(--accent-soft)}
+ol.sources .src-title{display:block;font:700 14.5px/1.6 var(--sans);color:var(--ink)}
+ol.sources .src-meta{display:block;margin-top:2px;font:500 11.5px/1.6 var(--sans);color:var(--muted)}
+ol.sources .src-link{display:inline-block;margin-top:5px;font:600 11.5px/1.6 var(--sans);word-break:break-all}
+footer{border-top:1px solid var(--line);margin-top:10px;padding:28px 0 56px;background:var(--paper-2)}
+.foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;font:500 12px/1.7 var(--sans);color:var(--muted)}
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr;gap:0;padding-top:26px}
+  .toc{position:static;max-height:none;overflow:visible;margin-bottom:18px;padding:0}
+  .toc nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding-bottom:8px;border-bottom:1px solid var(--line);width:100%}
+  .toc a{white-space:nowrap;border-left:0;border-bottom:2px solid transparent;padding:7px 10px}
+  .toc a.active{border-left:0;border-bottom-color:var(--accent)}
+  .toc .sub{display:none}
+  .toc-note{display:none}
+  .stats{grid-template-columns:1fr 1fr}
+}
+@media (max-width:680px){
+  .wrap{padding:0 18px}
+  .hero{padding:44px 0 26px}
+  .lede{font-size:16.5px}
+  h2{font-size:27px}
+  .stats{grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:13px 13px 12px}
+  .lanes,.cards,.two{grid-template-columns:1fr}
+  .ladder .rung{grid-template-columns:1fr;gap:3px}
+  .kv{grid-template-columns:1fr;gap:4px}
+  .kv dt{margin-top:8px}
+  .kv dt:first-child{margin-top:0}
+  table{min-width:600px}
+}
+@media print{
+  :root,html.dark{
+    --paper:#fff;--paper-2:#fff;--card:#fff;--ink:#000;--ink-2:#111;--muted:#555;
+    --line:#bbb;--line-2:#999;--accent:#000;--accent-2:#000;--accent-soft:#fff;
+    --green:#000;--green-soft:#fff;--blue:#000;--blue-soft:#fff;--gold:#000;--shadow:none;
+  }
+  body{background:#fff;color:#000;font-size:11pt}
+  .toc,.hero-actions,#progress,.skip,footer{display:none!important}
+  .layout{display:block;padding:0}
+  .hero{border-bottom:1px solid #999;padding:0 0 12pt}
+  h1{font-size:26pt}
+  h1 em{color:#000}
+  h2{font-size:18pt;break-after:avoid}
+  h3{break-after:avoid}
+  section{break-inside:avoid;border-bottom:1px solid #ccc;padding-bottom:14pt}
+  .callout,.card,.stat,blockquote,.table-wrap{box-shadow:none}
+  a{color:#000;text-decoration:none}
+  .cite{color:#000}
+  pre{background:#f5f5f5;color:#000;border-color:#ccc;white-space:pre-wrap}
+  ol.sources li{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+<div id="progress" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="wrap hero-inner">
+    <p class="kicker">HARNESS 深读 · 任务队列 · 2026-10</p>
+    <h1>任务队列<em>Agent 的第二条时间线</em></h1>
+    <p class="lede">
+      Agent 只有一条执行时间线：当前这一步；用户却常常已经想到下三步。任务队列就是这两条时间线的接口。
+      它看起来只是输入框旁边一列灰色的待办；真正决定的是三件事：用户能不能在 Agent 工作时继续表达，任务能不能跨会话活下来，崩溃之后会不会重复执行。
+      本文把 Claude Code、Cursor、Codex、Devin 与 Temporal、SQS 放在同一张图上，拆出<strong>四条车道、六个契约、九个状态</strong>，再给出一套从 Postgres 表到 worker 循环的最小实现。
+    </p>
+    <div class="meta">
+      <span><i></i>资料截至 2026-10-27</span>
+      <span><i></i>14 条来源</span>
+      <span><i></i>官方文档 / 缺陷报告 / 工程实践 / 书本实验</span>
+      <span><i></i>阅读约 24 分钟</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn primary" href="#summary">先看结论</a>
+      <a class="btn" href="#contracts">六个契约</a>
+      <a class="btn" href="#sql">最小实现</a>
+      <button class="btn" id="btnPrint" type="button">打印 / 导出 PDF</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <aside class="toc" aria-label="目录">
+    <p class="toc-title">目录</p>
+    <nav>
+      <a href="#summary">一页看懂</a>
+      <a href="#lanes">四条车道</a>
+      <a href="#contracts">六个契约</a>
+      <a href="#interface">界面与状态机</a>
+      <a href="#compare">产品对照</a>
+      <a href="#failures">十二个失败模式</a>
+      <a href="#model">数据模型</a>
+      <a href="#lease">领取与租约</a>
+      <a href="#scheduling">排序、公平与背压</a>
+      <a href="#bypass">Steering 与审批</a>
+      <a href="#sql">最小实现</a>
+      <a href="#metrics">度量与测试</a>
+      <a href="#principles">设计原则与取舍</a>
+      <a href="#sources">来源与方法</a>
+    </nav>
+    <p class="toc-note">文中 <b>[n]</b> 可点击跳到来源。产品文档、缺陷报告、工程实践与书本实验分开标注；缺陷报告只作为问题证据，不当作产品规格。</p>
+  </aside>
+
+  <main id="main">
+    <section id="summary">
+      <h2><span class="num">00</span><span class="h2-text">一页看懂</span></h2>
+      <div class="stats">
+        <div class="stat"><b>4</b><span>条车道</span><small>steer / follow-up / task / approval</small></div>
+        <div class="stat"><b>6</b><span>个契约</span><small>准入、排序、生效、取消、持久化、可见性</small></div>
+        <div class="stat"><b>9</b><span>个状态</span><small>queued 到 dead，终态不可回退</small></div>
+        <div class="stat"><b>3</b><span>张表</span><small>tasks / signals / events</small></div>
+        <div class="stat"><b>1</b><span>条硬约束</span><small>每个 agent 同时只有一个 active run</small></div>
+        <div class="stat"><b>12</b><span>个失败模式</span><small>每个都能在真实产品里找到影子</small></div>
+      </div>
+
+      <div class="callout">
+        <span class="label">一句话结论</span>
+        <p><strong>任务队列不是把用户输入排成队，而是把「什么时候生效」写成一份可验证的契约。</strong>产品上说不清生效点，工程上就会用丢消息、重复执行和幽灵写入来买单。</p>
+      </div>
+
+      <ul>
+        <li><strong>队列的单位是承诺，不是消息。</strong>steer 承诺「下一个安全边界生效」，follow-up 承诺「下一轮」，task 承诺「最终会跑」，approval 承诺「人来决定」。四种承诺的生命周期不同，不能用一条 FIFO 装。</li>
+        <li><strong>产品上最难的不是排队，是分诊。</strong>同一条输入，按按键、按设置、按内容还是按类型分流，会得到完全不同的可预测性。最差的做法是系统猜了，却不告诉用户它猜成了什么。</li>
+        <li><strong>工程上最难的不是并发，是状态。</strong>谁持有租约、谁有权写结果、崩溃后谁负责重试；这三件事决定队列会不会变成重复扣款机。</li>
+        <li><strong>体验上最难的不是进度，是解释。</strong>用户要知道「为什么在等、还要等多久、下一步会发生什么」，而不是只看到一个转圈。</li>
+      </ul>
+
+      <div class="callout blue">
+        <span class="label">读法</span>
+        <p>01–05 讲产品：四条车道、六个契约、界面、产品对照与失败模式；06–10 讲实现：数据模型、租约、调度、旁路与最小代码；11–12 讲度量、测试与取舍。只想看结论，读 00、02、12。</p>
+      </div>
+    </section>
+
+    <section id="lanes">
+      <h2><span class="num">01</span><span class="h2-text">四条车道：不要用一条 FIFO 装四种承诺</span></h2>
+      <p><strong>先把「队列」拆开。</strong>Agent 产品里至少有四种东西在排队，它们的生效点、持久化要求和失败语义完全不同。把它们塞进同一条 FIFO，短期能跑，长期一定出问题：审批排在一小时的任务后面，取消排在十条补丁后面，转向被当成下一轮任务。</p>
+
+      <div class="lanes">
+        <div class="lane">
+          <span class="en">Lane 1 · Steer</span>
+          <h3>改方向，不换任务</h3>
+          <p>用户看到 Agent 走偏，想补一句约束、换一个文件、停止某个方向。它应该落在<strong>下一个安全边界</strong>，而不是打断正在进行的工具调用。</p>
+          <dl>
+            <dt>典型</dt><dd>「先别改前端，只修 API」「用 pnpm，不要 npm」</dd>
+            <dt>生效</dt><dd>下一次模型调用前 / 工具返回后</dd>
+            <dt>持久</dt><dd>否，可合并；运行结束前有效</dd>
+            <dt>失败</dt><dd>丢弃并告知，或降级为 follow-up</dd>
+          </dl>
+        </div>
+        <div class="lane follow">
+          <span class="en">Lane 2 · Follow-up</span>
+          <h3>下一轮再做</h3>
+          <p>用户把后续工作交给同一个会话。它不该打断当前任务，但要保证在当前 turn 或当前 task 结束后按顺序执行。</p>
+          <dl>
+            <dt>典型</dt><dd>「跑完测试后把失败的三个用例修了」</dd>
+            <dt>生效</dt><dd>当前 turn / task 结束</dd>
+            <dt>持久</dt><dd>是，至少跨界面切换</dd>
+            <dt>失败</dt><dd>作为新 run 重试，保留原顺序</dd>
+          </dl>
+        </div>
+        <div class="lane task">
+          <span class="en">Lane 3 · Task</span>
+          <h3>独立工作单元</h3>
+          <p>一件可以独立调度、独立失败、独立重试的工作。它有自己的生命周期，不需要绑定在某次对话的当前轮次上。</p>
+          <dl>
+            <dt>典型</dt><dd>「给这 20 个仓库补 LICENSE」「每晚跑一次回归」</dd>
+            <dt>生效</dt><dd>调度器领取时</dd>
+            <dt>持久</dt><dd>是，跨重启、跨机器</dd>
+            <dt>失败</dt><dd>至少一次 + 退避重试 + 死信</dd>
+          </dl>
+        </div>
+        <div class="lane approval">
+          <span class="en">Lane 4 · Approval</span>
+          <h3>人来决定</h3>
+          <p>Agent 已经跑到一个需要授权的点。它不是「待办」，而是一个阻塞中的等待状态；人不做决定，任务不能继续，也不该被自动重试。</p>
+          <dl>
+            <dt>典型</dt><dd>「允许删除这 12 个文件吗」「允许推送这个分支吗」</dd>
+            <dt>生效</dt><dd>决定到达时</dd>
+            <dt>持久</dt><dd>是，带 TTL 与审计</dd>
+            <dt>失败</dt><dd>超时拒绝 / 取消，不自动放行</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>四条车道的语义差异</caption>
+          <thead><tr><th>车道</th><th>用户意图</th><th>生效点</th><th>持久化</th><th>顺序</th><th>失败语义</th></tr></thead>
+          <tbody>
+            <tr><td>Steer</td><td>改变当前任务的方向</td><td>下一个安全边界</td><td>否，可合并</td><td>按到达，允许覆盖</td><td>丢弃并告知，或降级为 follow-up</td></tr>
+            <tr><td>Follow-up</td><td>把后续工作交给同一会话</td><td>当前 turn / task 结束</td><td>是</td><td>会话内 FIFO</td><td>作为新 run 重试</td></tr>
+            <tr><td>Task</td><td>独立、可调度的工作</td><td>调度器领取</td><td>是</td><td>优先级 + 公平</td><td>至少一次，退避 + 死信</td></tr>
+            <tr><td>Approval</td><td>让人做授权决定</td><td>决定到达</td><td>是，带 TTL</td><td>单次，不排队重试</td><td>过期 / 拒绝，不自动放行</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>分诊机制本身是产品设计</h3>
+      <p>四条车道不会自己分类。用户按下回车的那一刻，产品必须决定这条输入进哪条道。这个决定可以由按键、设置、内容或类型触发；四种方式没有绝对优劣，但必须满足三条：<strong>可预测、可覆盖、可解释</strong>。</p>
+
+      <div class="table-wrap">
+        <table>
+          <caption>四种分诊机制</caption>
+          <thead><tr><th>方式</th><th>代表</th><th>怎么分</th><th>优点</th><th>风险</th></tr></thead>
+          <tbody>
+            <tr><td>按键</td><td>Cursor</td><td><code>Enter</code> 排队，<code>Cmd/Ctrl+Enter</code> 立即发送</td><td>即时、可学习、每次都能覆盖</td><td>快捷键冲突；跨端不一致；用户记不住</td></tr>
+            <tr><td>设置</td><td>Codex App</td><td>Settings → General → Follow-up behavior：Queue 或 Steer</td><td>默认一致，减少每次决策</td><td>全局设置与当下意图不匹配；用户忘了自己设过</td></tr>
+            <tr><td>内容</td><td>书本实验 6-2</td><td>关键词：取消 / 停止 → interrupt；问号 / 疑问词 → immediate；其余 → deferred</td><td>零学习成本，适合对话式入口</td><td>误判；不可解释；边界模糊</td></tr>
+            <tr><td>类型</td><td>Claude Code</td><td>普通消息、斜杠命令、<code>!</code> shell 命令分别处理</td><td>语义清晰，能做不同的持久化与权限</td><td>用户要理解类型；类型边界会随产品扩张变复杂</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Claude Code 把「消息」和「命令 / shell 命令」分开：排队消息在工具调用结束后就交给模型，命令则等到 turn 结束再逐条执行。<a class="cite" href="#s1">[1]</a> Cursor 用按键区分「排队」与「立即发送」，并允许拖动调整队列顺序。<a class="cite" href="#s2">[2]</a> Codex App 把选择放进全局设置，Queue 与 Steer 二选一。<a class="cite" href="#s6">[6]</a> 书本第 6 章实验 6-2 则用内容关键词做三档分流：<code>INTERRUPT</code>、<code>IMMEDIATE</code>、<code>DEFERRED</code>，其中 <code>DEFERRED</code> 会攒到异步结果到达时批量追加。<a class="cite" href="#s14">[14]</a></p>
+
+      <div class="callout gold">
+        <span class="label">设计建议</span>
+        <p>默认值可以智能，但发送前要显示「这条会排队 / 会转向 / 会立即执行」，并允许一键改。用户不需要理解队列实现，但必须能预测自己按下回车后会发生什么。</p>
+      </div>
+    </section>
+
+    <section id="contracts">
+      <h2><span class="num">02</span><span class="h2-text">六个契约：队列到底向用户承诺了什么</span></h2>
+      <p><strong>队列不是数据结构，是一组承诺。</strong>下面六个契约，任何一个说不清，都会在某个边界变成 bug。产品文档里应该逐条写出来，接口和测试才有依据。</p>
+
+      <div class="table-wrap">
+        <table>
+          <caption>六个契约与对应的失败</caption>
+          <thead><tr><th>契约</th><th>要回答的问题</th><th>说不清的样子</th></tr></thead>
+          <tbody>
+            <tr><td>准入</td><td>什么能进队列？谁有权进？满了怎么办？</td><td>队列无限增长；非法命令在运行时才报错；重复提交生成两条任务</td></tr>
+            <tr><td>排序</td><td>谁先跑？能不能改？改了之后原来的位置怎么办？</td><td>拖动排序后序号冲突；跨租户严格 FIFO 导致大客户饥饿</td></tr>
+            <tr><td>生效</td><td>什么时候从「排队」变成「生效」？</td><td>用户以为任务结束才跑，系统在中间轮次就放行</td></tr>
+            <tr><td>取消</td><td>取消的是排队项、运行中的任务，还是已经产生的副作用？</td><td>取消后子进程还在跑；取消被当成删除，审计缺失</td></tr>
+            <tr><td>持久化</td><td>刷新、切会话、关应用、崩溃之后，什么还在？</td><td>切个聊天队列就消失；重启后重复执行</td></tr>
+            <tr><td>可见性</td><td>用户怎么知道它在等什么、下一步是什么？</td><td>只有一个转圈；状态与真实执行不一致</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.1 准入：在入队时拒绝，不要等到运行时</h3>
+      <p>准入要回答三件事：<strong>能不能进、进多少、重复了怎么办</strong>。Claude Code 把一部分命令做成「发送即执行」，例如 <code>/status</code>、<code>/model</code> 这类改变设置或查询状态的命令；它们不进入队列，因为排队会让用户以为设置已经生效。<a class="cite" href="#s1">[1]</a> Cursor 的 Cloud Agents API 在 steer 请求里只允许 <code>prompt</code> 与 <code>delivery</code>，带 <code>model</code>、<code>mode</code> 等字段会直接返回 <code>400</code>，避免「转向」偷偷变成「新任务」。<a class="cite" href="#s3">[3]</a> Devin 的自动化则给每次运行设了条目上限、调用频率与 ACU 预算，超出上限的条目不会被静默执行，而是留给下一次脚本运行重新发出。<a class="cite" href="#s8">[8]</a></p>
+      <p>工程上，准入检查应该发生在 API 层，而不是 worker 里：参数是否合法、权限是否明显不足、队列是否已满、幂等键是否重复。运行时再检查一次权限，是为了防止「入队时允许、执行时策略已变」。</p>
+
+      <h3>2.2 排序：FIFO 是默认值，不是全部</h3>
+      <p>会话内最符合直觉的是 FIFO：用户按顺序输入，就按顺序执行。Claude Code 明确说，turn 结束时仍未处理的消息「按输入顺序」发出。<a class="cite" href="#s1">[1]</a> Cursor 允许拖动排序，说明队列顺序是用户可见、可编辑的状态，而不是内部实现细节。<a class="cite" href="#s2">[2]</a></p>
+      <p>跨会话、跨租户就不能只有 FIFO。Temporal 的 Task Queue 默认有 4 个分区；单分区「几乎总是 FIFO」，多分区时任务被随机分配到分区，严格顺序不再成立。<a class="cite" href="#s9">[9]</a> 这不是缺陷，而是吞吐与顺序的取舍。产品要明确：<strong>你承诺的是会话内顺序，还是全局顺序？</strong>前者便宜，后者昂贵，而且通常不需要。</p>
+
+      <h3>2.3 生效：把「什么时候」写成一个枚举</h3>
+      <p>这是整个队列最重要的一个字段。用户看到的「排队中」至少有五种不同含义：</p>
+      <div class="ladder">
+        <div class="rung"><b>立即执行</b><span>不排队，例如 <code>/status</code>、切换模型。用户期待设置马上生效，排队反而制造误解。</span></div>
+        <div class="rung"><b>下一个工具边界</b><span>steer 的典型语义。不打断在途工具，等它返回后把新指令注入上下文。Cursor 的 steer 明确说「在 Agent 的下一个工具调用时送达」。</span></div>
+        <div class="rung"><b>当前 turn 结束</b><span>Claude Code 的命令与 shell 命令；普通消息在工具调用结束后就进入模型，turn 结束时仍未处理的消息按顺序发出。</span></div>
+        <div class="rung"><b>当前 task / goal 完成</b><span>Cursor 的队列「等当前任务完成后依次处理」；Codex 的 Queue 设计意图是「当前任务完成后作为下一轮发送」。</span></div>
+        <div class="rung"><b>人工决定</b><span>审批。没有决定就不继续，超时按拒绝或取消处理，不自动放行。</span></div>
+      </div>
+      <p>Codex 的缺陷报告正好说明这条契约有多脆：用户把 Follow-up behavior 设为 Queue，期待「任务彻底完成后再执行」，实际却在某个中间内部轮次就被放行。报告里写得很清楚：<em>「Queue 看起来是『下一个内部轮次』，而不是『任务完成之后』，但 UI 没有说清这个区别。」</em><a class="cite" href="#s4">[4]</a> 这不是调度器写错了，而是生效点没有被建模、没有被显示、也没有被测试。</p>
+
+      <h3>2.4 取消：取消不是删除</h3>
+      <p>取消要分三层：<strong>排队项取消</strong>（还没开始，直接从队列移除并记一笔）、<strong>运行中取消</strong>（发协作式取消信号，在下一个安全检查点退出，必要时终止子进程）、<strong>副作用取消</strong>（已经发出的工具调用、已经写入的外部系统，通常不能撤销，只能补偿）。</p>
+      <p>Claude Code 的 <code>Esc</code> 会打断当前 turn，但保留已排队的内容并立刻发送；后台任务在退出时会清理，macOS / Linux 上还会处理 <code>setsid</code> 这类脱离 shell 的进程。<a class="cite" href="#s1">[1]</a> 这说明取消是一个有状态、有清理、有审计的动作，不是把数组元素删掉。</p>
+
+      <h3>2.5 持久化：队列必须比界面活得久</h3>
+      <p>Claude Code 的队列会随会话进入后台，用户可以在后台会话里继续处理；但命令、<code>!</code> shell 命令和带 IDE 选区的消息不能跟着走，产品会明确阻止「带着它们后台化」。<a class="cite" href="#s1">[1]</a> 这是好的设计：<strong>不能持久化的东西，提前说不能。</strong></p>
+      <p>反例是 Codex App 的缺陷：队列在切换聊天后从 UI 消失。用户预期「排队项应该一直可见，直到执行、取消或删除」，实际却只存在于当前视图。<a class="cite" href="#s5">[5]</a> 这提醒我们：队列的 source of truth 必须在服务端或本地数据库，UI 只是投影；切换视图不能重建队列。</p>
+
+      <h3>2.6 可见性：每个等待都要有原因和下一步</h3>
+      <p>「排队中」不是一种状态，至少是「等当前任务」「等审批」「等重试」「等容量」四种。用户看到的应该是一个<strong>原因 + 下一步 + 可做的动作</strong>，而不是一个转圈。Cursor 的 Cloud Agents API 把 steer 的结果明确分成 <code>steered</code>（已进入当前 run）和 <code>queued</code>（没有活跃 run，转为下一次 follow-up），并返回对应的 <code>runId</code> 或省略。<a class="cite" href="#s3">[3]</a> 这就是可见性契约的接口化：不要只说「收到了」，要说「它在哪条车道、什么时候生效」。</p>
+    </section>
+
+    <section id="interface">
+      <h2><span class="num">03</span><span class="h2-text">界面与状态机：九个状态，七个零件</span></h2>
+      <p><strong>状态机的价值不是画得漂亮，而是让 UI、接口和测试说同一种语言。</strong>下面九个状态覆盖了从入队到终态的主路径；任何一条「状态之外的临时标志」都会让排查变难，所以取消、审批、重试都要落到明确状态或明确字段上。</p>
+
+      <div class="stateflow" aria-label="任务状态机示意">
+        <div class="row"><span class="box start">queued</span><span class="arrow">→ claim →</span><span class="box active">claimed</span><span class="arrow">→ start →</span><span class="box active">running</span><span class="arrow">→</span><span class="box">succeeded</span></div>
+        <div class="row"><span class="arrow">running →</span><span class="box">waiting</span><span class="arrow">（审批 / 外部工具）→ running</span></div>
+        <div class="row"><span class="arrow">running →</span><span class="box">retry_wait</span><span class="arrow">→ queued</span><span class="arrow">；running →</span><span class="box bad">failed</span><span class="arrow">/</span><span class="box bad">cancelled</span><span class="arrow">/</span><span class="box bad">dead</span></div>
+        <div class="note">终态不可回退；要重做就新建一条任务，保留原任务的审计记录。</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>九个状态</caption>
+          <thead><tr><th>状态</th><th>含义</th><th>进入条件</th><th>离开</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge q">queued</span></td><td>已接受，等待被领取</td><td>入队成功、重试退避结束</td><td>claimed / cancelled</td></tr>
+            <tr><td><span class="badge q">claimed</span></td><td>已被某个 worker 租用，尚未开始执行</td><td>原子领取成功</td><td>running / retry_wait / cancelled</td></tr>
+            <tr><td><span class="badge r">running</span></td><td>Agent 正在执行</td><td>worker 开始处理</td><td>waiting / succeeded / failed / retry_wait / cancelled</td></tr>
+            <tr><td><span class="badge w">waiting</span></td><td>等人审批或等外部工具</td><td>需要授权 / 长工具</td><td>running / failed / cancelled</td></tr>
+            <tr><td><span class="badge w">retry_wait</span></td><td>失败后等待退避</td><td>可重试错误</td><td>queued / dead</td></tr>
+            <tr><td><span class="badge r">succeeded</span></td><td>成功终态</td><td>结果已持久化</td><td>不可回退</td></tr>
+            <tr><td><span class="badge d">failed</span></td><td>失败终态</td><td>不可重试错误或重试耗尽</td><td>不可回退</td></tr>
+            <tr><td><span class="badge c">cancelled</span></td><td>用户或系统取消</td><td>取消信号被确认</td><td>不可回退</td></tr>
+            <tr><td><span class="badge d">dead</span></td><td>死信，等待人工处理</td><td>超过最大重试次数</td><td>人工重放 / 丢弃</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>界面上的七个零件</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>队列 UI 的最小组成</caption>
+          <thead><tr><th>零件</th><th>要显示什么</th><th>关键交互</th></tr></thead>
+          <tbody>
+            <tr><td>输入区模式</td><td>这条会排队、会转向，还是立即发送</td><td>快捷键 + 发送前预览；允许一键改</td></tr>
+            <tr><td>队列列表</td><td>顺序、内容摘要、状态、生效点</td><td>拖动排序、取回编辑、删除</td></tr>
+            <tr><td>状态徽标</td><td>等当前任务 / 等审批 / 等重试 / 等容量</td><td>点开看原因与下一步</td></tr>
+            <tr><td>审批卡</td><td>要做什么、为什么、风险、过期时间</td><td>批准 / 拒绝 / 要求修改；范围可选「本次 / 本任务 / 本会话」</td></tr>
+            <tr><td>错误卡</td><td>哪一步失败、能否重试、会重试几次</td><td>重试 / 取消 / 查看日志 / 转人工</td></tr>
+            <tr><td>队列摘要</td><td>共几条、最长等待、预计完成</td><td>批量取消、暂停队列</td></tr>
+            <tr><td>空态与满态</td><td>「当前没有排队」或「队列已满，稍后再试」</td><td>给出可执行的下一步，不静默丢弃</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>七条界面规则</h3>
+      <ol>
+        <li><strong>队列跟着会话走。</strong>切换聊天、进入后台、重新打开，队列都应该还在；否则它不是队列，只是当前视图的草稿。</li>
+        <li><strong>未处理的消息灰显。</strong>Claude Code 用灰色区分「已发送但还没开始处理」和「已经被模型读到」，这个细节能显著降低「它到底看没看见」的焦虑。<a class="cite" href="#s1">[1]</a></li>
+        <li><strong>顺序可编辑，但要有稳定 id。</strong>Cursor 允许拖动排序；拖动后要更新服务端序号，不能只改 DOM。<a class="cite" href="#s2">[2]</a></li>
+        <li><strong>能取回，就能编辑。</strong>Claude Code 在输入框第一行按 <code>Up</code> 可以把排队内容取回输入框，编辑后重新入队。<a class="cite" href="#s1">[1]</a></li>
+        <li><strong>不能带走的，提前禁用。</strong>命令、shell 命令、带 IDE 选区的消息不能进入后台会话，Claude Code 会阻止后台化并提示先处理它们。<a class="cite" href="#s1">[1]</a></li>
+        <li><strong>「立即发送」与「排队」必须能互相覆盖。</strong>Cursor 用 <code>Cmd/Ctrl+Enter</code> 绕过队列；Claude Code 用 <code>Ctrl+Enter</code> 立即发送，旧终端不支持时用 <code>Ctrl+X Ctrl+S</code>。<a class="cite" href="#s1">[1]</a><a class="cite" href="#s2">[2]</a></li>
+        <li><strong>状态文案要写「下一步」，不要只写「排队中」。</strong>「将在当前任务完成后执行」比「queued」有用一百倍。</li>
+      </ol>
+    </section>
+
+    <section id="compare">
+      <h2><span class="num">04</span><span class="h2-text">产品对照：六种实现，三类承诺</span></h2>
+      <p><strong>同样叫 queue，不同产品解决的不是同一个问题。</strong>交互队列解决「什么时候听用户的」，任务队列解决「什么时候跑哪件事」，分发队列解决「哪台机器来跑」。把它们混为一谈，就会拿 Temporal 的语义去要求一个输入框。</p>
+
+      <h3>4.1 交互队列：Claude Code、Cursor、Codex</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>会话内队列的三种做法</caption>
+          <thead><tr><th>产品</th><th>队列单位</th><th>生效点</th><th>转向 / 打断</th><th>持久化</th><th>顺序</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Claude Code</td>
+              <td>消息、命令、<code>!</code> shell 命令</td>
+              <td>消息在工具调用结束后；命令在 turn 结束后逐条执行</td>
+              <td><code>Esc</code> 打断但保留队列；<code>Ctrl+Enter</code> 立即发送</td>
+              <td>随会话进入后台；命令与带 IDE 选区的消息不能</td>
+              <td>按输入顺序；<code>Up</code> 可取回编辑</td>
+            </tr>
+            <tr>
+              <td>Cursor</td>
+              <td>消息</td>
+              <td>队列等当前任务完成；steer 在下一次工具调用送达</td>
+              <td><code>Cmd/Ctrl+Enter</code> 立即发送；Send now 或连按 <code>Enter</code> 可 steer</td>
+              <td>队列在会话内可见；Cloud Agent 的 run 持久化</td>
+              <td>FIFO，可拖动排序</td>
+            </tr>
+            <tr>
+              <td>Codex</td>
+              <td>follow-up</td>
+              <td>Queue 设计为当前任务完成后；Steer 在运行中生效</td>
+              <td>Settings → Follow-up behavior 选择 Queue / Steer</td>
+              <td>UI 队列在切换聊天后可能消失（缺陷）</td>
+              <td>按输入顺序；中间轮次可能提前放行（缺陷）</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Claude Code 的粒度最细：它把「消息」和「命令 / shell」分开，因为两者的权限、执行位置和持久化能力不同。<a class="cite" href="#s1">[1]</a> Cursor 把「排队」和「转向」做成两个明确的动作，并用按键区分；Cloud Agents API 进一步把 steer 的结果分成 <code>steered</code> 与 <code>queued</code>，并规定每个 agent 同时只能有一个活跃 run，重复创建会返回 <code>409 agent_busy</code>。<a class="cite" href="#s3">[3]</a> Codex 把选择放进全局设置，Queue 与 Steer 二选一；官方 CLI 文档把 steer 描述为「引导当前 turn，同时把后续工作留在同一会话」，但并没有规定它在第几个内部步骤生效。<a class="cite" href="#s7">[7]</a> 它的缺陷报告显示，Queue 的实际生效点曾漂移到「下一个内部轮次」，而且队列在切换聊天后会从 UI 消失。<a class="cite" href="#s4">[4]</a><a class="cite" href="#s5">[5]</a></p>
+
+      <div class="callout blue">
+        <span class="label">一个反直觉的细节</span>
+        <p>Codex 社区里有人观察到，Steer 并不总是「立刻插入当前思考」，而更像「当前 turn 结束后再消费的 follow-up」。这说明<strong>转向的语义不能靠名字暗示，必须在接口和 UI 里写清楚</strong>：是插入当前上下文，还是排到当前 turn 之后。<a class="cite" href="#s6">[6]</a></p>
+      </div>
+
+      <h3>4.2 任务与分发队列：Devin、Temporal、SQS</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>任务队列与分发队列</caption>
+          <thead><tr><th>系统</th><th>队列单位</th><th>领取方式</th><th>顺序</th><th>失败处理</th><th>关键限制</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Devin Automations</td>
+              <td>自动化事件 → 新会话或消息</td>
+              <td>触发器匹配后启动会话</td>
+              <td>按事件；同一脚本一次只跑一个</td>
+              <td>失败的条目释放，下次可再次发出；脚本失败不自动重试</td>
+              <td>每次运行默认最多 10 条、上限 50 条；调用频率与 ACU 预算</td>
+            </tr>
+            <tr>
+              <td>Temporal</td>
+              <td>Workflow / Activity Task</td>
+              <td>Worker 主动长轮询</td>
+              <td>单分区近似 FIFO；多分区不保证</td>
+              <td>Task 持久化；Worker 挂掉后重新投递</td>
+              <td>默认 4 个分区；Activity Task Queue 支持服务端限流</td>
+            </tr>
+            <tr>
+              <td>Amazon SQS</td>
+              <td>消息</td>
+              <td>消费者拉取，可见性超时</td>
+              <td>标准队列不保证；FIFO 队列按消息组</td>
+              <td>未删除则重新可见；死信队列承接多次失败</td>
+              <td>默认可见性超时 30 秒；最长 12 小时；至少一次投递</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Devin 的自动化把「队列」做成了产品可见的限制：条目有 id 去重、每次运行有上限、失败会释放、频率和 ACU 有预算。<a class="cite" href="#s8">[8]</a> Temporal 的 Task Queue 是 worker 的分发机制，不是用户任务的 backlog；任务持久化在 workflow history 里，队列本身是轻量、按需创建的。<a class="cite" href="#s9">[9]</a> SQS 的可见性超时本质上是一个租约：消费者拿到消息后，消息对其他消费者暂时不可见；处理完要删除，超时未删就会重新出现，多次失败进入死信队列。<a class="cite" href="#s10">[10]</a></p>
+
+      <div class="callout gold">
+        <span class="label">选型提示</span>
+        <p>如果你的「队列」需要回答「用户这条消息什么时候生效」，先做产品语义，不要先选 broker；如果你需要回答「哪台机器跑这个工具调用」，再考虑 Temporal / SQS。两者可以叠在一起，但不能互相替代。</p>
+      </div>
+    </section>
+
+    <section id="failures">
+      <h2><span class="num">05</span><span class="h2-text">十二个失败模式：队列是怎么坏掉的</span></h2>
+      <p><strong>队列的 bug 很少是「队列本身」坏了。</strong>更多时候是语义没写清、状态没落库、租约没 fencing、或者 UI 把服务端状态抄了一份。下面十二个模式，多数有真实产品或工程证据，个别是设计推论。</p>
+
+      <div class="table-wrap">
+        <table>
+          <caption>失败模式、根因与修法</caption>
+          <thead><tr><th>#</th><th>症状</th><th>根因</th><th>修法</th><th>证据</th></tr></thead>
+          <tbody>
+            <tr><td>01</td><td>用户以为任务结束才执行，系统在中间轮次就放行</td><td>「生效点」没有被建模成字段，只存在于实现细节</td><td>给每条任务一个 <code>drain_policy</code>，UI 显示它，测试覆盖中间轮次</td><td><a class="cite" href="#s4">[4]</a></td></tr>
+            <tr><td>02</td><td>切换聊天 / 刷新后，排队项消失</td><td>队列只存在前端内存，视图切换触发重建</td><td>队列落库；UI 只做投影；切换后用任务 id 重新拉取</td><td><a class="cite" href="#s5">[5]</a></td></tr>
+            <tr><td>03</td><td>网络重试后同一条 steer 投递两次</td><td>接口没有幂等键；失败被当成「没送到」</td><td>客户端生成 <code>client_key</code>；服务端唯一约束；重复请求返回原结果</td><td><a class="cite" href="#s3">[3]</a><a class="cite" href="#s12">[12]</a></td></tr>
+            <tr><td>04</td><td>租约过期后旧 worker 写回结果，覆盖新 worker</td><td>没有 fencing token；完成写入只按 task id</td><td>每次领取递增 <code>lease_epoch</code>；完成时校验 epoch，0 行即丢弃</td><td><a class="cite" href="#s10">[10]</a><a class="cite" href="#s11">[11]</a></td></tr>
+            <tr><td>05</td><td>一个长任务堵住整个会话，后面的消息全在等</td><td>把「会话」当成唯一的并发单位，没有旁路</td><td>steer 走独立信号表；审批绕过任务队列；长任务拆步</td><td><a class="cite" href="#s1">[1]</a><a class="cite" href="#s3">[3]</a></td></tr>
+            <tr><td>06</td><td>审批排在一小时批处理后面，人来了也批不了</td><td>审批被当成普通任务，进入同一条 FIFO</td><td>审批单独状态与通知；超时策略；高优先级通道</td><td>设计推论</td></tr>
+            <tr><td>07</td><td>取消后子进程还在跑，或者工具已经产生副作用</td><td>取消只改了 UI 状态，没有协作式检查与进程清理</td><td><code>cancel_requested_at</code> + 步骤间检查 + 终止子进程 + 补偿记录</td><td><a class="cite" href="#s1">[1]</a></td></tr>
+            <tr><td>08</td><td>队列无限增长，内存 / 数据库被撑爆</td><td>没有准入上限、没有背压、没有过期清理</td><td>每 agent / 租户最大深度；满时 429 + Retry-After；TTL 清理</td><td><a class="cite" href="#s8">[8]</a></td></tr>
+            <tr><td>09</td><td>批量任务把交互请求饿死</td><td>全局严格优先级或纯 FIFO，没有公平调度</td><td>按租户轮转 / 加权公平；给交互流量预留容量</td><td>设计推论</td></tr>
+            <tr><td>10</td><td>CLI 里是「排队」，App 里是「转向」，云端又是第三种</td><td>各端自己实现语义，没有共享的契约与字段</td><td>服务端定义 <code>delivery</code> 枚举；各端只渲染，不解释</td><td><a class="cite" href="#s3">[3]</a><a class="cite" href="#s6">[6]</a></td></tr>
+            <tr><td>11</td><td>队列满时静默丢弃，用户以为提交成功</td><td>没有拒绝路径，或者拒绝只写日志</td><td>同步返回「已拒绝」与原因；UI 保留草稿；给出重试时间</td><td><a class="cite" href="#s8">[8]</a></td></tr>
+            <tr><td>12</td><td>监控只看队列深度，事故时深度很低但年龄很大</td><td>深度是瞬时量，不能反映卡住的最老任务</td><td>同时看 <code>oldest_age</code>、等待 p95、租约过期数</td><td>工程实践</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="label">最贵的一类 bug</span>
+        <p>不是「任务没跑」，而是「任务跑了两次，而且第二次没人知道」。重复执行的代价通常不是算力，而是外部副作用：重复发邮件、重复扣款、重复开 PR、重复删文件。队列设计的第一优先级不是吞吐，而是<strong>让重复可检测、让副作用可幂等</strong>。</p>
+      </div>
+    </section>
+
+    <section id="model">
+      <h2><span class="num">06</span><span class="h2-text">数据模型：三张表，九个状态</span></h2>
+      <p><strong>不要用一张表同时存任务、信号和日志。</strong>它们的保留期、写入频率、查询方式和一致性要求都不同。一个够用的最小模型是三张表：<code>agent_tasks</code> 存承诺，<code>run_signals</code> 存转向，<code>task_events</code> 存审计。</p>
+
+      <h3>6.1 任务表</h3>
+      <div class="code-label"><span>PostgreSQL · 任务与状态</span><span>最小字段集</span></div>
+      <pre><code>create table agent_tasks (
+  id               uuid primary key,
+  tenant_id        text not null,
+  agent_id         text not null,
+  session_id       text not null,
+  kind             text not null check (kind in ('follow_up', 'task', 'approval')),
+  state            text not null check (state in (
+                     'queued', 'claimed', 'running', 'waiting',
+                     'retry_wait', 'succeeded', 'failed', 'cancelled', 'dead')),
+  priority         int  not null default 0,
+  seq              bigint generated always as identity,
+  position         numeric not null default 0,
+  drain_policy     text not null check (drain_policy in (
+                     'next_tool', 'turn_end', 'task_end', 'human')),
+  payload          jsonb not null,
+  idempotency_key  text not null,
+  attempts         int  not null default 0,
+  max_attempts     int  not null default 3,
+  available_at     timestamptz not null default now(),
+  lease_owner      text,
+  lease_epoch      bigint not null default 0,
+  lease_until      timestamptz,
+  cancel_requested_at timestamptz,
+  created_at       timestamptz not null default now(),
+  started_at       timestamptz,
+  finished_at      timestamptz,
+  result           jsonb,
+  error            jsonb,
+  unique (tenant_id, idempotency_key)
+);
+
+create index agent_tasks_claim_idx
+  on agent_tasks (state, available_at, priority desc, position, seq);
+
+-- 每个 agent 同时只有一个活跃 run；并行靠多个 agent，而不是同一个 agent 并发
+create unique index agent_tasks_one_active
+  on agent_tasks (agent_id)
+  where state in ('claimed', 'running', 'waiting');</code></pre>
+
+      <p>几个字段的用意：</p>
+      <ul>
+        <li><code>seq</code> 是不可变的创建顺序，<code>position</code> 是可变的展示顺序。拖动排序只改 <code>position</code>，不重写历史；建议用稀疏数值（1024、2048……），插入时取相邻两条的中点，避免整表重排。</li>
+        <li><code>drain_policy</code> 把「什么时候生效」从实现细节变成数据。worker 不在运行时猜，UI 也能直接显示。</li>
+        <li><code>lease_epoch</code> 是 fencing token。每次领取加一，完成时带着它写回；旧 worker 的写回会命中 0 行。</li>
+        <li><code>idempotency_key</code> 防重复提交；<code>payload</code> 只存引用，不存几 MB 的对话历史。</li>
+      </ul>
+
+      <h3>6.2 信号表</h3>
+      <div class="code-label"><span>PostgreSQL · steer / cancel 信号</span><span>短生命周期</span></div>
+      <pre><code>create table run_signals (
+  id          bigserial primary key,
+  task_id     uuid not null references agent_tasks(id) on delete cascade,
+  seq         bigint not null,
+  kind        text not null check (kind in ('steer', 'cancel')),
+  body        jsonb not null,
+  client_key  text,
+  created_at  timestamptz not null default now(),
+  consumed_at timestamptz,
+  unique (task_id, seq),
+  unique (task_id, client_key)
+);
+
+create index run_signals_pending_idx
+  on run_signals (task_id, seq)
+  where consumed_at is null;</code></pre>
+      <p>信号与任务分开，是因为它们的生命周期完全不同：任务可能活几小时，信号通常只活一个 turn；任务要审计，信号可以合并；任务失败要重试，信号丢了通常只需要告诉用户「没送到」。把 steer 塞进任务表，会让「任务」这个概念同时承担「工作单元」和「对话事件」两种职责。</p>
+
+      <h3>6.3 事件表</h3>
+      <div class="code-label"><span>PostgreSQL · 追加写审计</span><span>只 insert，不 update</span></div>
+      <pre><code>create table task_events (
+  id         bigserial primary key,
+  task_id    uuid not null,
+  event      text not null,
+  from_state text,
+  to_state   text,
+  actor      text not null,
+  at         timestamptz not null default now(),
+  detail     jsonb
+);
+
+create index task_events_task_idx on task_events (task_id, at);</code></pre>
+      <p>事件表负责三件事：审计（谁在什么时候改了什么）、回放（事故后重建状态）、度量（等待、重试、取消的分布）。它不应该被用来做「当前状态」查询；当前状态永远以 <code>agent_tasks.state</code> 为准。</p>
+
+      <h3>6.4 六条不变量</h3>
+      <ol>
+        <li><strong>一个 agent 同时只有一个活跃 run。</strong>用部分唯一索引兜底；并发靠多个 agent、多个会话，而不是同一个会话里并行改文件。</li>
+        <li><strong>终态不可回退。</strong>要重做就新建一条任务，保留原任务的审计记录；否则「失败后悄悄复活」会破坏所有统计。</li>
+        <li><strong>每次领取递增 epoch。</strong>完成、失败、心跳都必须带 <code>lease_owner + lease_epoch</code>；否则旧 worker 会变成幽灵。</li>
+        <li><strong>队列顺序只由服务端决定。</strong>前端拖动只发「把 X 移到 Y 之后」的意图，服务端重算 <code>position</code> 并记录事件。</li>
+        <li><strong>幂等键在租户内唯一。</strong>同一件事重复提交返回原任务，不新建；不同租户可以复用一个键。</li>
+        <li><strong>payload 有上限。</strong>大文本、图片、文件放对象存储，表里只存 URI 与哈希；否则队列会变成第二个数据库。</li>
+      </ol>
+    </section>
+
+    <section id="lease">
+      <h2><span class="num">07</span><span class="h2-text">领取与租约：不要在一次 Agent 运行里持有事务</span></h2>
+      <p><strong>数据库队列最常见的错误，是把「领取」写成「开事务 → 锁行 → 跑 Agent → 提交」。</strong>Agent 可能跑十分钟，事务会一直持有锁，连接池很快耗尽，其他 worker 只能排队。正确做法是：<strong>领取是一个短事务，提交后靠租约维持所有权；完成是另一个短事务，用 epoch 做 fencing。</strong></p>
+
+      <h3>7.1 原子领取</h3>
+      <div class="code-label"><span>PostgreSQL · claim</span><span>一条语句完成选行、加锁、改状态</span></div>
+      <pre><code>with candidate as (
+  select id
+  from agent_tasks
+  where state = 'queued'
+    and available_at &lt;= now()
+    and cancel_requested_at is null
+  order by priority desc, position, seq
+  for update skip locked
+  limit 1
+)
+update agent_tasks t
+set state       = 'claimed',
+    lease_owner = $1,
+    lease_epoch = t.lease_epoch + 1,
+    lease_until = now() + interval '30 seconds',
+    attempts    = t.attempts + 1,
+    started_at  = coalesce(t.started_at, now())
+from candidate c
+where t.id = c.id
+returning t.*;</code></pre>
+      <p><code>FOR UPDATE SKIP LOCKED</code> 让并发的 worker 跳过已被别人锁住的行，而不是排队等锁；它把「选一行」和「锁一行」合成一个原子动作，避免两个 worker 同时选中同一条任务。<a class="cite" href="#s11">[11]</a> 这个锁只在领取事务里有效，提交后就释放；真正的所有权由 <code>lease_until</code> 维持。</p>
+
+      <h3>7.2 心跳与完成</h3>
+      <div class="code-label"><span>PostgreSQL · heartbeat / complete</span><span>两者都必须带 epoch</span></div>
+      <pre><code>-- 每 10 秒续一次；租约 30 秒，留两次重试空间
+update agent_tasks
+set lease_until = now() + interval '30 seconds'
+where id = $1
+  and lease_owner = $2
+  and lease_epoch = $3
+  and state in ('claimed', 'running', 'waiting');
+
+-- 完成时校验 owner + epoch；0 行说明租约已经丢了
+update agent_tasks
+set state = 'succeeded',
+    finished_at = now(),
+    result = $4,
+    lease_owner = null,
+    lease_until = null
+where id = $1
+  and lease_owner = $2
+  and lease_epoch = $3
+  and state in ('running', 'waiting');</code></pre>
+      <p>如果完成语句返回 0 行，worker 不应该重试写回，而应该丢弃结果并记录「lease lost」。因为这意味着另一个 worker 已经接手；再写一次就会覆盖新结果，甚至产生两次副作用。SQS 的可见性超时是同一个思路：消息在处理期间对其他消费者不可见，超时未删除就重新出现。<a class="cite" href="#s10">[10]</a></p>
+
+      <h3>7.3 回收过期租约</h3>
+      <div class="code-label"><span>PostgreSQL · reaper</span><span>由独立进程或定时任务执行</span></div>
+      <pre><code>update agent_tasks
+set state = case
+      when attempts &gt;= max_attempts then 'dead'
+      else 'retry_wait'
+    end,
+    available_at = now() + make_interval(
+      secs =&gt; least(300, (power(2, attempts)::int * 2))
+    ),
+    lease_owner = null,
+    lease_until = null
+where state in ('claimed', 'running', 'waiting')
+  and lease_until &lt; now();</code></pre>
+      <p>退避时间要有上限和抖动，否则大量任务会在同一秒重试，形成二次雪崩。SQS 的可见性超时最长 12 小时，超过这个尺度的任务应该拆成多个步骤或改用 durable execution，而不是无限延长租约。<a class="cite" href="#s10">[10]</a> 对 Agent 来说，更现实的做法是：每个工具调用是一个可检查点，长任务在每个检查点续租；一旦进程崩溃，从最后一个检查点恢复，而不是从头重跑。</p>
+
+      <div class="callout green">
+        <span class="label">一句话记住</span>
+        <p><strong>事务负责「谁拿到」，租约负责「谁还活着」，epoch 负责「谁有资格写」。</strong>三件事分开，崩溃恢复才不会变成数据污染。</p>
+      </div>
+    </section>
+
+    <section id="scheduling">
+      <h2><span class="num">08</span><span class="h2-text">排序、公平与背压：队列的三种社会契约</span></h2>
+      <p><strong>调度不是「谁先来谁先跑」这么简单。</strong>它同时在分配三种稀缺资源：用户的等待时间、系统的并发容量、以及不同租户之间的公平性。下面五件事，决定了队列在负载下是「慢」还是「坏」。</p>
+
+      <h3>8.1 会话内 FIFO，跨会话再谈优先级</h3>
+      <p>同一个会话里，顺序是用户心智模型的一部分：他按 A、B、C 输入，就期待 A、B、C 执行。跨会话时，严格 FIFO 会让一个批量任务挡住所有交互请求，所以需要优先级或公平调度。一个简单的分层是：<strong>会话内按 <code>position, seq</code>；跨会话按 <code>priority</code> 与租户配额。</strong></p>
+
+      <h3>8.2 公平：不要让一个大客户吃掉所有 worker</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>常见调度策略</caption>
+          <thead><tr><th>策略</th><th>适合</th><th>代价 / 风险</th></tr></thead>
+          <tbody>
+            <tr><td>严格 FIFO</td><td>单租户、顺序敏感</td><td>队头阻塞；大任务挡住小请求</td></tr>
+            <tr><td>严格优先级</td><td>交互流量必须优先</td><td>低优先级饥饿；优先级被滥用</td></tr>
+            <tr><td>按租户轮转</td><td>多租户 SaaS</td><td>实现复杂；顺序不再全局</td></tr>
+            <tr><td>加权公平</td><td>不同套餐 / 不同配额</td><td>需要持续测量与调参</td></tr>
+            <tr><td>预留容量</td><td>交互与批处理混跑</td><td>容量利用率下降</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Temporal 的 Task Queue 用分区提升吞吐，代价是多分区下不保证严格顺序；这是典型的「用顺序换并发」。<a class="cite" href="#s9">[9]</a> 产品侧也可以用同样的思路：交互队列单独一组 worker，批处理另一组；两组共享总容量，但交互组有最低保留。</p>
+
+      <h3>8.3 背压：有界队列，早拒绝</h3>
+      <p>没有上限的队列不是队列，是内存泄漏。准入层至少要设四道闸：<strong>每 agent 最大深度</strong>（防止一个会话刷爆）、<strong>每租户最大深度</strong>（防止一个客户占满）、<strong>全局最大深度</strong>（保护数据库）、<strong>预算上限</strong>（防止一个任务烧掉一个月成本）。</p>
+      <p>拒绝要同步、要可解释、要给下一步：<code>429 Too Many Requests</code> + <code>Retry-After</code> + 「当前队列 120 条，预计 8 分钟后可提交」。Devin 的做法是把上限做成产品可见的配置：每次运行最多处理多少条、每小时最多触发多少次、单个会话最多消耗多少 ACU。<a class="cite" href="#s8">[8]</a> 这比在后台静默丢弃诚实得多。</p>
+
+      <h3>8.4 长任务：心跳、检查点、拆步</h3>
+      <p>Agent 任务经常跨小时。租约不能无限长，所以要把长任务拆成可检查点的步骤：每次模型调用、每次工具调用、每次压缩之后都可以续租；进程崩溃后从最后一个检查点恢复。Anthropic 的长任务 harness 用 <code>claude-progress.txt</code>、功能清单和 git 历史把「跨上下文窗口的进度」外化，本质上也是把一个大任务拆成可恢复的小步。<a class="cite" href="#s13">[13]</a></p>
+
+      <h3>8.5 并发：一个 agent 串行，多个 agent 并行</h3>
+      <p>Cursor 的 Cloud Agents API 明确规定：每个 agent 同时只能有一个活跃 run；在 run 处于 <code>CREATING</code>、<code>RUNNING</code> 或 <code>WAITING_FOR_BACKGROUND_WORK</code> 时再发普通 follow-up 会返回 <code>409 agent_busy</code>，除非用 <code>delivery: "steer"</code>。<a class="cite" href="#s3">[3]</a> 这个约束不是性能限制，而是产品选择：同一个工作区里并发改文件，合并冲突和上下文交错会让人无法理解。要并行，就开多个 agent、多个 worktree、多个会话。</p>
+    </section>
+
+    <section id="bypass">
+      <h2><span class="num">09</span><span class="h2-text">两条旁路：Steering 与审批</span></h2>
+      <p><strong>队列再完整，也不能让所有事情都排队。</strong>转向要绕过队列，审批要绕过队列，取消也要绕过队列。它们是队列的旁路，不是队列的普通元素。</p>
+
+      <h3>9.1 Steering：在安全边界插入，不在工具中间打断</h3>
+      <p>Steering 的接口要回答三件事：<strong>送到哪、什么时候生效、没送到怎么办</strong>。Cursor 的 Cloud Agents API 把结果分成 <code>steered</code> 与 <code>queued</code>：有活跃 run 时进入当前 run，在下一次安全步骤送达；没有活跃 run 时转为下一次 follow-up。<a class="cite" href="#s3">[3]</a> 这比笼统返回 <code>202 Accepted</code> 有用得多，因为客户端可以据此更新 UI。</p>
+      <div class="table-wrap">
+        <table>
+          <caption>Steering 的接口语义</caption>
+          <thead><tr><th>字段 / 状态</th><th>含义</th><th>客户端该做什么</th></tr></thead>
+          <tbody>
+            <tr><td><code>delivery: "steer"</code></td><td>请求进入当前 run，不新建任务</td><td>显示「将在下一步生效」；不要重复提交</td></tr>
+            <tr><td><code>delivery: "steered"</code></td><td>当前 run 已接受，返回 <code>runId</code></td><td>把消息挂到该 run 的时间线</td></tr>
+            <tr><td><code>delivery: "queued"</code></td><td>没有活跃 run，转为下一次 follow-up</td><td>显示「已排队，等下一轮」；不要显示「已插入」</td></tr>
+            <tr><td><code>client_key</code></td><td>客户端幂等键</td><td>重试时复用；服务端去重</td></tr>
+            <tr><td>运行结束前未消费</td><td>信号没有赶上当前 run</td><td>按产品策略降级为 follow-up，或明确告知未送达</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>实现上，Agent 循环在每个安全边界检查一次信号表：模型调用前、工具返回后、压缩之后。不要在处理工具调用的中途强行改上下文，否则工具参数和模型意图会错位。</p>
+      <div class="code-label"><span>Python · 安全边界消费信号</span><span>伪代码</span></div>
+      <pre><code>async def run_agent(task, queue, model, tools):
+    for step in range(task.max_steps):
+        if await queue.cancel_requested(task):
+            raise Cancelled("user")
+
+        for signal in await queue.drain_signals(task):
+            messages.append({"role": "user", "content": signal.body})
+
+        action = await model(messages)
+        if not action.tool_call:
+            return action.text
+
+        result = await tools.run(
+            action.tool_call,
+            idempotency_key=f"{task.id}:{step}",
+        )
+        messages.append(result)
+
+    raise MaxSteps("step budget exhausted")</code></pre>
+      <p>两个细节：<strong>工具调用要带幂等键</strong>，因为重试可能发生在工具已经成功、但结果还没写回的窗口；<strong>信号消费要在一个短事务里标记 <code>consumed_at</code></strong>，否则重试会重复注入同一条 steer。</p>
+
+      <h3>9.2 审批：阻塞状态，不是普通任务</h3>
+      <p>审批和任务的关键区别是：<strong>审批的推进者是人，不是 worker。</strong>它应该进入 <code>waiting</code> 状态，带 <code>approval_id</code>、<code>expires_at</code>、风险等级和可选的「本次 / 本任务 / 本会话」授权范围。超时默认拒绝或取消，不能自动放行；审批通过后，任务从 <code>waiting</code> 回到 <code>running</code>，而不是新建一条任务。</p>
+      <div class="table-wrap">
+        <table>
+          <caption>审批卡的最小字段</caption>
+          <thead><tr><th>字段</th><th>作用</th></tr></thead>
+          <tbody>
+            <tr><td>动作</td><td>要执行什么命令 / 改哪些文件 / 推到哪个分支</td></tr>
+            <tr><td>原因</td><td>Agent 为什么需要这一步；不做会怎样</td></tr>
+            <tr><td>风险</td><td>不可逆、影响范围、涉及的数据</td></tr>
+            <tr><td>范围</td><td>仅本次 / 本任务 / 本会话；默认最小</td></tr>
+            <tr><td>过期</td><td>什么时候失效；过期后任务怎么处理</td></tr>
+            <tr><td>审计</td><td>谁批的、什么时候、依据是什么</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>书本第 6 章的三档分流可以作为审批之外的默认策略：<code>INTERRUPT</code> 走取消，<code>IMMEDIATE</code> 走立即回应（不打断后台任务），<code>DEFERRED</code> 走排队。<a class="cite" href="#s14">[14]</a> 审批是第四档，因为它的推进条件不是「什么时候有空」，而是「人什么时候做决定」。</p>
+
+      <div class="callout gold">
+        <span class="label">旁路原则</span>
+        <p>取消、转向、审批都不应该排在「待办」后面。它们要能打断等待，但不能打断正在写文件的工具调用；它们要能改变任务的下一步，但不能改变已经发生的事实。</p>
+      </div>
+    </section>
+
+    <section id="sql">
+      <h2><span class="num">10</span><span class="h2-text">最小实现：一个 worker 的四十行</span></h2>
+      <p><strong>把前面的契约压成可运行的骨架。</strong>下面不是生产代码，省略了鉴权、限流、对象存储和可观测性；但它保留了三个不能省的东西：<strong>原子领取、心跳续租、完成时 fencing</strong>。</p>
+
+      <h3>10.1 接口</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>最小 API 面</caption>
+          <thead><tr><th>方法与路径</th><th>作用</th><th>关键语义</th></tr></thead>
+          <tbody>
+            <tr><td><code>POST /v1/tasks</code></td><td>创建任务或 follow-up</td><td>带 <code>idempotency_key</code>；返回队列位置与 <code>drain_policy</code></td></tr>
+            <tr><td><code>GET /v1/tasks/{id}</code></td><td>读取任务</td><td>返回状态、尝试次数、等待原因、结果引用</td></tr>
+            <tr><td><code>POST /v1/tasks/{id}/cancel</code></td><td>取消</td><td>幂等；排队项立即取消，运行项协作式取消</td></tr>
+            <tr><td><code>POST /v1/runs/{id}/steer</code></td><td>转向当前 run</td><td>返回 <code>steered</code> 或 <code>queued</code>；带 <code>client_key</code></td></tr>
+            <tr><td><code>GET /v1/agents/{id}/queue</code></td><td>读取队列</td><td>按 <code>position</code> 排序；每条带状态与生效点</td></tr>
+            <tr><td><code>PATCH /v1/tasks/{id}/position</code></td><td>调整顺序</td><td>只改 <code>position</code>；写审计事件</td></tr>
+            <tr><td><code>POST /v1/approvals/{id}</code></td><td>提交审批决定</td><td>批准 / 拒绝 / 要求修改；带理由与范围</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-label"><span>HTTP · 创建任务</span><span>请求与响应</span></div>
+      <pre><code>POST /v1/tasks
+{
+  "agent_id": "agent_42",
+  "kind": "task",
+  "drain_policy": "task_end",
+  "input": "fix the three failing tests",
+  "idempotency_key": "user_123:req_456"
+}
+
+201 Created
+{
+  "id": "tsk_01J8Z9K3",
+  "state": "queued",
+  "position": 3,
+  "drain_policy": "task_end",
+  "wait_reason": "agent_busy",
+  "queue_age_seconds": 0
+}</code></pre>
+
+      <h3>10.2 worker 循环</h3>
+      <div class="code-label"><span>Python · worker</span><span>领取、心跳、完成 / 失败</span></div>
+      <pre><code>import asyncio
+
+class Cancelled(Exception):
+    pass
+
+class LeaseLost(Exception):
+    pass
+
+async def worker(pool, agent, worker_id: str):
+    while not pool.stopping:
+        task = await pool.claim(worker_id)
+        if task is None:
+            await asyncio.sleep(0.2)
+            continue
+
+        heartbeat = asyncio.create_task(pool.heartbeat(task))
+        try:
+            result = await agent.run(task, pool)
+            await pool.complete(task, result)
+        except Cancelled:
+            await pool.cancel(task, reason="user")
+        except LeaseLost:
+            # 另一个 worker 已经接手；丢弃结果，不要重写
+            pool.log.warning("lease lost: %s", task.id)
+        except Exception as exc:
+            await pool.fail(task, exc)
+        finally:
+            heartbeat.cancel()</code></pre>
+
+      <p>这段代码的顺序很重要：<strong>先领取，后启动心跳；先完成，后取消心跳；任何写回都带 epoch。</strong>如果把心跳放在 <code>agent.run</code> 里面，工具调用卡住时租约就会过期；如果把完成放在 <code>finally</code> 里，失败也可能被写成成功。</p>
+
+      <h3>10.3 Agent 循环里的三个检查点</h3>
+      <pre><code>async def run_agent(task, queue, model, tools):
+    for step in range(task.max_steps):
+        if await queue.cancel_requested(task):
+            raise Cancelled("user")
+
+        for signal in await queue.drain_signals(task):
+            messages.append({"role": "user", "content": signal.body})
+
+        action = await model(messages)
+        if not action.tool_call:
+            return action.text
+
+        result = await tools.run(
+            action.tool_call,
+            idempotency_key=f"{task.id}:{step}",
+        )
+        messages.append(result)
+
+    raise MaxSteps("step budget exhausted")</code></pre>
+
+      <p>三个检查点分别对应三种失败：<strong>取消</strong>（用户改了主意）、<strong>转向</strong>（用户补了约束）、<strong>重试</strong>（工具已经成功但结果没写回）。工具幂等键用 <code>task.id + step</code>，同一个步骤重试不会产生第二次副作用；如果工具本身不支持幂等，就在工具外面包一层「先查后写」的补偿逻辑。</p>
+
+      <div class="callout blue">
+        <span class="label">实现边界</span>
+        <p>这段骨架假设「一个 agent 同时一个 run」。如果你要做多 agent 并行，不要去掉这个约束；复制 agent，给每个 agent 独立的队列与工作区。共享同一个 agent id 的并发 run 会让 <code>one_active</code> 索引直接拒绝，这是保护，不是障碍。</p>
+      </div>
+    </section>
+
+    <section id="metrics">
+      <h2><span class="num">11</span><span class="h2-text">度量与测试：怎么证明队列没有坏</span></h2>
+      <p><strong>队列的监控不能只看深度。</strong>深度低但最老任务等了半小时，说明 worker 卡住了；深度高但等待时间短，可能只是瞬时峰值。下面十二个指标覆盖「堵、慢、重、丢、偏」五类问题。</p>
+
+      <div class="table-wrap">
+        <table>
+          <caption>队列指标</caption>
+          <thead><tr><th>指标</th><th>定义</th><th>异常信号</th></tr></thead>
+          <tbody>
+            <tr><td><code>queue_depth</code></td><td>处于 <code>queued</code> 的任务数</td><td>持续上升；与吞吐背离</td></tr>
+            <tr><td><code>oldest_age_seconds</code></td><td>最老 queued 任务的等待时长</td><td>超过等待 p95 的两倍</td></tr>
+            <tr><td><code>claim_latency_p95</code></td><td>入队到被领取的时间</td><td>升高说明 worker 不足或锁竞争</td></tr>
+            <tr><td><code>wait_p95</code></td><td>入队到开始执行的时间</td><td>按租户 / 优先级拆分看</td></tr>
+            <tr><td><code>run_duration_p95</code></td><td>开始到终态的时间</td><td>长尾说明工具或压缩有问题</td></tr>
+            <tr><td><code>retry_rate</code></td><td>进入 <code>retry_wait</code> 的比例</td><td>突增通常是外部依赖故障</td></tr>
+            <tr><td><code>dead_letter_rate</code></td><td>进入 <code>dead</code> 的比例</td><td>任何非零都值得看</td></tr>
+            <tr><td><code>stuck_leases</code></td><td>租约过期仍未回收的任务数</td><td>应为 0；非 0 说明 reaper 挂了</td></tr>
+            <tr><td><code>cancel_latency</code></td><td>取消请求到确认取消的时间</td><td>排队项应接近 0；运行项看工具粒度</td></tr>
+            <tr><td><code>steer_delivery_rate</code></td><td><code>steered</code> / (<code>steered</code> + <code>queued</code> + 丢弃)</td><td>过低说明总是在错过当前 run</td></tr>
+            <tr><td><code>duplicate_effect_count</code></td><td>被幂等层拦下的重复副作用</td><td>不是「零就没事」，要看趋势</td></tr>
+            <tr><td><code>fairness_max_share</code></td><td>单租户占用的 worker 比例</td><td>接近 100% 说明公平调度失效</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>11.1 测试矩阵</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>从单元到混沌</caption>
+          <thead><tr><th>层</th><th>覆盖什么</th><th>典型用例</th></tr></thead>
+          <tbody>
+            <tr><td>单元</td><td>状态迁移、幂等键、取消语义</td><td>终态不可回退；重复 <code>idempotency_key</code> 返回原任务；取消 queued 不产生 run</td></tr>
+            <tr><td>集成</td><td>真实 Postgres 的 claim / lease / reaper</td><td>8 个 worker 并发领取 100 条，无重复、无遗漏；租约过期后重新入队</td></tr>
+            <tr><td>性质测试</td><td>随机交错下的不变量</td><td>任意 enqueue / claim / complete / cancel 顺序，都不出现两个活跃 run</td></tr>
+            <tr><td>混沌</td><td>进程崩溃、数据库重启、网络分区</td><td>在 claim 后、工具调用后、完成前分别 <code>kill -9</code>；旧 worker 的写回必须 0 行</td></tr>
+            <tr><td>负载</td><td>吞吐、延迟、公平</td><td>10,000 条排队、16 个 worker；p95 claim；单租户份额不超过配额</td></tr>
+            <tr><td>界面</td><td>队列可见性与可操作性</td><td>切换会话队列不丢；拖动排序持久化；键盘可取回；状态文案可读</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>11.2 验收命令</h3>
+      <p>本页本身是静态内容，不引入运行时队列；它的验收是「归档一致 + 页面结构 + 引用不悬空」：</p>
+      <pre><code>cd web-astro
+node personal/harness/verify.mjs
+npm run test:personal</code></pre>
+      <p>如果未来把第 10 节的骨架做成可运行实验，测试应该先于实现：先写「租约过期后旧 worker 写回失败」「重复 steer 只消费一次」「取消 queued 不启动 run」三个用例，再写调度器。没有这三个用例，队列很容易在演示时正确、在崩溃时出错。</p>
+    </section>
+
+    <section id="principles">
+      <h2><span class="num">12</span><span class="h2-text">设计原则与取舍</span></h2>
+      <p><strong>最后压缩成十二条。</strong>它们不是互斥的教条，而是一组检查表：做队列评审时，逐条问「我们选了什么，代价是什么」。</p>
+
+      <ol>
+        <li><strong>先定义生效点，再写队列。</strong>没有 <code>drain_policy</code> 的队列，迟早会在「下一轮」和「任务结束」之间漂移。</li>
+        <li><strong>一条队列只承载一种承诺。</strong>steer、follow-up、task、approval 分开；混在一起，失败语义一定互相污染。</li>
+        <li><strong>队列是持久状态，UI 只是投影。</strong>切会话、刷新、换设备都不能重建队列；队列的 source of truth 在服务端或本地库。</li>
+        <li><strong>每个 agent 一个活跃 run，并行靠多 agent。</strong>同一个工作区并发改文件，冲突成本高于并行收益。</li>
+        <li><strong>至少一次执行，副作用必须幂等。</strong>不要承诺 exactly-once；承诺「重复可检测、重复无副作用」。</li>
+        <li><strong>取消是一等状态，不是删除。</strong>保留审计、清理子进程、记录已发生的副作用。</li>
+        <li><strong>Steer 只落在安全边界。</strong>工具调用中间不插入新指令；否则参数和意图会错位。</li>
+        <li><strong>公平性是产品功能。</strong>多租户下，严格 FIFO 或严格优先级都会制造饥饿；预留容量或轮转是必须的。</li>
+        <li><strong>有界队列，早拒绝。</strong>队列满时同步拒绝、给原因和重试时间；静默丢弃比报错更伤信任。</li>
+        <li><strong>看年龄，不看深度。</strong>深度是瞬时量；最老任务的等待时间才是「堵没堵」的证据。</li>
+        <li><strong>租约必须带 fencing。</strong>没有 epoch 的完成写回，迟早会覆盖别人的结果。</li>
+        <li><strong>跨端共享一套语义。</strong>CLI、App、Cloud 可以有不同交互，但不能有不同 <code>delivery</code> 含义。</li>
+      </ol>
+
+      <h3>12.1 关键取舍</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>没有免费的选择</caption>
+          <thead><tr><th>选择</th><th>适合</th><th>代价</th></tr></thead>
+          <tbody>
+            <tr><td>数据库队列</td><td>已有 Postgres、要事务与审计</td><td>高吞吐要调索引 / 分区；worker 常驻连接</td></tr>
+            <tr><td>专用 broker</td><td>高吞吐、跨语言、解耦</td><td>状态与业务库分离；一致性要自己做</td></tr>
+            <tr><td>一条 FIFO</td><td>单租户、语义单一</td><td>队头阻塞；旁路困难</td></tr>
+            <tr><td>四条车道</td><td>产品级 Agent</td><td>实现与 UI 更复杂；需要统一状态机</td></tr>
+            <tr><td>严格优先级</td><td>交互必须压过批处理</td><td>低优先级饥饿；优先级被滥用</td></tr>
+            <tr><td>公平调度</td><td>多租户 SaaS</td><td>顺序不再全局；调参成本</td></tr>
+            <tr><td>至少一次</td><td>大多数 Agent 任务</td><td>必须做幂等；重复副作用要可检测</td></tr>
+            <tr><td>租约 + 心跳</td><td>长任务、可崩溃</td><td>需要 reaper、epoch、时钟容忍</td></tr>
+            <tr><td>单 agent 串行</td><td>同一工作区、可解释</td><td>吞吐靠多 agent；资源开销更大</td></tr>
+            <tr><td>内存队列</td><td>演示、单进程、可丢</td><td>重启即丢；不能跨设备</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <span class="label">评审时最该问的一句</span>
+        <p>「用户按下回车后，他认为发生了什么？系统实际做了什么？如果这两件事不一样，队列的哪个字段应该负责把它说清楚？」</p>
+      </div>
+    </section>
+
+    <section id="sources">
+      <h2><span class="num">13</span><span class="h2-text">来源与方法</span></h2>
+      <p><strong>方法：</strong>2026-10-27 用本机 <code>local-web-search</code> 检索并抓取正文；优先使用产品官方文档，GitHub issue 只作为缺陷证据，Temporal / SQS / Postgres 作为通用队列参照，书本第 6 章实验作为本地实现证据。产品行为会随版本变化，引用日期见每条来源；缺陷可能已被修复，正文只用它说明「这种失败模式存在」。</p>
+      <p><strong>限制：</strong>本文不是基准测试，不比较各产品的吞吐或延迟；没有访问闭源实现，涉及内部结构的判断只到公开文档与接口行为为止。页面中的 SQL 与 Python 是最小示意，不是生产代码。</p>
+
+      <ol class="sources">
+        <li id="s1"><span class="src-title">Queue messages while Claude works</span><span class="src-meta">Claude Code Docs · 官方文档 · 消息 / 命令 / shell 的排队、立即发送、取回与后台会话行为 · 更新于 2026-10-27</span><a class="src-link" href="https://code.claude.com/docs/en/interactive-mode">code.claude.com/docs/en/interactive-mode</a></li>
+        <li id="s2"><span class="src-title">Cursor Agent · Queued messages / Steer a running agent</span><span class="src-meta">Cursor Docs · 官方文档 · Enter 排队、Cmd/Ctrl+Enter 立即发送、拖动排序、下一次工具调用 steer · 访问于 2026-10-27</span><a class="src-link" href="https://cursor.com/docs/agent/overview">cursor.com/docs/agent/overview</a></li>
+        <li id="s3"><span class="src-title">Cloud Agents API</span><span class="src-meta">Cursor Docs · 官方文档 · durable agent + per-prompt run、单 agent 单活跃 run、409 agent_busy、steered / queued、重试可能重复投递 · 访问于 2026-10-27</span><a class="src-link" href="https://cursor.com/docs/cloud-agent/api/endpoints">cursor.com/docs/cloud-agent/api/endpoints</a></li>
+        <li id="s4"><span class="src-title">Codex App: Queue applies follow-ups after an intermediate turn</span><span class="src-meta">GitHub openai/codex issue #31874 · 缺陷报告 · 2026-07-09 · 报告者称 Queue 在中间内部轮次放行；后续标记「不再发生」并关闭</span><a class="src-link" href="https://github.com/openai/codex/issues/31874">github.com/openai/codex/issues/31874</a></li>
+        <li id="s5"><span class="src-title">Queued tasks disappear after switching chats in Codex App</span><span class="src-meta">GitHub openai/codex issue #45884 · 缺陷报告 · 2026-09-16 · 队列在切换聊天后从 UI 消失</span><a class="src-link" href="https://github.com/openai/codex/issues/45884">github.com/openai/codex/issues/45884</a></li>
+        <li id="s6"><span class="src-title">A practical Codex app Steer workflow</span><span class="src-meta">OpenAI Developer Community · 用户报告 · 2026-03-25 · 观察 Steer 更像「当前 turn 结束后消费的 follow-up」</span><a class="src-link" href="https://community.openai.com/t/a-practical-codex-app-steer-workflow-splitting-a-task-into-staged-follow-ups/1377757">community.openai.com/t/1377757</a></li>
+        <li id="s7"><span class="src-title">Codex CLI</span><span class="src-meta">OpenAI · 官方文档 · 引导当前 turn、检查命令与 diff、把后续工作留在同一会话 · 访问于 2026-10-27</span><a class="src-link" href="https://developers.openai.com/codex/cli">developers.openai.com/codex/cli</a></li>
+        <li id="s8"><span class="src-title">Automations</span><span class="src-meta">Devin Docs · 官方文档 · 触发器、条目去重、每次运行上限、失败释放、调用频率与 ACU 预算 · 更新于 2026-10-16</span><a class="src-link" href="https://docs.devin.ai/product-guides/automations">docs.devin.ai/product-guides/automations</a></li>
+        <li id="s9"><span class="src-title">Task Queues</span><span class="src-meta">Temporal Docs · 官方文档 · Worker 长轮询、任务持久化、默认 4 分区、单分区近似 FIFO、多分区不保证顺序 · 访问于 2026-10-27</span><a class="src-link" href="https://docs.temporal.io/task-queue">docs.temporal.io/task-queue</a></li>
+        <li id="s10"><span class="src-title">Amazon SQS visibility timeout</span><span class="src-meta">AWS Docs · 官方文档 · 可见性超时、心跳续期、12 小时上限、至少一次投递、死信队列 · 访问于 2026-10-27</span><a class="src-link" href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html">docs.aws.amazon.com/.../sqs-visibility-timeout.html</a></li>
+        <li id="s11"><span class="src-title">Using FOR UPDATE SKIP LOCKED For Queue Workflows</span><span class="src-meta">Netdata Academy · 工程实践 · SKIP LOCKED 的原子领取、避免 worker 排队、索引与监控建议 · 访问于 2026-10-27</span><a class="src-link" href="https://www.netdata.cloud/academy/update-skip-locked">netdata.cloud/academy/update-skip-locked</a></li>
+        <li id="s12"><span class="src-title">Idempotent requests</span><span class="src-meta">Stripe Docs · 官方文档 · 幂等键、重试返回原结果、参数不一致报错 · 访问于 2026-10-27</span><a class="src-link" href="https://docs.stripe.com/api/idempotent_requests">docs.stripe.com/api/idempotent_requests</a></li>
+        <li id="s13"><span class="src-title">Effective harnesses for long-running agents</span><span class="src-meta">Anthropic · 官方研究 · 2025-11-26 · initializer + coding agent、claude-progress.txt、功能清单与增量推进</span><a class="src-link" href="https://www.anthropic.com/research/effective-harnesses-for-long-running-agents">anthropic.com/research/effective-harnesses-for-long-running-agents</a></li>
+        <li id="s14"><span class="src-title">第 6 章 · 交互：观察与动作空间的扩展 / 实验 6-2 async-agent</span><span class="src-meta">本站书稿 · 本地实现 · 事件队列、INTERRUPT / IMMEDIATE / DEFERRED 三档分流、异步结果到达时批量追加 · 访问于 2026-10-27</span><a class="src-link" href="/book/chapter6/">/book/chapter6/</a></li>
+      </ol>
+
+      <p class="small" style="margin-top:18px">维护说明：产品行为以引用日为准；若发现文档更新，先改本文对应段落与来源日期，再跑页面结构测试与归档校验。页面不含外部脚本与追踪，离线可读。</p>
+    </section>
+  </main>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <div><b>任务队列：Agent 的第二条时间线</b> · 调研与写作 2026-10-27 · 14 条来源</div>
+    <div>产品设计文档，不是官方规格 · 缺陷可能已修复，引用以日期为准 · SQL 与代码为最小示意</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var printBtn=document.getElementById('btnPrint');
+  if(printBtn)printBtn.addEventListener('click',function(){window.print();});
+
+  var bar=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('.toc a[href^="#"]'));
+  var sections=links.map(function(a){return document.getElementById(a.getAttribute('href').slice(1));}).filter(Boolean);
+  function setActive(){
+    var pos=window.scrollY+140;
+    var cur=sections[0];
+    sections.forEach(function(sec){if(sec.offsetTop<=pos)cur=sec;});
+    links.forEach(function(a){
+      a.classList.toggle('active',a.getAttribute('href')==='#'+cur.id);
+    });
+    var doc=document.documentElement;
+    var max=doc.scrollHeight-window.innerHeight;
+    var pct=max>0?Math.min(100,Math.max(0,(window.scrollY/max)*100)):0;
+    if(bar)bar.style.width=pct+'%';
+  }
+  window.addEventListener('scroll',setActive,{passive:true});
+  window.addEventListener('resize',setActive);
+  setActive();
+})();
+</script>
+</body>
+</html>
