@@ -1,0 +1,27 @@
+---
+// Dev-only page: the agent lab (requirement 001). All data comes from the
+// agent-lab service through the /__lab/* proxy; see client/lab/main.ts.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import { SETTINGS_PATH } from '../routes.mjs';
+---
+
+<Layout locale="zh-CN" title="Agent 实验台 · 书本助教">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="lab-page page-width">
+    <header class="lab-head">
+      <p class="eyebrow">需求 001 · 书本助教</p>
+      <h1>Agent 实验台</h1>
+      <p class="lab-lead">问助教一个关于这本书的问题，看它每一轮看到了什么、调用了什么工具；用开关关掉某一章讲的机制再跑一次，用评估判断改动是不是真的变好了。模型接口是全局配置，在「<a href={withBase(SETTINGS_PATH)}>设置</a>」里维护。</p>
+    </header>
+    <nav id="lab-tabs" class="lab-tabs" aria-label="实验台"></nav>
+    <div id="lab-banner"></div>
+    <div id="lab-root" class="lab-root">
+      <p class="lab-muted">正在加载……</p>
+    </div>
+  </main>
+  <script>
+    import '../client/lab/main.ts';
+  </script>
+</Layout>

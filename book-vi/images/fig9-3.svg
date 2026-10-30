@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 410" width="1000" height="410" style="background:#ffffff">
+  <defs>
+    <style>
+      .t{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#26343c}
+      .h{font-size:20px;font-weight:700}
+      .s{font-size:16px;fill:#52636d}
+      .box{fill:#f5f7f8;stroke:#33434d;stroke-width:2}
+      .accent{fill:#e8f1f5;stroke:#2f617a;stroke-width:2}
+    </style>
+  </defs>
+  <text x="500" y="30" text-anchor="middle" class="t h">Cách biểu diễn năng lực quyết định nơi cập nhật chính</text>
+
+  <rect x="35" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="145" y="105" text-anchor="middle" class="t h">Tri thức</text>
+  <text x="145" y="135" text-anchor="middle" class="t s" style="font-size:15px">Sự kiện, kinh nghiệm, ngoại lệ</text>
+  <text x="145" y="164" text-anchor="middle" class="t s">Markdown / cơ sở tri thức</text>
+
+  <rect x="275" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="385" y="105" text-anchor="middle" class="t h">Chỉ dẫn</text>
+  <text x="385" y="135" text-anchor="middle" class="t s" style="font-size:10px">Nguyên tắc phán đoán diễn đạt được bằng lời</text>
+  <text x="385" y="164" text-anchor="middle" class="t s">Prompt / Skill</text>
+
+  <rect x="515" y="72" width="220" height="126" rx="9" class="box"/>
+  <text x="625" y="105" text-anchor="middle" class="t h">Chương trình</text>
+  <text x="625" y="135" text-anchor="middle" class="t s" style="font-size:12px">Quy trình tất định và ràng buộc chặt</text>
+  <text x="625" y="164" text-anchor="middle" class="t s" style="font-size:14.5px">Công cụ / Luồng việc / Harness</text>
+
+  <rect x="755" y="72" width="220" height="126" rx="9" class="accent"/>
+  <text x="865" y="105" text-anchor="middle" class="t h">Tham số</text>
+  <text x="865" y="135" text-anchor="middle" class="t s" style="font-size:12px">Tri giác nhiều chiều và chính sách ẩn</text>
+  <text x="865" y="164" text-anchor="middle" class="t s">SFT / Chưng cất / RL</text>
+
+  <line x1="145" y1="226" x2="865" y2="226" stroke="#33434d" stroke-width="2"/>
+  <path d="M145 218 V234 M865 218 V234" stroke="#33434d" stroke-width="2"/>
+  <text x="145" y="260" text-anchor="middle" class="t s">Dễ cập nhật, truy vết được</text>
+  <text x="865" y="260" text-anchor="middle" class="t s">Nội hóa, chi phí suy luận thấp</text>
+  <text x="500" y="289" text-anchor="middle" class="t h">Không phải bậc thang một chiều mà là bốn vật mang bổ trợ nhau</text>
+
+  <rect x="145" y="320" width="710" height="58" rx="8" class="accent"/>
+  <text x="500" y="344" text-anchor="middle" class="t h" style="font-size:15.5px">Câu hỏi đầu tiên: năng lực có diễn đạt trọn vẹn bằng sự kiện, quy tắc hay chương trình không?</text>
+  <text x="500" y="367" text-anchor="middle" class="t s" style="font-size:15px">Độ ổn định, chi phí và tần suất cập nhật quyết định cách triển khai, không phải khả năng tham số hóa</text>
+</svg>

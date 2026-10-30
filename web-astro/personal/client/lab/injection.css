@@ -1,0 +1,317 @@
+/* 需求 033：提示注入攻防矩阵与单次详情。 */
+.lab-injection {
+  display: grid;
+  gap: 22px;
+}
+.lab-inj-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lab-inj-title-row .lab-h2 {
+  margin: 0;
+}
+.lab-inj-intro {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--lab-radius, 10px);
+  background: var(--surface);
+}
+.lab-inj-intro .lab-lead {
+  max-width: 78ch;
+}
+.lab-inj-links {
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+}
+.lab-inj-form,
+.lab-inj-cell-panel {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--lab-radius, 10px);
+  background: var(--surface);
+}
+.lab-inj-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.lab-inj-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.lab-inj-fieldset legend {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lab-inj-check {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 2px 8px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lab-inj-check:hover {
+  border-color: var(--accent);
+}
+.lab-inj-check input {
+  grid-row: span 2;
+  margin-top: 3px;
+}
+.lab-inj-check-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.lab-inj-check-summary {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.lab-inj-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.lab-inj-estimate {
+  margin: 12px 0;
+}
+.lab-inj-estimate--warn {
+  color: var(--lab-warn);
+  font-weight: 600;
+}
+.lab-inj-report-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.lab-inj-export {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lab-inj-report-head .lab-h2 {
+  margin-bottom: 4px;
+}
+.lab-inj-report-head p {
+  margin: 0;
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+.lab-inj-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+.lab-inj-stat {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.lab-inj-stat-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.lab-inj-stat-value {
+  display: block;
+  margin-top: 3px;
+  font-size: 1.02rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.lab-inj-table-wrap {
+  overflow-x: auto;
+}
+.lab-inj-matrix {
+  min-width: 760px;
+}
+.lab-inj-matrix th,
+.lab-inj-matrix td {
+  vertical-align: middle;
+}
+.lab-inj-corner,
+.lab-inj-attack {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface);
+  text-align: left;
+}
+.lab-inj-attack {
+  min-width: 136px;
+}
+.lab-inj-attack-id,
+.lab-inj-defense-id {
+  display: block;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.lab-inj-defense {
+  min-width: 128px;
+  text-align: center;
+}
+.lab-inj-defense-name {
+  display: block;
+  font-size: 0.84rem;
+}
+.lab-inj-guard {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--hover-bg, var(--surface));
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+.lab-inj-cell {
+  display: grid;
+  gap: 1px;
+  width: 100%;
+  min-height: 68px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.lab-inj-cell:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.lab-inj-cell:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.lab-inj-cell-rate {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lab-inj-cell-count,
+.lab-inj-cell-state {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.lab-inj-cell--low {
+  background: color-mix(in srgb, var(--lab-ok) 9%, var(--surface));
+}
+.lab-inj-cell--mid {
+  background: color-mix(in srgb, var(--lab-warn) 9%, var(--surface));
+}
+.lab-inj-cell--high {
+  background: color-mix(in srgb, var(--lab-warn) 18%, var(--surface));
+}
+.lab-inj-cell--critical {
+  background: color-mix(in srgb, var(--lab-bad) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--lab-bad) 45%, var(--line));
+}
+.lab-inj-cell--none {
+  background: var(--surface);
+}
+.lab-inj-average th,
+.lab-inj-average td {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+}
+.lab-inj-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.78rem;
+}
+.lab-inj-legend-item {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.lab-inj-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lab-inj-panel-head .lab-h3 {
+  margin: 0;
+}
+.lab-inj-trials td {
+  font-size: 0.82rem;
+}
+.lab-inj-clickable {
+  cursor: pointer;
+}
+.lab-inj-clickable:hover {
+  background: var(--hover-bg, var(--surface));
+}
+.lab-inj-trial--success td:first-child {
+  box-shadow: inset 3px 0 0 var(--lab-bad);
+}
+.lab-inj-run-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lab-inj-detail-row td {
+  padding: 0;
+  background: var(--surface);
+}
+.lab-inj-detail {
+  padding: 10px 12px;
+  border-left: 2px solid var(--line);
+  font-size: 0.82rem;
+}
+.lab-inj-detail p {
+  margin: 4px 0;
+}
+@media (max-width: 900px) {
+  .lab-inj-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .lab-inj-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .lab-inj-columns {
+    grid-template-columns: 1fr;
+  }
+  .lab-inj-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lab-inj-controls {
+    grid-template-columns: 1fr;
+  }
+  .lab-inj-intro {
+    padding: 14px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lab-inj-cell {
+    transition:
+      border-color 120ms ease,
+      background 120ms ease;
+  }
+}

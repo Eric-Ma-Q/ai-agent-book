@@ -1,0 +1,1662 @@
+/* 随页问答：全站悬浮入口与面板。颜色沿用阅读器的 CSS 变量。 */
+.pa-root {
+  /* 静态归档页与 A/B 试卷页没有阅读器的全站样式表，--bg / --surface / --muted /
+     --accent-ink 等变量不存在；没有回退时面板会是透明底、按钮文字和底色撞色。
+     这里统一映射一次，Astro 页面仍用阅读器的值，纯 HTML 页面退回中性色。 */
+  --pa-bg: var(--bg, var(--paper, #fcfcf9));
+  --pa-surface: var(--surface, var(--card, #f2f3ed));
+  --pa-ink: var(--ink, #20231e);
+  --pa-muted: var(--muted, var(--ink-soft, #62675d));
+  --pa-line: var(--line, #dedfd7);
+  --pa-accent: var(--accent, #b45309);
+  --pa-accent-ink: var(--accent-ink, #ffffff);
+  --pa-interactive: var(--interactive, #4d6f1e);
+  --pa-sans: var(--sans, 'Manrope Variable', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', sans-serif);
+  --pa-serif: var(--serif, 'Newsreader Variable', 'Noto Serif SC', 'Songti SC', Georgia, serif);
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  font-family: var(--pa-sans);
+  color: var(--pa-ink);
+  pointer-events: none;
+}
+/* 显隐只认 hidden 属性。归档页与试卷页没有全站的 [hidden] 规则，而
+   .pa-panel / .pa-fab 自己的 display 会盖掉浏览器默认的 [hidden]，
+   导致一进页面面板就弹出、点关闭也关不掉。 */
+.pa-root [hidden] {
+  display: none !important;
+}
+body:has(.personal-anno-toggle) .pa-root,
+body.pa-has-anno .pa-root,
+body:has(#themeFab) .pa-root {
+  bottom: 78px;
+}
+.pa-root > * {
+  pointer-events: auto;
+}
+
+.pa-fab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 13px;
+  border: 1px solid color-mix(in srgb, var(--pa-accent) 64%, var(--pa-line));
+  border-radius: 999px;
+  background: var(--pa-accent);
+  color: var(--pa-accent-ink);
+  font: 650 0.875rem/1 var(--pa-sans);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.pa-fab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.22);
+}
+.pa-fab:active {
+  transform: translateY(0);
+}
+.pa-fab svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pa-panel {
+  /* 宿主页隔离：归档页把 `section{padding:64px 0}`、`body{font:15px/1.85}`
+     写成裸元素规则，落在面板上就是顶部 64px 空带、底部被挤掉、标题行高逐页
+     漂移。面板只沿用这里的盒模型与文字基线，组件自己的类规则仍按需覆盖。 */
+  padding: 0;
+  font-size: 1rem;
+  line-height: normal;
+  position: relative;
+  width: min(432px, calc(100vw - 28px));
+  height: min(700px, calc(100vh - 110px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--pa-line);
+  border-radius: 18px;
+  background: var(--pa-bg);
+  box-shadow: 0 24px 70px rgb(0 0 0 / 0.26);
+  /* Keep the measured and declared size identical on archive pages, which
+     have no global border-box reset; the fullscreen morph relies on it. */
+  box-sizing: border-box;
+}
+/* 同样来自宿主页的裸元素规则：`button{...}` 不带 font-family 时控件退回
+   Arial，`a{border-bottom:1px solid}` 会让面板里的链接多一条下划线。 */
+.pa-panel button,
+.pa-panel input,
+.pa-panel select,
+.pa-panel textarea {
+  font-family: inherit;
+}
+.pa-panel a {
+  border-bottom: 0;
+}
+.pa-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+  padding: 15px 15px 11px 18px;
+  border-bottom: 1px solid var(--pa-line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--pa-surface) 72%, var(--pa-bg)), var(--pa-bg));
+}
+.pa-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.pa-title strong {
+  font-family: var(--pa-serif);
+  font-size: 1.12rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.pa-subtitle {
+  color: var(--pa-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.pa-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pa-head-button {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pa-muted);
+  font-size: 0.73rem;
+}
+.pa-head-button:hover {
+  border-color: var(--pa-line);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+}
+.pa-close {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  padding: 0;
+}
+.pa-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  padding: 0 8px;
+}
+.pa-expand-icon {
+  display: inline-flex;
+}
+.pa-expand[aria-pressed='true'] {
+  border-color: var(--pa-line);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+}
+
+.pa-history {
+  max-height: 252px;
+  overflow-y: auto;
+  padding: 8px 16px 10px;
+  border-bottom: 1px solid var(--pa-line);
+  background: var(--pa-surface);
+  font-size: 0.72rem;
+}
+.pa-history-empty {
+  margin: 6px 0;
+  color: var(--pa-muted);
+  line-height: 1.6;
+}
+.pa-history-tip {
+  margin: 2px 0 6px;
+  color: var(--pa-muted);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.pa-history-item {
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--pa-line);
+}
+.pa-history-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+.pa-history-question {
+  margin: 0 0 3px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.pa-history-meta {
+  margin: 0;
+  color: var(--pa-muted);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.pa-history-error {
+  margin: 4px 0 0;
+  color: #b03a2e;
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.pa-history-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+.pa-history-action {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--pa-interactive) 42%, var(--pa-line));
+  border-radius: 7px;
+  background: var(--pa-surface);
+  color: var(--pa-interactive);
+  font: 650 0.68rem/1 var(--pa-sans);
+  cursor: pointer;
+}
+.pa-history-action:hover {
+  border-color: var(--pa-interactive);
+  background: color-mix(in srgb, var(--pa-interactive) 10%, var(--pa-surface));
+}
+.pa-history-action:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.pa-history-link,
+.pa-run-link {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--pa-interactive);
+  font-size: 0.68rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pa-history-actions .pa-history-link {
+  margin-top: 0;
+}
+.pa-run-link {
+  margin-top: 0;
+}
+
+.pa-restored {
+  margin: 0 0 12px;
+  padding: 9px 11px;
+  border: 1px solid var(--pa-line);
+  border-left: 3px solid var(--pa-interactive);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--pa-surface) 70%, var(--pa-bg));
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+  line-height: 1.55;
+}
+.pa-restored strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--pa-ink);
+  font-size: 0.72rem;
+}
+
+.pa-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 7px 14px 7px 18px;
+  border-bottom: 1px solid var(--pa-line);
+  background: var(--pa-surface);
+  font-size: 0.72rem;
+}
+.pa-context-label {
+  flex-shrink: 0;
+  color: var(--pa-muted);
+}
+.pa-context-line {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.pa-shot-toggle {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: 1px solid var(--pa-line);
+  border-radius: 999px;
+  background: var(--pa-bg);
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+}
+.pa-shot-toggle[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--pa-accent) 70%, var(--pa-line));
+  background: color-mix(in srgb, var(--pa-accent) 28%, var(--pa-bg));
+  color: var(--pa-ink);
+}
+
+.pa-seen {
+  border-bottom: 1px solid var(--pa-line);
+  font-size: 0.72rem;
+}
+.pa-seen summary {
+  padding: 8px 18px;
+  color: var(--pa-muted);
+  cursor: pointer;
+  list-style: none;
+}
+.pa-seen summary::-webkit-details-marker {
+  display: none;
+}
+.pa-seen summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s ease;
+}
+.pa-seen[open] summary::before {
+  transform: rotate(90deg);
+}
+.pa-seen-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 230px;
+  padding: 0 18px 12px;
+  overflow: auto;
+}
+.pa-seen-image {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border: 1px solid var(--pa-line);
+  border-radius: 8px;
+  background: #fff;
+}
+.pa-seen-text {
+  margin: 0;
+  color: var(--pa-muted);
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.pa-messages {
+  flex: 1;
+  min-height: 96px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 18px;
+  scroll-behavior: smooth;
+}
+.pa-empty {
+  padding: 20px 6px 8px;
+}
+.pa-empty-title {
+  margin: 0 0 6px;
+  font-family: var(--pa-serif);
+  font-size: 1.14rem;
+  font-weight: 600;
+}
+.pa-empty-text {
+  margin: 0;
+  color: var(--pa-muted);
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+
+.pa-message {
+  margin: 0 0 14px;
+  animation: pa-in 0.16s ease both;
+}
+@keyframes pa-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.pa-message--user {
+  margin-left: auto;
+  width: fit-content;
+  max-width: 88%;
+  padding: 9px 12px;
+  border: 1px solid var(--pa-line);
+  border-radius: 13px 13px 4px 13px;
+  background: var(--pa-surface);
+}
+.pa-message-text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pa-message-context {
+  margin: 5px 0 0;
+  color: var(--pa-muted);
+  font-size: 0.66rem;
+  line-height: 1.4;
+}
+/* 每条提问与回答下方一行，复制按钮只占文字宽；点击后原地显示结果。 */
+.pa-message-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+.pa-message-actions:empty {
+  display: none;
+}
+.pa-message-copy {
+  min-height: 22px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.pa-message-copy:hover {
+  border-color: var(--pa-line);
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+}
+.pa-message-copy--done {
+  color: var(--pa-interactive);
+}
+.pa-message--assistant {
+  padding: 11px 12px;
+  border: 1px solid var(--pa-line);
+  border-radius: 4px 13px 13px 13px;
+  background: var(--pa-bg);
+}
+.pa-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.pa-tools:empty {
+  display: none;
+}
+.pa-tool {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1px solid var(--pa-line);
+  border-radius: 7px;
+  background: var(--pa-surface);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+.pa-tool--error {
+  border-color: color-mix(in srgb, #c0392b 40%, var(--pa-line));
+}
+.pa-tool-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--pa-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pa-accent) 25%, transparent);
+}
+.pa-tool--error .pa-tool-dot {
+  background: #c0392b;
+}
+.pa-tool-name {
+  flex-shrink: 0;
+  font-weight: 650;
+}
+.pa-tool-arg {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--pa-muted);
+}
+.pa-tool-time {
+  flex-shrink: 0;
+  color: var(--pa-muted);
+  font-variant-numeric: tabular-nums;
+}
+.pa-tool-details {
+  flex-basis: 100%;
+  margin-left: 12px;
+}
+.pa-tool-details summary {
+  color: var(--pa-muted);
+  cursor: pointer;
+  font-size: 0.65rem;
+}
+.pa-tool-result {
+  max-height: 160px;
+  margin: 4px 0 0;
+  padding: 6px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--pa-bg);
+  color: var(--pa-muted);
+  font: 0.65rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.pa-answer {
+  font-size: 0.84rem;
+  line-height: 1.72;
+  overflow-wrap: anywhere;
+}
+.pa-answer p {
+  margin: 0 0 0.65em;
+}
+.pa-answer h3,
+.pa-answer h4,
+.pa-answer h5,
+.pa-answer h6 {
+  margin: 0.9em 0 0.35em;
+  font-family: var(--pa-serif);
+  line-height: 1.35;
+}
+/* 归档页也会给裸元素写标题、引用与表格样式；回答在哪个页面打开都按同一套
+   排版渲染，不让宿主的 h3 字号、blockquote 字体或表格宽度漏进来。 */
+.pa-answer h3 {
+  font-size: 1.17em;
+}
+.pa-answer h4 {
+  font-size: 1em;
+}
+.pa-answer h5 {
+  font-size: 0.83em;
+}
+.pa-answer h6 {
+  font-size: 0.67em;
+}
+.pa-answer strong {
+  font-weight: 700;
+}
+.pa-answer em {
+  font-style: italic;
+}
+.pa-answer ul,
+.pa-answer ol {
+  margin: 0 0 0.7em;
+  padding-left: 1.3em;
+}
+.pa-answer li {
+  margin-bottom: 0.22em;
+}
+.pa-answer code {
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  background: var(--pa-surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.86em;
+}
+.pa-answer pre {
+  margin: 0 0 0.75em;
+  padding: 9px 10px;
+  overflow-x: auto;
+  border: 1px solid var(--pa-line);
+  border-radius: 8px;
+  background: var(--pa-surface);
+  white-space: pre;
+}
+.pa-answer pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+.pa-answer .lab-diagram {
+  margin: 0 0 0.75em;
+}
+.pa-answer .lab-diagram-svg {
+  overflow: hidden;
+  border: 1px solid var(--pa-line);
+  border-radius: 8px;
+  background: var(--pa-surface);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.pa-answer .lab-diagram-stage {
+  width: 100%;
+  transform-origin: 0 0;
+}
+.pa-answer .lab-diagram-svg svg {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+.pa-answer .lab-diagram-tools {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+.pa-answer .lab-diagram-hint {
+  margin: 0;
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+.pa-answer .lab-diagram-reset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pa-interactive);
+  font: inherit;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.pa-answer .lab-diagram-source {
+  margin-top: 4px;
+  color: var(--pa-muted);
+  font-size: 0.72rem;
+}
+.pa-answer .lab-diagram-source summary {
+  cursor: pointer;
+}
+.pa-answer .lab-diagram-error {
+  margin: 0 0 0.35em;
+  color: var(--pa-muted);
+  font-size: 0.72rem;
+}
+.pa-answer blockquote {
+  margin: 0 0 0.75em;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--pa-line);
+  color: var(--pa-muted);
+  font-family: inherit;
+  font-size: inherit;
+}
+.pa-answer a {
+  color: var(--pa-interactive);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.pa-answer .lab-table {
+  overflow-x: auto;
+  margin-bottom: 0.75em;
+}
+.pa-answer table {
+  width: auto;
+  min-width: 0;
+  border-collapse: collapse;
+  background: none;
+  font-size: 0.75rem;
+}
+.pa-answer th,
+.pa-answer td {
+  padding: 4px 7px;
+  border: 1px solid var(--pa-line);
+  background: none;
+  font-size: inherit;
+}
+.pa-answer th {
+  font-weight: 700;
+  text-align: center;
+}
+.pa-answer td {
+  width: auto;
+  font-weight: 400;
+  text-align: left;
+}
+/* Host pages use `tr:last-child td { border-bottom: 0 }`; keep every cell
+   bordered so a table reads the same in the panel. */
+.pa-answer tr:last-child td {
+  border-bottom: 1px solid var(--pa-line);
+}
+.pa-answer .lab-cite,
+.pa-cite {
+  display: inline;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--pa-muted);
+}
+/* Page block citations are buttons; reset the native button chrome so they
+   read like the book citation pills next to them. */
+.pa-answer button.pa-cite {
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 1px dotted var(--pa-muted);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pa-answer button.pa-cite:hover {
+  background: color-mix(in srgb, var(--pa-accent) 12%, transparent);
+}
+.pa-answer .lab-cite-ref,
+.pa-cite-ref {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: var(--pa-surface);
+  font-size: 0.68em;
+  font-weight: 650;
+}
+.pa-answer .lab-cite-quote,
+.pa-cite-quote {
+  color: var(--pa-muted);
+}
+.pa-answer .lab-cite-badge,
+.pa-cite-badge {
+  margin-left: 2px;
+  font-size: 0.62em;
+}
+.pa-answer .lab-cite--verified .lab-cite-badge,
+.pa-cite--verified .pa-cite-badge {
+  color: #4c7a1e;
+}
+.pa-answer .lab-cite--not_found .lab-cite-badge,
+.pa-answer .lab-cite--too_short .lab-cite-badge,
+.pa-cite--not_found .pa-cite-badge,
+.pa-cite--too_short .pa-cite-badge,
+.pa-cite--missing .pa-cite-badge {
+  color: #b03a2e;
+}
+
+.pa-footer {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--pa-line);
+  color: var(--pa-muted);
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+.pa-footer:empty {
+  display: none;
+}
+.pa-footer--error {
+  color: #b03a2e;
+}
+
+.pa-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'quick quick'
+    'input actions'
+    'settings settings';
+  align-items: end;
+  gap: 6px 8px;
+  flex: 0 0 auto;
+  padding: 10px 12px 8px;
+  border-top: 1px solid var(--pa-line);
+  background: var(--pa-bg);
+}
+.pa-quick {
+  grid-area: quick;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pa-quick::-webkit-scrollbar {
+  display: none;
+}
+.pa-quick:empty {
+  display: none;
+}
+.pa-quick-button {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid var(--pa-line);
+  border-radius: 999px;
+  background: var(--pa-surface);
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.pa-quick-button:hover {
+  border-color: color-mix(in srgb, var(--pa-accent) 65%, var(--pa-line));
+  color: var(--pa-ink);
+}
+.pa-input {
+  grid-area: input;
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  max-height: 132px;
+  max-height: min(132px, 26dvh);
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--pa-line);
+  border-radius: 12px;
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  font: 0.84rem/1.5 var(--pa-sans);
+  resize: none;
+  outline: none;
+}
+.pa-input:focus {
+  border-color: color-mix(in srgb, var(--pa-accent) 75%, var(--pa-line));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--pa-accent) 22%, transparent);
+}
+.pa-settings {
+  grid-area: settings;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pa-settings::-webkit-scrollbar {
+  display: none;
+}
+.pa-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.pa-field-label {
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+  white-space: nowrap;
+}
+.pa-model {
+  max-width: 128px;
+  min-height: 28px;
+  padding: 0 5px;
+  border: 1px solid var(--pa-line);
+  border-radius: 7px;
+  background: var(--pa-bg);
+  color: var(--pa-ink);
+  font-size: 0.68rem;
+}
+.pa-reasoning {
+  max-width: 104px;
+}
+.pa-model-hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+}
+.pa-send,
+.pa-stop {
+  min-width: 72px;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--pa-line);
+  border-radius: 10px;
+  background: var(--pa-accent);
+  color: var(--pa-accent-ink);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+.pa-stop {
+  background: var(--pa-bg);
+  color: var(--pa-muted);
+}
+.pa-send:disabled {
+  opacity: 0.4;
+}
+.pa-actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  align-self: end;
+  margin: 0;
+}
+.pa-foot {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 14px 9px;
+  overflow: hidden;
+  color: var(--pa-muted);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--pa-bg);
+}
+
+/* 阅读器在 ≤1000px 把工具栏固定在底边；入口和面板整体上移，避免盖住
+   「本章目录 / 我的划线 / 字号 / 专注阅读」。有批注入口时再上移一档，
+   并用 max-height 保证面板标题与关闭按钮不会被顶出视口。 */
+@media (max-width: 1000px) {
+  body:has(.reader-controls:not([hidden])) .pa-root {
+    bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  body:has(.reader-controls:not([hidden])):has(.personal-anno-toggle) .pa-root {
+    bottom: calc(128px + env(safe-area-inset-bottom));
+  }
+  body:has(.reader-controls:not([hidden])) .pa-panel:not(.pa-panel--full) {
+    max-height: calc(100dvh - 150px - env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 640px) {
+  .pa-root {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    align-items: flex-end;
+  }
+  body:has(.personal-anno-toggle) .pa-root,
+  body.pa-has-anno .pa-root {
+    bottom: 12px;
+  }
+  .pa-panel {
+    width: 100%;
+    height: min(82vh, 660px);
+    border-radius: 16px 16px 12px 12px;
+  }
+  .pa-fab {
+    min-height: 42px;
+    padding: 0 13px;
+    font-size: 0.82rem;
+  }
+  .pa-messages {
+    padding: 12px 12px 14px;
+  }
+  .pa-model-hint {
+    display: none;
+  }
+  .pa-model {
+    max-width: 112px;
+  }
+  .pa-reasoning {
+    max-width: 92px;
+  }
+}
+@media (max-width: 380px) {
+  .pa-subtitle {
+    display: none;
+  }
+  .pa-field-label {
+    display: none;
+  }
+  .pa-model {
+    max-width: 112px;
+  }
+  .pa-reasoning {
+    max-width: 92px;
+  }
+  .pa-expand-label {
+    display: none;
+  }
+  .pa-expand {
+    width: 30px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+/* 短视口下面板会被阅读器底栏压到 300px 左右；收紧固定区域，保证
+   输入框与发送按钮不会被面板的 overflow:hidden 裁掉。 */
+@media (max-height: 560px) {
+  .pa-foot {
+    display: none;
+  }
+  .pa-panel:not(.pa-panel--full) .pa-seen {
+    display: none;
+  }
+  .pa-panel:not(.pa-panel--full) .pa-model-hint {
+    display: none;
+  }
+  .pa-panel:not(.pa-panel--full) .pa-compose {
+    gap: 4px 6px;
+    padding: 7px 10px 6px;
+  }
+  .pa-panel:not(.pa-panel--full) .pa-input {
+    max-height: 64px;
+  }
+  .pa-panel:not(.pa-panel--full) .pa-messages {
+    min-height: 64px;
+  }
+}
+
+/* 021: 检验卡、块号回链、聚焦与提示。 */
+.pa-concept {
+  margin: 12px 0 2px;
+}
+.pa-concept figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.pa-concept figcaption strong {
+  font-size: 0.78rem;
+}
+.pa-concept figcaption span {
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+}
+.pa-concept-canvas {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--pa-line);
+  border-radius: 10px;
+  background: var(--pa-surface);
+  scrollbar-width: thin;
+}
+.pa-concept-canvas svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.pa-concept-node rect {
+  fill: var(--pa-bg);
+  stroke: var(--pa-line);
+}
+.pa-concept-node--link {
+  cursor: pointer;
+}
+.pa-concept-node--link:hover rect,
+.pa-concept-node--link:focus-visible rect {
+  stroke: var(--pa-accent);
+}
+.pa-concept-node:focus-visible {
+  outline: none;
+}
+.pa-concept-node:focus-visible rect {
+  stroke-width: 2;
+}
+.pa-concept-label {
+  fill: var(--pa-ink);
+  font-size: 11px;
+  font-weight: 600;
+}
+.pa-concept-label--small {
+  font-size: 10px;
+}
+.pa-concept-section {
+  fill: var(--pa-muted);
+  font-size: 9px;
+}
+.pa-concept-edge {
+  fill: none;
+  stroke: var(--pa-muted);
+  stroke-width: 1.2;
+}
+.pa-concept-edge--back {
+  stroke-dasharray: 4 4;
+}
+.pa-concept-edge--long {
+  opacity: 0.9;
+}
+.pa-concept--dense .pa-concept-edge {
+  opacity: 0.55;
+}
+.pa-concept-arrow--solid {
+  fill: var(--pa-muted);
+}
+.pa-concept-arrow--dashed {
+  fill: var(--pa-bg);
+  stroke: var(--pa-muted);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.pa-concept-edge-label rect {
+  fill: var(--pa-bg);
+  stroke: var(--pa-line);
+  stroke-width: 0.6;
+}
+.pa-concept-edge-label text {
+  fill: var(--pa-muted);
+  font-size: 9px;
+}
+.pa-concept-note {
+  margin: 6px 0 0;
+  color: var(--pa-muted);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+.pa-concept-list {
+  margin-top: 6px;
+  font-size: 0.68rem;
+}
+.pa-concept-list summary {
+  color: var(--pa-muted);
+  cursor: pointer;
+}
+.pa-concept-list ol,
+.pa-concept-rel {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--pa-ink);
+  line-height: 1.6;
+}
+.pa-concept-rel-title {
+  margin: 8px 0 0;
+  color: var(--pa-muted);
+}
+.pa-concept-rel-label {
+  color: var(--pa-muted);
+}
+.pa-concept-list-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pa-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.pa-concept-error {
+  margin: 8px 0 0;
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+}
+
+.pa-figure-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--pa-line);
+  background: var(--pa-surface);
+}
+.pa-figure-list[hidden] {
+  display: none;
+}
+.pa-figure-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--pa-line);
+  border-radius: 8px;
+  background: var(--pa-bg);
+  color: var(--pa-ink);
+  font-size: 0.7rem;
+  text-align: left;
+}
+.pa-figure-kind {
+  flex-shrink: 0;
+  width: 18px;
+  color: var(--pa-muted);
+}
+.pa-figure-caption {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pa-figure-section {
+  flex-shrink: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--pa-muted);
+  font-size: 0.62rem;
+}
+.pa-focus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--pa-line);
+  background: color-mix(in srgb, var(--pa-accent) 8%, var(--pa-bg));
+  font-size: 0.68rem;
+}
+.pa-focus[hidden] {
+  display: none;
+}
+.pa-focus-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pa-focus-clear {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid var(--pa-line);
+  border-radius: 999px;
+  background: var(--pa-bg);
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+}
+
+.pa-mode-toggle {
+  flex-shrink: 0;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--pa-line);
+  border-radius: 999px;
+  background: var(--pa-bg);
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+}
+.pa-mode-toggle--on {
+  border-color: color-mix(in srgb, var(--pa-accent) 70%, var(--pa-line));
+  background: color-mix(in srgb, var(--pa-accent) 28%, var(--pa-bg));
+  color: var(--pa-ink);
+}
+.pa-check {
+  margin: 12px 0 2px;
+  padding: 11px 12px 10px;
+  border: 1px solid color-mix(in srgb, var(--pa-accent) 40%, var(--pa-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--pa-accent) 10%, var(--pa-bg));
+}
+.pa-check-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.pa-check-badge {
+  color: var(--pa-ink);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+.pa-check-hint {
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+.pa-check-question {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.pa-check-answer {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--pa-line);
+  border-radius: 999px;
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  font-size: 0.68rem;
+}
+.pa-block-ref {
+  display: inline;
+  padding: 0 1px;
+  border: 0;
+  border-bottom: 1px dashed color-mix(in srgb, var(--pa-accent) 70%, var(--pa-line));
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+.pa-block-ref:hover {
+  background: color-mix(in srgb, var(--pa-accent) 18%, transparent);
+  color: var(--pa-ink);
+}
+.pa-block-flash {
+  animation: pa-block-flash 1.2s ease;
+}
+@keyframes pa-block-flash {
+  0%,
+  100% {
+    background-color: transparent;
+    outline: 0 solid transparent;
+  }
+  20% {
+    background-color: color-mix(in srgb, var(--pa-accent) 22%, transparent);
+    outline: 2px solid color-mix(in srgb, var(--pa-accent) 70%, transparent);
+  }
+}
+.pa-notice {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 76px;
+  z-index: 2;
+  padding: 7px 10px;
+  border: 1px solid var(--pa-line);
+  border-radius: 9px;
+  background: var(--pa-surface);
+  color: var(--pa-ink);
+  font-size: 0.7rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+.pa-notice[hidden] {
+  display: none;
+}
+
+
+.pa-replay-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+}
+.pa-replay-panel[hidden] {
+  display: none;
+}
+.pa-replay-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.pa-replay-head strong {
+  font-size: 0.9rem;
+}
+.pa-replay-status {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--pa-line);
+  border-radius: 999px;
+  color: var(--pa-muted);
+  font-size: 0.62rem;
+}
+.pa-replay-status--ok {
+  color: var(--pa-accent);
+  border-color: color-mix(in srgb, var(--pa-accent) 60%, var(--pa-line));
+}
+.pa-replay-summary {
+  padding: 10px 11px;
+  border: 1px solid var(--pa-line);
+  border-radius: 10px;
+  background: var(--pa-surface);
+}
+.pa-replay-question {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.pa-replay-meta {
+  margin: 0;
+  color: var(--pa-muted);
+  font-size: 0.64rem;
+}
+.pa-replay-turns {
+  margin-top: 12px;
+}
+.pa-replay-turn {
+  display: flex;
+  gap: 10px;
+}
+.pa-replay-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 22px;
+  flex-shrink: 0;
+}
+.pa-replay-rail::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: -6px;
+  width: 1px;
+  background: var(--pa-line);
+}
+.pa-replay-turn:last-child .pa-replay-rail::before {
+  display: none;
+}
+.pa-replay-dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--pa-line);
+  border-radius: 50%;
+  background: var(--pa-surface);
+  font-size: 0.58rem;
+}
+.pa-replay-body {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 12px;
+}
+.pa-replay-row {
+  display: flex;
+  gap: 8px;
+  font-size: 0.66rem;
+  line-height: 1.55;
+}
+.pa-replay-row-label {
+  flex-shrink: 0;
+  color: var(--pa-muted);
+}
+.pa-replay-row-value {
+  flex: 1;
+  min-width: 0;
+}
+.pa-replay-tools {
+  margin: 2px 0 0;
+  color: var(--pa-muted);
+  font-size: 0.6rem;
+  word-break: break-all;
+}
+.pa-replay-tool {
+  margin-top: 4px;
+  border: 1px solid var(--pa-line);
+  border-radius: 7px;
+  background: var(--pa-surface);
+  font-size: 0.64rem;
+}
+.pa-replay-tool summary {
+  padding: 4px 7px;
+  cursor: pointer;
+}
+.pa-replay-pre-label {
+  margin: 4px 8px 0;
+  color: var(--pa-muted);
+  font-size: 0.58rem;
+}
+.pa-replay-pre {
+  margin: 0;
+  padding: 6px 8px;
+  max-height: 180px;
+  overflow: auto;
+  border-top: 1px solid var(--pa-line);
+  font: 0.6rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pa-replay-error {
+  margin: 4px 0 0;
+  color: #b03a2e;
+  font-size: 0.64rem;
+}
+.pa-replay-empty {
+  margin: 0;
+  color: var(--pa-muted);
+  font-size: 0.68rem;
+}
+.pa-replay-answer {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--pa-line);
+  font-size: 0.66rem;
+}
+.pa-replay-answer summary {
+  color: var(--pa-muted);
+  cursor: pointer;
+}
+.pa-replay-answer pre {
+  margin: 6px 0 0;
+  max-height: 240px;
+  overflow: auto;
+  color: var(--pa-ink);
+  font: 0.64rem/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.pa-run-replay {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pa-accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-fab,
+  .pa-message,
+  .pa-seen summary::before {
+    transition: none;
+    animation: none;
+  }
+  .pa-messages {
+    scroll-behavior: auto;
+  }
+}
+@media print {
+  .pa-root {
+    display: none;
+  }
+}
+
+/* 全屏对话：同一棵面板 DOM 换成页面内固定层。位置与尺寸的过渡由
+   page-assistant.ts 测量后用 Web Animations API 完成，这里只定义目标形态。
+   宽屏留 16px 让页面仍露出一圈，正文限制在 820px 内容栏里，不铺满整屏。 */
+html.pa-fullscreen,
+html.pa-fullscreen body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.pa-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: rgb(18 20 16 / 0.16);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+.pa-root--full .pa-scrim {
+  opacity: 1;
+  visibility: visible;
+}
+@supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .pa-scrim {
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+}
+.pa-panel--full {
+  --pa-col: 820px;
+  --pa-col-pad: max(20px, calc((100% - var(--pa-col)) / 2));
+  position: fixed;
+  top: 16px;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  z-index: 1;
+  width: min(1080px, calc(100vw - 32px));
+  height: calc(100vh - 32px);
+  height: calc(100dvh - 32px);
+  max-height: none;
+  margin-inline: auto;
+  border-radius: 20px;
+  box-shadow: 0 30px 90px rgb(0 0 0 / 0.3);
+}
+.pa-panel--full .pa-head {
+  padding-left: var(--pa-col-pad);
+  padding-right: var(--pa-col-pad);
+}
+.pa-panel--full .pa-history,
+.pa-panel--full .pa-context,
+.pa-panel--full .pa-seen summary,
+.pa-panel--full .pa-seen-body,
+.pa-panel--full .pa-messages,
+.pa-panel--full .pa-replay-panel,
+.pa-panel--full .pa-compose,
+.pa-panel--full .pa-foot {
+  padding-left: var(--pa-col-pad);
+  padding-right: var(--pa-col-pad);
+}
+.pa-panel--full .pa-messages {
+  padding-top: 20px;
+  padding-bottom: 26px;
+}
+.pa-panel--full .pa-answer {
+  font-size: 0.95rem;
+  line-height: 1.78;
+}
+.pa-panel--full .pa-message {
+  margin-bottom: 18px;
+}
+.pa-panel--full .pa-message--user {
+  max-width: min(72%, 640px);
+}
+.pa-panel--full .pa-answer h3 {
+  font-size: 1.2rem;
+}
+.pa-panel--full .pa-answer h4 {
+  font-size: 1.08rem;
+}
+.pa-panel--full .pa-answer table {
+  font-size: 0.82rem;
+}
+.pa-panel--full .pa-input {
+  min-height: 44px;
+  max-height: 132px;
+  max-height: min(132px, 26dvh);
+  font-size: 0.9rem;
+}
+.pa-panel--full .pa-history {
+  max-height: min(46vh, 420px);
+}
+.pa-panel--full .pa-seen-body {
+  max-height: 40vh;
+}
+.pa-panel--full .pa-seen-image {
+  max-height: 260px;
+}
+.pa-panel :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pa-accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .pa-panel--full {
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .pa-panel--full .pa-head {
+    padding-top: calc(15px + env(safe-area-inset-top));
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .pa-panel--full .pa-history,
+  .pa-panel--full .pa-context,
+  .pa-panel--full .pa-seen summary,
+  .pa-panel--full .pa-seen-body,
+  .pa-panel--full .pa-messages,
+  .pa-panel--full .pa-replay-panel,
+  .pa-panel--full .pa-compose,
+  .pa-panel--full .pa-foot {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .pa-panel--full .pa-foot {
+    padding-bottom: calc(9px + env(safe-area-inset-bottom));
+  }
+  .pa-panel--full .pa-answer {
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pa-scrim {
+    transition: none;
+  }
+  .pa-block-flash {
+    animation: none;
+    background-color: color-mix(in srgb, var(--pa-accent) 22%, transparent);
+  }
+}
+@media print {
+  /* The assistant itself is hidden above; release the scroll lock so the
+     article prints in full even if the reader prints while fullscreen. */
+  html.pa-fullscreen,
+  html.pa-fullscreen body {
+    overflow: visible;
+  }
+}
