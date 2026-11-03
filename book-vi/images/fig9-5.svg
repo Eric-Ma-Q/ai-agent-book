@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 470" width="1000" height="470" style="background:#ffffff">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#33434d"/></marker>
+    <style>
+      .t{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#26343c}
+      .h{font-size:20px;font-weight:700}
+      .s{font-size:15px;fill:#52636d}
+      .box{fill:#f5f7f8;stroke:#33434d;stroke-width:2}
+      .accent{fill:#e8f1f5;stroke:#2f617a;stroke-width:2}
+      .line{fill:none;stroke:#33434d;stroke-width:2;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="500" y="30" text-anchor="middle" class="t h">Thực thi trực tuyến và tiến hóa ngoại tuyến: bản chính thức không bị sửa khi đang chạy</text>
+
+  <rect x="28" y="80" width="944" height="118" rx="10" fill="#fafbfb" stroke="#7d8d96" stroke-width="1.5"/>
+  <text x="55" y="107" class="t h">Vòng thực thi trực tuyến</text>
+  <rect x="220" y="114" width="150" height="58" rx="7" class="box"/>
+  <rect x="425" y="114" width="150" height="58" rx="7" class="box"/>
+  <rect x="630" y="114" width="150" height="58" rx="7" class="box"/>
+  <text x="295" y="149" text-anchor="middle" class="t s">Agent bản ổn định</text>
+  <text x="500" y="149" text-anchor="middle" class="t s">Xử lý tác vụ thật</text>
+  <text x="705" y="149" text-anchor="middle" class="t s" style="font-size:12px">Ghi quỹ đạo và phản hồi</text>
+  <path d="M370 143 H423" class="line"/><path d="M575 143 H628" class="line"/>
+
+  <rect x="28" y="270" width="944" height="150" rx="10" fill="#f5f8fa" stroke="#2f617a" stroke-width="1.5"/>
+  <text x="55" y="298" class="t h">Vòng tiến hóa ngoại tuyến</text>
+  <rect x="107" y="323" width="150" height="62" rx="7" class="accent"/>
+  <rect x="307" y="323" width="150" height="62" rx="7" class="accent"/>
+  <rect x="507" y="323" width="150" height="62" rx="7" class="accent"/>
+  <rect x="707" y="323" width="170" height="62" rx="7" class="accent"/>
+  <text x="182" y="349" text-anchor="middle" class="t s" style="font-size:12.5px">Tổng hợp và chẩn đoán</text><text x="182" y="371" text-anchor="middle" class="t s" style="font-size:10px">Tìm nguyên nhân gốc chung</text>
+  <text x="382" y="349" text-anchor="middle" class="t s">Thay đổi ứng viên</text><text x="382" text-anchor="middle" class="t s" y="364.04" style="font-size:12px">Tri thức · Chỉ dẫn ·</text><text x="382" text-anchor="middle" class="t s" y="377.96" style="font-size:12px">Chương trình · Tham số</text>
+  <text x="582" y="349" text-anchor="middle" class="t s" style="font-size:10.5px">Kiểm thử hồi quy và an toàn</text><text x="582" y="371" text-anchor="middle" class="t s">Giữ lại năng lực cũ</text>
+  <text x="792" y="349" text-anchor="middle" class="t s" style="font-size:10px">Phát hành dần, giám sát, quay lui</text><text x="792" y="371" text-anchor="middle" class="t s" style="font-size:12.5px">Thăng lên bản ổn định mới</text>
+  <path d="M257 354 H305" class="line"/><path d="M457 354 H505" class="line"/><path d="M657 354 H705" class="line"/>
+
+  <!-- 轨迹向下进入离线诊断，使用两层之间的独立通道。 -->
+  <path d="M705 172 V232 H182 V321" class="line" stroke-dasharray="7 5"/>
+  <rect x="374" y="220" width="140" height="24" rx="4" fill="#ffffff"/>
+  <text x="444" text-anchor="middle" class="t s" y="229.46" style="font-size:13px">Nhật ký kinh</text><text x="444" text-anchor="middle" class="t s" y="244.54" style="font-size:13px">nghiệm có phiên bản</text>
+
+  <!-- 新版本从右侧外环返回稳定版 Agent，不与轨迹通道交叉或重叠。 -->
+  <path d="M877 354 H986 V56 H295 V112" class="line" stroke-dasharray="7 5"/>
+  <rect x="572" y="44" width="156" height="24" rx="4" fill="#ffffff"/>
+  <text x="650" y="61" text-anchor="middle" class="t s" style="font-size:10.5px">Phiên bản mới đã kiểm chứng</text>
+
+  <text x="500" y="452" text-anchor="middle" class="t s">Gốc tin cậy: quyền, kiểm toán, kiểm chứng và quay lui không do vòng tiến hóa thường sửa đổi</text>
+</svg>

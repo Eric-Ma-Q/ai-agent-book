@@ -1,0 +1,322 @@
+/* Favorites page (requirement 007). Scoped to .fav-* and the existing
+   .harness-* layout classes; theme colors come from the reader variables. */
+.fav-page .harness-head {
+  max-width: 980px;
+}
+.fav-alert {
+  margin: 18px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ink);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.fav-alert code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+}
+.fav-toolbar {
+  display: grid;
+  gap: 12px;
+  margin: 28px 0 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.fav-toolbar .harness-search {
+  max-width: none;
+}
+.fav-toolbar .harness-count {
+  margin: 0;
+}
+.fav-selects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+.fav-selects label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.fav-selects select {
+  max-width: 260px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+.fav-selects select:focus-visible,
+.fav-open:focus-visible,
+.fav-remove:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.fav-status {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.fav-empty-note {
+  margin-top: 0;
+}
+.fav-list {
+  display: grid;
+  gap: 20px;
+  margin-top: 18px;
+}
+.fav-card {
+  min-width: 0;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.fav-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 18px;
+}
+.fav-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.fav-exam {
+  color: var(--ink);
+  font-weight: 650;
+}
+.fav-id {
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.75rem;
+}
+.fav-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.fav-open,
+.fav-remove {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+}
+.fav-open:hover,
+.fav-remove:hover {
+  border-color: var(--muted);
+  color: var(--ink);
+}
+.fav-remove:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.fav-scenario {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+.fav-stem {
+  margin: 14px 0;
+  font-size: 1.03rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.fav-blank {
+  display: inline-block;
+  min-width: 2.2em;
+  border-bottom: 1px solid var(--muted);
+  color: var(--muted);
+  text-align: center;
+}
+.fav-opts {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+.fav-opt {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+.fav-opt.is-correct {
+  border-color: var(--accent);
+  background: var(--bg);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+}
+.fav-key {
+  min-width: 1.2em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  color: var(--muted);
+}
+.fav-opt-text {
+  flex: 1;
+  min-width: 0;
+}
+.fav-correct {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+.fav-code {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+}
+.fav-answer,
+.fav-rubric,
+.fav-reference,
+.fav-explain,
+.fav-note-inline {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.fav-answer b,
+.fav-rubric b,
+.fav-reference b,
+.fav-explain b,
+.fav-note-inline b {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+.fav-rubric ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+.fav-rubric li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fav-points {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+.fav-src {
+  margin: 12px 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.fav-src a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.fav-src a:hover {
+  color: var(--muted);
+}
+.fav-missing {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.fav-card[hidden],
+.fav-list[hidden],
+.fav-empty-note[hidden],
+.fav-status[hidden] {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .fav-toolbar {
+    padding: 14px 16px;
+  }
+  .fav-card {
+    padding: 16px 16px 18px;
+  }
+  .fav-card-head {
+    flex-direction: column;
+  }
+  .fav-actions {
+    margin-left: 0;
+  }
+  .fav-selects {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fav-selects label {
+    flex-wrap: nowrap;
+  }
+  .fav-selects label span {
+    flex: none;
+    white-space: nowrap;
+  }
+  .fav-selects select {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    width: auto;
+  }
+  .fav-opt {
+    align-items: flex-start;
+    font-size: 0.9rem;
+  }
+}

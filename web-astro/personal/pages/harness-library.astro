@@ -1,0 +1,100 @@
+---
+// Dev-only page: an index of everything in the Harness archive (requirement
+// 006). Titles and counts come from library.json, which is generated from
+// manifest.json + catalog.mjs, so the page cannot drift from the archive.
+import { readFile } from 'node:fs/promises';
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import { HARNESS_PATH } from '../routes.mjs';
+
+type Category = {
+  id: string;
+  label: string;
+  description: string;
+  count: number;
+  files: { path: string; title: string; url: string; bytes: number }[];
+};
+type Library = { total: number; metaCount: number; categories: Category[] };
+const library = JSON.parse(
+  await readFile(new URL('../harness/library.json', import.meta.url), 'utf8'),
+) as Library;
+const categories = library.categories.map((category: Category) => ({
+  ...category,
+  files: category.files.map((file: Category['files'][number]) => ({
+    ...file,
+    href: withBase(file.url),
+    search: `${file.title} ${file.path} ${category.label}`.toLowerCase(),
+  })),
+}));
+const formatBytes = (bytes: number) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : bytes >= 1024
+      ? `${Math.round(bytes / 1024)} KB`
+      : `${bytes} B`;
+---
+
+<Layout locale="zh-CN" title="Harness 资料库 · 归档索引">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width">
+    <header class="harness-library-head">
+      <p class="eyebrow">需求 006 · 归档索引</p>
+      <h1>Harness 资料库</h1>
+      <p class="harness-lead">
+        调研分册、专题文档、协作存档、实验代码与构建产物都在这里。每一项链接到归档里的原文件；
+        {library.total} 个可展示文件，另有 {library.metaCount} 个旧项目元文件只做存档、不对外提供。
+      </p>
+      <p class="harness-quick">
+        <a class="harness-button" href={withBase(HARNESS_PATH)}>← 返回 Harness 目录</a>
+      </p>
+    </header>
+
+    <section class="harness-block" aria-labelledby="library-search-title">
+      <div class="harness-block-head">
+        <h2 id="library-search-title">查找资料</h2>
+        <p class="harness-count" data-library-count aria-live="polite">显示 {library.total} / {library.total}</p>
+      </div>
+      <label class="harness-search">
+        <span class="harness-search-label">按标题、路径或类别搜索</span>
+        <input type="search" data-library-search placeholder="例如：评测、collab、memory" autocomplete="off" />
+      </label>
+      <p class="harness-empty" data-library-empty hidden>没有匹配的资料，换个关键词试试。</p>
+    </section>
+
+    {
+      categories.map((category) => (
+        <section class="harness-library-section" data-library-section aria-labelledby={`library-${category.id}`}>
+          <h2 id={`library-${category.id}`}>
+            {category.label}
+            <small>{category.count} 项 · {category.description}</small>
+          </h2>
+          <ul class="harness-library-list">
+            {category.files.map((file) => (
+              <li>
+                <a class="harness-item" href={file.href} data-library-item data-search={file.search}>
+                  <span class="harness-item-title">{file.title}</span>
+                  <span class="harness-item-meta">
+                    <span class="harness-item-path">{file.url.slice('/harness/site/'.length)}</span>
+                    <span>{formatBytes(file.bytes)}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+
+    <footer class="harness-foot">
+      <p>资料库由 <code>library.json</code> 生成；新增或下线文件先更新清单，再重跑构建脚本。</p>
+      <p class="harness-foot-links">
+        <a href={withBase(HARNESS_PATH)}>Harness 目录</a>
+        <a href={withBase('/')}>回到阅读器</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    import '../client/harness/library.ts';
+  </script>
+</Layout>

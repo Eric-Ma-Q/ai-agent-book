@@ -1,0 +1,24 @@
+/* Agent-lab citation jump: the quoted passage flashes, then fades. */
+::highlight(lab-quote) {
+  background-color: #f2c94c99;
+  color: inherit;
+}
+[data-theme='dark'] ::highlight(lab-quote) {
+  background-color: #b8862b80;
+}
+.quote-jump-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 60;
+  max-width: min(90vw, 460px);
+  margin: 0;
+  padding: 10px 16px;
+  transform: translateX(-50%);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+  font-size: 0.9rem;
+}

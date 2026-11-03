@@ -1,0 +1,58 @@
+---
+// Dev-only page listing every highlight and note across all chapters. Data is
+// loaded in the browser from /__personal/highlights by highlights-page.ts.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import '../client/highlights-page.css';
+---
+
+<Layout locale="zh-CN" title="全部划线 · 我的阅读笔记">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="hl-page page-width">
+    <header class="hl-head">
+      <p class="eyebrow">我的阅读笔记</p>
+      <h1>全部划线</h1>
+      <p id="hl-summary" class="hl-summary"></p>
+    </header>
+
+    <div class="hl-toolbar" role="search">
+      <label class="hl-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input id="hl-search" type="search" placeholder="搜索划线、笔记、小节…" autocomplete="off" aria-label="搜索划线和笔记" aria-keyshortcuts="/" />
+        <kbd aria-hidden="true">/</kbd>
+      </label>
+      <div id="hl-kinds" class="hl-kinds" role="group" aria-label="按类型筛选"></div>
+      <label class="hl-sort">
+        <span class="hl-sr">排序</span>
+        <select id="hl-sort">
+          <option value="book">按书中顺序</option>
+          <option value="recent">按最近划线</option>
+        </select>
+      </label>
+      <details id="hl-export" class="hl-export">
+        <summary>导出</summary>
+        <div class="hl-export-menu">
+          <p>导出当前筛选出的划线</p>
+          <button id="hl-export-copy" type="button">复制为 Markdown</button>
+          <button id="hl-export-download" type="button">下载 .md 文件</button>
+        </div>
+      </details>
+    </div>
+
+    <div id="hl-problems" class="hl-problems" role="alert" hidden></div>
+
+    <div class="hl-body">
+      <nav id="hl-chapters" class="hl-chapters" aria-label="按章节筛选"></nav>
+      <section class="hl-results" aria-label="划线列表">
+        <p id="hl-count" class="hl-count" role="status"></p>
+        <div id="hl-list" class="hl-list">
+          <p class="hl-loading">正在加载……</p>
+        </div>
+      </section>
+    </div>
+    <p id="hl-toast" class="hl-toast" role="status" hidden></p>
+  </main>
+  <script>
+    import '../client/highlights-page.ts';
+  </script>
+</Layout>

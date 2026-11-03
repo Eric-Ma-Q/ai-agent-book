@@ -1,0 +1,12 @@
+---
+// Requirement 034: a small inline citation marker. The page renders the source
+// list from the same data module, so a marker can only exist when its source
+// does; the test checks the two sets match.
+interface Props {
+  id: string;
+  note?: string;
+}
+const { id, note } = Astro.props;
+const label = id.replace(/^S/, '');
+---
+<a class="ig-cite" href={`#src-${id}`} aria-label={note ? `来源 ${label}：${note}` : `来源 ${label}`}>[{label}]</a>

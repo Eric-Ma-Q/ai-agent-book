@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 多 Agent：什么时候开分身，分身听谁的 · Claude Code 源码拆解</title>
+<meta name="description" content="「多 Agent」很容易被讲成架构图，但代码里它其实是三个不同的东西：一次性的子 Agent、可后台运行的任务、以及共享一个终端的队友。三者的隔离程度、权限来源、失败方式都不一样。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" aria-current="page" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 07 章 · 分身的边界与代价</p>
+  <h1>多 Agent：什么时候开分身，分身听谁的</h1>
+  <p class="lead">「多 Agent」很容易被讲成架构图，但代码里它其实是三个不同的东西：一次性的子 Agent、可后台运行的任务、以及共享一个终端的队友。三者的隔离程度、权限来源、失败方式都不一样。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li><code>Agent</code> 工具的输入只有五个参数：说明、提示词、子类型、模型、是否后台。默认子类型是通用型。</li><li>任务系统有七种类型：本地命令、本地 Agent、远端 Agent、进程内队友、本地工作流、MCP 监控、Dream（记忆整理）。</li><li>子 Agent 可以继承父级上下文（fork），也可以全新开始；工具集按定义裁剪，权限模式跟随父级或 Agent 定义。</li><li>swarm（队友）不是「多线程」，而是真的开终端窗格：支持进程内、tmux、iTerm2 三种后端，靠文件邮箱通信。</li><li>协调者模式与 fork 互斥：协调者会换掉整套内置 Agent 名单，自己当调度员。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>三个东西，别混为一谈</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>形态</th><th>怎么起</th><th>活多久</th><th>上下文</th><th>典型用途</th></tr></thead>
+      <tbody>
+      <tr><td>子 Agent</td><td><code>Agent</code> 工具</td><td>一次调用内</td><td>全新或 fork 父对话</td><td>搜索、探索、独立验证</td></tr>
+      <tr><td>后台任务</td><td><code>run_in_background</code></td><td>跨轮次，可断线恢复</td><td>独立</td><td>长命令、远端跑批</td></tr>
+      <tr><td>队友（swarm）</td><td><code>TeamCreate</code> + 窗格</td><td>整个团队会话</td><td>共享团队目录与邮箱</td><td>并行改不同模块</td></tr>
+      </tbody>
+    </table></div>
+  <div class="analogy"><i aria-hidden="true">≈</i><div>外包、夜班、和开分部：外包干完就交付（子 Agent）；夜班明天还在（后台任务）；开分部要租办公室、拉专线、还要同步权限（swarm）。</div></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>子 Agent 的参数表</h2>
+  
+  
+<div class="ev">
+  <header><span class="path">tools/AgentTool/AgentTool.tsx</span><span>82-93 · 参数少是刻意的：子 Agent 的复杂度应该来自它的定义，而不是调用参数</span></header>
+  <pre>const baseInputSchema = lazySchema(() =&gt; z.object({
+  description: z.string(),
+  prompt: z.string(),
+  subagent_type: z.string().optional().describe('The type of specialized agent to use for this task'),
+  model: z.enum(['sonnet', 'opus', 'haiku']).optional(),
+  run_in_background: z.boolean().optional(),
+}))</pre>
+</div>
+  <p>除这五个基础字段，还有 <code>name</code>（可被 <code>SendMessage</code> 寻址）、<code>team_name</code>、<code>mode</code>（teammate 的权限模式）、<code>isolation</code>（worktree / remote）、<code>cwd</code>。其中 <code>run_in_background</code> 与 <code>cwd</code> 会按开关从 schema 里 <b><code>.omit()</code> 掉</b> —— 模型「看不见」这两个参数，而不是传了被忽略。</p>
+  
+<div class="ev">
+  <header><span class="path">tools/AgentTool/AgentTool.tsx</span><span>110-125 · 同一个工具，在不同构建里有不同的参数表</span></header>
+  <pre>const schema = feature('KAIROS') ? fullInputSchema() : fullInputSchema().omit({ cwd: true })
+return isBackgroundTasksDisabled || isForkSubagentEnabled()
+  ? schema.omit({ run_in_background: true })
+  : schema</pre>
+</div>
+  <p>内置 Agent 有六种：通用型、探索型、计划型、验证型、Claude Code 使用指南、状态栏配置。探索与计划两种受一个 A/B 门控制，说明「要不要给模型配专家」本身也在被实验。</p>
+  <div class="tw"><table>
+      <thead><tr><th>内置 Agent</th><th>职责</th><th>工具边界</th></tr></thead>
+      <tbody>
+      <tr><td>general-purpose</td><td>默认子类型，什么都能干</td><td>继承父级可用工具</td></tr>
+      <tr><td>explore</td><td>只读探索代码库，对外默认用 haiku</td><td>禁用 Edit / Write / NotebookEdit</td></tr>
+      <tr><td>plan</td><td>出方案，不动手</td><td>复用 explore 的工具集</td></tr>
+      <tr><td>verification</td><td>后台独立验证改动，产出 PASS / FAIL / PARTIAL</td><td>禁用改文件，只读 + 跑测试</td></tr>
+      <tr><td>claude-code-guide</td><td>回答「这个功能怎么用」</td><td>文档与帮助</td></tr>
+      <tr><td>statusline-setup</td><td>配置状态栏</td><td>设置文件</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note good"><b>可迁移结论：</b>给子 Agent 定义「角色 + 工具禁用清单 + 模型档位」，比在 prompt 里写「你是一个只读的探索者」可靠得多。注意它的只读是靠 <code>disallowedTools</code> 实现的，而不是靠权限模式；对外用户的探索 Agent 还会降级到 haiku —— <b>用便宜模型干搜索，是成本设计的一部分</b>。</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>隔离：继承什么，不继承什么</h2>
+  
+  <p>这里最容易出安全事故，而代码的答案比想象中复杂：<b>上下文可以继承，工具池会被重新组装，deny 规则照旧，但 Agent 定义可以自带更高的权限模式</b>。</p>
+  <ul><li><b>上下文</b>：fork 模式下子 Agent 继承父级完整对话与逐字节相同的系统提示；普通子 Agent 只拿到 prompt 与必要附件。</li><li><b>工具</b>：不是父级工具池的子集，而是用 <code>assembleToolPool()</code> 重新组装 —— 注释明说它「不受父级工具限制影响」。</li><li><b>权限</b>：规则（deny / ask / allow）随权限上下文继承，deny 仍在第一步生效；但模式取 <code>agent.permissionMode ?? 'acceptEdits'</code>。</li><li><b>结果</b>：回灌的是子 Agent 的<b>最终文本全文</b>，不是摘要；过程消息不进父级上下文。</li></ul>
+  
+<div class="ev">
+  <header><span class="path">tools/AgentTool/AgentTool.tsx</span><span>568-577 · 父级当前能用的工具不继承，但规则继承</span></header>
+  <pre>assembleToolPool({
+  ...parentContext.toolPermissionContext,
+  mode: agent.permissionMode ?? 'acceptEdits',
+})
+// 注释原文：subagents "aren't affected by the parent's tool restrictions"</pre>
+</div>
+  <div class="note warn"><b>一个真实的安全边界：</b>Agent 定义的 frontmatter 可以写 <code>permissionMode: bypassPermissions</code>，子 Agent 就会以绕过模式启动。deny 规则仍然拦得住，但「父级当前是 default、子级却是 bypass」这件事在设计上是被允许的 —— 使用第三方 Agent 定义前必须读它这一行。</div>
+  <div class="tradeoff"><div><b>换来什么</b>子 Agent 的过程不占父级上下文：一个「找代码」任务可能读 20 个文件，父级只收到最终结论全文。</div><div><b>付出什么</b>最终文本可能很长且丢细节；父级无法审计子 Agent 读过什么，除非翻它的 transcript；权限模式可被定义抬高。</div></div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>任务系统：七种类型，五个状态</h2>
+  
+  
+<div class="ev">
+  <header><span class="path">Task.ts</span><span>8-21</span></header>
+  <pre>export type TaskType =
+  | 'local_bash'
+  | 'local_agent'
+  | 'remote_agent'
+  | 'in_process_teammate'
+  | 'local_workflow'
+  | 'monitor_mcp'
+  | 'dream'
+
+export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'killed'</pre>
+</div>
+  <p>把「任务」抽成统一类型，带来三个直接好处：UI 只需要一套任务面板；<code>TaskOutput</code> 可以增量读任意任务的输出；进程重启后能按 transcript 恢复未完成的任务。这也是为什么长任务不会因为关掉终端就全丢。</p>
+  <div class="tw"><table>
+      <thead><tr><th>类型</th><th>干什么</th><th>谁能起</th></tr></thead>
+      <tbody>
+      <tr><td><code>local_bash</code></td><td>后台跑命令</td><td>Bash 工具（<code>run_in_background</code>）</td></tr>
+      <tr><td><code>local_agent</code></td><td>后台跑子 Agent</td><td>Agent 工具</td></tr>
+      <tr><td><code>remote_agent</code></td><td>在远端环境跑 Agent</td><td>云会话 / RemoteTrigger</td></tr>
+      <tr><td><code>in_process_teammate</code></td><td>同进程里的队友</td><td>TeamCreate（进程内后端）</td></tr>
+      <tr><td><code>local_workflow</code></td><td>多步工作流脚本</td><td>Workflow 工具（flag）</td></tr>
+      <tr><td><code>monitor_mcp</code></td><td>监控 MCP 事件</td><td>Monitor 工具（flag）</td></tr>
+      <tr><td><code>dream</code></td><td>后台整理记忆</td><td>autoDream</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>swarm：真的开窗格</h2>
+  
+  <p>队友模式的实现比想象中「土」但有效：它真的调 <code>tmux</code> 或 iTerm2 开窗格，每个队友是一个独立的 Claude 进程，靠<b>文件邮箱</b>通信。没有消息总线，没有共享内存。</p>
+  
+<div class="ev">
+  <header><span class="path">utils/swarm/constants.ts</span><span>1-16 · 独立 socket + 带 PID 的会话名，避免和用户自己的 tmux 打架</span></header>
+  <pre>export const TEAM_LEAD_NAME = 'team-lead'
+export const SWARM_SESSION_NAME = 'claude-swarm'
+export const SWARM_VIEW_WINDOW_NAME = 'swarm-view'
+export const TMUX_COMMAND = 'tmux'
+...
+export function getSwarmSocketName(): string {
+  return `claude-swarm-${process.pid}`
+}</pre>
+</div>
+  <div class="tw"><table>
+      <thead><tr><th>后端</th><th>怎么跑</th><th>优点</th><th>限制</th></tr></thead>
+      <tbody>
+      <tr><td>进程内</td><td>同一进程里起 runner</td><td>快、无终端依赖</td><td>不能开后台 Agent；权限要回问 leader</td></tr>
+      <tr><td>tmux</td><td>开 tmux 窗格</td><td>独立进程、可观察</td><td>需要 tmux；窗口管理麻烦</td></tr>
+      <tr><td>iTerm2</td><td>开 iTerm2 分屏</td><td>macOS 体验好</td><td>仅 macOS + iTerm2</td></tr>
+      </tbody>
+    </table></div>
+  <p>权限是这里最微妙的部分：进程内队友遇到需要审批的操作，会<b>把请求发到 leader 的邮箱</b>，然后每 500ms 轮询自己的邮箱等答复。leader 不在或界面不可用时，还有一条降级路径。</p>
+  
+<div class="ev">
+  <header><span class="path">utils/swarm/inProcessRunner.ts</span><span>124-126</span></header>
+  <pre>* Falls back to the mailbox system when the bridge is unavailable:
+ * sends a permission request to the leader's inbox, waits for the response
+ * in the teammate's own mailbox.</pre>
+</div>
+  <div class="note "><b>一个实现缺口：</b><code>tasks.ts</code> 的注册表没有登记 <code>in_process_teammate</code>，所以 <code>TaskStop</code> 对队友会返回 <code>unsupported_type</code>；界面上的「停」是绕过注册表直接调 <code>kill()</code> 的。这类不一致正是「先有 UI 后有统一模型」的痕迹。</div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>协调者模式：换一套班子</h2>
+  
+  <p>协调者模式（<code>COORDINATOR_MODE</code>）不是「多一个 Agent」，而是<b>换掉内置 Agent 名单</b>：开启后 <code>getBuiltInAgents()</code> 返回的是协调者专用的 worker 集合，主 Agent 变成调度员。它与 fork 互斥 —— 两者都想当「唯一的编排者」。</p>
+  
+<div class="ev">
+  <header><span class="path">tools/AgentTool/builtInAgents.ts</span><span>38-46 · 用一个环境变量切换整套班子</span></header>
+  <pre>// Use lazy require inside the function body to avoid circular dependency
+// issues at module init time. The coordinatorMode module depends on tools
+if (feature('COORDINATOR_MODE')) {
+  if (isEnvTruthy(process.env.CLAUDE_CODE_COORDINATOR_MODE)) {
+    const { getCoordinatorAgents } = require('../../coordinator/workerAgent.js')</pre>
+</div>
+  <p>与它相对的 fork 模式则相反：不换班子，而是让子 Agent <b>继承父级完整消息、逐字节相同的系统提示与工具表</b>，权限模式用 <code>bubble</code>（把审批冒泡回父终端），默认 <code>maxTurns: 200</code>。为了让缓存命中，fork 会把父级所有未完成的 <code>tool_use</code> 统一回一个占位结果。</p>
+  <div class="note "><b>产品视角：</b>「多 Agent」不是越多越好。协调者模式存在的理由，是把「拆任务、分派、汇总」从主循环里拿出来，交给一个专职角色 —— 代价是多一层上下文传递；fork 的代价则是上下文翻倍。</div>
+
+</section>
+
+
+<section id="s07">
+  <h2><span class="num">07</span>失败模式：分身最容易在哪里翻车</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>失败</th><th>代码里的表现</th><th>设计上的应对</th></tr></thead>
+      <tbody>
+      <tr><td>队友再开后台任务</td><td>进程内队友调 <code>run_in_background: true</code> 直接抛错</td><td>明确禁止，避免任务树无限深</td></tr>
+      <tr><td>权限请求没人接</td><td>leader 界面不可用</td><td>降级到邮箱轮询</td></tr>
+      <tr><td>子 Agent 卡死</td><td>任务一直 running</td><td><b>只对 shell 有 45 秒检测；子 Agent 没有看门狗</b></td></tr>
+      <tr><td>上下文爆炸</td><td>子 Agent 读太多文件</td><td>工具结果预算 + 只回灌结论</td></tr>
+      <tr><td>结果丢失</td><td>后台任务跨重启</td><td>transcript 落盘，按 <code>TaskOutput</code> 增量读</td></tr>
+      <tr><td>前台任务拖住整轮</td><td>子 Agent 一直不返回</td><td>可选「120 秒后自动转后台」</td></tr>
+      </tbody>
+    </table></div>
+  <div class="grid g4"><div class="stat"><b>7</b><span>任务类型</span><em>Task.ts</em></div><div class="stat"><b>3</b><span>swarm 后端</span><em>进程内 / tmux / iTerm2</em></div><div class="stat"><b>6</b><span>内置 Agent</span><em>含 2 个受 A/B 门控制</em></div><div class="stat"><b>500ms</b><span>队友邮箱轮询间隔</span><em>inProcessRunner.ts</em></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>tools/AgentTool/（AgentTool.tsx、runAgent.ts、builtInAgents.ts、forkSubagent.ts） <span>· 子 Agent 契约</span></li><li>Task.ts、tasks/ <span>· 任务类型与生命周期</span></li><li>utils/swarm/（constants.ts、backends/、inProcessRunner.ts） <span>· 队友与邮箱</span></li><li>coordinator/coordinatorMode.js <span>· 协调者模式</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="06-permission.html"><small>← 上一章</small><b>06 权限</b></a><a class="next" href="08-unreleased.html"><small>下一章 →</small><b>08 未发布功能</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

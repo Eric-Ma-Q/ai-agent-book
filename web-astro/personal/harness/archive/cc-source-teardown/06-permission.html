@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>06 权限：每一次「能不能做」都有固定答案 · Claude Code 源码拆解</title>
+<meta name="description" content="Agent 产品最难的一课是「让它敢做，又不让它乱做」。Claude Code 的做法不是加弹窗，而是把审批做成一条固定顺序的流水线：规则、工具自检、模式、分类器、熔断，各就各位。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" aria-current="page" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 06 章 · 从弹窗到流水线</p>
+  <h1>权限：每一次「能不能做」都有固定答案</h1>
+  <p class="lead">Agent 产品最难的一课是「让它敢做，又不让它乱做」。Claude Code 的做法不是加弹窗，而是把审批做成一条固定顺序的流水线：规则、工具自检、模式、分类器、熔断，各就各位。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>对外只有五种权限模式；<code>auto</code> 要构建开关打开才存在，它用 AI 分类器替代弹窗，连续被拒 3 次或累计 20 次就退回「每次都问」。</li><li>裁决顺序写死在代码里：deny 规则 → 工具自检 → 模式 → 允许规则 → 转成 ask。deny 永远优先，连绕过模式也绕不过。</li><li><code>dontAsk</code> 模式把所有「要问」直接变成「拒绝」—— 这是无头场景（CI）唯一可行的语义。</li><li>OS 级沙箱不在 CLI 本体里，而是外部的 <code>@anthropic-ai/sandbox-runtime</code>；开沙箱后，Bash 可以「自动放行但受限执行」。</li><li>企业侧可以从服务端下发策略，直接禁用远端会话、远程控制等功能 —— 代码里是 <code>isPolicyAllowed()</code> 这类开关。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>五种对外模式，一种内部模式</h2>
+  
+  <p>模式决定的不是「能不能用工具」，而是「拿不准的时候怎么办」。命令行与设置只认五个对外模式；<code>auto</code> 要 <code>feature('TRANSCRIPT_CLASSIFIER')</code> 构建设置才存在，<code>bubble</code> 只活在类型层（子 Agent 把请求冒泡给父终端），不接受配置。</p>
+  <div class="tw"><table>
+      <thead><tr><th>模式</th><th>拿不准时</th><th>典型使用者</th><th>备注</th></tr></thead>
+      <tbody>
+      <tr><td><code>default</code></td><td>问用户</td><td>所有人</td><td>默认档</td></tr>
+      <tr><td><code>plan</code></td><td>只读探索，不改文件</td><td>复杂任务开工前</td><td>计划模式下禁止写</td></tr>
+      <tr><td><code>acceptEdits</code></td><td>文件编辑自动通过</td><td>信任度高的日常开发</td><td>命令仍要问</td></tr>
+      <tr><td><code>bypassPermissions</code></td><td>全部放行</td><td>容器 / 一次性环境</td><td>危险路径仍会拦（安全兜底）</td></tr>
+      <tr><td><code>dontAsk</code></td><td>直接拒绝</td><td>CI、无头脚本</td><td>「问不了」就等价于「不行」</td></tr>
+      <tr><td><code>auto</code></td><td>AI 分类器判定</td><td>内部（ant）</td><td>外部映射为 default</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">types/permissions.ts</span><span>16-38 · bubble 不在 INTERNAL_PERMISSION_MODES 里</span></header>
+  <pre>export const EXTERNAL_PERMISSION_MODES = [
+  'acceptEdits', 'bypassPermissions', 'default', 'dontAsk', 'plan',
+] as const
+export type InternalPermissionMode = ExternalPermissionMode | 'auto' | 'bubble'</pre>
+</div>
+  
+<div class="ev">
+  <header><span class="path">utils/permissions/PermissionMode.ts</span><span>41-98 · auto 模式对外的映射是 default —— 外部用户看到的是「询问」，不是「自动」</span></header>
+  <pre>auto: {
+  title: 'Auto mode',
+  shortTitle: 'Auto',
+  symbol: '⏵⏵',
+  color: 'warning' as ModeColorKey,
+  external: 'default' as ExternalPermissionMode,
+},</pre>
+</div>
+  <div class="analogy"><i aria-hidden="true">≈</i><div>像公司门禁：员工卡（规则）、楼层权限（模式）、保安复核（分类器）、以及「连续刷不开就叫人」（熔断）。四层各管一段，不是重复。</div></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>一次工具调用的十一步</h2>
+  
+  <p>这段代码的编号注释可以直接当规范读。<b>顺序本身就是安全边界</b>：把 deny 放在最前，是为了让任何后面的「放行」都不能翻案。</p>
+  <div class="tw"><table>
+      <thead><tr><th>步骤</th><th>检查什么</th><th>结果</th></tr></thead>
+      <tbody>
+      <tr><td>1a</td><td>整工具被 deny 规则命中</td><td>拒绝，终止</td></tr>
+      <tr><td>1b</td><td>整工具有 ask 规则</td><td>转 ask（沙箱可自动放行的 Bash 除外）</td></tr>
+      <tr><td>1c</td><td>工具自己的 <code>checkPermissions()</code></td><td>allow / deny / ask / passthrough</td></tr>
+      <tr><td>1d</td><td>工具明确拒绝</td><td>拒绝，终止</td></tr>
+      <tr><td>1e</td><td>工具声明「必须人工交互」</td><td>即使绕过模式也要问</td></tr>
+      <tr><td>1f</td><td>内容级 ask 规则（如 <code>Bash(npm publish:*)</code>）</td><td>优先于绕过模式</td></tr>
+      <tr><td>1g</td><td>安全路径检查（.git/、.claude/、shell 配置）</td><td>绕过模式下也要问</td></tr>
+      <tr><td>2a</td><td>模式是否允许（含 plan 模式下继承 bypass）</td><td>允许，终止</td></tr>
+      <tr><td>2b</td><td>整工具被 allow 规则命中</td><td>允许，终止</td></tr>
+      <tr><td>3</td><td>以上都不确定（passthrough）</td><td>转成 ask</td></tr>
+      <tr><td>4</td><td>ask 之后：dontAsk / auto / 交互处理器</td><td>拒绝 / 分类器 / 弹窗</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">utils/permissions/permissions.ts</span><span>1174-1186 · deny 永远第一步</span></header>
+  <pre>// 1. Check if the tool is denied
+// 1a. Entire tool is denied
+const denyRule = getDenyRuleForTool(appState.toolPermissionContext, tool)
+if (denyRule) {
+  return {
+    behavior: 'deny',
+    decisionReason: { type: 'rule', rule: denyRule },
+    message: `Permission to use ${tool.name} has been denied.`,
+  }
+}</pre>
+</div>
+  <div class="note good"><b>可迁移结论：</b>审批顺序要写成显式的编号步骤，并有测试覆盖每一步。否则加一个新功能时，很容易把「deny 优先」破坏掉。</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>auto 模式：用模型审模型</h2>
+  
+  <p><code>auto</code> 把「问用户」换成「问一个分类器」。分类器看到的是工具给它的精简输入（<code>toAutoClassifierInput()</code>），而不是完整文件内容 —— 既省 token，也避免把代码送进判定请求。</p>
+  
+<div class="ev">
+  <header><span class="path">utils/permissions/denialTracking.ts</span><span>12-16 · 连续 3 次或累计 20 次被拒，退回人工确认</span></header>
+  <pre>export const DENIAL_LIMITS = {
+  maxConsecutive: 3,
+  maxTotal: 20,
+} as const</pre>
+</div>
+  <p>还有一个容易被忽略的细节：进入 auto 模式时，代码会把「等价于任意代码执行」的允许规则<b>剥掉</b>。比如 <code>Bash(python:*)</code> —— 允许它等于允许一切，分类器也就形同虚设。</p>
+  
+<div class="ev">
+  <header><span class="path">utils/permissions/dangerousPatterns.ts</span><span>3-8</span></header>
+  <pre>* An allow rule like `Bash(python:*)` or `PowerShell(node:*)` lets the model
+ * run arbitrary code via that interpreter, bypassing the auto-mode classifier.
+ * These lists feed the isDangerous{Bash,PowerShell}Permission predicates in
+ * permissionSetup.ts, which strip such rules at auto-mode entry.</pre>
+</div>
+  <div class="tradeoff"><div><b>换来什么</b>日常操作不用每次点确认，长任务不会被人肉审批卡死。</div><div><b>付出什么</b>分类器会犯错：既可能放过危险命令，也可能误拒正常操作；所以要有「连续被拒就退回人工」的熔断，以及随时可切的模式。</div></div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>沙箱：不在这个仓库里</h2>
+  
+  <p>一个常见误解是「Claude Code 自带 OS 级沙箱」。源码给出的答案是：CLI 只做适配层，真正的隔离来自外部包 <code>@anthropic-ai/sandbox-runtime</code>（macOS 用 seatbelt，Linux 用 bubblewrap）。</p>
+  
+<div class="ev">
+  <header><span class="path">utils/sandbox/sandbox-adapter.ts</span><span>1-20</span></header>
+  <pre>/**
+ * Adapter layer that wraps @anthropic-ai/sandbox-runtime with Claude CLI-specific integrations.
+ * This file provides the bridge between the external sandbox-runtime package and Claude CLI's
+ * settings system, tool integration, and additional features.
+ */
+import type { ... } from '@anthropic-ai/sandbox-runtime'
+import { SandboxManager as BaseSandboxManager, ... } from '@anthropic-ai/sandbox-runtime'</pre>
+</div>
+  <ul><li><b>沙箱开启后</b>，Bash 可以配置成「被沙箱包裹就自动放行」（<code>isAutoAllowBashIfSandboxed</code>）—— 用隔离换掉逐条确认；</li><li><b>被排除的命令</b>（需要网络、需要写系统目录）仍然要遵守 ask 规则；</li><li><b>依赖检查</b>：Linux/WSL 缺 bubblewrap 时给出安装提示，而不是静默降级。</li></ul>
+  <div class="note warn"><b>结论：</b>如果你要抄它的安全模型，抄的是「权限流水线 + 外部沙箱适配」这个分层，而不是某个内置沙箱实现 —— 后者需要你自己接 OS 能力。</div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>规则语法与作用域</h2>
+  
+  <p>规则是三态：<code>allow</code> / <code>deny</code> / <code>ask</code>，写进设置文件后按作用域合并：企业托管 → 用户 → 项目 → 本地 → 会话。语法上有几个必须知道的形状：</p>
+  <div class="tw"><table>
+      <thead><tr><th>写法</th><th>含义</th><th>坑</th></tr></thead>
+      <tbody>
+      <tr><td><code>Bash(git:*)</code></td><td>所有以 git 开头的命令</td><td>前缀匹配，不是正则</td></tr>
+      <tr><td><code>Bash(npm publish:*)</code></td><td>精确到子命令</td><td>内容级 ask 优先于绕过模式</td></tr>
+      <tr><td><code>mcp__github</code></td><td>整个 MCP 服务器的工具</td><td>等价于 <code>mcp__github__*</code></td></tr>
+      <tr><td><code>Read(./src/**)</code></td><td>路径 glob</td><td>越界与符号链接另有校验</td></tr>
+      </tbody>
+    </table></div>
+  <p>规则被覆盖时，代码会主动检测「影子规则」并提示（<code>shadowedRuleDetection</code>）—— 因为一条被上层覆盖的 allow 规则，会让用户以为自己放行了，其实没有。</p>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>企业控制面与紧急开关</h2>
+  
+  <p>两个独立通道：<b>策略限制</b>（能用什么功能）与<b>托管设置</b>（默认配置长什么样）。策略是「缺省即允许」的白名单式模型：只有被明确 block 的 key 才会拒绝。</p>
+  
+<div class="ev">
+  <header><span class="path">services/policyLimits/types.ts</span><span>5-10</span></header>
+  <pre>* Only blocked policies are included. If a policy key is absent, it's allowed.
+restrictions: z.record(z.string(), z.object({ allowed: z.boolean() }))</pre>
+</div>
+  <p>实际用到的 key 比如 <code>allow_remote_sessions</code>、<code>allow_remote_control</code>、<code>allow_product_feedback</code> —— 企业可以直接关掉「远程会话」这类能力，而不需要发版。</p>
+  
+<div class="ev">
+  <header><span class="path">utils/permissions/bypassPermissionsKillswitch.ts</span><span>26-38 · 启动时拉一次 gate，命中就把「绕过模式」从选项里拿掉</span></header>
+  <pre>export async function checkAndDisableBypassPermissionsIfNeeded(...) {
+  // Check if bypassPermissions should be disabled based on Statsig gate
+  // Do this only once, before the first query...
+  const shouldDisable = await shouldDisableBypassPermissions()
+  if (!shouldDisable) return
+  setAppState(prev =&gt; ({ ...prev, toolPermissionContext: createDisabledBypassPermissionsContext(...) }))</pre>
+</div>
+  <div class="note "><b>产品含义：</b>「安全」在这里是一个可远程调整的策略面，而不是一个写死的开关。好处是能应急；代价是用户看到的可用功能可能在某天突然消失。</div>
+
+</section>
+
+
+<section id="s07">
+  <h2><span class="num">07</span>三个容易误解的细节</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>误解</th><th>代码事实</th><th>证据</th></tr></thead>
+      <tbody>
+      <tr><td>hook 允许就等于放行</td><td>PreToolUse hook 的 allow 只是「不反对」，之后仍要过 deny / ask 规则；命中照样拒绝或弹窗</td><td><code>toolHooks.ts</code> 的 <code>checkRuleBasedPermissions</code></td></tr>
+      <tr><td>Bash 语义分类器在跑</td><td>本构建里 <code>BASH_CLASSIFIER</code> 是 stub：<code>isClassifierPermissionsEnabled()</code> 恒 false</td><td><code>bashClassifier.ts</code></td></tr>
+      <tr><td>沙箱默认开着</td><td>沙箱默认关闭（<code>sandbox.enabled ?? false</code>），开了才转调外部包，Linux 还需 bwrap/socat</td><td><code>sandbox-adapter.ts:459-467</code></td></tr>
+      </tbody>
+    </table></div>
+  <p>auto 模式的分类器调用也有明确参数：温度固定 0（要可复现），输出上限 4096 token，模型优先取内部配置、否则用主循环模型。它<b>不是</b>在规则层判断，而是一次独立的侧查询。</p>
+
+</section>
+
+
+<section id="s08">
+  <h2><span class="num">08</span>这套设计的三条硬规则</h2>
+  
+  <ul><li><b>拒绝不可被绕过</b>：deny 在第一步，连 <code>bypassPermissions</code> 都翻不了案；</li><li><b>不确定就降级</b>：分类器连续被拒就退回人工，而不是继续自动放行；</li><li><b>危险先于便利</b>：<code>.git/</code>、shell 配置文件这类路径，在任何模式下都要确认。</li></ul>
+  <div class="grid g4"><div class="stat"><b>5 + 1</b><span>对外模式 + auto</span><em>bubble 仅类型</em></div><div class="stat"><b>11</b><span>裁决步骤（含子步）</span><em>permissions.ts 注释编号</em></div><div class="stat"><b>3 / 20</b><span>连续 / 累计拒绝熔断</span><em>denialTracking.ts</em></div><div class="stat"><b>3</b><span>策略 key 示例</span><em>remote sessions/control/feedback</em></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>utils/permissions/permissions.ts（52KB） <span>· 裁决流水线</span></li><li>utils/permissions/PermissionMode.ts <span>· 模式枚举</span></li><li>utils/sandbox/sandbox-adapter.ts <span>· 外部沙箱适配</span></li><li>services/policyLimits/、bypassPermissionsKillswitch.ts <span>· 企业策略与紧急开关</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="05-context.html"><small>← 上一章</small><b>05 上下文</b></a><a class="next" href="07-agents.html"><small>下一章 →</small><b>07 多 Agent</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

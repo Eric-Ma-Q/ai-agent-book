@@ -1,0 +1,517 @@
+/* Harness directory and library pages (requirement 006). Scoped to the
+   .harness-* classes so the rest of the reader is untouched. */
+.harness-page {
+  padding-block: 56px 96px;
+}
+.harness-head {
+  max-width: 900px;
+}
+.harness-head h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  line-height: 1.05;
+  margin: 10px 0 18px;
+  letter-spacing: -0.02em;
+}
+.harness-lead {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  color: var(--muted);
+  max-width: 68ch;
+}
+.harness-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 26px 0 22px;
+  padding: 0;
+}
+.harness-stats div {
+  min-width: 118px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.harness-stats dt {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.harness-stats dd {
+  margin: 4px 0 0;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+.harness-quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+}
+.harness-button {
+  display: inline-block;
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 650;
+  font-size: 0.875rem;
+}
+.harness-button:hover {
+  background: var(--muted);
+}
+.harness-link {
+  color: var(--muted);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.harness-link:hover {
+  color: var(--ink);
+}
+
+.harness-block {
+  margin-top: 64px;
+}
+.harness-block h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  line-height: 1.2;
+  margin: 0;
+}
+.harness-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-bottom: 20px;
+}
+.harness-count {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.harness-path {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 16px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.harness-path li {
+  position: relative;
+  padding: 20px 22px 20px 58px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.harness-step {
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  font-family: var(--serif);
+  font-size: 1rem;
+  color: var(--muted);
+}
+.harness-path a {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.harness-path p {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.harness-controls {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.harness-search {
+  display: grid;
+  gap: 6px;
+  max-width: 540px;
+}
+.harness-search-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.harness-search input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+.harness-search input:focus-visible {
+  border-color: var(--ink);
+}
+.harness-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.harness-filters button {
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.harness-filters button:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+}
+.harness-filters button[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+.harness-empty {
+  margin: 8px 0 0;
+  padding: 16px 18px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.harness-group {
+  margin-top: 32px;
+}
+.harness-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  margin-bottom: 14px;
+}
+.harness-group-head h3 {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+.harness-group-head p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.harness-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.harness-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition:
+    border-color 0.18s,
+    transform 0.18s;
+}
+.harness-card:hover {
+  border-color: var(--muted);
+  transform: translateY(-2px);
+}
+.harness-card:focus-visible {
+  outline-offset: 3px;
+}
+.harness-kind {
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+}
+.harness-card-title {
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.harness-card-desc {
+  font-size: 0.84375rem;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.harness-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+}
+.harness-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+
+.harness-labs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.harness-lab {
+  min-width: 0;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.harness-lab-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.harness-lab-head h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.375rem;
+}
+.harness-lab p {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.harness-command {
+  max-width: 100%;
+  margin: 14px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+.harness-command code {
+  white-space: pre;
+}
+.harness-lab-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.harness-lab-links a {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.harness-lab-links .harness-lab-run {
+  padding: 8px 14px;
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+.harness-lab-links .harness-lab-run:hover {
+  color: var(--bg);
+}
+
+.harness-foot {
+  margin-top: 72px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.harness-foot code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.harness-foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.harness-foot-links a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.harness-foot-links a:hover {
+  color: var(--ink);
+}
+
+/* Library */
+.harness-library-head {
+  max-width: 860px;
+}
+.harness-library-list {
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.harness-library-section {
+  margin-top: 40px;
+}
+.harness-library-section h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+.harness-library-section h2 small {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+.harness-library-section > p {
+  margin: 0 0 14px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.harness-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 18px;
+  padding: 13px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+}
+.harness-item:hover {
+  border-color: var(--muted);
+}
+.harness-item-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.harness-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.harness-item-path {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .harness-page {
+    padding-block: 36px 72px;
+  }
+  .harness-stats div {
+    flex: 1 1 calc(50% - 10px);
+    min-width: 0;
+  }
+  .harness-block {
+    margin-top: 48px;
+  }
+  .harness-cards,
+  .harness-labs {
+    grid-template-columns: 1fr;
+  }
+  .harness-path {
+    grid-template-columns: 1fr;
+  }
+  .harness-item {
+    display: grid;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .harness-card,
+  .harness-card:hover {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Requirement 013: the AI PM practice card in the PM group. */
+.harness-practice {
+  margin: 0 0 14px;
+}
+.harness-practice-card {
+  position: relative;
+  display: grid;
+  gap: 5px;
+  padding: 18px 48px 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--accent) 65%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.harness-practice-card:hover {
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+.harness-practice-kind {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.harness-practice-card strong {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+.harness-practice-desc {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+.harness-practice-arrow {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .harness-practice-card {
+    transition: none;
+  }
+  .harness-practice-card:hover {
+    transform: none;
+  }
+}

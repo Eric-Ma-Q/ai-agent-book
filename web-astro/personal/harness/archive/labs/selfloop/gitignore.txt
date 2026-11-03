@@ -1,0 +1,3 @@
+.selfloop/
+__pycache__/
+*.pyc

@@ -1,0 +1,7 @@
+# Run state produced by the archived labs; the content itself is tracked.
+archive/labs/selfloop/.selfloop/
+archive/labs/selfloop/__pycache__/
+archive/labs/mini-harness/__pycache__/
+archive/labs/mini-harness/**/__pycache__/
+archive/hooks-33/__pycache__/
+archive/_deck/pdfout/

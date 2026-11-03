@@ -1,0 +1,195 @@
+{
+ "version": 1,
+ "entries": {
+  "471ecedb8a824e6f8dcd": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Theuser asksabout the core formula ofAgent andthethree components. Let me searchthe book.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent 核心公式\"}",
+        "name": "search_book"
+       },
+       "id": "call_75d32e9a21ed4353b1adc415",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent = LLM + 规划 + 记忆 + 工具\"}",
+        "name": "search_book"
+       },
+       "id": "call_ebe1e37d34fb4ed990309d43",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1169,
+     "cached_tokens": 1024,
+     "completion_tokens": 110,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 2703,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "d2f3bd97e3f7703a1b50": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Thesearch results were omitted. Let me tryagain with different queries.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent 公式\"}",
+        "name": "search_book"
+       },
+       "id": "call_f79723267c154f439d1db0fe",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent 定义 组成\"}",
+        "name": "search_book"
+       },
+       "id": "call_cf584c5d45b646b99b516241",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1290,
+     "cached_tokens": 1024,
+     "completion_tokens": 95,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 1812,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "d2f9eef3d71da3d35321": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Thetoolresults arebeing omitted. Let me try toread the chaptersto understandthe structure. Let me listchapters first.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{}",
+        "name": "list_chapters"
+       },
+       "id": "call_f0c2c37ab3a144ccbf9790ad",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1402,
+     "cached_tokens": 1280,
+     "completion_tokens": 55,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 1021,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "5f8195b4cb9fe4ad275b": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Thetool results arebeing omitted. Let me tryto getthe actual content. Let me calllist_chapters again andsee ifI can get theoutput.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{}",
+        "name": "list_chapters"
+       },
+       "id": "call_98ab245852014c2c8ec59869",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1449,
+     "cached_tokens": 1280,
+     "completion_tokens": 62,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 4604,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "ac7bf1304ead842a05d2": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Thetool results arebeing omitted. Let me try again tosee the actual content.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{}",
+        "name": "list_chapters"
+       },
+       "id": "call_e0e6982036eb435ab09a9069",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1496,
+     "cached_tokens": 1280,
+     "completion_tokens": 47,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 4909,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "9424c8b9388715fdfe2b": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Thetool results arebeing omitted. Let me tryto read theactualcontent. Itseems the tool results are beinghidden fromme. Let me try againwith thesearch tool andsee ifI can get results.\n\nActually, the results say\"（工具结果已省略）\" which means the tool resultsareomitted. This is strange.Let me try to callthe tools again and see ifIcan get the actual content.Wait, maybe the issueis that the tool results arebeing omittedin the display. Let me try callinglist_chaptersagain witha specificchapter.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1}",
+        "name": "list_chapters"
+       },
+       "id": "call_fe6770b765294127a724d81b",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1543,
+     "cached_tokens": 1280,
+     "completion_tokens": 162,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 4109,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ]
+ }
+}

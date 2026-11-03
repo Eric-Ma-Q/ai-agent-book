@@ -1,0 +1,367 @@
+---
+// Requirement 014: interactive, offline workbench for the archived SelfLoop
+// lab. The simulator is a pure browser module; this page renders the static
+// shell, gates, stop table, mechanisms and no-script fallback, then the client
+// script fills the controls, score chart, candidate table and inspector.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import { HARNESS_PATH, HARNESS_SITE_PATH, SELFLOOP_PATH } from '../routes.mjs';
+import { GATES, SCENARIOS, SOURCE_DEFAULTS, STAGES } from '../harness/selfloop/engine.mjs';
+import '../client/harness/selfloop.css';
+
+const labBase = `${HARNESS_SITE_PATH}labs/selfloop/`;
+const readmeUrl = withBase(`${labBase}README.md`);
+const fileUrl = (file: string) => withBase(`${labBase}${file}`);
+const staticScenarios = SCENARIOS.map((scenario) => ({
+  id: scenario.id,
+  title: scenario.title,
+  task: scenario.task,
+  description: scenario.description,
+  expectedStop: scenario.expectedStop,
+  badge: scenario.badge,
+}));
+const stopRows = [
+  ['verified', '达成目标', 'verified && stop_on_verified', '第 3 轮拿到 1.0 时停'],
+  ['budget', '累计成本越线', 'cost_usd >= budget_usd', '演示值 $0.00045；真实默认 $2'],
+  ['plateau', '连续无严格提升', 'plateau >= plateau_k', '第 4、5 轮被拒后停'],
+  ['max_rounds', '跑满轮数', 'round >= max_rounds', 'canary 近失场景默认 1 轮'],
+  ['stopped', '手动停止', 'stop() 在轮次边界生效', '不会中断正在进行的提议或验证'],
+];
+---
+
+<Layout locale="zh-CN" title="SelfLoop 交互运行台 · Harness 实验">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width sl-page" data-sl-root>
+    <header class="sl-hero">
+      <div class="sl-hero-copy">
+        <p class="eyebrow">实验 014 · SelfLoop</p>
+        <h1>把自举循环<br />一轮一轮拆开看</h1>
+        <p class="sl-lead">
+          SelfLoop 的浏览器运行台：用脚本化 MockProposer 和内存 RunStore 复刻
+          基线、提议、沙箱验证、四道闸门、接受归档与停机。单步查看提示词、闸门证据、
+          分数曲线、候选 diff 与运行档案。不联网、不执行真实命令、不写读者数据。
+        </p>
+        <div class="sl-hero-actions">
+          <a class="harness-button" href="#workbench">进入运行台 →</a>
+          <a class="harness-link" href={readmeUrl}>读实验说明</a>
+          <a class="harness-link" href={withBase(HARNESS_PATH)}>← Harness 目录</a>
+        </div>
+      </div>
+      <dl class="sl-stats" aria-label="运行台统计">
+        <div><dt>阶段</dt><dd>6 <small>基线到停机</small></dd></div>
+        <div><dt>场景</dt><dd>{staticScenarios.length} <small>含五种终止原因</small></dd></div>
+        <div><dt>闸门</dt><dd>4 <small>可见 / 隐藏 / canary / 完整性</small></dd></div>
+        <div><dt>网络请求</dt><dd>0 <small>离线可跑</small></dd></div>
+      </dl>
+    </header>
+
+    <aside class="sl-note">
+      <strong>这是模拟器，不是第二个 SelfLoop。</strong>
+      默认场景的四轮分数 0.4942 → 0.6867 → 0.8154 → 1.0 与闸门数字来自归档源码的一次真实跑分；
+      提示词、token、成本、评分与完整性规则按 <code>providers.py</code> / <code>verify.py</code> 复刻。
+      生产默认 {SOURCE_DEFAULTS.maxRounds} 轮、${SOURCE_DEFAULTS.budgetUsd} 预算、平台期 K={SOURCE_DEFAULTS.plateauK}；
+      页面为了短演示把预算调到 $0.00045，并把 canary 场景设为 1 轮。结论以 <a href={readmeUrl}>归档源码与 README</a> 为准。
+    </aside>
+
+    <noscript>
+      <style>[data-sl-workbench] { display: none; }</style>
+      <div class="sl-noscript">
+        <p>
+          交互运行台需要 JavaScript。你仍然可以阅读五个场景、四道闸门、六个阶段与停机条件，
+          或直接打开 <a href={readmeUrl}>SelfLoop 实验说明</a>。
+        </p>
+        <h2>五个场景</h2>
+        <ol class="sl-noscript-scenarios">
+          {staticScenarios.map((scenario) => (
+            <li>
+              <strong>{scenario.title}</strong>
+              <span>{scenario.task}</span>
+              <span>预期停机：{scenario.expectedStop}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </noscript>
+
+    <section class="sl-workbench" id="workbench" aria-label="SelfLoop 运行台" data-sl-workbench>
+      <aside class="sl-panel sl-controls" aria-labelledby="sl-controls-title">
+        <div class="sl-panel-head">
+          <p class="sl-kicker">控制台</p>
+          <h2 id="sl-controls-title">选一条循环路径</h2>
+        </div>
+        <div class="sl-scenario-list" data-sl-scenarios></div>
+
+        <div class="sl-fieldset">
+          <p class="sl-fieldset-title">开关</p>
+          <div class="sl-options" data-sl-options>
+            <p class="sl-muted">加载脚本后可调轮数、预算、平台期、手动停止与 verified 开关。</p>
+          </div>
+        </div>
+
+        <div class="sl-run-buttons">
+          <button class="sl-button sl-button-primary" type="button" data-sl-step>单步执行</button>
+          <button class="sl-button" type="button" data-sl-play aria-pressed="false">自动播放</button>
+          <button class="sl-button" type="button" data-sl-reset>重置</button>
+        </div>
+        <label class="sl-speed">
+          <span>播放速度</span>
+          <select data-sl-speed>
+            <option value="1100">0.5x</option>
+            <option value="650" selected>1x</option>
+            <option value="350">2x</option>
+          </select>
+        </label>
+        <p class="sl-hint">
+          空格 播放 / 暂停，← / → 单步。每次单步前进一个事件；到 <code>finished</code> 自动暂停。
+          改任一开关会从头重算轨迹。
+        </p>
+      </aside>
+
+      <section class="sl-stage" aria-labelledby="sl-stage-title">
+        <div class="sl-stage-head">
+          <div>
+            <p class="sl-kicker" data-sl-current-stage>P1 · 基线</p>
+            <h2 id="sl-stage-title" data-sl-current-title>运行开始</h2>
+            <p class="sl-current-summary" data-sl-current-summary>
+              选择一个场景，然后点「单步执行」。
+            </p>
+          </div>
+          <p class="sl-progress" data-sl-progress aria-live="polite">事件 0 / 0</p>
+        </div>
+
+        <div class="sl-rail" data-sl-rail role="group" aria-label="六个循环阶段">
+          {
+            STAGES.map((stage) => (
+              <button
+                type="button"
+                class="sl-rail-step"
+                data-sl-rail-stage={stage.id}
+                aria-pressed="false"
+                title={`${stage.id} ${stage.name}`}
+              >
+                <span>{stage.id}</span>
+                <strong>{stage.name}</strong>
+              </button>
+            ))
+          }
+        </div>
+        <div class="sl-progressbar" aria-hidden="true"><span data-sl-progressbar></span></div>
+
+        <div class="sl-metrics" data-sl-metrics aria-label="当前运行指标">
+          <div class="sl-metric"><span>最优分数</span><strong>0.0000</strong><small>等待基线</small></div>
+        </div>
+
+        <section class="sl-chart-card" aria-labelledby="sl-chart-title">
+          <div class="sl-chart-head">
+            <h3 id="sl-chart-title">分数曲线</h3>
+            <p data-sl-chart-note>已入档候选 · 点击圆点看闸门</p>
+          </div>
+          <div class="sl-chart" data-sl-chart></div>
+          <div class="sl-legend" aria-hidden="true">
+            <span><i class="is-baseline"></i>基线</span>
+            <span><i class="is-accepted"></i>接受</span>
+            <span><i class="is-rejected"></i>拒绝</span>
+            <span><i class="is-verified"></i>verified</span>
+          </div>
+        </section>
+
+        <section class="sl-candidates" aria-labelledby="sl-candidates-title">
+          <div class="sl-chart-head">
+            <h3 id="sl-candidates-title">轮次档案</h3>
+            <p data-sl-candidates-note>点击一行选中候选</p>
+          </div>
+          <div class="sl-table-wrap">
+            <table class="sl-table">
+              <thead>
+                <tr>
+                  <th scope="col">轮</th>
+                  <th scope="col">候选</th>
+                  <th scope="col">可见</th>
+                  <th scope="col">隐藏</th>
+                  <th scope="col">canary</th>
+                  <th scope="col">分数</th>
+                  <th scope="col">裁决</th>
+                </tr>
+              </thead>
+              <tbody data-sl-candidates-body></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="sl-timeline-wrap">
+          <ol class="sl-timeline" data-sl-timeline aria-label="事件时间线"></ol>
+          <p class="sl-timeline-empty" data-sl-timeline-empty>还没有事件。</p>
+        </div>
+
+        <div class="sl-stage-foot">
+          <div class="sl-foot-actions">
+            <button class="sl-text-button" type="button" data-sl-back>← 上一步</button>
+            <button class="sl-text-button" type="button" data-sl-jump>跳到结尾 →</button>
+          </div>
+          <span data-sl-foot-status>离线模拟 · 无真实副作用</span>
+        </div>
+      </section>
+
+      <aside class="sl-panel sl-inspector" aria-labelledby="sl-inspector-title">
+        <div class="sl-inspector-head">
+          <div>
+            <p class="sl-kicker">检查器</p>
+            <h2 id="sl-inspector-title" data-sl-inspector-title>运行开始</h2>
+            <p class="sl-inspector-meta" data-sl-inspector-meta>事件 0 · P1</p>
+          </div>
+        </div>
+        <div class="sl-tabs" role="tablist" aria-label="检查器视图">
+          <button type="button" role="tab" aria-selected="true" data-sl-tab="gates" id="sl-tab-gates" aria-controls="sl-pane-gates">闸门</button>
+          <button type="button" role="tab" aria-selected="false" data-sl-tab="archive" id="sl-tab-archive" aria-controls="sl-pane-archive">档案</button>
+          <button type="button" role="tab" aria-selected="false" data-sl-tab="diff" id="sl-tab-diff" aria-controls="sl-pane-diff">diff</button>
+          <button type="button" role="tab" aria-selected="false" data-sl-tab="raw" id="sl-tab-raw" aria-controls="sl-pane-raw">原始 JSON</button>
+        </div>
+        <div class="sl-pane" data-sl-pane="gates" id="sl-pane-gates" role="tabpanel" aria-labelledby="sl-tab-gates">
+          <p class="sl-muted">运行后在这里查看四道闸门、失败样本与 verified 检查。</p>
+        </div>
+        <div class="sl-pane" data-sl-pane="archive" id="sl-pane-archive" role="tabpanel" aria-labelledby="sl-tab-archive" hidden>
+          <p class="sl-muted">运行后在这里查看内存里的 meta、candidates、snapshots 与 best.py。</p>
+        </div>
+        <div class="sl-pane" data-sl-pane="diff" id="sl-pane-diff" role="tabpanel" aria-labelledby="sl-tab-diff" hidden>
+          <p class="sl-muted">选中候选后在这里看相对基线或上一接受候选的 unified diff。</p>
+        </div>
+        <div class="sl-pane" data-sl-pane="raw" id="sl-pane-raw" role="tabpanel" aria-labelledby="sl-tab-raw" hidden>
+          <p class="sl-muted">点击时间线事件查看原始数据。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="sl-mechanisms" id="gates" aria-labelledby="sl-gates-title">
+      <div class="sl-section-head">
+        <div>
+          <p class="eyebrow">四道闸门</p>
+          <h2 id="sl-gates-title">分数只回答“有没有变好”，verified 还要过门禁</h2>
+          <p class="sl-section-lead">
+            可见测试和隐藏用例决定分数；canary 与完整性只决定能不能 verified。
+            分开看，才能解释“可见测试还是 5/6，分数却在涨”和“分数 1.0 却不是 verified”。
+          </p>
+        </div>
+      </div>
+      <ol class="sl-gate-grid">
+        {
+          GATES.map((gate) => (
+            <li class="sl-gate-card">
+              <div class="sl-gate-card-head">
+                <h3>{gate.name}</h3>
+                <span class="sl-gate-value">{gate.weight}</span>
+              </div>
+              <p class="sl-gate-weight">{gate.gate ? '门禁：不参与分数，只影响 verified' : '计分：参与 0.35 / 0.65 加权'}</p>
+              <p>{gate.question}</p>
+              <p>{gate.how}</p>
+              <p><strong>局限：</strong>{gate.risk}</p>
+              <p><a href={fileUrl(`selfloop/${gate.file}`)}><code>selfloop/{gate.file}</code></a></p>
+            </li>
+          ))
+        }
+      </ol>
+      <pre class="sl-formula">score = 0.35 * (visible_passed / visible_total) + 0.65 * (hidden_passed / hidden_total)
+integrity 失败 → score = 0
+verified = integrity ∧ visible 全过 ∧ hidden 全过 ∧ canary 全过</pre>
+      <p class="sl-callout">
+        <strong>为什么可见测试不能当验收：</strong>可见集只覆盖主路径，agent 能看到并针对它打补丁；
+        隐藏集与 canary 的期望值由参考实现现算，且不进入提示词。测试跑绿只是“没被可见用例抓住”。
+      </p>
+    </section>
+
+    <section class="sl-mechanisms" id="stops" aria-labelledby="sl-stops-title">
+      <div class="sl-section-head">
+        <div>
+          <p class="eyebrow">停机条件</p>
+          <h2 id="sl-stops-title">五种终止原因，全部写在代码里</h2>
+          <p class="sl-section-lead">
+            不依赖提示词。轮次之间先看 verified，再看预算与平台期；都没命中就继续，
+            跑满轮数上限，或在下一轮边界响应手动停止。
+          </p>
+        </div>
+      </div>
+      <div class="sl-table-wrap">
+        <table class="sl-table sl-stop-table">
+          <thead>
+            <tr><th scope="col">stop_reason</th><th scope="col">含义</th><th scope="col">判定</th><th scope="col">页面里怎么看</th></tr>
+          </thead>
+          <tbody>
+            {stopRows.map(([reason, meaning, check, note]) => (
+              <tr>
+                <td><code>{reason}</code></td>
+                <td>{meaning}</td>
+                <td><code>{check}</code></td>
+                <td>{note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="sl-callout">
+        <strong>顺序很重要：</strong>verified 与预算同一轮命中时，先看 <code>stop_on_verified</code>。
+        关掉它，1.0 的候选也会被接受，但运行会继续到预算或平台期；预算场景专门演示这条路径。
+      </p>
+    </section>
+
+    <section class="sl-mechanisms" id="stages" aria-labelledby="sl-stages-title">
+      <div class="sl-section-head">
+        <div>
+          <p class="eyebrow">完整流程 · P1–P6</p>
+          <h2 id="sl-stages-title">六个阶段，各自回答一个问题</h2>
+          <p class="sl-section-lead">
+            每张卡给出“解决什么问题 / 怎么实现 / 代价 / 源码”。点「在运行台看」会跳到该阶段的第一个事件；
+            分数、闸门与档案都在右侧检查器里。
+          </p>
+        </div>
+      </div>
+      <ol class="sl-mechanism-grid">
+        {
+          STAGES.map((stage) => (
+            <li class="sl-mechanism" data-sl-mechanism={stage.id}>
+              <div class="sl-mechanism-head">
+                <span class="sl-stage-badge">{stage.id}</span>
+                <h3>{stage.name}</h3>
+                <span class="sl-mechanism-short">{stage.short}</span>
+              </div>
+              <p class="sl-mechanism-question">{stage.question}</p>
+              <dl class="sl-mechanism-facts">
+                <div><dt>怎么做</dt><dd>{stage.how}</dd></div>
+                <div><dt>代价 / 局限</dt><dd>{stage.cost}</dd></div>
+              </dl>
+              <div class="sl-mechanism-foot">
+                <span class="sl-code-inline">
+                  <a href={fileUrl(stage.file)}><code>{stage.file}</code></a>
+                </span>
+                <button class="sl-text-button" type="button" data-sl-see-stage={stage.id}>
+                  在运行台看 →
+                </button>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+      <pre class="sl-command">cd web-astro/personal/harness/archive/labs/selfloop
+python3 -m unittest discover -s tests -v   # 14 条真实测试
+python3 run.py                            # 本机按需打开 8791，用完关闭</pre>
+      <p class="sl-callout">
+        <strong>运行台不代理 8791。</strong>真实 SelfLoop 仍按归档 README 手动启动；
+        页面里的提议、验证与归档都是内存模拟，不产生候选文件，也不会调用模型。
+      </p>
+    </section>
+
+    <footer class="sl-foot">
+      <p>
+        模拟器复刻的是流程与关键判断，不是逐行解释器；候选闸门数字来自一次真实跑分，
+        结论以 <a href={readmeUrl}>SelfLoop README</a> 与 <code>selfloop/</code> 源码为准。
+      </p>
+      <p class="harness-foot-links">
+        <a href={withBase(HARNESS_PATH)}>Harness 目录</a>
+        <a href={withBase(SELFLOOP_PATH)}>本页</a>
+        <a href={withBase('/')}>回到阅读器</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    import '../client/harness/selfloop.ts';
+  </script>
+</Layout>

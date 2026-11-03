@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>前端部署工程师（FDE）就业指南 2026 · 岗位地图与转岗路线</title>
+<meta name="description" content="39 条来源拆解 FDE 的岗位、薪资与转岗路线：FDE 国内外薪资与岗位地图、能力栈、作品集、简历改写、5–7 轮面试与 90 天路线。">
+<script>
+/* 主题预置：在 CSS 绘制前挂上 dark 类，避免闪白 */
+(function(){try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}})();
+</script>
+<style>
+:root{
+  --paper:#f6f1e7;
+  --paper-2:#efe8da;
+  --card:#fffdf8;
+  --ink:#1a1a17;
+  --ink-2:#37352e;
+  --muted:#6f6a5f;
+  --line:#ded5c4;
+  --line-2:#c8bda8;
+  --accent:#b23a2e;
+  --accent-2:#8d2a21;
+  --accent-soft:#f3e2dd;
+  --green:#2f5d50;
+  --green-soft:#e3ece7;
+  --blue:#33587a;
+  --blue-soft:#e5ebf2;
+  --gold:#94651c;
+  --gold-soft:#f4ead7;
+  --red:#a33a32;
+  --red-soft:#f6e1de;
+  --shadow:0 18px 50px rgba(40,32,20,.08);
+  --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC","STSong","SimSun",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  color-scheme:light;
+}
+html.dark{
+  --paper:#141519;
+  --paper-2:#191b20;
+  --card:#1d1f25;
+  --ink:#f1eee6;
+  --ink-2:#d3cec2;
+  --muted:#a39d90;
+  --line:#33363d;
+  --line-2:#454951;
+  --accent:#e06a5b;
+  --accent-2:#f08a7d;
+  --accent-soft:#3a2422;
+  --green:#7fbfa9;
+  --green-soft:#1e2f2a;
+  --blue:#8db4d6;
+  --blue-soft:#1d2a36;
+  --gold:#d8ad63;
+  --gold-soft:#332918;
+  --red:#e58a80;
+  --red-soft:#3a2320;
+  --shadow:0 18px 50px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;overflow-x:clip}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(178,58,46,.25)}
+a:hover{border-bottom-color:currentColor}
+h1,h2,h3,h4{font-family:var(--serif);line-height:1.3;margin:0}
+p{margin:0 0 14px}
+.topbar{
+  position:sticky;top:0;z-index:30;background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+}
+.topbar-in{display:flex;align-items:center;gap:14px;max-width:1080px;margin:0 auto;padding:10px 24px}
+.topbar b{font-family:var(--serif);font-size:15px;font-weight:600}
+.topbar nav{display:flex;gap:4px;overflow:auto;flex:1;scrollbar-width:none}
+.topbar nav::-webkit-scrollbar{display:none}
+.topbar nav a{
+  font-size:12.5px;color:var(--muted);border:0;padding:5px 9px;border-radius:999px;white-space:nowrap;
+}
+.topbar nav a:hover{background:var(--paper-2);color:var(--ink)}
+.tbtn{
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);
+  border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:var(--sans);
+}
+.tbtn:hover{border-color:var(--accent);color:var(--accent)}
+.hero{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+.eyebrow{
+  font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);
+  font-weight:600;margin-bottom:14px
+}
+.hero h1{font-size:clamp(30px,4.4vw,46px);letter-spacing:-.01em;margin-bottom:16px}
+.hero h1 small{display:block;font-family:var(--sans);font-size:15px;font-weight:400;color:var(--muted);letter-spacing:0;margin-top:10px}
+.lead{font-size:17px;color:var(--ink-2);max-width:74ch}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 22px}
+.chip{
+  font-size:12px;padding:3px 10px;border-radius:999px;background:var(--paper-2);
+  color:var(--muted);border:1px solid var(--line)
+}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{
+  display:inline-block;padding:9px 18px;border-radius:999px;background:var(--accent);color:#fff;
+  border:1px solid var(--accent);font-size:14px;font-weight:600
+}
+.btn:hover{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+.ghost{
+  display:inline-block;padding:9px 18px;border-radius:999px;border:1px solid var(--line-2);
+  color:var(--ink-2);font-size:14px;background:var(--card);cursor:pointer;font-family:var(--sans)
+}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+main{padding-bottom:60px}
+section{padding:44px 0 8px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+.sec-no{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.08em}
+h2{font-size:clamp(23px,3vw,31px);margin:6px 0 10px}
+h2 .en{font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:block;margin-top:6px;font-weight:500}
+h3{font-size:19px;margin:26px 0 8px}
+h4{font-size:16px;margin:16px 0 6px}
+.sec-lead{color:var(--ink-2);max-width:78ch;font-size:16.5px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:22px 0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi b{display:block;font-family:var(--serif);font-size:26px;color:var(--accent);line-height:1.2}
+.kpi span{font-size:12.5px;color:var(--muted);display:block;margin-top:4px}
+.kpi em{font-style:normal;font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;background:var(--card)}
+caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);padding-bottom:6px}
+th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+th{background:var(--paper-2);font-weight:600;font-size:13px;color:var(--ink-2)}
+tbody tr:hover{background:color-mix(in srgb,var(--gold-soft) 35%,transparent)}
+.num{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.note{font-size:12.5px;color:var(--muted);margin-top:-6px}
+.callout{
+  border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;
+  padding:14px 18px;margin:20px 0
+}
+.callout.green{border-color:var(--green);background:var(--green-soft)}
+.callout.blue{border-color:var(--blue);background:var(--blue-soft)}
+.callout.gold{border-color:var(--gold);background:var(--gold-soft)}
+.callout b{font-family:var(--serif)}
+.callout p:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:18px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card h4{margin-top:0}
+.card p:last-child{margin-bottom:0}
+.card .tag{font-size:11.5px;color:var(--accent);font-family:var(--mono);letter-spacing:.04em}
+ul,ol{margin:10px 0 16px;padding-left:22px}
+li{margin:5px 0}
+.tight li{margin:3px 0}
+q,.q{font-family:var(--serif);color:var(--ink-2)}
+code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
+.ref{font-size:12px;vertical-align:super;border:0;color:var(--accent);font-family:var(--mono)}
+.ref:hover{text-decoration:underline}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0}
+details summary{cursor:pointer;font-weight:600;font-size:14.5px}
+details[open] summary{margin-bottom:8px}
+.mode-switch{display:flex;gap:6px;margin:16px 0 4px}
+.mode-switch button{
+  border:1px solid var(--line-2);background:var(--card);color:var(--muted);
+  padding:6px 14px;border-radius:999px;font-size:13px;cursor:pointer;font-family:var(--sans)
+}
+.mode-switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bars{margin:16px 0}
+.bar-row{display:grid;grid-template-columns:150px 1fr 92px;gap:10px;align-items:center;margin:7px 0;font-size:13px}
+.bar-track{height:12px;background:var(--paper-2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.bar-fill{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:999px}
+.bar-row .v{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.fit-list{display:grid;gap:8px;margin:16px 0}
+.fit-item{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14.5px;cursor:pointer}
+.fit-item input{margin-top:5px;accent-color:var(--accent)}
+.fit-item:hover{border-color:var(--line-2)}
+.fit-out{border:1px dashed var(--line-2);border-radius:12px;padding:14px 18px;background:var(--card);margin:8px 0 18px}
+.fit-out b{font-family:var(--serif);font-size:18px;color:var(--accent)}
+.fit-out p{margin:6px 0 0;font-size:14px;color:var(--ink-2)}
+.plan{display:grid;gap:8px;margin:16px 0}
+.plan label{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.plan input{margin-top:5px;accent-color:var(--green)}
+.plan .phase{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:block}
+.progress{height:8px;background:var(--paper-2);border-radius:999px;overflow:hidden;border:1px solid var(--line);margin:10px 0 4px}
+.progress i{display:block;height:100%;width:0;background:var(--green);transition:width .2s}
+.progress-txt{font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.steps{counter-reset:step;list-style:none;padding:0;margin:16px 0}
+.steps li{position:relative;padding-left:40px;margin:12px 0}
+.steps li::before{
+  counter-increment:step;content:counter(step);position:absolute;left:0;top:1px;
+  width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);
+  font-family:var(--mono);font-size:12.5px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line-2)
+}
+.srcs{list-style:none;padding:0;counter-reset:src;font-size:14px}
+.srcs li{counter-increment:src;position:relative;padding:9px 0 9px 44px;border-bottom:1px dashed var(--line);margin:0}
+.srcs li::before{
+  content:"S" counter(src);position:absolute;left:0;top:9px;font-family:var(--mono);
+  font-size:11.5px;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:1px 6px
+}
+.srcs .meta{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.foot{padding:30px 0 60px;color:var(--muted);font-size:13px}
+.foot p{margin:4px 0}
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  .topbar b{display:none}
+  .bar-row{grid-template-columns:100px 1fr 78px;font-size:12px}
+  table{font-size:13px}
+  th,td{padding:7px 8px}
+  .hero{padding-top:34px}
+}
+@media print{
+  .topbar,.hero-actions,.mode-switch,.progress,.progress-txt{display:none}
+  body{background:#fff;color:#000;font-size:11pt}
+  section{break-inside:auto;border-bottom:0}
+  a{color:#000;border:0}
+  .card,.kpi,table{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <b>FDE 就业指南</b>
+    <nav aria-label="章节">
+      <a href="#market">市场</a>
+      <a href="#money">钱</a>
+      <a href="#reality">真相</a>
+      <a href="#jobs">岗位</a>
+      <a href="#fit">适配</a>
+      <a href="#skills">能力</a>
+      <a href="#portfolio">作品集</a>
+      <a href="#resume">简历</a>
+      <a href="#interview">面试</a>
+      <a href="#plan">路线</a>
+      <a href="#risk">风险</a>
+      <a href="#sources">来源</a>
+    </nav>
+    <button class="tbtn" id="themeBtn" type="button" aria-label="切换深浅色">主题</button>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">AI 行业调研 · 就业指南</p>
+    <h1>前端部署工程师（FDE）就业指南
+      <small>岗位、薪资、门槛、面试与 90 天路线：一张能直接照着走的图</small>
+    </h1>
+    <p class="lead">
+      这一页只讲 FDE（Forward Deployed Engineer）：它在国内被叫作「前端部署工程师」，实际工作是驻客户现场，把 AI 接进业务流程，并对上线结果负责。
+      内容覆盖国内外的岗位与薪资、一线真相、准入能力、作品集、简历、面试与 90 天路线，所有数字标注口径。
+    </p>
+    <div class="hero-meta">
+      <span class="chip">数据截至 2026-10-29</span>
+      <span class="chip">39 条来源</span>
+      <span class="chip">约 20 分钟</span>
+      <span class="chip">薪资为招聘页与媒体口径，非成交价</span>
+    </div>
+    <div class="hero-actions">
+      <a class="btn" href="#market">从市场看起</a>
+      <a class="ghost" href="#fit">8 题自评</a>
+      <button class="ghost" type="button" id="printBtn">打印这份指南</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="market">
+  <p class="sec-no">01 / MARKET</p>
+  <h2>市场：四条增长曲线，四个不能相加的口径<span class="en">Four growth numbers, four samples</span></h2>
+  <p class="sec-lead">
+    「FDE 需求暴涨」是真的，但 729%、42 倍、44 倍、13.8 倍来自四个不同样本。把它们加在一起，会得出一个不存在的市场。
+  </p>
+  <p>
+    它之所以被前端从业者关注，是因为本行的曲线在另一边：美国前端招聘 2022 年初见顶后长期低迷<a class="ref" href="#s21">[21]</a>；
+    Stanford 2026-08 的工作论文用 ADP 薪酬记录发现，22–25 岁在高 AI 暴露职业中的相对就业比对照组低约 19%，软件开发是分化最明显的职业之一<a class="ref" href="#s20">[20]</a>。
+    这是相对差距，不是绝对下降——同一时期美国劳工统计局仍预测软件开发者十年增长 15%<a class="ref" href="#s20">[20]</a>。市场没有消失，是在向「能对结果负责的人」集中。
+  </p>
+
+  <div class="kpis">
+    <div class="kpi"><b>+729%</b><span>Indeed 美国 FDE 岗位，2025-04 的 643 个 → 2026-04 的 5,330 个</span><em>来源 S1、S9</em></div>
+    <div class="kpi"><b>≈44×</b><span>1,190 条 JD 扫描：相对 2025Q1 基线，2026 年中约 4,300 个/月</span><em>来源 S6</em></div>
+    <div class="kpi"><b>+2,100%</b><span>高管猎头 C&amp;T 对 2026 年底需求的预测；在册 FDE 约 1.7 万人</span><em>来源 S4</em></div>
+    <div class="kpi"><b>13.8×</b><span>韩国 2026 年 1–9 月 FDE 招聘启事数同比；岗位数 14.5 倍</span><em>来源 S10</em></div>
+  </div>
+
+  <h3>口径对照</h3>
+  <table>
+    <caption>同一现象的不同测量，页面不合并、不平均</caption>
+    <thead><tr><th>口径</th><th>数字</th><th>样本与限制</th></tr></thead>
+    <tbody>
+      <tr><td>Indeed 美国</td><td class="num">643 → 5,330（+729%）</td><td>2025-04 与 2026-04 两个时点的在架岗位数，含相邻标题；中文媒体同引<a class="ref" href="#s1">[1]</a><a class="ref" href="#s9">[9]</a></td></tr>
+      <tr><td>招聘数据站 JD 扫描</td><td class="num">≈44× / 4,300 月增 / 585 家公司</td><td>1,190 条美国 JD，标题严格匹配；低基数上的高增长<a class="ref" href="#s6">[6]</a></td></tr>
+      <tr><td>高管猎头 C&amp;T</td><td class="num">2,000 精英 / 17,000 在册 / +2,100%</td><td>250+ 高管访谈、80 家财富 500 问卷、300+ FDE 访谈；「精英」定义为主观阈值<a class="ref" href="#s4">[4]</a></td></tr>
+      <tr><td>LinkedIn 全球</td><td class="num">2023–2025 新增 42 倍</td><td>经中新经纬转引的 2026-01 报告；与 AI 工程师 13 倍并列<a class="ref" href="#s1">[1]</a></td></tr>
+      <tr><td>韩国 Wanted Lab</td><td class="num">启事 13.8× / 岗位 14.5×</td><td>平台自报，2026 年 1–9 月同比；同期办 FDE 招聘会与培训<a class="ref" href="#s10">[10]</a></td></tr>
+      <tr><td>国内门户早期口径</td><td class="num">2025 年前 9 个月 +800%</td><td>2025-11 报道，基数极小，只能说明「从零起量」<a class="ref" href="#s27">[27]</a></td></tr>
+    </tbody>
+  </table>
+
+  <h3>需求侧发生了什么</h3>
+  <p>
+    C&amp;T 的调研给出了一个更具体的形状：2026 年初只有 5%–10% 的企业计划招 FDE，且多为小规模试点；到第二季度末，这个比例跳到 70%，
+    大型咨询与服务公司报告的 FDE 编制要扩 10 倍，直接搭 20–100 人的团队<a class="ref" href="#s4">[4]</a>。
+    钱也跟着进来了：OpenAI 的 Deployment Company、Anthropic 与黑石/高盛合作的 Ode，以及亚马逊云科技十亿美元级的 FDE 团队<a class="ref" href="#s4">[4]</a><a class="ref" href="#s3">[3]</a>。
+  </p>
+  <p>
+    供给则是另一条曲线。C&amp;T 估算美国真正能稳定交付 AI ROI 的「精英 FDE」只有约 2,000 人——不是 2,000 人可选，而是总共 2,000 人<a class="ref" href="#s4">[4]</a>。
+    Ode 的 CEO 说得更直白：很多 FDE 能把 Claude Code 推给一个组织，但很少有人能做出公司的旗舰 AI 产品功能<a class="ref" href="#s4">[4]</a>。
+    缺口带来培训生意：韩国的 Wanted Lab 直接开「FDE 学院」，把有开发经验但缺 AI 应用与客户现场经验的人批量补课<a class="ref" href="#s10">[10]</a>。
+  </p>
+
+  <div class="callout gold">
+    <p><b>怎么读这些数字：</b>美国在册 FDE 约 1.7 万人，2026 年中每月新增约 4,300 个岗位——这是一个「增长很快、绝对量不大」的市场。它值得投入，但不值得为它押上全部职业筹码。</p>
+  </div>
+
+  <h3>国内的需求从哪来</h3>
+  <table>
+    <caption>三类雇主，工作内容差别很大</caption>
+    <thead><tr><th>类型</th><th>典型公司</th><th>FDE 干什么</th><th>你要接受的代价</th></tr></thead>
+    <tbody>
+      <tr><td>模型厂 / 云厂交付</td><td>字节豆包、蚂蚁数科、智谱、腾讯、科大讯飞<a class="ref" href="#s1">[1]</a><a class="ref" href="#s12">[12]</a><a class="ref" href="#s13">[13]</a></td><td>把模型嵌进客户业务流程，做行业方案、POC 与上线</td><td>KPI 与客户续约/扩容挂钩，出差多</td></tr>
+      <tr><td>行业软件与集成商</td><td>帆软、众一伍德一类<a class="ref" href="#s14">[14]</a><a class="ref" href="#s11">[11]</a></td><td>带着自家产品驻场，做配置、集成、培训和验收</td><td>行业 know-how 门槛高（如化工、制造），薪资天花板低一些</td></tr>
+      <tr><td>AI 原生小团队 / 自由职业</td><td>内容营销、餐饮连锁等垂直场景<a class="ref" href="#s9">[9]</a></td><td>一人承担需求、原型、开发、运维，按项目或订阅收费</td><td>获客自负、收入不稳、交付周期压缩</td></tr>
+    </tbody>
+  </table>
+  <p>
+    城市分布集中在北上深杭广：北京（科大讯飞）<a class="ref" href="#s13">[13]</a>、深圳（腾讯）<a class="ref" href="#s12">[12]</a>、杭州（帆软）<a class="ref" href="#s14">[14]</a>、广州（自由职业者案例）<a class="ref" href="#s9">[9]</a>。
+  </p>
+</section>
+
+<section id="money">
+  <p class="sec-no">02 / MONEY</p>
+  <h2>钱：双峰分布，别拿顶格当预期<span class="en">Bimodal pay, not a ladder</span></h2>
+  <p class="sec-lead">
+    同一职位名，企业软件公司的 FDE 贴着高级工程师的线，前沿实验室的 FDE 高出两三倍，差额几乎全在股权。
+    国内则是「顶格百万、中位四十万、基层两三万」三层。
+  </p>
+
+  <div class="mode-switch" role="group" aria-label="薪资视图">
+    <button type="button" data-money="us" aria-pressed="true">海外（美元 / 年）</button>
+    <button type="button" data-money="cn" aria-pressed="false">国内（人民币 / 月）</button>
+  </div>
+
+  <div data-money-panel="us">
+    <div class="bars" aria-hidden="true">
+      <div class="bar-row"><span>Levels.fyi 中位</span><span class="bar-track"><i class="bar-fill" style="width:44%"></i></span><span class="v">$201K</span></div>
+      <div class="bar-row"><span>Palantir 中位</span><span class="bar-track"><i class="bar-fill" style="width:52%"></i></span><span class="v">$240K</span></div>
+      <div class="bar-row"><span>Sierra 中位</span><span class="bar-track"><i class="bar-fill" style="width:100%"></i></span><span class="v">$460K</span></div>
+      <div class="bar-row"><span>前沿 senior</span><span class="bar-track"><i class="bar-fill" style="width:96%"></i></span><span class="v">$450–550K</span></div>
+    </div>
+    <table>
+      <caption>自报与公布口径混合；条形按 46 万美元归一</caption>
+      <thead><tr><th>口径</th><th>数字</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>Levels.fyi 中位总包</td><td class="num">≈ $201K</td><td>美国 FDE 职级样本<a class="ref" href="#s5">[5]</a><a class="ref" href="#s22">[22]</a></td></tr>
+        <tr><td>Palantir</td><td class="num">中位 $240K / 最高 ≈$435K</td><td>软件工程师序列，FDE 归在其中<a class="ref" href="#s5">[5]</a></td></tr>
+        <tr><td>Sierra</td><td class="num">中位 $460K</td><td>这是该公司软件工程师序列的中位，不是 FDE 专岗；按成功解决计费，FDE 权重高<a class="ref" href="#s5">[5]</a><a class="ref" href="#s29">[29]</a></td></tr>
+        <tr><td>前沿实验室</td><td class="num">mid $350–450K / senior $450–550K / staff $600K+</td><td>作者明说来自自报聚合，只能看形状<a class="ref" href="#s5">[5]</a></td></tr>
+        <tr><td>招聘页公布底薪</td><td class="num">$130K–$301K</td><td>1,190 条 JD 扫描，底薪不含股权<a class="ref" href="#s6">[6]</a></td></tr>
+        <tr><td>OpenAI / Anthropic</td><td class="num">$162–280K / $200–300K</td><td>门户转引招聘页，未含股权<a class="ref" href="#s1">[1]</a>；Anthropic 总包另有 35–55 万口径<a class="ref" href="#s23">[23]</a></td></tr>
+      </tbody>
+    </table>
+    <p class="note">口径提醒：Levels.fyi 是自报样本，前沿实验室的区间没有公开样本；「50 万美元」通常指顶级实验室的 senior/staff 且一半以上是未流动股权<a class="ref" href="#s5">[5]</a>。</p>
+  </div>
+
+  <div data-money-panel="cn" hidden>
+    <div class="bars" aria-hidden="true">
+      <p class="note" style="margin:0 0 6px">按上限 8 万/月归一；未计 15 薪年化</p>
+      <div class="bar-row"><span>低职级</span><span class="bar-track"><i class="bar-fill" style="width:31%"></i></span><span class="v">2–3 万</span></div>
+      <div class="bar-row"><span>字节豆包</span><span class="bar-track"><i class="bar-fill" style="width:88%"></i></span><span class="v">3.5–7 万×15</span></div>
+      <div class="bar-row"><span>蚂蚁数科</span><span class="bar-track"><i class="bar-fill" style="width:75%"></i></span><span class="v">4–6 万×15</span></div>
+      <div class="bar-row"><span>智谱负责人</span><span class="bar-track"><i class="bar-fill" style="width:100%"></i></span><span class="v">6–8 万</span></div>
+    </div>
+    <table>
+      <caption>门户报道所引平台截图与受访者口径，均为展示价</caption>
+      <thead><tr><th>层级 / 公司</th><th>数字</th><th>年化与说明</th></tr></thead>
+      <tbody>
+        <tr><td>字节跳动 · 豆包 AI 大模型 FDE</td><td class="num">3.5–7 万/月 × 15 薪</td><td>顶格约 105 万元<a class="ref" href="#s1">[1]</a></td></tr>
+        <tr><td>蚂蚁数科 · B 端 FDE</td><td class="num">4–6 万/月 × 15 薪</td><td>约 60–90 万元<a class="ref" href="#s1">[1]</a></td></tr>
+        <tr><td>智谱 · FDE 负责人</td><td class="num">6–8 万/月</td><td>负责人岗，非通用水平<a class="ref" href="#s1">[1]</a></td></tr>
+        <tr><td>中低职级（受访者）</td><td class="num">2–3 万/月</td><td>上海某 AI 公司<a class="ref" href="#s1">[1]</a></td></tr>
+        <tr><td>高职级（受访者）</td><td class="num">年包 40 万+</td><td>同上，年包为主<a class="ref" href="#s1">[1]</a></td></tr>
+      </tbody>
+    </table>
+    <p class="note">门户同时提醒：年薪百万集中在小部分顶尖人才，不是行业平均<a class="ref" href="#s1">[1]</a>。</p>
+  </div>
+
+  <h3>同一个「中位数」，四个数</h3>
+  <p>
+    薪酬是这个岗位最容易被营销的数字。把 2026 年的四个口径并排放，差异来自样本、职级归一和是否含股权，而不是谁在撒谎：
+  </p>
+  <table>
+    <caption>四个中位数 / 区间，四个样本</caption>
+    <thead><tr><th>来源</th><th>数字</th><th>样本与口径</th></tr></thead>
+    <tbody>
+      <tr><td>LinkedIn（经跟访转引）</td><td class="num">中位约 $199K</td><td>标题匹配的 FDE，全球样本<a class="ref" href="#s31">[31]</a></td></tr>
+      <tr><td>Levels.fyi</td><td class="num">中位约 $201K</td><td>美国自报总包<a class="ref" href="#s5">[5]</a><a class="ref" href="#s22">[22]</a></td></tr>
+      <tr><td>Perspective AI（1,200 条）</td><td class="num">Palantir 中位 $215K；中级中位 $385K；staff $610K；principal $1.2M+</td><td>Glassdoor / Levels.fyi / 薪资披露 / Blind / 自报混合，把 Anthropic「Applied AI Engineer」等相邻头衔归一并入<a class="ref" href="#s34">[34]</a></td></tr>
+      <tr><td>A10X</td><td class="num">前沿 senior $450–550K</td><td>自报聚合，作者自己标注「只能看形状」<a class="ref" href="#s5">[5]</a></td></tr>
+    </tbody>
+  </table>
+  <p class="note">
+    三个来源都同意两件事：股权占大头（顶级区间 55%–70%）<a class="ref" href="#s34">[34]</a>；美国以外的区间约为美国的 50%–70%<a class="ref" href="#s34">[34]</a>。
+    「中位」具体是 19.9 万还是 21.5 万，对你的 offer 谈判没有影响——看的是这家公司这个职级的区间。
+  </p>
+
+  <h3>国内：平台价与猎头价差一档</h3>
+  <p>
+    门户报道的字节、蚂蚁、智谱是「平台展示价」<a class="ref" href="#s1">[1]</a>；猎聘上猎头挂出的同类岗位更高：北京 / 上海 / 深圳的 AI 前线部署工程师 35–65K·15 薪，AI 数字化 FDE 交付专家 50–80K，商超零售方向的「FDE Echo」70–100K，AI 项目交付（Agent 方向）25–50K·15 薪<a class="ref" href="#s36">[36]</a>。
+    这些是挂牌区间，不是成交价；但它说明国内的上限比「3.5–7 万」的报道更高，且行业方向（零售、制造、金融）会显著改变定价。
+  </p>
+  <p>
+    分布上，猎聘报告称 FDE 岗位 68.33% 集中在上海、北京、深圳、杭州，行业需求 72.36% 来自 AI 与互联网<a class="ref" href="#s31">[31]</a>；这与页面前面按城市列的样本一致。
+  </p>
+
+  <h3>一线的真实收入</h3>
+  <p>
+    定焦 One 访谈了五位从业者，给出的数字比招聘页冷<a class="ref" href="#s9">[9]</a>：北京一位 FDE 实习生日薪 200 元、最忙时一周近 50 小时；
+    深圳一位从产品经理转岗的 FDE 说「拿的还是产品经理的薪资」；广州的自由职业者接到数万元订单，但要自己承担获客、开发、返工与运维；
+    五个人的共同判断是「外界传的百万年薪，几乎没人真拿到」<a class="ref" href="#s9">[9]</a>。
+  </p>
+  <p>
+    硅谷侧也有类似的落差：洛杉矶的受访者说入行第一年总包「二十多万美元」，猎头开价 40 万美元并附完全远程；但她同时强调 FDE 不是初级岗位，通常要先有几年的产品经理或开发经验<a class="ref" href="#s1">[1]</a>。
+  </p>
+
+  <div class="callout">
+    <p><b>看 offer 时看四件事：</b>股权占比与行权价、驻场补贴与差旅政策、on-call 与交付窗口、绩效与「客户续约/扩容」的绑定方式。前两项决定实际收入，后两项决定你能干多久。</p>
+  </div>
+</section>
+
+<section id="reality">
+  <p class="sec-no">03 / REALITY</p>
+  <h2>一线真相：一半在贴二维码，一半在卖认知<span class="en">The job behind the job posting</span></h2>
+  <p class="sec-lead">
+    2026 年 9 月的一篇跟访把 FDE 的三种生意和真实一天写清楚了：JD 写的是 RAG 与 Agent 架构，现场第一件事可能是给设备贴二维码、把手写台账敲进 Excel<a class="ref" href="#s31">[31]</a>。
+    这不是劝退，是让你在面试里问对问题。
+  </p>
+
+  <h3>逆势的背景</h3>
+  <p>
+    2026 年上半年，美国科技行业累计裁员接近 14 万人：亚马逊一年砍掉约 3 万个岗位，Meta 裁 8,000 人，甲骨文员工总数从 16.2 万降到 14.1 万（-13%）<a class="ref" href="#s31">[31]</a>。
+    同一时间 FDE 招聘在涨。这种反差是岗位热度的一部分，也意味着转岗窗口和裁员风险同时存在。
+  </p>
+
+  <h3>三种生意，三种天花板</h3>
+  <table>
+    <caption>同叫 FDE，商业模式决定你三年后还剩什么<a class="ref" href="#s31">[31]</a></caption>
+    <thead><tr><th>模式</th><th>收什么钱</th><th>典型客户</th><th>天花板与风险</th></tr></thead>
+    <tbody>
+      <tr><td>外包式项目定制</td><td>按项目报价</td><td>想用 AI 但说不清需求的企业</td><td>最累；需求聊着聊着就没了；难沉淀产品</td></tr>
+      <tr><td>产品实施</td><td>产品 license + 实施费</td><td>已有成熟 Agent 产品的厂商客户</td><td>本质接近实施，技术深度取决于产品</td></tr>
+      <tr><td>卖认知（咨询 / 培训）</td><td>咨询费、培训费、订阅</td><td>老板与业务团队</td><td>不碰重交付，靠个人品牌；可一人公司</td></tr>
+    </tbody>
+  </table>
+
+  <h3>真实的一天</h3>
+  <p>
+    一位从后端转来的 FDE 接了制造业客户，想做「AI 预测维护」，到场才发现工厂连温度、振动、运行时间都没采集过；他只能先理顺报修流程，再把故障描述结构化保存，为以后攒数据<a class="ref" href="#s31">[31]</a>。
+    另一段更具体：客户老板问「能不能预测哪台机器明天坏」，所谓的数据记录是写在沾油台账上的手写数字，他花时间敲进 Excel，又花一周说服车间主任让工人每天多填两栏<a class="ref" href="#s31">[31]</a>。
+  </p>
+  <p>
+    强度也不是文案里的样子：驻场是常态，最忙时一周近 50 小时、每周三天驻场或出差；Palantir 的一位前 FDE 描述一周 3–4 天在客户处、一个客户约一年、团队 4–5 人<a class="ref" href="#s31">[31]</a>。
+    「burnout」是这个圈子的高频词，「驻场外包」是它的另一个花名<a class="ref" href="#s31">[31]</a>。
+  </p>
+
+  <h3>title 通胀</h3>
+  <p>
+    需求涨得快，头衔也在注水：越来越多挂着 FDE 的岗位，实际工作向售前、解决方案架构甚至客户成功滑落<a class="ref" href="#s31">[31]</a>。
+    区分办法还是那三条——看动词、看对象、看钱的结构；再加一条：看这家公司有没有可复用的平台。没有平台，FDE 就是项目制外包，下一个客户从零开始<a class="ref" href="#s31">[31]</a>。
+  </p>
+
+  <div class="callout">
+    <p><b>面试必须问的三个问题：</b>我服务的客户是谁、一年几个？公司有没有可复用的平台或模板，上一个客户的交付让下一个客户快了多少？这个岗位的考核是客户结果、续约金额，还是人天？三个答案决定这份工作是能力跃迁还是消耗。</p>
+  </div>
+</section>
+
+<section id="jobs">
+  <p class="sec-no">04 / JOBS</p>
+  <h2>岗位地图：海外 12 家、国内三类、两套检索词<span class="en">Where the seats actually are</span></h2>
+  <p class="sec-lead">
+    海外岗位集中在模型厂、应用层公司与数据平台；国内集中在模型厂交付、行业软件与 AI 原生小团队。下面这张表可以直接当投递清单用。
+  </p>
+
+  <h3>海外</h3>
+  <table>
+    <caption>公司名与岗位类型来自公开招聘页与行业汇总；「看点」是判断适配的角度，不是面试情报</caption>
+    <thead><tr><th>公司</th><th>岗位</th><th>地点 / 规模</th><th>看点</th></tr></thead>
+    <tbody>
+      <tr><td>Palantir</td><td>Forward Deployed Software Engineer（Delta）</td><td>美国多地 / 概念发源地</td><td>薪资下限的锚，企业软件交付方法论最完整<a class="ref" href="#s5">[5]</a><a class="ref" href="#s25">[25]</a></td></tr>
+      <tr><td>OpenAI</td><td>Forward Deployed Engineer</td><td>旧金山、纽约</td><td>战略客户、前沿模型生产部署，5 年以上工程或部署经验<a class="ref" href="#s15">[15]</a><a class="ref" href="#s17">[17]</a></td></tr>
+      <tr><td>Anthropic</td><td>Forward Deployed Engineer</td><td>旧金山等</td><td>交付 MCP Server、子 Agent、Agent Skill 等组件并回流产品<a class="ref" href="#s16">[16]</a><a class="ref" href="#s2">[2]</a></td></tr>
+      <tr><td>Sierra</td><td>Software Engineer, Agent / FDE</td><td>9 城，含慕尼黑、首尔</td><td>按成功解决计费，FDE 直接对结果负责<a class="ref" href="#s24">[24]</a><a class="ref" href="#s29">[29]</a></td></tr>
+      <tr><td>Decagon</td><td>Forward Deployed / Solutions Engineer</td><td>美国</td><td>客服 Agent 场景，交付与方案混合岗<a class="ref" href="#s30">[30]</a></td></tr>
+      <tr><td>Databricks</td><td>AI FDE</td><td>美国多地</td><td>RAG、多智能体、Text2SQL、微调、评估与性能<a class="ref" href="#s2">[2]</a></td></tr>
+      <tr><td>Cohere</td><td>Forward Deployed Engineer</td><td>北美 / 欧洲</td><td>企业私有化部署为主<a class="ref" href="#s27">[27]</a></td></tr>
+      <tr><td>Ode with Anthropic</td><td>FDE（服务公司）</td><td>美国</td><td>PE 背景的交付公司，项目制、节奏快<a class="ref" href="#s4">[4]</a></td></tr>
+      <tr><td>OpenAI Deployment Company</td><td>FDE / 部署专家</td><td>美国</td><td>收购 Tomoro 带入约 150 名 FDE<a class="ref" href="#s2">[2]</a></td></tr>
+      <tr><td>企业自建团队</td><td>Internal FDE</td><td>保险、金融科技、医疗、游戏</td><td>不希望业务知识外流，开始自建 20–100 人团队<a class="ref" href="#s4">[4]</a></td></tr>
+    </tbody>
+  </table>
+  <p class="note">海外投递的现实约束：多数岗位要求本地工作许可与客户现场出差能力；跨时区远程的 FDE 岗位存在，但通常要求更强的英文沟通与既有交付案例。</p>
+
+  <h3>亚太：被忽略的第二战场</h3>
+  <table>
+    <caption>2026-10 抓到的亚太岗位样本；欧洲本轮没有取到可逐条核实的岗位页，暂不列</caption>
+    <thead><tr><th>地点</th><th>岗位 / 规模</th><th>公司</th><th>信号</th></tr></thead>
+    <tbody>
+      <tr><td>东京</td><td>52 个 on-site 的 FDE / 部署 / 方案岗</td><td>Databricks、OpenAI、ServiceNow、Datadog、Notion 等</td><td>聚合站按 Greenhouse / Ashby / Lever 刷新，2026-10-29 更新<a class="ref" href="#s35">[35]</a></td></tr>
+      <tr><td>东京</td><td>Deployment Lead (DL), FDE</td><td>OpenAI</td><td>官方招聘搜索页可见，说明前沿实验室在亚太设交付岗<a class="ref" href="#s37">[37]</a></td></tr>
+      <tr><td>东京</td><td>FDE（日语）· Agentic Voice AI</td><td>Zoom</td><td>语言是硬门槛，技术栈偏实时语音<a class="ref" href="#s38">[38]</a></td></tr>
+      <tr><td style="white-space:nowrap">新加坡</td><td>Forward Deployed Software Engineer</td><td>Prompt.Build</td><td>东南亚交付岗，英文为主<a class="ref" href="#s39">[39]</a></td></tr>
+    </tbody>
+  </table>
+  <p>
+    亚太岗位对国内候选人的现实意义：地理与时区更近、部分岗位接受中文客户，但日本与新加坡通常要求本地工作许可或语言能力。把它当作「先出海再转美国」的中间站，比直接投美国更可行。
+  </p>
+
+  <h3>国内</h3>
+  <table>
+    <caption>岗位样本来自 BOSS 直聘、智联的标题与摘要；详情页需登录，页面只引用公开摘要</caption>
+    <thead><tr><th>公司</th><th>标题</th><th>城市</th><th>JD 关键句</th></tr></thead>
+    <tbody>
+      <tr><td>腾讯</td><td>AI 前线部署工程师 · FDE</td><td>深圳</td><td>深入行业场景，把模糊需求拆成技术路线图，主导需求分析、选型与架构<a class="ref" href="#s12">[12]</a></td></tr>
+      <tr><td>科大讯飞</td><td>前沿部署工程师（FDE）</td><td>北京</td><td>把 AI 能力嵌入客户业务流程、推动一线落地<a class="ref" href="#s13">[13]</a></td></tr>
+      <tr><td>帆软</td><td>AI FDE（前沿部署工程师）</td><td>杭州</td><td>数据工具厂商的交付型 FDE，经验不限<a class="ref" href="#s14">[14]</a></td></tr>
+      <tr><td>众一伍德（辽宁）</td><td>FDE（Forward Deployed Engineer）前端部署工程师</td><td>驻场 / 辽宁</td><td>化工装置 + TPT 产品，要求化工专业 3–8 年<a class="ref" href="#s11">[11]</a></td></tr>
+    </tbody>
+  </table>
+
+  <h3>证书与培训：谁在卖入场券</h3>
+  <div class="grid2">
+    <div class="card">
+      <p class="tag">厂商认证</p>
+      <h4>腾讯云 ADP 前沿部署工程师（FDE）</h4>
+      <p>2026-09-10 推出，官方称是行业首个面向智能体交付岗位的工程师认证：Prometric 线下闭卷，60 题（40 单选 + 20 多选）、90 分钟、70 分合格，考试费 1,200 元，证书 2 年有效；伙伴体系分认证级、优选级、FDE 级<a class="ref" href="#s33">[33]</a>。</p>
+      <p class="note">官方自己写：认证提供统一的能力证明，项目经验与行业理解才决定能否承担真实项目<a class="ref" href="#s33">[33]</a>。</p>
+    </div>
+    <div class="card">
+      <p class="tag">政府 + 社区</p>
+      <h4>上海「FDE 企业 AI 落地班」</h4>
+      <p>2026-08-26，虹口区科经委与 Datawhale 合办，从百余家报名企业里选 20 家规上企业，与 20 位认证 FDE 专家一对一配对，现场出方案；此前 2026-03 在杭州办了首期，属于「长三角 FDE 联合行动」<a class="ref" href="#s32">[32]</a>。</p>
+      <p class="note">对求职者的含义：国内开始出现「企业侧需求 × FDE 供给」的官方对接场，比招聘平台更接近真实项目。</p>
+    </div>
+  </div>
+  <p>
+    怎么用：证书适合两类人——要进厂商伙伴生态做交付的人，和需要一块「能力已标准化」敲门砖的转岗者。它不能替代作品集：面试仍然会问你做过什么、上线后怎么验证。
+    对「零基础三个月年薪百万」的培训班，保持和前面一样的警惕<a class="ref" href="#s9">[9]</a>。
+  </p>
+
+  <h3>今天就能用的检索词</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4>中文</h4>
+      <p class="tight">FDE / 前沿部署工程师 / 前线部署工程师 / 前置部署工程师 / AI 交付工程师 / AI 解决方案工程师 / 大模型交付 / 行业解决方案（AI）/ 客户成功工程师（技术）</p>
+      <p class="note">在 BOSS、猎聘、智联分别搜一遍：同一岗位在不同平台的叫法不一致，以 JD 内容为准。</p>
+    </div>
+    <div class="card">
+      <h4>英文</h4>
+      <p class="tight">forward deployed engineer / forward deployed software engineer / deployment strategist / applied AI engineer / AI solutions engineer / customer engineer, AI / solutions architect, generative AI / field engineer, AI</p>
+      <p class="note">再加 <code>site:job-boards.greenhouse.io</code> 或 <code>site:jobs.ashbyhq.com</code>，能直接命中公司自建招聘页。</p>
+    </div>
+  </div>
+  <p>
+    渠道上，海外以公司招聘页（Greenhouse / Ashby）与 LinkedIn 为主，垂直板如 deployedjobs、fde.directory、a10x 会聚合 FDE 专岗<a class="ref" href="#s30">[30]</a><a class="ref" href="#s29">[29]</a>；
+    国内以 BOSS 直聘与猎聘为主，猎头活跃度高——有从业者两年经验就被猎头视为「十分资深」<a class="ref" href="#s1">[1]</a>。
+  </p>
+</section>
+
+<section id="fit">
+  <p class="sec-no">05 / FIT</p>
+  <h2>谁适合：三个硬门槛，八道自评<span class="en">Three gates, eight questions</span></h2>
+  <p class="sec-lead">
+    FDE 不是「会写代码又能说话」这么简单。它要求你能独立把一件事从模糊需求推到生产，并对结果负责。
+    下面 8 题按真实工作拆的，勾完看结论。
+  </p>
+
+  <h3>三个硬门槛</h3>
+  <ol class="steps">
+    <li><b>独立上线过。</b>不是参与，是负责：你定过范围、做过取舍、扛过上线和事故。</li>
+    <li><b>能对客户讲清取舍。</b>能把「为什么先不做这个」讲成对方能接受的理由，而不是技术辩解。</li>
+    <li><b>接受现场。</b>驻场一个月、一周三天出差、白天开会晚上写代码，是这个岗位的常态<a class="ref" href="#s9">[9]</a>。</li>
+  </ol>
+
+  <h3>8 题自评</h3>
+  <div class="fit-list" data-fit>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我独立负责过一个从 0 到上线、有真实用户每天在用的系统</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我把客户或业务方的模糊诉求，拆成过可执行、可验收的方案</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我读懂并改造过别人的老系统、老接口或脏数据</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我做过 LLM 应用（RAG、工具调用、评估），知道它会在哪里出错</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我做过发布、监控与回滚，处理过线上事故并写了复盘</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我能在两周内做出一个可演示、能跑真实数据的原型</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我愿意为业务结果负责，而不只是交付代码</span></label>
+    <label class="fit-item"><input type="checkbox" data-fit-item><span>我能接受频繁出差、驻场和与一线员工长时间沟通</span></label>
+  </div>
+  <div class="fit-out" data-fit-out aria-live="polite">
+    <b>0 / 8</b>
+    <p>勾选后给出结论：0–3 先补证据，4–6 边投边补，7–8 可以直接开始投递。</p>
+  </div>
+
+  <div class="callout">
+    <p><b>不适合的信号：</b>只想安静写代码、对「客户改需求」高度烦躁、无法接受结果被业务指标衡量。这三条里占两条，FDE 会让你比现在更痛苦——这不是能力问题，是工作形态不匹配。</p>
+  </div>
+</section>
+
+<section id="skills">
+  <p class="sec-no">06 / SKILLS</p>
+  <h2>能力栈：六块，前端已有一半<span class="en">Six blocks, half already yours</span></h2>
+  <p class="sec-lead">
+    fde.academy 把 FDE 的能力拆成六块<a class="ref" href="#s8">[8]</a>。对前端背景的人来说，缺口通常不在写界面，而在企业集成、LLM 评估与客户发现。
+  </p>
+
+  <table>
+    <caption>「已有」按 3 年以上前端/平台经验估计；「要补」是面试会追问的部分</caption>
+    <thead><tr><th>能力块</th><th>具体内容</th><th>前端已有</th><th>要补</th></tr></thead>
+    <tbody>
+      <tr><td>软件工程</td><td>TypeScript / Python、API、测试、调试</td><td>TS、组件化、前端测试</td><td>Python + FastAPI、服务端测试与错误处理</td></tr>
+      <tr><td>数据与企业集成</td><td>PostgreSQL、ETL、Webhook、OAuth 2.0 / SSO、Salesforce / SAP / ServiceNow 类系统</td><td>接口联调、鉴权接入</td><td>数据建模、增量同步、权限边界、老系统适配</td></tr>
+      <tr><td>LLM 应用</td><td>RAG、切分、向量检索、工具调用、评估、护栏</td><td>调用过模型 API</td><td>评估集设计、失败模式分类、成本与延迟预算</td></tr>
+      <tr><td>云与 DevOps</td><td>AWS / Azure / GCP、Docker、CI/CD、日志监控、K8s 基础</td><td>CI/CD、CDN、前端发布</td><td>容器与编排、IaC、服务端可观测性</td></tr>
+      <tr><td>系统设计</td><td>队列、缓存、限流、遗留系统约束下的可靠性</td><td>前端性能与缓存</td><td>异步任务、幂等、降级、多租户</td></tr>
+      <tr><td>客户发现与现场执行</td><td>访谈、范围界定、MVP、根因分析（RCA）</td><td>与产品/设计协作</td><td>直接对客户定范围、写验收标准、现场排查</td></tr>
+    </tbody>
+  </table>
+
+  <h3>被低估的那一项：评估（evals）</h3>
+  <p>
+    薪资从 24 万走到 45 万美元的分水岭，不在会不会调模型，而在能不能证明系统可靠：设计回归评估集、准备黄金数据集、做漂移检测、跟踪失败模式<a class="ref" href="#s5">[5]</a>。
+    「大多数人卡在这一关」——这是招聘方筛人的实际门槛，也是前端工程师最容易补、最少人补的一块<a class="ref" href="#s5">[5]</a>。
+  </p>
+  <p>
+    另一个常被忽略的是<b>英文</b>。海外 FDE 的面试、客户会议、录屏讲解都用英文；口音不是问题，能不能在 5 分钟内把架构取舍讲清楚才是<a class="ref" href="#s7">[7]</a>。
+  </p>
+
+  <div class="callout green">
+    <p><b>前端的独特优势：</b>你比后端更习惯「在别人的约束里做东西」——设计规范、浏览器兼容、构建工具链、发布窗口。这套「约束下的交付」直觉，正是 FDE 在客户现场最需要的能力。</p>
+  </div>
+</section>
+
+<section id="portfolio">
+  <p class="sec-no">07 / PORTFOLIO</p>
+  <h2>作品集：三个能被验收的证据<span class="en">Three artifacts that survive scrutiny</span></h2>
+  <p class="sec-lead">
+    FDE 的简历筛选不看「做过什么功能」，看「你能不能独立把东西推到生产」。三个 artifact 覆盖评估、审批与交付，做完就有可讲的现场故事。
+  </p>
+
+  <div class="grid2">
+    <div class="card">
+      <p class="tag">ARTIFACT 01</p>
+      <h4>带引用与拒答的企业文档问答</h4>
+      <p>自选一份 100 页以上的公开文档（政策、手册、合同），做检索问答：每个答案必须带出处，语料答不了时必须说「不知道」。</p>
+      <p><b>验收：</b>30 条黄金问题集，报告准确率、幻觉率、拒答率、P95 延迟与单次成本；给出 5 个典型失败案例与修法。</p>
+    </div>
+    <div class="card">
+      <p class="tag">ARTIFACT 02</p>
+      <h4>带人工审批闸门的工具型 Agent</h4>
+      <p>能查数据库、搜文档、发工单；任何写操作与危险命令必须人工确认，并留审计日志。</p>
+      <p><b>验收：</b>演示一次「闸门拦住破坏性操作」；用 10 条注入样本证明它不会被绕过；说明并发与超时怎么处理。</p>
+    </div>
+    <div class="card">
+      <p class="tag">ARTIFACT 03</p>
+      <h4>多租户交付样板</h4>
+      <p>把前端部署经验变成 FDE 语言：租户配置、环境隔离、灰度发布、一键回滚、可观测面板。</p>
+      <p><b>验收：</b>两个租户同时在线，改一个不影响另一个；一次灰度到 10% 再回滚；附一页 SLO 与告警说明。</p>
+    </div>
+  </div>
+
+  <h3>每个 artifact 的交付格式</h3>
+  <ul class="tight">
+    <li>仓库 + README：陌生人照文档 30 分钟内能跑起来；</li>
+    <li>3 分钟录屏：先讲客户拿到什么，再讲取舍与放弃的方案；</li>
+    <li>一页「决策记录」：为什么这么切、哪里会坏、坏了怎么发现；</li>
+    <li>数字：准确率、延迟、成本、失败率——没有数字的 demo 在 FDE 面试里等于没做<a class="ref" href="#s7">[7]</a>。</li>
+  </ul>
+  <p class="note">面试手作题常见的形态就是这三类：修公开仓库的 issue 并录屏、给定行业用公开 API 做有用的东西、做带引用与拒答的检索助手<a class="ref" href="#s7">[7]</a>。</p>
+</section>
+
+<section id="resume">
+  <p class="sec-no">08 / RESUME</p>
+  <h2>简历：把「我写了组件」翻译成「我交付了结果」<span class="en">Translate, don't inflate</span></h2>
+  <p class="sec-lead">
+    FDE 简历的读者只有两个问题：你独立扛过事吗？你在客户面前能站住吗？一页纸回答这两个问题就够了。
+  </p>
+
+  <h3>一页结构</h3>
+  <ol class="steps">
+    <li><b>定位句</b>（两行）：几年经验 + 交付过什么类型的系统 + 现在要找 FDE。</li>
+    <li><b>三个结果</b>：每个用「约束 → 你的决策 → 可量化结果」三句写完，不用形容词。</li>
+    <li><b>客户与规模</b>：服务过几类客户、多少用户、多大并发、多长交付周期。</li>
+    <li><b>技能矩阵</b>：按上面六块列，别按语言列；LLM 一块要写评估与护栏。</li>
+    <li><b>证据链接</b>：仓库、录屏、技术文章，放最上面或最下面，别藏在附件。</li>
+  </ol>
+
+  <h3>三组 before / after</h3>
+  <table>
+    <caption>事实不变，只换叙述角度</caption>
+    <thead><tr><th>前端写法</th><th>FDE 写法</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>负责公司官网前端开发，使用 React + TypeScript。</td>
+        <td>把 3 个业务线的官网收敛到一套构建与发布流水线，发布耗时从 40 分钟降到 8 分钟，回滚一次点击完成。</td>
+      </tr>
+      <tr>
+        <td>参与客服系统开发，对接后端接口。</td>
+        <td>在客服工作台里接入知识检索，答复带出处；把 12% 的低置信度会话转人工，人工复检通过率 91%。</td>
+      </tr>
+      <tr>
+        <td>优化页面性能，首屏加载提升明显。</td>
+        <td>把首屏 LCP 从 4.2s 压到 1.9s（P75，真实用户），代价是放弃一套设计动效；用 2 周 A/B 验证转化率未下降。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>投递方式</h3>
+  <ul class="tight">
+    <li><b>先列 20 家</b>：8 家模型厂 / 应用层、6 家行业软件、6 家 AI 原生小团队；每家写一句「我能帮他们解决什么」。</li>
+    <li><b>再找内推</b>：FDE 岗位的招聘经理更信内部转介；LinkedIn 上找同团队的人，问一个具体问题而不是「求内推」。</li>
+    <li><b>最后海投</b>：平台关键词用中文那套，覆盖「FDE / 前沿部署 / AI 交付」三种写法。</li>
+  </ul>
+  <div class="callout">
+    <p><b>两个高频拒绝原因：</b>把团队成果写成「我们做了」，面试官找不到你的贡献<a class="ref" href="#s7">[7]</a>；简历上只有 CRUD 或纯前端项目，没有一件能放到客户面前的东西<a class="ref" href="#s7">[7]</a>。</p>
+  </div>
+</section>
+
+<section id="interview">
+  <p class="sec-no">09 / INTERVIEW</p>
+  <h2>面试：5–7 轮，考的是「不确定里能不能交付」<span class="en">Five to seven rounds</span></h2>
+  <p class="sec-lead">
+    FDE 的面试不是标准 SWE 流程。它要看你能否界定模糊问题、设计并搭出 AI 方案、现场排查、在客户面前过安全评审。
+    一轮完整流程通常 5–7 轮、3–6 周<a class="ref" href="#s7">[7]</a>。
+    不同来源的样本差很多：becomeanfde 按 11 个环节归纳<a class="ref" href="#s7">[7]</a>，dataford 汇总了 686 份候选人报告与 137 份公司指南<a class="ref" href="#s18">[18]</a>；具体轮次以招聘方为准。
+  </p>
+
+  <table>
+    <caption>环节按 becomeanfde 汇总的 11 个阶段整理，任何一家只会挑其中几轮<a class="ref" href="#s7">[7]</a></caption>
+    <thead><tr><th>轮次</th><th>考什么</th><th>怎么准备</th></tr></thead>
+    <tbody>
+      <tr><td>招聘官 / Hiring Manager</td><td>「为什么是 FDE 而不是普通 SWE」，以及简历上的项目是不是你主导的</td><td>准备一个个人化的动机；讲项目用「我」不用「我们」</td></tr>
+      <tr><td>带回家的构建 + 录屏</td><td>无人监督下能否做出生产级的东西，并把决策讲给客户听</td><td>先问清约束；把评估、错误处理、README 当交付物；录屏讲取舍不讲代码行</td></tr>
+      <tr><td>实战编码</td><td>在客户的脏数据与真实约束里写代码，不是刷题</td><td>练「读别人的代码 + 小步改 + 写测试」</td></tr>
+      <tr><td>问题拆解 / 系统设计</td><td>把模糊需求拆成可交付的范围与里程碑</td><td>练「带约束版本」：给定预算、时限、遗留系统</td></tr>
+      <tr><td>现场排查</td><td>线上坏了，你怎么复现、定位、修复、回归<a class="ref" href="#s26">[26]</a></td><td>按「先复现后定位再修复」讲，别跳步</td></tr>
+      <tr><td>客户沟通 / 角色扮演</td><td>客户情绪上来时，你能不能先接情绪再给选项<a class="ref" href="#s26">[26]</a></td><td>准备两个冲突故事：需求变更、上线延期</td></tr>
+      <tr><td>安全与合规评审</td><td>权限、数据边界、注入、审批闸门</td><td>把你的 Agent 项目的护栏讲成一条条规则</td></tr>
+    </tbody>
+  </table>
+
+  <h3>高频题（按真实工作改写）</h3>
+  <ul class="tight">
+    <li>客户说「我要一个 AI 客服」，你到场第一天做什么？</li>
+    <li>客户的系统没有 API，只有导出 Excel 的按钮，你怎么接？</li>
+    <li>模型在 demo 里 95% 正确，上线后业务方说「一半是错的」，你怎么定位？</li>
+    <li>给你两周和一个客户，你如何决定先做哪个流程？</li>
+    <li>你的方案要访问客户的核心数据，安全团队不批，你怎么改？</li>
+    <li>上线后没人用，你怎么查是产品问题、流程问题还是模型问题？</li>
+    <li>客户要你承诺「准确率 99%」，你怎么谈验收标准？</li>
+    <li>你做过的最失败的一次交付是什么，责任在谁？</li>
+  </ul>
+
+  <h3>国内外差异</h3>
+  <div class="grid2">
+    <div class="card">
+      <h4>海外</h4>
+      <p>流程长、手作题重、强调书面与录屏表达；安全评审是独立环节；对「为什么这家公司」追问很细<a class="ref" href="#s7">[7]</a><a class="ref" href="#s19">[19]</a>。</p>
+    </div>
+    <div class="card">
+      <h4>国内</h4>
+      <p>更看行业 know-how 与驻场意愿，常见「方案宣讲 + 客户场景问答」；部分岗位直接给一个客户背景让你出方案与报价<a class="ref" href="#s3">[3]</a><a class="ref" href="#s11">[11]</a>。</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <p><b>一条红线：</b>不要编客户项目。FDE 面试官几乎都会追问「客户当时怎么说的」「你改了什么」「最后谁验收」，三层追问就能问穿；被识破的代价远高于承认「我没做过客户现场，但我做过内部交付」。</p>
+  </div>
+</section>
+
+<section id="plan">
+  <p class="sec-no">10 / PLAN</p>
+  <h2>路线：90 天拿到面试，6 个月拿到选择权<span class="en">90 days to interviews</span></h2>
+  <p class="sec-lead">
+    下面的清单按周排，勾选进度只存在当前页面，不上传、不写读者数据。做完一项勾一项，别同时开五条线。
+  </p>
+
+  <div class="plan" data-plan>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 1–2 周</span>盘点证据：把过去三年的项目按「约束 / 决策 / 结果」写成 6 条，挑出能放到客户面前的 2 条</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 3–4 周</span>补 Python 与服务端：FastAPI + PostgreSQL 做一个带鉴权的服务，写测试</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 5–6 周</span>做 Artifact 01：文档问答 + 引用 + 拒答 + 30 条评估集</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 7–8 周</span>做 Artifact 02：带审批闸门的工具型 Agent，录 10 条注入测试</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 9 周</span>做 Artifact 03：多租户交付样板，把前端发布经验翻译成 SLO 与回滚</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 10 周</span>英文表达：用 5 分钟讲清一个架构取舍，录音回听，改三遍</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 11 周</span>列出 20 家目标公司，写一句「我能解决他们什么」，找 5 个内推</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 12 周</span>投 20 家 + 2 场模拟面试；记录每次被追问卡住的问题</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 4–6 月</span>选一个行业纵深（制造 / 金融 / 医疗 / 客服），做到能听懂对方 KPI</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 4–6 月</span>把三个 artifact 合成一个可复用的交付模板，写成方法论文章</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">第 4–6 月</span>如果走自由职业：练报价、合同范围与验收条款，先接一个小单验证</span></label>
+    <label><input type="checkbox" data-plan-item><span><span class="phase">持续</span>每季度回看一次：岗位还在扩吗？你的能力是更通用还是更依赖某家公司？</span></label>
+  </div>
+  <div class="progress" aria-hidden="true"><i data-plan-bar></i></div>
+  <p class="progress-txt" data-plan-txt>0 / 12 项完成</p>
+
+  <div class="callout green">
+    <p><b>如果只有 30 天：</b>跳过 Artifact 03，把 01 做扎实（评估集 + 失败案例 + 成本数字），然后直接投国内模型厂与行业软件。评估能力是最快的差异化。</p>
+  </div>
+</section>
+
+<section id="risk">
+  <p class="sec-no">11 / RISK</p>
+  <h2>风险：伪 FDE、驻场强度与职业寿命<span class="en">What can go wrong</span></h2>
+  <p class="sec-lead">
+    这个岗位的热度里混着三类东西：真交付、换皮实施、以及被 AI 替代中的部分工作。进场前先认清，退场时才不狼狈。
+  </p>
+
+  <h3>五种「伪 FDE」信号</h3>
+  <ul class="tight">
+    <li>JD 写 FDE，实际是售前：KPI 是签单额，有项目提成，签完就撤<a class="ref" href="#s3">[3]</a>；</li>
+    <li>只做安装部署与培训，不改代码、不做方案<a class="ref" href="#s3">[3]</a>；</li>
+    <li>「零基础三个月转行年薪百万」的培训班承诺，把岗位当招生话术<a class="ref" href="#s9">[9]</a>；</li>
+    <li>外包驻场，客户与雇主都不是你的产品团队，沉淀不下来；</li>
+    <li>公司没有产品，只有项目：你做完一个客户，下一个从零开始<a class="ref" href="#s31">[31]</a>；</li>
+    <li>头衔通胀：挂 FDE 的名，实际工作滑向售前、解决方案架构或客户成功<a class="ref" href="#s31">[31]</a>。</li>
+  </ul>
+
+  <h3>强度与消耗</h3>
+  <p>
+    受访者的日常是：上午在客户现场开会，下午整理零散诉求搭 Demo，晚上熬夜优化方案，最长一次驻场近一个月；一个项目约 80% 的环节都要参与<a class="ref" href="#s9">[9]</a>。
+    实习生一周近 50 小时、日薪 200 元<a class="ref" href="#s9">[9]</a>。这不是个例，是岗位形态：交付周期压缩、需求现场变更、成功标准由客户定。
+    「burnout」在这个圈子里是高频词，行业里也流传「驻场外包」这个花名<a class="ref" href="#s31">[31]</a>。
+  </p>
+
+  <h3>职业寿命与替代</h3>
+  <p>
+    C&amp;T 的创始人给了一个不客气的判断：五到十年内，FDE 这个岗位「可能消失」；中期需求可能从企业 AI 转向物理 AI<a class="ref" href="#s4">[4]</a>。
+    更具体的信号是产品化：Palantir 已经把「AI FDE」做成一个 agent，让模型承担部分现场工程师的工作<a class="ref" href="#s28">[28]</a>。
+  </p>
+  <p>
+    合理的定位是：把 FDE 当作 2–3 年的能力跃迁——客户判断、范围界定、结果负责——而不是终身职位。这些能力换一个名字仍然值钱；只依赖某家公司产品的「配置技能」则不值钱。
+  </p>
+
+  <div class="callout gold">
+    <p><b>退出信号：</b>连续两个项目黄掉且复盘结论都是「客户不配合」；一年里 70% 时间在出差却学不到新东西；公司开始用「人头数」而不是「客户结果」考核 FDE。出现任意两条，就该换环境了。</p>
+  </div>
+</section>
+
+<section id="sources">
+  <p class="sec-no">12 / SOURCES</p>
+  <h2>来源与口径<span class="en">Sources</span></h2>
+  <p class="sec-lead">
+    39 条来源，按页面引用顺序编号。招聘页与门户转引的数字标为「展示价 / 转引」，不与一手研究混用。
+    抓取失败或需登录的页面只用到标题与摘要，正文断言不依赖它们。
+  </p>
+  <ol class="srcs">
+    <li id="s1"><a href="https://m.36kr.com/p/3839857956817414">年薪百万，招聘需求涨42倍，「AI圈最火岗位」，到底是干嘛的？</a><span class="meta">36氪转载中新经纬，2026-06-05；含 LinkedIn 42 倍、国内岗位薪资截图、OpenAI/Anthropic 年薪与两位从业者访谈</span></li>
+    <li id="s2"><a href="https://www.woshipm.com/ai/6409489.html">OpenAI、Anthropic 都在招聘的 FDE，到底是什么岗位？</a><span class="meta">人人都是产品经理；FDE 词源、Dev/Delta 分工、OpenAI/Anthropic/Databricks 岗位职责转述</span></li>
+    <li id="s3"><a href="https://www.woshipm.com/ai/6435582.html">AI时代落地攻坚者：FDE前沿部署工程师全景解析</a><span class="meta">人人都是产品经理；五阶段职责、25/50/25 时间分配、真假 FDE 五条标准、字节/阿里薪资</span></li>
+    <li id="s4"><a href="https://techcrunch.com/2026/07/30/forward-deployed-engineers-are-the-ai-industrys-latest-talent-obsession">Forward-deployed engineers are the AI industry's latest talent obsession</a><span class="meta">TechCrunch，2026-07-30；C&amp;T 研究：2,000 精英 / 17,000 在册 / +2,100% / 70% 企业计划招聘 / 岗位可能消失</span></li>
+    <li id="s5"><a href="https://a10x.dev/blog/how-much-do-forward-deployed-engineers-make">Forward Deployed Engineer salary (2026): $201K median, by company</a><span class="meta">A10X；Levels.fyi 中位、Palantir/Sierra 数字、前沿实验室区间、evals 门槛</span></li>
+    <li id="s6"><a href="https://becomeanfde.com/">How to become a Forward Deployed Engineer</a><span class="meta">becomeanfde（Interview Kickstart）；1,190 条 JD 扫描、98% 面向客户、底薪 13–30.1 万、585 家公司、97.5 亿美元投入</span></li>
+    <li id="s7"><a href="https://becomeanfde.com/fde-interview-questions">FDE interview questions: the loop, decoded</a><span class="meta">同站；5–7 轮 / 3–6 周、11 个环节、手作题与录屏、拒绝原因</span></li>
+    <li id="s8"><a href="https://fde.academy/blog/the-forward-deployed-engineer-roadmap">Forward Deployed Engineer Roadmap 2026</a><span class="meta">fde.academy；六块能力、12 个月分阶段门槛</span></li>
+    <li id="s9"><a href="https://www.wenxuecity.com/news/2026/08/07/126735233.html">第一批做FDE的人，离高薪差远了</a><span class="meta">定焦One（文学城转载），2026-08-07；五位从业者访谈、Indeed 643→5,330、实习 200 元/天、百万年薪落差</span></li>
+    <li id="s10"><a href="https://zh.edaily.co.kr/news/eda202610265417">工程师招聘公告激增14倍……WantedLab助力人才匹配</a><span class="meta">EDAILY 中文版，2026-10-26；韩国 13.8 倍 / 14.5 倍、FDE 学院</span></li>
+    <li id="s11"><a href="https://www.zhaopin.com/jobdetail/CCL1358658420J40948065502.htm">FDE(Forward Deployed Engineer)前端部署工程师 · 众一伍德</a><span class="meta">智联招聘；化工装置 + TPT 产品驻场 JD 全文</span></li>
+    <li id="s12"><a href="https://www.zhipin.com/job_detail/509b700448d8854d0nB_0t21GFVU.html">AI前线部署工程师 · FDE（深圳）· 腾讯</a><span class="meta">BOSS 直聘详情页需登录，仅用搜索摘要</span></li>
+    <li id="s13"><a href="https://www.zhipin.com/job_detail/e417cce0a837af040nF82t20GFBZ.html">前沿部署工程师(FDE) · 科大讯飞</a><span class="meta">BOSS 直聘；摘要：把 AI 能力嵌入客户业务流程</span></li>
+    <li id="s14"><a href="https://www.zhipin.com/job_detail/bf3191aba7bb084e0nB639m0FFVT.html">ai FDE（前沿部署工程师）· 帆软软件</a><span class="meta">BOSS 直聘；杭州，经验不限</span></li>
+    <li id="s15"><a href="https://openai.com/careers/forward-deployed-engineer-(fde)-sf-san-francisco">Forward Deployed Engineer (FDE) - SF</a><span class="meta">OpenAI 招聘页；抓取被 bot 校验拦截，仅引用标题与公开描述</span></li>
+    <li id="s16"><a href="https://job-boards.greenhouse.io/anthropic/jobs/5423029008">Forward Deployed Engineer · Anthropic</a><span class="meta">Greenhouse 招聘页</span></li>
+    <li id="s17"><a href="https://www.paraform.com/insights/openai-forward-deployed-engineer">OpenAI Forward Deployed Engineer Guide</a><span class="meta">Paraform；薪酬高于传统解决方案工程约 60%、面试考「不确定下的部署判断」</span></li>
+    <li id="s18"><a href="https://dataford.io/roles/forward-deployed-engineer">Forward-Deployed Engineer Interview Guide 2026</a><span class="meta">dataford；686 份候选人报告与 137 份公司指南汇总（抓取 429，仅用标题与摘要）</span></li>
+    <li id="s19"><a href="https://fde.is/blog/interview-guide">FDE Interview Guide: Process, Rounds &amp; How to Prepare</a><span class="meta">fde.is；面试轮次与准备方式</span></li>
+    <li id="s20"><a href="https://www.greatfrontend.com/blog/frontend-developer-demand-a-job-market-reality-check">Frontend Developer Demand in 2026: A Job Market Reality Check</a><span class="meta">GreatFrontEnd，2026-08-27；Stanford 工作论文：22–25 岁高 AI 暴露职业相对就业低约 19%</span></li>
+    <li id="s21"><a href="https://dev.to/hainanzhao/the-us-frontend-engineer-market-in-2026-a-data-driven-reality-check-and-the-bias-that-stops-us-4172">The US Frontend Engineer Market in 2026</a><span class="meta">dev.to，2026-06-29；美国前端招聘 2022 年见顶后长期低迷</span></li>
+    <li id="s22"><a href="https://www.levels.fyi/t/software-engineer/title/forward-deployed-engineer?country=254">Forward Deployed Engineer Salary</a><span class="meta">Levels.fyi；FDE 职级自报总包</span></li>
+    <li id="s23"><a href="https://www.aced.io/jobs/fde/anthropic">Anthropic FDE Salary &amp; Jobs</a><span class="meta">aced.io；Anthropic FDE 总包 35–55 万美元、在招状态（第三方汇总）</span></li>
+    <li id="s24"><a href="https://www.aced.io/jobs/fde/sierra">Sierra FDE Salary &amp; Jobs</a><span class="meta">aced.io；约 30 个在招工程岗、9 个城市，含慕尼黑与首尔</span></li>
+    <li id="s25"><a href="https://www.simpliaxis.com/resources/palantir-vs-openai-vs-anthropic-fde">Palantir vs OpenAI vs Anthropic: Three Forward Deployed Engineer Roles</a><span class="meta">SimpliAxis；三家公司 FDE 的定位差异</span></li>
+    <li id="s26"><a href="https://www.fdechina.org/fde-interview-guide">FDE 面试完全准备：考察什么、怎么练、怎么讲好现场故事</a><span class="meta">fdechina；设计题、行为面、排查演练、角色扮演四环节</span></li>
+    <li id="s27"><a href="https://www.sina.cn/news/detail/5228831419927633.html">AI 最新的风口职位：前沿部署工程师</a><span class="meta">新浪，2025-11-03；OpenAI/Anthropic/Cohere 招聘、前 9 个月需求增 800%</span></li>
+    <li id="s28"><a href="https://palantir.com/docs/foundry/ai-fde/overview">AI FDE · Overview</a><span class="meta">Palantir 官方文档；用 agent 承担部分 FDE 工作</span></li>
+    <li id="s29"><a href="https://fde.directory/articles/forward-deployed-engineer-sierra">Forward Deployed Engineer at Sierra: Role, Salary, and Hiring</a><span class="meta">fde.directory；按成功解决计费对 FDE 角色的影响</span></li>
+    <li id="s30"><a href="https://deployedjobs.com/company/decagon">Decagon Forward Deployed &amp; Solutions Engineer Jobs</a><span class="meta">deployedjobs；22 个 FDE / 解决方案 / 应用 AI 岗位</span></li>
+    <li id="s31"><a href="https://news.marsbit.co/20260928202809195443.html">大规模裁员潮下的AI金饭碗FDE</a><span class="meta">脑极体（火星财经转载），2026-09-28；2026 上半年美国科技裁员近 14 万、三种生意、贴二维码与台账的现场、驻场强度、猎聘 68.33% / 72.36%、title 通胀、LinkedIn 中位 19.9 万美元</span></li>
+    <li id="s32"><a href="https://www.shanghai.gov.cn/nw15343/20260827/7e015e8fb2dd407f887bc72a844bb2d0.html">FDE企业AI落地班上海专场在虹口举办</a><span class="meta">上海市政府（虹口区），2026-08-27；20 家规上企业 × 20 位认证 FDE 专家、杭州首期、长三角 FDE 联合行动</span></li>
+    <li id="s33"><a href="https://adp.tencent.com/zh/blog/adp-fde-certification-guide">腾讯云 ADP 前沿部署工程师（FDE）认证指南</a><span class="meta">腾讯云，2026-09-10 推出；Prometric 线下闭卷、60 题 / 90 分钟 / 70 分、1,200 元、2 年有效、伙伴三级</span></li>
+    <li id="s34"><a href="https://getperspective.ai/blog/2026-forward-deployed-engineering-compensation-report-1200-fdes">The 2026 Forward Deployed Engineering Compensation Report: What 1,200 FDEs Earn</a><span class="meta">Perspective AI，2026-05；1,200 条薪酬数据、Palantir 中位 21.5 万、中级 38.5 万、staff 61 万、股权 55–70%、国际为美国 50–70%</span></li>
+    <li id="s35"><a href="https://forwardeployedjobs.com/locations/tokyo-japan">Forward deployed jobs in Tokyo, Japan</a><span class="meta">forwarddeployedjobs；52 个 on-site 岗位、公司名单、2026-10-29 更新</span></li>
+    <li id="s36"><a href="https://www.liepin.com/a/77831755.shtml">北京 Forward Deployed Engineer（前沿部署工程师）招聘</a><span class="meta">猎聘；猎头挂牌区间：35–65K·15、50–80K、70–100K、25–50K·15</span></li>
+    <li id="s37"><a href="https://openai.com/careers/search?q=forward+deployed+engineer">OpenAI Careers · forward deployed engineer</a><span class="meta">OpenAI 官方招聘搜索；含「Deployment Lead (DL), FDE - Tokyo」</span></li>
+    <li id="s38"><a href="https://sg.linkedin.com/jobs/view/forward-deployed-engineer-japanese-speaker-at-zoom-4427799970">Zoom · Forward Deployed Engineer (Japanese speaker)</a><span class="meta">LinkedIn 岗位页；Agentic Voice AI，日语要求</span></li>
+    <li id="s39"><a href="https://www.linkedin.com/jobs/view/forward-deployed-software-engineer-singapore-at-beyondrisk-ai-6-4223604690">Prompt.Build · Forward Deployed Software Engineer (Singapore)</a><span class="meta">LinkedIn 岗位页；东南亚交付岗</span></li>
+  </ol>
+
+  <p class="note">
+    未采用的数字：「FDE 需求增长 321%」「年薪中位 48.5 万美元」等无法追到原始出处的说法；「FDE 面试通过率」一类无样本数据。
+    所有薪资为招聘页或媒体展示口径，不代表成交价；汇率与年化换算只用于量级比较。
+  </p>
+</section>
+
+</main>
+
+<footer class="foot wrap">
+  <p><b>前端部署工程师（FDE）就业指南 2026</b> · 数据截至 2026-10-29 · 39 条来源</p>
+  <p>检索与正文抓取使用本机 local-web-search；薪资、岗位数与增长率分别标注口径，冲突处并列而不合并。</p>
+  <p>这一页不构成求职承诺。岗位市场变化很快，投递前请回到原始招聘页核对。</p>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement;
+
+  /* 主题切换：与归档其他页面共用 harness-theme */
+  var btn = document.getElementById('themeBtn');
+  function syncTheme(){
+    if(!btn) return;
+    btn.textContent = root.classList.contains('dark') ? '浅色' : '深色';
+    btn.setAttribute('aria-pressed', root.classList.contains('dark') ? 'true' : 'false');
+  }
+  if(btn){
+    syncTheme();
+    btn.addEventListener('click', function(){
+      var dark = root.classList.toggle('dark');
+      try{ localStorage.setItem('harness-theme', dark ? 'dark' : 'light'); }catch(e){}
+      syncTheme();
+    });
+  }
+
+  var printBtn = document.getElementById('printBtn');
+  if(printBtn) printBtn.addEventListener('click', function(){ window.print(); });
+
+  /* 薪资视图切换 */
+  var moneyBtns = Array.prototype.slice.call(document.querySelectorAll('[data-money]'));
+  var panels = Array.prototype.slice.call(document.querySelectorAll('[data-money-panel]'));
+  moneyBtns.forEach(function(b){
+    b.addEventListener('click', function(){
+      var key = b.getAttribute('data-money');
+      moneyBtns.forEach(function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      panels.forEach(function(p){ p.hidden = p.getAttribute('data-money-panel') !== key; });
+    });
+  });
+
+  /* 8 题自评 */
+  var fitRoot = document.querySelector('[data-fit]');
+  var fitOut = document.querySelector('[data-fit-out]');
+  var FIT_TEXT = [
+    {min:7, title:'可以直接开始投', body:'你已经具备 FDE 的核心证据。接下来只差把三件事讲清楚：你独立扛过什么、怎么定范围、结果怎么衡量。去列 20 家目标公司。'},
+    {min:4, title:'边投边补', body:'你有工程底子，缺的是「对客户负责」的证据。优先补一个带评估的 LLM 项目和一个客户场景故事，再投国内模型厂与行业软件。'},
+    {min:0, title:'先补证据，别急着转', body:'现在投 FDE 会在第一轮被问穿。用 90 天做出一件能放到客户面前的東西：从 Artifact 01 开始，先把评估和失败案例做出来。'}
+  ];
+  function renderFit(){
+    if(!fitRoot || !fitOut) return;
+    var items = Array.prototype.slice.call(fitRoot.querySelectorAll('[data-fit-item]'));
+    var n = items.filter(function(i){ return i.checked; }).length;
+    var band = FIT_TEXT.filter(function(t){ return n >= t.min; })[0];
+    fitOut.innerHTML = '<b>' + n + ' / ' + items.length + ' · ' + band.title + '</b><p>' + band.body + '</p>';
+  }
+  if(fitRoot){
+    fitRoot.addEventListener('change', renderFit);
+    renderFit();
+  }
+
+  /* 清单进度：只在本页内存里，不写 storage */
+  var plan = document.querySelector('[data-plan]');
+  var bar = document.querySelector('[data-plan-bar]');
+  var txt = document.querySelector('[data-plan-txt]');
+  function renderPlan(){
+    if(!plan || !bar || !txt) return;
+    var items = Array.prototype.slice.call(plan.querySelectorAll('[data-plan-item]'));
+    var n = items.filter(function(i){ return i.checked; }).length;
+    bar.style.width = (items.length ? (n / items.length * 100) : 0) + '%';
+    txt.textContent = n + ' / ' + items.length + ' 项完成';
+  }
+  if(plan){
+    plan.addEventListener('change', renderPlan);
+    renderPlan();
+  }
+})();
+</script>
+</body>
+</html>

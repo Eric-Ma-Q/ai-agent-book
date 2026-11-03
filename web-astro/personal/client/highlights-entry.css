@@ -1,0 +1,15 @@
+.hl-entry[aria-current='page'] {
+  background: var(--surface);
+  border-color: var(--muted);
+}
+.hl-dialog-link {
+  display: inline-block;
+  margin: 0 0 14px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.hl-dialog-link:hover {
+  color: var(--interactive, #718829);
+}

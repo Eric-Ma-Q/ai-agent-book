@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 先看地图：谁在指挥谁 · Claude Code 源码拆解</title>
+<meta name="description" content="51 万行不是均匀分布的。五个目录装下了大部分复杂度：utils/、components/、commands/、tools/、services/。搞清楚它们的职责边界，后面每一章才不会读丢。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" aria-current="page" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 02 章 · 分层、入口与三种产品形态</p>
+  <h1>先看地图：谁在指挥谁</h1>
+  <p class="lead">51 万行不是均匀分布的。五个目录装下了大部分复杂度：<code>utils/</code>、<code>components/</code>、<code>commands/</code>、<code>tools/</code>、<code>services/</code>。搞清楚它们的职责边界，后面每一章才不会读丢。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>入口极薄：<code>entrypoints/cli.tsx</code> 只做参数与模式判断，真正的装配在 <code>main.tsx</code>（4,683 行）。</li><li>同一个内核跑三种形态：交互式 REPL、无头 <code>print</code>（给脚本/CI）、SDK（给外部程序）。</li><li><code>components/</code> 389 个文件说明：终端 UI 不是附属品，它和内核一样重。</li><li>复杂度集中在 <code>utils/</code>（564 个文件），这是「Agent 运行时」的真相：大量小机制，而不是一个大循环。</li><li>89 个编译期开关 + 164 个账号分支意味着：你读到的代码是所有版本的并集。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>五个目录，五种职责</h2>
+  
+  <p>下面这张表是本地副本的实测文件数（<code>find &lt;dir&gt; -type f | wc -l</code>）。注意 <code>tools/</code> 只有 184 个文件，却撑起全部对外能力；而 <code>utils/</code> 有 564 个，是真正的「运行时」。</p>
+  <div class="tw"><table>
+      <thead><tr><th>目录</th><th>文件数</th><th>职责</th><th>一句话理解</th></tr></thead>
+      <tbody>
+      <tr><td><code>utils/</code></td><td>564</td><td>底层机制：消息、token、权限、shell、会话落盘、更新</td><td>发动机与管线</td></tr>
+      <tr><td><code>components/</code></td><td>389</td><td>Ink/React 终端组件：消息流、输入框、对话框、状态栏</td><td>仪表盘与中控台</td></tr>
+      <tr><td><code>commands/</code></td><td>207</td><td>斜杠命令实现（101 个命令目录 + 共享模块）</td><td>快捷键面板</td></tr>
+      <tr><td><code>tools/</code></td><td>184</td><td>模型可调用的工具，一个目录一个工具</td><td>机械臂</td></tr>
+      <tr><td><code>services/</code></td><td>130</td><td>API、压缩、MCP、遥测、OAuth、插件、策略</td><td>外部世界的接口</td></tr>
+      <tr><td><code>hooks/</code></td><td>104</td><td>React hooks + 权限处理器 + 工具执行编排</td><td>神经中枢</td></tr>
+      <tr><td><code>ink/</code></td><td>96</td><td>自维护的终端渲染器（Ink 分支）</td><td>显示驱动</td></tr>
+      <tr><td><code>bridge/</code></td><td>31</td><td>IDE / 远程会话桥接</td><td>对外插口</td></tr>
+      <tr><td><code>skills/</code></td><td>20</td><td>Skill 的发现与加载</td><td>可插拔知识</td></tr>
+      <tr><td><code>tasks/</code></td><td>12</td><td>后台任务类型与生命周期</td><td>排班表</td></tr>
+      <tr><td><code>buddy/</code></td><td>6</td><td>彩蛋：终端宠物（见第 08 章）</td><td>吉祥物</td></tr>
+      <tr><td><code>coordinator/</code></td><td>1</td><td>协调者模式的上下文拼装</td><td>工头</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note "><b>读法建议：</b>不要从 <code>main.tsx</code> 顺着读，会淹死。按「一次会话」的路径读：入口 → <code>QueryEngine</code> → <code>query.ts</code> → <code>StreamingToolExecutor</code> → 具体工具。这条链只有五个文件。</div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>启动链：为什么入口这么薄</h2>
+  
+  <p><code>entrypoints/cli.tsx</code> 的第一屏就是性能优化：在加载重模块之前先打点、并行启动 MDM 读取与钥匙串预取。这段注释直接说明了动机 —— 把 135ms 的 import 时间和 65ms 的钥匙串读取藏到并行里。</p>
+  
+<div class="ev">
+  <header><span class="path">main.tsx</span><span>1-12</span></header>
+  <pre>// These side-effects must run before all other imports:
+// 1. profileCheckpoint marks entry before heavy module evaluation begins
+// 2. startMdmRawRead fires MDM subprocesses (plutil/reg query) so they run in
+//    parallel with the remaining ~135ms of imports below
+// 3. startKeychainPrefetch fires both macOS keychain reads (OAuth + legacy API
+//    key) in parallel — isRemoteManagedSettingsEligible() otherwise reads them
+//    sequentially via sync spawn inside applySafeConfigEnvironmentVariables()
+//    (~65ms on every macOS startup)</pre>
+</div>
+  <div class="analogy"><i aria-hidden="true">≈</i><div>像赛车进站：不是等车停稳再分工，而是车还在滑行时，换胎、加油、擦镜片已经同时开始了。</div></div>
+  <p>这种「启动即并行」的写法在 CLI 产品里很典型：用户对「按下回车到出现光标」的容忍度只有几百毫秒，而 Agent 启动要读设置、读钥匙串、拉远端策略、预热模型能力表。Claude Code 的选择是<b>把能并行的全部提前</b>，把不能并行的延后到首次使用时。</p>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>一个内核，三种产品形态</h2>
+  
+  <p>同一套 <code>query.ts</code> + 工具 + 权限，被包成三种对外形态。这解释了为什么它能同时是「终端工具」「CI 里的命令」和「别人产品里的引擎」。</p>
+  <div class="tw"><table>
+      <thead><tr><th>形态</th><th>入口</th><th>典型场景</th><th>交互假设</th></tr></thead>
+      <tbody>
+      <tr><td>交互式 REPL</td><td><code>screens/REPL.tsx</code>（5,005 行）</td><td>人在终端里边看边改</td><td>有键盘、有确认弹窗、可中断</td></tr>
+      <tr><td>无头 / 打印</td><td><code>cli/print.ts</code>（5,594 行）</td><td>脚本、CI、批处理</td><td>无交互，权限必须预先裁决</td></tr>
+      <tr><td>SDK</td><td><code>entrypoints/sdk/</code>、<code>agentSdkTypes.ts</code></td><td>被别的程序调用</td><td>结构化消息流，不做渲染</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">entrypoints/</span><span>目录结构 · SDK 类型单独成文件，说明它是正式对外契约</span></header>
+  <pre>agentSdkTypes.ts   cli.tsx   init.ts   mcp.ts   sandboxTypes.ts   sdk/</pre>
+</div>
+  <div class="tradeoff"><div><b>换来什么</b>一套内核三处复用，行为一致，测试只需覆盖一份逻辑。</div><div><b>付出什么</b>无头模式没有「问用户」这条退路，所有权限必须在事前表达清楚；这也是 <code>dontAsk</code> 模式存在的原因（见第 06 章）。</div></div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>体量与依赖：它其实是个前端项目</h2>
+  
+  <p>把 import 语句数一遍，会发现最常出现的不是 HTTP 客户端，而是 React —— 756 次；<code>bun:bundle</code> 被 import 196 次（其中 <code>feature()</code> 共出现 941 处）；<code>@anthropic-ai/sdk</code> 135 次；<code>zod/v4</code> 125 次。终端 UI 用 React 写、用自维护的 Ink 渲染，是这份代码最反直觉的工程决策之一。</p>
+  <div class="grid g4"><div class="stat"><b>756</b><span>React import 次数</span><em>含 components/hooks</em></div><div class="stat"><b>389</b><span>界面组件文件</span><em>components/</em></div><div class="stat"><b>941</b><span>feature() 调用点</span><em>bun:bundle</em></div><div class="stat"><b>89</b><span>不同的功能开关</span><em>去重</em></div></div>
+  <div class="note good"><b>为什么值得注意：</b>Agent 产品的复杂度大头不在「调模型」，而在「把流式输出、工具进度、权限询问、多任务状态同时渲染出来」。用 React 的声明式模型处理这种并发 UI，是它能快速迭代界面的原因。</div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>编译期裁剪：一份代码，多个二进制</h2>
+  
+  <p><code>import { feature } from 'bun:bundle'</code> 不是运行时开关，而是<b>打包器的常量折叠</b>：<code>feature('X')</code> 在构建时被替换成 <code>true</code> 或 <code>false</code>，<code>false</code> 分支连同 import 一起被摇掉。所以泄露的源码里那些「没上线的功能」，在对外二进制里可能一行都不存在。</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>115-121 · 典型写法：条件 require + 类型断言，false 时整块被消除</span></header>
+  <pre>const snipModule = feature('HISTORY_SNIP')
+  ? (require('./services/compact/snipCompact.js') as typeof import('./services/compact/snipCompact.js'))
+  : null</pre>
+</div>
+  <p>另一层是按账号裁剪：<code>process.env.USER_TYPE === 'ant'</code> 在 164 个文件里出现，决定「内部员工版」是否加载某些工具、界面与实验能力。这两层叠起来，就是「读代码 ≠ 看线上」的根本原因。</p>
+  <div class="tw"><table>
+      <thead><tr><th>裁剪层</th><th>机制</th><th>例子</th><th>对读者的影响</th></tr></thead>
+      <tbody>
+      <tr><td>编译期</td><td><code>feature()</code> 常量折叠</td><td><code>KAIROS</code>、<code>BUDDY</code></td><td>代码在，二进制里可能没有</td></tr>
+      <tr><td>账号</td><td><code>USER_TYPE=ant</code></td><td><code>ConfigTool</code>、<code>REPLTool</code></td><td>内部才有，外部永远看不到</td></tr>
+      <tr><td>环境变量</td><td><code>process.env.*</code></td><td><code>ENABLE_LSP_TOOL</code></td><td>手动开启即生效</td></tr>
+      <tr><td>服务端</td><td>GrowthBook / 托管设置</td><td>灰度、限额、killswitch</td><td>代码里读不到最终值</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>一条推荐的阅读路径</h2>
+  
+  <p>如果你只有两小时，按这个顺序读，每一步都能独立跑通：</p>
+  <ol>
+    <li><code>tools.ts</code> 的 <code>getAllBaseTools()</code>：先知道它有哪些手。</li>
+    <li><code>Tool.ts</code> 的类型定义：知道一只手有哪些关节（schema、权限、渲染、并发）。</li>
+    <li><code>query.ts</code> 的 <code>queryLoop</code>：知道手是怎么被调用的。</li>
+    <li><code>services/tools/StreamingToolExecutor.ts</code>：知道多只手怎么不打架。</li>
+    <li><code>services/compact/autoCompact.ts</code>：知道干久了怎么不失忆。</li>
+  </ol>
+  <p>这五个文件加起来约 3,600 行，占全库不到 1%，却决定了产品 80% 的体验。</p>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>本地副本目录统计：find / wc -l <span>· 2026-10-29 实测</span></li><li>main.tsx、entrypoints/cli.tsx、cli/print.ts、tools.ts、Tool.ts <span>· 行号见各节证据块</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="01-event.html"><small>← 上一章</small><b>01 事件与证据</b></a><a class="next" href="03-loop.html"><small>下一章 →</small><b>03 主循环</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

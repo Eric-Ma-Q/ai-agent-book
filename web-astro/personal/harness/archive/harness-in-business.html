@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness 上岗：公司里的 Agent 工程（2024–2026）</title>
+<meta name="description" content="10 个可核验的公司案例，观察 agent harness 如何在运营、设计、产品与客服岗位落地。">
+<script>
+/* 主题预置：在 CSS 绘制前挂上 dark 类，避免闪白 */
+(function(){try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}})();
+</script>
+<style>
+:root{
+  --ink:#15171c;
+  --ink-2:#33363d;
+  --muted:#6f6a60;
+  --paper:#f6f3ec;
+  --card:#fffdf8;
+  --line:#ddd7ca;
+  --line-strong:#c9c0ae;
+  --accent:#b23a2e;
+  --accent-soft:#f3e2dd;
+  --green:#2f5d50;
+  --green-soft:#e2ece7;
+  --blue:#33587a;
+  --blue-soft:#e3eaf1;
+  --amber:#9a6a1f;
+  --amber-soft:#f4ead7;
+  --violet:#5b4a72;
+  --violet-soft:#ebe5f1;
+  --serif:"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",Georgia,serif;
+  --sans:"PingFang SC","Hiragino Sans GB","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:"SFMono-Regular",Menlo,Consolas,monospace;
+  --shadow:0 1px 2px rgba(21,23,28,.04),0 8px 24px rgba(21,23,28,.05);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(178,58,46,.25)}
+a:hover{border-bottom-color:var(--accent)}
+sup a{border:none;font-family:var(--mono);font-size:10px;padding:0 1px}
+a.cite{border:none;color:inherit}
+a.cite:hover{color:var(--accent)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+.nav{
+  position:sticky;top:0;z-index:50;background:rgba(246,243,236,.88);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+}
+.nav-inner{max-width:1120px;margin:0 auto;padding:0 28px;height:56px;display:flex;align-items:center;gap:22px}
+.nav-brand{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.02em;white-space:nowrap}
+.nav-brand span{color:var(--accent)}
+.nav-links{display:flex;gap:18px;overflow-x:auto;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-links a{font-size:13px;color:var(--ink-2);border:none;white-space:nowrap}
+.nav-links a.active{color:var(--accent);font-weight:600}
+.nav-actions{margin-left:auto;display:flex;gap:8px}
+.btn{
+  font:inherit;font-size:12px;padding:6px 11px;border:1px solid var(--line-strong);
+  background:transparent;color:var(--ink-2);border-radius:999px;cursor:pointer;
+}
+.btn:hover{border-color:var(--ink-2);color:var(--ink)}
+header.hero{padding:76px 0 40px;border-bottom:1px solid var(--line)}
+.kicker{
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);display:flex;align-items:center;gap:10px;margin-bottom:26px;
+}
+.kicker:before{content:"";width:26px;height:1px;background:var(--accent);display:inline-block}
+h1{
+  font-family:var(--serif);font-weight:700;font-size:clamp(38px,5.6vw,62px);
+  line-height:1.14;margin:0 0 22px;letter-spacing:-.01em;
+}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{font-size:clamp(17px,2vw,20px);line-height:1.75;color:var(--ink-2);max-width:760px;margin:0 0 30px}
+.lede strong{font-weight:600;color:var(--ink);background:linear-gradient(transparent 62%,var(--accent-soft) 62%)}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px 26px;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+.meta-row b{color:var(--ink-2);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:44px 0 0}
+.stat{background:var(--card);padding:20px 18px 18px}
+.stat .n{font-family:var(--serif);font-size:34px;line-height:1;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .n small{font-size:15px;font-weight:600;margin-left:2px}
+.stat .l{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.5}
+.stat .s{font-family:var(--mono);font-size:10px;color:#9a9488;margin-top:6px}
+section{padding:64px 0;border-bottom:1px solid var(--line)}
+.sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px}
+.sec-num{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em}
+h2{font-family:var(--serif);font-size:clamp(26px,3.4vw,36px);line-height:1.25;margin:0;font-weight:700;letter-spacing:-.01em}
+.sec-sub{color:var(--muted);max-width:720px;margin:12px 0 34px;font-size:15px}
+h3{font-family:var(--serif);font-size:21px;margin:0 0 8px;font-weight:700}
+p{margin:0 0 14px}
+.small{font-size:13px;color:var(--muted)}
+.mono{font-family:var(--mono)}
+
+/* 摘要 */
+.findings{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.finding{background:var(--card);border:1px solid var(--line);padding:22px 22px 18px;position:relative}
+.finding:before{content:attr(data-i);position:absolute;right:16px;top:12px;font-family:var(--serif);font-size:40px;color:var(--accent-soft);font-weight:700;line-height:1}
+.finding h3{font-size:17px;margin-bottom:6px;padding-right:36px}
+.finding p{font-size:14px;color:var(--ink-2);margin:0}
+.finding .ref{display:block;margin-top:12px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+
+/* 定义 */
+.formula{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-family:var(--mono);
+  font-size:14px;background:var(--ink);color:#f6f3ec;padding:20px 22px;margin:0 0 26px;
+}
+.formula b{color:#f2b8ae;font-weight:600}
+.formula span{color:#8f8a80}
+.layers{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:26px 0 8px}
+.layer{background:var(--card);border:1px solid var(--line);border-top:3px solid;padding:16px 14px}
+.layer:nth-child(1){border-top-color:var(--blue)}
+.layer:nth-child(2){border-top-color:var(--green)}
+.layer:nth-child(3){border-top-color:var(--amber)}
+.layer:nth-child(4){border-top-color:var(--violet)}
+.layer:nth-child(5){border-top-color:var(--accent)}
+.layer .lb{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.layer h4{margin:4px 0 8px;font-size:16px;font-weight:600}
+.layer p{font-size:12.5px;line-height:1.65;color:var(--ink-2);margin:0}
+.layer .eg{margin-top:10px;font-size:11.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.criteria{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.crit{border-left:2px solid var(--accent);padding:2px 0 2px 14px}
+.crit b{display:block;font-size:13px;margin-bottom:3px}
+.crit span{font-size:12.5px;color:var(--muted);line-height:1.6}
+
+/* 矩阵 */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.chip{
+  font:inherit;font-size:12px;padding:5px 12px;border-radius:999px;border:1px solid var(--line-strong);
+  background:transparent;color:var(--ink-2);cursor:pointer;
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);background:var(--card)}
+table.matrix{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+.matrix th{
+  text-align:left;font-weight:600;font-size:11px;letter-spacing:.06em;color:var(--muted);
+  padding:11px 14px;border-bottom:1px solid var(--line-strong);background:#f1ede4;white-space:nowrap;
+}
+.matrix td{padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+.matrix tr:last-child td{border-bottom:none}
+.matrix tr[hidden]{display:none}
+.matrix tbody tr:hover{background:#faf6ee}
+.matrix .co{font-weight:600;white-space:nowrap}
+.matrix .co small{display:block;font-weight:400;color:var(--muted);font-size:11px;margin-top:2px}
+.tag{display:inline-block;font-size:10.5px;font-family:var(--mono);padding:1px 6px;border:1px solid var(--line-strong);color:var(--muted);border-radius:2px;white-space:nowrap}
+.tag.op{color:var(--blue);border-color:#b9c9d8;background:var(--blue-soft)}
+.tag.de{color:var(--violet);border-color:#cfc4da;background:var(--violet-soft)}
+.tag.pd{color:var(--green);border-color:#bcd0c7;background:var(--green-soft)}
+.tag.cs{color:var(--amber);border-color:#ddc9a4;background:var(--amber-soft)}
+.src{font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap}
+
+/* 案例 */
+.case{
+  background:var(--card);border:1px solid var(--line);margin:0 0 22px;box-shadow:var(--shadow);
+}
+.case-top{display:flex;align-items:flex-start;gap:16px;padding:22px 24px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.case-top .idx{font-family:var(--serif);font-size:32px;line-height:1;color:var(--line-strong);font-weight:700;min-width:42px}
+.case-top h3{font-size:22px;margin:0 0 3px}
+.case-top .sub{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+.case-top .tags{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.case-body{padding:20px 24px 22px}
+.case-body .what{font-size:14.5px;color:var(--ink-2)}
+.case-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:18px 0 16px}
+.cg{background:#fdfbf5;padding:12px 12px 11px}
+.cg .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:5px}
+.cg .v{font-size:12.5px;line-height:1.62;color:var(--ink-2)}
+.case-result{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-left:2px solid var(--accent);padding:4px 0 4px 14px;margin:0 0 12px}
+.case-result .big{font-family:var(--serif);font-size:27px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--accent)}
+.case-result .txt{font-size:13px;color:var(--ink-2);flex:1;min-width:220px}
+.case-foot{display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:12px}
+.case-foot .take{flex:1;min-width:260px;color:var(--ink-2)}
+.case-foot .take b{color:var(--ink);font-weight:600}
+.quote{border-left:2px solid var(--line-strong);padding-left:14px;color:var(--ink-2);font-size:13.5px;margin:12px 0}
+.quote i{font-style:normal;color:var(--muted)}
+
+/* 短线案例 */
+.briefs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.brief{background:var(--card);border:1px solid var(--line);padding:18px 18px 16px}
+.brief .co{font-family:var(--serif);font-size:17px;font-weight:700;margin-bottom:2px}
+.brief .role{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-bottom:10px}
+.brief p{font-size:13px;color:var(--ink-2);margin:0 0 10px}
+.brief .n{font-family:var(--serif);font-size:22px;color:var(--accent);font-weight:700;line-height:1.2;margin-bottom:4px}
+.brief a{font-size:11px;font-family:var(--mono)}
+
+/* 规律 */
+.patterns{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.pattern{background:var(--card);border:1px solid var(--line);padding:22px}
+.pattern .pn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--accent);margin-bottom:6px}
+.pattern h3{font-size:18px}
+.pattern p{font-size:13.5px;color:var(--ink-2)}
+.pattern .ev{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;margin-top:12px}
+
+/* 失败 */
+.fails{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.fail{background:#fbf7f2;border:1px solid #e4d4c8;border-top:3px solid var(--accent);padding:20px}
+.fail h3{font-size:17px;margin-bottom:2px}
+.fail .when{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-bottom:10px}
+.fail p{font-size:13px;color:var(--ink-2)}
+.fail .miss{font-size:12px;background:#fff;border:1px dashed #d8c3b4;padding:9px 11px;margin-top:12px}
+.fail .miss b{color:var(--accent)}
+
+/* 学术 */
+.evidence{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start}
+.chart{background:var(--card);border:1px solid var(--line);padding:22px}
+.bar-row{margin-bottom:16px}
+.bar-row .top{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--ink-2)}
+.bar-row .top b{font-family:var(--mono);font-size:11px}
+.bar{height:9px;background:#ece7dc;position:relative;overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);display:block}
+.bar.g i{background:var(--green)}
+.bar.v i{background:var(--violet)}
+.bar-note{font-size:10.5px;color:var(--muted);margin-top:4px}
+.evidence .txt p{font-size:14px}
+.fieldnotes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:0}
+.fn{background:var(--card);border:1px solid var(--line);border-top:2px solid var(--green);padding:16px 16px 14px}
+.fn .who{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+.fn h4{font-size:15px;margin:0 0 7px}
+.fn p{font-size:12.5px;line-height:1.65;color:var(--ink-2);margin:0 0 8px}
+.fn a{font-size:11px;font-family:var(--mono)}
+
+/* 角色清单 */
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.role-card{background:var(--card);border:1px solid var(--line);padding:22px}
+.role-card .rh{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+.role-card .rh h3{font-size:19px;margin:0}
+.role-card .rh span{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.role-card ol{margin:0;padding-left:18px}
+.role-card li{font-size:13px;color:var(--ink-2);margin-bottom:9px;line-height:1.65}
+.role-card li b{color:var(--ink)}
+
+/* 方法 */
+.method{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.method h3{font-size:16px;margin-bottom:8px}
+.method p,.method li{font-size:13px;color:var(--ink-2)}
+.method ul{padding-left:18px;margin:0}
+.method li{margin-bottom:7px}
+
+/* 参考 */
+.refs{columns:2;column-gap:32px;font-size:12px;color:var(--ink-2)}
+.ref{break-inside:avoid;margin-bottom:14px;padding-left:26px;position:relative;line-height:1.6}
+.ref .num{position:absolute;left:0;top:0;font-family:var(--mono);font-size:10px;color:var(--accent)}
+.ref .t{font-weight:600;color:var(--ink)}
+.ref .u{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);word-break:break-all;margin-top:2px}
+.ref .d{font-size:10.5px;color:var(--muted)}
+footer{padding:38px 0 60px;color:var(--muted);font-size:12px}
+footer .frow{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px}
+
+@media (max-width:900px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .findings,.patterns,.method{grid-template-columns:1fr}
+  .layers{grid-template-columns:repeat(2,1fr)}
+  .case-grid{grid-template-columns:repeat(2,1fr)}
+  .briefs,.fails,.roles{grid-template-columns:1fr}
+  .evidence{grid-template-columns:1fr}
+  .fieldnotes{grid-template-columns:1fr}
+  .refs{columns:1}
+  .criteria{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .wrap,.nav-inner{padding-left:18px;padding-right:18px}
+  .stats{grid-template-columns:1fr}
+  .stat .n{font-size:30px}
+  header.hero{padding-top:48px}
+  section{padding:46px 0}
+  .layers,.case-grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+@media print{
+  .nav,.filters,.nav-actions{display:none}
+  body{background:#fff;font-size:11pt}
+  section{border:none;padding:18px 0;page-break-inside:auto}
+  .case,.brief,.finding,.pattern{box-shadow:none;page-break-inside:avoid}
+  a{color:inherit;border:none}
+}
+
+/* ===== 站点标准：明暗主题与浮动按钮 ===== */
+html.dark{
+  color-scheme:dark;
+  --ink:#ebe5d8;
+  --ink-2:#c7bfae;
+  --muted:#9d9483;
+  --paper:#17140f;
+  --card:#211c15;
+  --line:#393227;
+  --line-strong:#4b4233;
+  --accent:#e08a7a;
+  --accent-soft:#3a241f;
+  --green:#93c3af; --green-soft:#1f2f29;
+  --blue:#9fc0da; --blue-soft:#1d2a35;
+  --amber:#d9b273; --amber-soft:#332817;
+  --violet:#bdaacf; --violet-soft:#2a2433;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+html.dark .nav{background:rgba(23,20,15,.88)}
+html.dark a{border-bottom-color:rgba(224,138,122,.3)}
+html.dark .formula{background:#0d0b08}
+html.dark .matrix th{background:#2a2419}
+html.dark .matrix tbody tr:hover{background:#262117}
+html.dark .cg{background:#262117}
+html.dark .fail{background:#241a16;border-color:#4a352b}
+html.dark .fail .miss{background:#2b211a;border-color:#5a4034}
+html.dark .bar{background:#332c22}
+html.dark .chip[aria-pressed="true"]{background:#ebe5d8;border-color:#ebe5d8;color:#17140f}
+html.dark .stat .s{color:#8f8676}
+html.dark .tag.op,html.dark .tag.de,html.dark .tag.pd,html.dark .tag.cs{border-color:var(--line-strong)}
+#themeFab{position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:flex;
+  align-items:center;justify-content:center;padding:0;box-shadow:0 4px 14px rgba(0,0,0,.16);
+  transition:transform .15s ease}
+#themeFab:hover{transform:scale(1.08)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+@media (prefers-reduced-motion:reduce){#themeFab{transition:none}}
+@media print{
+  #themeFab,#harness-floating-nav{display:none!important}
+  html.dark{--paper:#fff;--card:#fff;--ink:#15171c;--ink-2:#33363d;--muted:#6f6a60;
+    --line:#ddd7ca;--line-strong:#c9c0ae;--accent:#b23a2e;color-scheme:light}
+  html.dark .matrix th{background:#f1ede4}
+  html.dark .cg,html.dark .fail,html.dark .fail .miss,html.dark .matrix tbody tr:hover,
+  html.dark .bar{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="目录">
+  <div class="nav-inner">
+    <div class="nav-brand">Harness <span>上岗</span></div>
+    <div class="nav-links">
+      <a href="#summary">摘要</a>
+      <a href="#define">定义</a>
+      <a href="#matrix">案例矩阵</a>
+      <a href="#cases">深度案例</a>
+      <a href="#patterns">规律</a>
+      <a href="#failures">失败面</a>
+      <a href="#evidence">证据</a>
+      <a href="#roles">角色清单</a>
+      <a href="#method">方法</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn" id="btnPrint" type="button">打印 / PDF</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">研究简报 · 2026-10-19 · 案例截至 2026-10</div>
+    <h1>Harness 上岗：<br>公司里的 <em>Agent 工程</em></h1>
+    <p class="lede">
+      模型负责“下一步做什么”，harness 负责让它<strong>看在正确的上下文里、用能改状态的工具、被约束住、做完能验收、错了能退回</strong>。
+      这份简报拆 13 个有公司名、有业务场景、有可点开来源的案例，看运营、设计、产品与客服岗位上的 harness 到底长什么样。
+    </p>
+    <div class="meta-row">
+      <span>案例 <b>13</b> 个深度拆解 + <b>9</b> 个短线</span>
+      <span>来源 <b>30+</b>，一手优先</span>
+      <span>覆盖 <b>2023–2026</b></span>
+      <span>口径：<b>官方 / 厂商案例 / 媒体 / 论文</b>分别标注</span>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="n">63<small>%</small></div>
+        <div class="l">Anthropic 客服总量由 Fin 端到端解决</div>
+        <div class="s">Fin 案例 · 厂商口径</div>
+      </div>
+      <div class="stat">
+        <div class="n">500<small>万</small></div>
+        <div class="l">淘宝生意管家服务的商家数</div>
+        <div class="s">2025 双 11 · 官方发布</div>
+      </div>
+      <div class="stat">
+        <div class="n">1026 → 24</div>
+        <div class="l">浦发银行两个月孵化智能体数 vs 工程化落地数</div>
+        <div class="s">上海国资委 · 官方</div>
+      </div>
+      <div class="stat">
+        <div class="n">30<small>%</small></div>
+        <div class="l">模拟公司里 agent 能自主完成的任务比例</div>
+        <div class="s">TheAgentCompany · 论文</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="summary">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">01</span><h2>先看结论</h2></div>
+    <p class="sec-sub">六个判断，后面每个都有案例和来源支撑。</p>
+    <div class="findings">
+      <article class="finding" data-i="1">
+        <h3>落地的不是“通用助手”，是窄而深的岗位流程</h3>
+        <p>淘宝的“AI 店长 + 6 个 AI 员工”、京东的“客服 / 导购 / 跟单 / 分析”、美团的“意图匹配 + 可拖拽 TaskFlow”、沃尔玛的排班与翻译工具，都是把一件事拆到可验收，而不是给员工一个万能聊天框。</p>
+        <span class="ref">见案例 01、02、03、08</span>
+      </article>
+      <article class="finding" data-i="2">
+        <h3>harness 的重心在“业务状态”，不在提示词</h3>
+        <p>能办理退款、改价、建工单、发素材，才算工具；验收看订单、工单、数据库状态，而不是看模型说自己做完了。τ-bench 直接把“对话结束时的数据库状态”作为判分依据。</p>
+        <span class="ref">见案例 06、07 与论文 <a class="cite" href="#ref-11">[11]</a></span>
+      </article>
+      <article class="finding" data-i="3">
+        <h3>“知识运营”正在变成正式岗位</h3>
+        <p>Fin 设 knowledge manager 与 conversation designer；Anthropic 客服每周复盘未回答问题、每季度做内容冲刺；京东让商家把任意格式文件拖进知识中心自动结构化。更关键的是“谁来维护”：美团把外呼、地图、API 组件化，让业务运营拖拽编排 TaskFlow，模型只做意图匹配与调度。</p>
+        <span class="ref">见案例 02、03、06、07</span>
+      </article>
+      <article class="finding" data-i="4">
+        <h3>人审不是失败，是设计变量</h3>
+        <p>京东京小智把“转人工率下降 18%”当成绩，而不是追求 0；抖音生活服务把触发条件写成“回复不精准 + 用户有情绪”；浦发银行更狠，把审核从对话级上移到发布级——1026 个智能体只有 24 个通过合规闸门进入生产。</p>
+        <span class="ref">见案例 02、11、12</span>
+      </article>
+      <article class="finding" data-i="5">
+        <h3>回退案例缺的几乎都不是模型</h3>
+        <p>Klarna 回聘人工、麦当劳终止得来速 AI、Air Canada 为聊天机器人错误担责：分别是质量维度缺验证、复杂环境缺纠正、对外承诺缺约束与责任边界。</p>
+        <span class="ref">见“失败面”与 <a class="cite" href="#ref-5">[5]</a><a class="cite" href="#ref-13">[13]</a><a class="cite" href="#ref-18">[18]</a></span>
+      </article>
+      <article class="finding" data-i="6">
+        <h3>“厂商案例”要打折看，但机制仍可学</h3>
+        <p>本简报多数数字来自厂商 case study 或企业自述，未经独立审计。可复用的是它们暴露的 harness 结构：知识谁维护、工具接到哪、验收看什么、人在哪一步接手。</p>
+        <span class="ref">见“方法”一节</span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="define">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">02</span><h2>什么算 harness</h2></div>
+    <p class="sec-sub">沿用《深入理解 AI Agent》的边界：harness 是 Agent 边界内、模型之外的运行与治理层。它不是“模型之外的一切”，环境本身（订单库、设计文件、网页）不算。</p>
+
+    <div class="formula">
+      <b>Agent</b> = Model + <b>Harness</b>
+      <span>；</span>
+      <b>Harness</b> = 上下文 + 工具 + 约束 + 验证 + 纠正
+    </div>
+
+    <div class="layers">
+      <div class="layer">
+        <div class="lb">Layer 1</div>
+        <h4>上下文</h4>
+        <p>把业务知识、用户状态、历史轨迹组装成模型此刻能用的信息。</p>
+        <div class="eg">案例里：商品知识中心、CLAUDE.md、未回答问题清单</div>
+      </div>
+      <div class="layer">
+        <div class="lb">Layer 2</div>
+        <h4>工具</h4>
+        <p>不只查询，还要能改变业务状态：退款、建单、改价、发布素材。</p>
+        <div class="eg">案例里：Meta Ads MCP、售后系统、Figma 插件、排班系统</div>
+      </div>
+      <div class="layer">
+        <div class="lb">Layer 3</div>
+        <h4>约束</h4>
+        <p>权限、金额、角色、合规、品牌规范，以及“哪些动作必须人批”。</p>
+        <div class="eg">案例里：店铺权限绑定、金融合规 guardrails、字符上限</div>
+      </div>
+      <div class="layer">
+        <div class="lb">Layer 4</div>
+        <h4>验证</h4>
+        <p>检查“做对没有”：对账业务状态、A/B、抽检、离线评测集。</p>
+        <div class="eg">案例里：数据库终态比对、点击率 A/B、CX Score</div>
+      </div>
+      <div class="layer">
+        <div class="lb">Layer 5</div>
+        <h4>纠正</h4>
+        <p>错了怎么补救：重试、回滚、转人工、下线、补知识。</p>
+        <div class="eg">案例里：checkpoint 回滚、转人工阈值、回聘人工</div>
+      </div>
+    </div>
+
+    <div class="criteria">
+      <div class="crit"><b>收录标准一：有公司名</b><span>能指到具体企业，不接受“某头部品牌”。</span></div>
+      <div class="crit"><b>收录标准二：有自用证据</b><span>公司自己、客户案例页、官方发布或可靠媒体；只有产品发布不算。</span></div>
+      <div class="crit"><b>收录标准三：能拆出 harness</b><span>至少能说清上下文、工具、约束、验证、纠正中的三项。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="matrix">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">03</span><h2>案例矩阵</h2></div>
+    <p class="sec-sub">按岗位筛。数字均为公开口径，来源等级见每行末尾与参考文献；厂商案例不等于独立验证。</p>
+    <div class="filters" role="group" aria-label="按岗位筛选">
+      <button class="chip" data-filter="all" aria-pressed="true">全部</button>
+      <button class="chip" data-filter="op" aria-pressed="false">运营</button>
+      <button class="chip" data-filter="de" aria-pressed="false">设计</button>
+      <button class="chip" data-filter="pd" aria-pressed="false">产品</button>
+      <button class="chip" data-filter="cs" aria-pressed="false">客服</button>
+    </div>
+    <div class="table-wrap">
+      <table class="matrix">
+        <thead>
+          <tr><th>公司</th><th>岗位 / 场景</th><th>规模或结果</th><th>harness 关键件</th><th>来源</th></tr>
+        </thead>
+        <tbody id="matrix-body">
+          <tr data-role="op de">
+            <td class="co">淘宝 / 天猫<small>生意管家 + 店小蜜</small></td>
+            <td>电商运营、素材设计、客服</td>
+            <td>500 万商家；效率 1.5 倍；店小蜜转人工 -20%、成交 +35%</td>
+            <td>AI 店长 + 6 个员工 agent；知识中心；A/B 验收</td>
+            <td class="src">官方 + 媒体 <a class="cite" href="#ref-2">[2]</a><a class="cite" href="#ref-21">[21]</a></td>
+          </tr>
+          <tr data-role="cs op">
+            <td class="co">京东<small>京小智 5.0</small></td>
+            <td>客服、导购、跟单</td>
+            <td>80 万商家；转人工率 -18%；海信 7 天下单转化 +60%</td>
+            <td>知识自动结构化；多 agent 接力；30+ 节点跟单</td>
+            <td class="src">厂商稿 + 官方 <a class="cite" href="#ref-3">[3]</a><a class="cite" href="#ref-27">[27]</a></td>
+          </tr>
+          <tr data-role="cs op">
+            <td class="co">美团<small>智能客服 TaskFlow</small></td>
+            <td>客服、商家助手</td>
+            <td>意图准确率 &lt;80% → 近 90%；在线咨询占比 85%+</td>
+            <td>工具组件化；运营拖拽编排；低置信度让用户澄清</td>
+            <td class="src">官方技术博客 <a class="cite" href="#ref-22">[22]</a></td>
+          </tr>
+          <tr data-role="op">
+            <td class="co">Anthropic<small>增长营销</small></td>
+            <td>投放素材、广告文案</td>
+            <td>文案 2 小时→15 分钟；素材产能 10 倍</td>
+            <td>双子代理；Figma 插件；Meta Ads MCP；实验记忆</td>
+            <td class="src">公司自述 <a class="cite" href="#ref-1">[1]</a></td>
+          </tr>
+          <tr data-role="de pd">
+            <td class="co">Anthropic<small>产品设计</small></td>
+            <td>界面走查、原型、文案合规</td>
+            <td>法务协同从 1 周降到两次 30 分钟会议</td>
+            <td>设计稿入上下文；GitHub 工单；可运行原型</td>
+            <td class="src">公司自述 <a class="cite" href="#ref-1">[1]</a></td>
+          </tr>
+          <tr data-role="cs op">
+            <td class="co">Anthropic<small>客服 × Fin</small></td>
+            <td>客户支持</td>
+            <td>63% 总量端到端；79% 解决率；56 万次/月</td>
+            <td>知识经理；每周缺口复盘；路由与升级</td>
+            <td class="src">厂商案例 <a class="cite" href="#ref-6">[6]</a></td>
+          </tr>
+          <tr data-role="cs op">
+            <td class="co">Airtable<small>× Sierra</small></td>
+            <td>客户支持、邮件</td>
+            <td>80% 解决率；约等于 95 名客服；4 周上线</td>
+            <td>单一入口；邮件多轮；上下文保持</td>
+            <td class="src">厂商案例 <a class="cite" href="#ref-7">[7]</a></td>
+          </tr>
+          <tr data-role="op">
+            <td class="co">沃尔玛<small>门店与采购</small></td>
+            <td>排班、任务、翻译、采购</td>
+            <td>90 万周活 / 300 万次查询每天；排班 90→30 分钟</td>
+            <td>企业知识；44 语翻译；Element 平台治理</td>
+            <td class="src">公司发布 <a class="cite" href="#ref-10">[10]</a></td>
+          </tr>
+          <tr data-role="cs op">
+            <td class="co">Klarna<small>客服助手</small></td>
+            <td>客服、退款退货</td>
+            <td>首月 230 万次对话；相当于 700 名全职；后回聘人工</td>
+            <td>多语言；退款工具；缺质量维度验证</td>
+            <td class="src">厂商案例 <a class="cite" href="#ref-4">[4]</a> + 媒体 <a class="cite" href="#ref-5">[5]</a></td>
+          </tr>
+          <tr data-role="cs">
+            <td class="co">Notion<small>× Decagon</small></td>
+            <td>客户体验</td>
+            <td>工单解决时间 -34%；转人工率 3.4%</td>
+            <td>智能路由；工单状态；知识整合</td>
+            <td class="src">厂商案例 <a class="cite" href="#ref-9">[9]</a></td>
+          </tr>
+          <tr data-role="cs">
+            <td class="co">SoFi<small>× Sierra</small></td>
+            <td>金融客服</td>
+            <td>61% 拦截率；NPS +33；每周 5 万次对话</td>
+            <td>内部 API；合规 guardrails；推理轨迹可查</td>
+            <td class="src">厂商案例 <a class="cite" href="#ref-8">[8]</a></td>
+          </tr>
+          <tr data-role="op pd">
+            <td class="co">1688<small>× Accio</small></td>
+            <td>采购、店铺经营</td>
+            <td>1 亿买家；Agent 发起交易占 40%；核价 1–2 天→1 小时</td>
+            <td>全球寻源；比价；报价 skill；店铺权限绑定</td>
+            <td class="src">官方 + 媒体 <a class="cite" href="#ref-14">[14]</a><a class="cite" href="#ref-28">[28]</a></td>
+          </tr>
+          <tr data-role="cs op pd">
+            <td class="co">浦发银行<small>× HiAgent</small></td>
+            <td>银行客服、运营</td>
+            <td>2 个月 3207 人 / 1026 个智能体 / 24 个上线</td>
+            <td>开发态-发布态-运行态隔离；发布前合规校验</td>
+            <td class="src">官方 <a class="cite" href="#ref-24">[24]</a></td>
+          </tr>
+          <tr data-role="cs op">
+            <td class="co">抖音<small>电商客服 × 扣子</small></td>
+            <td>售后客服、私信获客</td>
+            <td>开口率 +41%；留资率 +36%；线索有效率 +24%</td>
+            <td>有效干预率；实验参数进工作流；按情绪转人工</td>
+            <td class="src">厂商稿 + 媒体 <a class="cite" href="#ref-25">[25]</a><a class="cite" href="#ref-26">[26]</a></td>
+          </tr>
+          <tr data-role="de pd">
+            <td class="co">Figma<small>设计 agent</small></td>
+            <td>产品设计、组件文档</td>
+            <td>专业设计师人工评分 60%+ 胜出；Uber 文档数月→一个下午</td>
+            <td>设计系统规则；skills；连接器；人工评分集</td>
+            <td class="src">官方博客 <a class="cite" href="#ref-38">[38]</a></td>
+          </tr>
+          <tr data-role="de op">
+            <td class="co">Shopify<small>Canvas</small></td>
+            <td>商家主题设计</td>
+            <td>2026 上半年 2500 万次主题编辑</td>
+            <td>design contract；代码校验；截图自检闭环</td>
+            <td class="src">官方发布 <a class="cite" href="#ref-39">[39]</a></td>
+          </tr>
+          <tr data-role="op de">
+            <td class="co">蓝色光标<small>BlueAI</small></td>
+            <td>营销、素材、视频</td>
+            <td>覆盖 95%+ 作业场景；约 100 个智能体；2311 人 / 608 亿营收</td>
+            <td>既有工序嵌入；视频 Agent 聚合</td>
+            <td class="src">年报 <a class="cite" href="#ref-29">[29]</a></td>
+          </tr>
+          <tr data-role="op">
+            <td class="co">京东<small>言犀数字人</small></td>
+            <td>闲时直播、带货</td>
+            <td>京造闲时转化 +40%；单场 30 小时在线</td>
+            <td>商品知识；实时互动；闲时排班</td>
+            <td class="src">媒体 <a class="cite" href="#ref-15">[15]</a></td>
+          </tr>
+          <tr data-role="cs">
+            <td class="co">Fin<small>自家客服</small></td>
+            <td>客户支持</td>
+            <td>83% 自动化；知识经理 + 对话设计师</td>
+            <td>Guidance rules；Procedures；CX Score</td>
+            <td class="src">厂商案例 <a class="cite" href="#ref-16">[16]</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small" style="margin-top:12px">说明：同一案例可能跨多个岗位，矩阵只标主岗位；部分短线案例（Notion Academy、Salesforce）未单列，见第 05 节。“厂商案例”指由服务商撰写、客户署名的案例，数字未经独立审计。</p>
+  </div>
+</section>
+
+<section id="cases">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">04</span><h2>深度案例</h2></div>
+    <p class="sec-sub">每个案例都按同一张“五层表”拆。读法：先看它把哪一层做厚了，再看结果数字属于哪一层。</p>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">01</div>
+        <div>
+          <h3>淘宝：把“店长的一天”拆成 1+6 个 agent</h3>
+          <div class="sub">电商运营 / 素材设计 · 2025 双 11 · 500 万商家</div>
+        </div>
+        <div class="tags"><span class="tag op">运营</span><span class="tag de">设计</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">2025 年双 11，淘宝把商家后台“生意管家”升级为“1 个 AI 店长 + 6 个 AI 员工”的组合。AI 店长「大促小助理」按大促阶段读店铺经营数据，给实时解读、流失诊断和机会点；6 个员工覆盖数据分析、订单等场景；AIGC 负责商品图与视频；客服由“店小蜜”承接。官方口径：AI 店长生成 500 万条经营策略，平均帮商家省 30% 工作量，效率提升 1.5 倍；AI 数据分析师覆盖 90% 中小商家的核心分析场景。2025 年 9 月，店小蜜 5.0 以“Agent 原生”形态发布，测试阶段转人工率降低 20% 以上、店铺成交转化率提升 35% 以上。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">店铺经营数据、订单、商品信息、平台大促规则；按阶段切换“看什么”。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">数据分析、策略生成、素材生成（万相营造）、售后系统自动处理。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">平台规则与店铺权限；AI 给建议，商家拍板，不替商家做最终经营决定。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">AIGC 素材做 A/B，商品点击率 +10%；经营指标前后对比。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">商家驳回策略、改素材；复杂问题转人工客服。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">500 万</div>
+          <div class="txt">商家使用；效率 1.5 倍；AIGC 累计生成 1.5 亿个图片与视频素材；店小蜜在双 11 服务 3 亿人次，其中 1 亿人次全自动承接，约一半售后问题自动解决。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>别做一个“万能店长”，把店长的一天拆成班次——谁看数据、谁出素材、谁接客服，最后商家只做拍板。A/B 是这套系统里最关键的验证件。</div>
+          <div class="src">来源 <a class="cite" href="#ref-2">[2]</a> 官方发布经媒体转述、<a class="cite" href="#ref-21">[21]</a> 亿邦动力</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">02</div>
+        <div>
+          <h3>京东：四个“数字员工”与一个知识中心</h3>
+          <div class="sub">客服 / 导购 / 跟单 · 2025-04 · 80 万商家</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">京小智 5.0 一次推出四个 agent：客服、导购、跟单、VOC 分析，基于言犀与 DeepSeek 双模型。最值得看的是两个设计：一是知识中心，商家把任意格式文件拖进去，模型自动解析成结构化知识，不需要手工配问答；二是导购做成了多 agent 流水线——需求探明 → 推荐理由 → 商品推荐 → 商品答疑，彼此交接。跟单覆盖售前、售中、售后 30 多个服务节点。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">京东域内知识、泛零售行业知识、品牌自有知识；京造场景下 2.5 万 SKU、900 余品类。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">业务查询、操作办理、主动跟单、VOC 分析模板；工具直接接平台业务系统。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">商家知识边界与平台规则；转人工规则由商家配置。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">内测对比转人工率、满意度、咨询转化率，而不是只看回答“像不像人”。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">转人工兜底；知识缺口的补录；按品类调整搭售策略。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">-18% / +21%</div>
+          <div class="txt">内测期间转人工率整体下降 18%，满意度反而提升 21%，咨询转化率提升 2%；京造用其做低客单与高客单的差异化搭售，客服渠道转化率提升 300% 以上。同属京东体系的海信，把国补咨询做成“区域划分 → 资格识别 → 申领 → 下单”一站式服务，打通营销、物流、价保、订单、发票；2024 年，回复过的会话 7 天下单转化率比未回复高六成，应答准确率超过 90%。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>知识不是写 prompt，是把文件变成结构化知识；复杂任务不是让一个 agent 全做，而是让多个窄 agent 接力，每一棒都有明确输入输出。</div>
+          <div class="src">来源 <a class="cite" href="#ref-3">[3]</a> 厂商稿、<a class="cite" href="#ref-27">[27]</a> 京东云开发者社区（官方）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">03</div>
+        <div>
+          <h3>美团：把 harness 的可编辑层交给运营</h3>
+          <div class="sub">客服 / 商家助手 · 2021-09 · 在线咨询占比 85%+</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">美团智能客服服务 6.3 亿年交易用户、770 万生活服务商家，在线咨询占比 85% 以上。技术博客里最值得抄的不是模型，而是分工：意图体系、Task 流程、订单查询接口“主要由各业务的运营团队来维护”；对话系统只做两件事——把用户输入匹配到标准问，以及完成多轮交互里的调度。为此他们把外呼、地图、API 组件化，提供可视化 TaskFlow 编辑器，业务运营拖拽就能改流程；底层用 Bayes Network 把规则与概率结合起来。意图置信度不高时，系统不硬答，而是给出业务列表让用户自己澄清。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">意图体系、标准问、各业务 Task 流程、订单查询接口，均由业务运营维护。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">外呼、地图、API 全部组件化，拖拽进流程；座席侧有话术推荐与会话摘要。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">业务规则写进 Task 流程；低置信度不硬答，转为澄清。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">不满意度与转人工率衡量机器人；ATT / ACW 衡量人工辅助。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">用户澄清、转人工、运营直接改流程与话术。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">&lt;80% → 90%</div>
+          <div class="txt">意图识别准确率的提升；更重要的是流程维护权在运营手里，改一个业务规则不需要发版等工程排期。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>别把流程写死在代码里。把工具组件化、流程可视化，让最懂业务的人维护 harness；模型只负责匹配与调度。</div>
+          <div class="src">来源 <a class="cite" href="#ref-22">[22]</a> · 美团技术团队（官方）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">04</div>
+        <div>
+          <h3>Anthropic 增长营销：一个人的投放团队</h3>
+          <div class="sub">投放素材 / 广告文案 · 2025-06 · 团队规模 1 人</div>
+        </div>
+        <div class="tags"><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">Anthropic 的增长营销是一个非技术背景的“一人团队”。他们用 Claude Code 搭了三条流水线：读 Google Ads 的 CSV，找出表现差的广告，按 30 字符标题 / 90 字符描述的限制生成新变体，标题和描述各由一个子代理负责，几分钟产出数百条；写了一个 Figma 插件，识别画框、替换标题与描述，一批生成最多 100 个素材变体；用 Meta Ads 的 MCP server 在 Claude 里直接查投放与花费。还做了个粗糙的“实验记忆”，把历史假设和结果带回上下文。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">历史广告与表现数据、平台字符限制、过往实验假设与结果。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">CSV 读取、两个子代理、Figma 插件、Meta Ads MCP server。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">Google Ads 的字符上限与素材规格；品牌口径。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">投放表现回流，低效广告进入下一轮迭代；实验记忆避免重复试错。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">按数据淘汰变体、重写；人工决定最终投放组合。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">2h → 15min</div>
+          <div class="txt">单条广告文案创作时间；素材产能约 10 倍；Figma 插件把“几小时复制粘贴”压到每批 0.5 秒。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>增长团队的 harness 核心是“数据回流”：投放表现进入下一轮上下文，实验记忆防止重复试错。模型换了，这套流水线仍然成立。</div>
+          <div class="src">来源 <a class="cite" href="#ref-1">[1]</a> · 公司自述（PDF 第 15 页）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">05</div>
+        <div>
+          <h3>Anthropic 产品设计：从画图到直接改代码</h3>
+          <div class="sub">界面走查 / 原型 / 文案合规 · 2025-06 · 非工程背景设计师</div>
+        </div>
+        <div class="tags"><span class="tag de">设计</span><span class="tag pd">产品</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">产品设计团队支持 Claude Code、Claude.ai 与 API。过去改字体、颜色、间距要写设计文档、和工程师来回几轮；现在设计师直接用 Claude Code 改前端，甚至做“通常不会让设计师碰”的大范围状态管理改动。他们把 mockup 截图贴进去，生成工程师能直接跑的原型；用 GitHub 集成把 issue 变成代码建议；用 agent 梳理错误态、逻辑流和系统状态，把边界情况提前到设计阶段发现。一次全站去掉“research preview”字样的文案修改，设计与法务实时协同，两次 30 分钟会议完成，而过去要一周来回。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">设计稿截图、现有代码库、组件与状态、法务文案要求。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">代码编辑与运行、GitHub Actions / issue、原型运行环境。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">工程规范与代码评审；法务合规；发布权限仍在工程侧。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">原型能跑、工程师 review、边界状态可复现；不再靠静态图“讲解”。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">PR 迭代；checkpoint 回滚；review 打回。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">1 周 → 2×30 分钟</div>
+          <div class="txt">跨设计、法务、工程的文案修改协同；设计师可以直接交付可运行原型，减少“设计→工程”的翻译损耗。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>设计师的 harness 边界是“能改代码，但过评审”。产出从静态图变成可运行原型，验证也从“看图”变成“跑起来”。</div>
+          <div class="src">来源 <a class="cite" href="#ref-1">[1]</a> · 公司自述（PDF 第 17 页）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">06</div>
+        <div>
+          <h3>Anthropic 客服：把 Fin 当系统跑，而不是当工具看</h3>
+          <div class="sub">客户支持 · 2024 选型，2025–2026 扩产 · 56 万次解决/月</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">Anthropic 的客服最初只有一个人。2024 年他们在“自建还是采购”之间选了 Fin，但没有把 Fin 当“加在流程上的一层 AI”，而是围绕它重建运营节奏：每周复盘未回答问题、每季度做内容冲刺、办全团队 hack week 补知识（一周内解决率提升 10%）、设专职内容与知识经理负责 taxonomy 与答案质量、用 Claude 聚类缺口并起草内容、明确路由（Fin 接量，人接企业与边缘案例）、Fin 指标与客服 KPI 同表。最能说明“harness 比模型更管用”的细节是：他们只是把可用 snippets 数量翻倍，一周内解决率就提升了 5.5 个百分点；Fin 产品侧的 Simulations 可以扮演客户重跑整套对话，改完 Procedure 后用它防回归。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">帮助中心、产品变更、历史对话缺口；按主题建 taxonomy，季度冲刺补覆盖。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">退款、订阅、账单、账户数据查询；后端错误码翻译；必要时升级人工。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">企业与合规边缘案例必须走人；敏感账户操作有权限与验证。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">解决率、自动化率、未回答问题清单、CX 质量评分，与核心客服 KPI 同表。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">每周补内容、每季冲刺、hack week 集中修；路由回人工。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">63%</div>
+          <div class="txt">客服总量由 Fin 端到端解决；Fin 参与 80% 的进线，解决率 79%，每月约 56 万次解决；团队没有随流量同比例加人。较早一版客户故事给的是 96% 介入、解决率从 36% 升到 50.8%，两个页面统计时点与分母不同，引用时需注明。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>AI 客服的上限由知识运营节奏决定：周复盘、季度冲刺、专人负责 taxonomy。模型是常量，节奏是变量。</div>
+          <div class="src">来源 <a class="cite" href="#ref-6">[6]</a>、<a class="cite" href="#ref-36">[36]</a> · 厂商案例（客户署名）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">07</div>
+        <div>
+          <h3>Airtable：统一入口，比换模型更有效</h3>
+          <div class="sub">客户支持 / 邮件 · 2025–2026 · 80% 解决率</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">Airtable 原来的聊天体验是“给一条帮助中心链接，让客户自己点”，而多数客户已经试过这条路。他们与 Sierra 合作，把 chat、email 收进一个入口：agent 不再甩链接，而是在对话里一步步带客户完成操作；话题切换时保持上下文；邮件这种最难自动化的渠道也能多轮端到端解决。上线节奏是 chat 四周、email 再加七天，背后用模拟与测试兜底。内部把支持团队拆成 AI 支持、人工支持、支持优化三条线。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">产品文档、历史工单、客户账户与使用状态；跨渠道共享同一份上下文。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">账户查询、操作指引、工单创建与升级；邮件多轮会话。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">企业与高价值客户走人工；敏感操作需验证。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">解决率、人工承接量、渠道对比；上线前用模拟对话测试。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">转人工；支持优化团队回看失败对话并改知识。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">80%</div>
+          <div class="txt">AI 解决率；承接约等于 95 名全职客服的工作量；四周上线 chat，七天上线 email。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>渠道统一 + 上下文保持，比换一个更强的模型更能提升解决率；“给答案”而不是“给链接”是体验分水岭。</div>
+          <div class="src">来源 <a class="cite" href="#ref-7">[7]</a> · 厂商案例（客户署名）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">08</div>
+        <div>
+          <h3>沃尔玛：150 万员工的“流程助手”</h3>
+          <div class="sub">门店运营 / 采购 · 2025-06 · 90 万周活</div>
+        </div>
+        <div class="tags"><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">沃尔玛给门店员工上了一组 AI 工具：任务管理工具理解优先级、给推荐，试点的夜班补货场景把组长排班时间从 90 分钟降到 30 分钟；44 种语言的实时翻译，内置 Walmart 自有品牌知识（“Great Value”不会被翻错）；用了五年的对话式 AI 升级，把冗长的流程文档变成一步步操作指引，覆盖 90 万周活、每天 300 万次查询；还有面向总部员工的创意伙伴 MyAssistant、面向采购的 AI 助手 Wally——Wally 的上下文不是把文档塞进 RAG，而是建了一层语义层来理解自有数据；权限路线是让它在“可配置的 guardrails”内代采购执行。底层是自研的 Element 平台，统一做数据治理与安全。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">门店流程文档、排班与任务、商品与自有品牌知识、多语言词表。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">任务分配、排班、翻译、流程指引、采购分析、工单创建。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">数据治理与安全统一在 Element 平台；门店角色权限。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">试点门店的前后对比（90→30 分钟）；翻译靠迭代反馈闭环。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">人工接管；按反馈迭代词表与流程；分阶段推广。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">90 → 30 分钟</div>
+          <div class="txt">组长排班规划时间（试点估算）；对话式 AI 覆盖 90 万周活、每天 300 万次查询；翻译支持 44 种语言。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>大企业的 harness 先解决“知识在谁脑子里”：把流程文档变成可执行步骤，再接排班、任务、工单系统；平台层统一治理，避免每个团队各造一套。</div>
+          <div class="src">来源 <a class="cite" href="#ref-10">[10]</a> 公司发布、<a class="cite" href="#ref-41">[41]</a> Wally 发布</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">09</div>
+        <div>
+          <h3>Klarna：先赢成本，再补质量</h3>
+          <div class="sub">客服 / 退款退货 · 2024-02 上线，2025-05 回退 · 230 万次对话/首月</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">Klarna 的 AI assistant 首月做了 230 万次对话，占客服对话的三分之二，相当于 700 名全职客服；重复咨询下降 25%，客户解决问题的时间从 11 分钟降到 2 分钟以内，覆盖 23 个市场、35 种语言，预计 2024 年带来 4000 万美元利润改善。同期 ChatGPT Enterprise 全员开放，90% 员工每天使用，传播、市场、法务的采用率分别是 93%、88%、86%。但 2025 年 5 月，CEO 承认削减人力“过头了”，重新招聘人工客服——复杂问题与客户体验并不只由成本指标衡量。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">订单、支付、退款政策、多语言话术；按市场本地化。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">退款、退货、账户操作；与支付系统直连。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">金融合规、身份验证、金额与权限规则。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">CSAT、重复咨询、解决时长、利润改善；但复杂工单的质量没有被单独度量。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">2025 年回聘人工、调整人机分工；把“什么时候必须人接”重新写回流程。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">700 人</div>
+          <div class="txt">首月相当于 700 名全职客服的工作量；4000 万美元利润改善；一年后回聘人工，成为“成本指标不等于业务指标”的反面注脚。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>成本指标赢了，质量维度没进验证闭环：CSAT 持平可能掩盖复杂工单的体验下降。上线前就要定义“哪些问题不允许 AI 独立关闭”。</div>
+          <div class="src">来源 <a class="cite" href="#ref-4">[4]</a> 厂商案例、<a class="cite" href="#ref-5">[5]</a> 媒体（2025-05-08）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">10</div>
+        <div>
+          <h3>1688：把 agent 放进交易入口</h3>
+          <div class="sub">采购 / 店铺经营 · 2026-10-13 · 1 亿买家</div>
+        </div>
+        <div class="tags"><span class="tag op">运营</span><span class="tag pd">产品</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">2026 年 10 月 13 日，1688 宣布全面接入阿里全球电商 AI 工作台 Accio：平台逾 1 亿年度活跃买家、超 100 万源头厂商可以直接使用 AI 辅助采购、店铺运营和经营决策。买家用自己的 1688 账号开通；卖家安装“1688 生意助手”、绑定店铺后使用。1688 副总裁王强在采访中给出更硬的业务口径：由 Agent 发起的交易已占 40%，每天被调动的商家约 29 万家、占平台三分之一，买家通过 Agent 委托询盘找货的占比超过 20%；面向定制类商家的“报价 skill”把过去一两天的核价压到一小时以内。全球已有 1000 万中小企业用户在用 Accio。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">商品库、供应商资质、历史采购与价格、店铺经营数据。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">寻源、比价、采购下单、店铺运营动作；与账号体系绑定。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">采购额度、店铺权限、平台交易规则。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">采购结果与店铺经营指标；平台侧可追踪。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">人工确认订单；异常交易走平台申诉与客服。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">40% / 29 万</div>
+          <div class="txt">Agent 发起的交易占比与每天被调动的商家数；核价从 1–2 天压到 1 小时内，采购与备货直接进入双 11 节奏。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>把 agent 嵌进交易入口，而不是另做一个聊天框；权限跟着店铺账号走，工具才能真的“办业务”。</div>
+          <div class="src">来源 <a class="cite" href="#ref-14">[14]</a> 杭州网、<a class="cite" href="#ref-28">[28]</a> 搜狐财经（引 1688 副总裁）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">11</div>
+        <div>
+          <h3>浦发银行：1026 个智能体，只有 24 个敢上线</h3>
+          <div class="sub">银行客服 / 运营 · 2025–2026 · 3207 名平台用户</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span><span class="tag pd">产品</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">浦发银行与火山引擎共建企业级智能体平台 HiAgent，核心设计是把智能体生命周期拆成“开发态—发布态—运行态”：开发态支持业务人员低代码搭建、快速验证；发布态设统一的安全审核和权限管理，所有智能体必须通过合规校验才能进入实际应用；运行态监控响应速度、准确率等指标，推动闭环迭代。官方称这是银行业首次实现开发态与运行态的隔离。上线两个月，平台用户 3207 人，孵化 1026 个智能体，其中 24 个实现工程化落地，嵌入客服、运营等核心流程；表单识别平均处理时长从 30 分钟降到 6 分钟，准确率 90%，日均处理 700 多笔。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">业务规则、历史记录、后台信息；客服场景里由智能体整合后台信息、定位服务断点。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">低代码搭建、表单识别、客服协同；工具与后台系统打通。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">发布态强制合规校验与权限管理；金融行业安全要求前置。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">上线前审核；运行态监控响应速度与准确率；试点指标对比。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">未通过校验不上线；运行异常下线迭代；人工协同兜底。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">2.3%</div>
+          <div class="txt">1026 个智能体中只有 24 个工程化落地。这个漏斗不是失败，而是金融业的正常闸门：建得出来，不等于敢让它碰客户与资金。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>把审核从“对话级转人工”上移到“发布级准入”。先问“这个 agent 允许上线吗”，再问“它这一次答得对不对”。</div>
+          <div class="src">来源 <a class="cite" href="#ref-24">[24]</a> · 上海国资委官网（官方）</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">12</div>
+        <div>
+          <h3>抖音：给“人审”本身定一个指标</h3>
+          <div class="sub">电商客服 / 私信获客 · 2024–2025 · 开口率 +41%</div>
+        </div>
+        <div class="tags"><span class="tag cs">客服</span><span class="tag op">运营</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">抖音电商客服团队基于扣子（Coze）搭客服 agent，跑两种人机分工：Agent 直接面客；以及更常见的“Agent 回复 + 人工监管”。他们没有只考核“AI 答对多少”，而是自建“有效干预率”——同时判断 AI 回答得好不好、真人客服纠正得对不对，用一个指标约束两个方向。工作流被拆成主流程、Agent 节点、配置节点、代码节点，代码节点里显式包含“实验参数获取”，AB 分流是工作流的一等公民。生活服务侧的“AI 即用”则把转人工条件写得很具体：回复不精准、导致用户有情绪时主动转接人工；夜间与高峰自动托管。使用商家对比未使用商家，进私开口率 +41%、留资率 +36%、线索有效率 +24%。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">金牌客服接待经验、行业知识、人设风格；会话基本面判断后路由。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">IM 通信、特征解析、实验参数获取、留资卡片、话术建议。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">风险回复必须人工干预；低价值场景停止发问；夜间/高峰托管。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">有效干预率、15 秒首响达标率、会话评价分、线索有效率。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">人工接管、实时话术建议、按干预结果反推 agent 配置。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">+41% / +36%</div>
+          <div class="txt">进私开口率与留资率；线索有效率 +24%，15 秒首响达标率提升 1.3 倍。数字来自对照组，不是单组前后对比。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>把“人审”变成指标：既考核模型，也考核纠正的人。否则人工要么不敢改，要么乱改，最后说不清问题出在哪。</div>
+          <div class="src">来源 <a class="cite" href="#ref-25">[25]</a> 厂商稿、<a class="cite" href="#ref-26">[26]</a> 新京报（媒体）</div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+    <article class="case">
+      <div class="case-top">
+        <div class="idx">13</div>
+        <div>
+          <h3>Figma：设计约束进上下文，设计质量进评测</h3>
+          <div class="sub">产品设计 · 2026-10 · 专业设计师人工评分</div>
+        </div>
+        <div class="tags"><span class="tag de">设计</span><span class="tag pd">产品</span></div>
+      </div>
+      <div class="case-body">
+        <p class="what">Figma 在 2026 年 10 月的博客里，第一次给出设计 agent 的质量口径：“在与专业设计师进行的人工评分评测中，约 60% 以上的案例胜出”（样本与方法未公开）。上下文不是把品牌手册塞进 RAG，而是设计系统规则、skills 与连接器：例如“红色只用于删除这类动作，绝不用于装饰”。客户侧，Uber 把组件文档从“多个人做几个月”压到“一个设计师一个下午”；Granola 用连接器把会议记录直接标注到画布；Atlassian 强调让 agent“在 guardrails 内生成”。</p>
+        <div class="case-grid">
+          <div class="cg"><div class="k">上下文</div><div class="v">设计系统指南、组件库、品牌与交互规则、skills、连接器里的会议记录与需求。</div></div>
+          <div class="cg"><div class="k">工具</div><div class="v">画布与组件编辑、连接器、设计系统检索；产出直接落在设计文件里。</div></div>
+          <div class="cg"><div class="k">约束</div><div class="v">颜色语义、组件用法、品牌规范写成硬规则；Atlassian 的表述是“在 guardrails 内生成”。</div></div>
+          <div class="cg"><div class="k">验证</div><div class="v">专业设计师人工评分，约 60%+ 案例胜出；评测方法与样本未公开。</div></div>
+          <div class="cg"><div class="k">纠正</div><div class="v">设计师改稿、补规则、迭代 skills；把失败案例回流到设计系统。</div></div>
+        </div>
+        <div class="case-result">
+          <div class="big">60%+</div>
+          <div class="txt">在与专业设计师的人工评分对比中胜出的比例；Uber 的组件文档从数月压到一个下午。样本与方法未公开，数字只能当方向，不能当保证。</div>
+        </div>
+        <div class="case-foot">
+          <div class="take"><b>可复用点：</b>设计约束要编译进上下文与检查规则，而不是靠一句“按品牌规范来”；设计质量也要有人工评分集，否则无法判断 agent 是帮忙还是添乱。</div>
+          <div class="src">来源 <a class="cite" href="#ref-38">[38]</a> · Figma 官方博客</div>
+        </div>
+      </div>
+    </article>
+</section>
+
+<section id="briefs">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">05</span><h2>九个短线案例</h2></div>
+    <p class="sec-sub">数字不如上面十三个完整，但各自补了一个角度：工单路由、合规、内部 dogfooding、评测基建、既有工序嵌入、闲时运营、平台型产品。</p>
+    <div class="briefs">
+      <article class="brief">
+        <div class="co">Notion × Decagon</div>
+        <div class="role">客户体验 · 每年 100 万次咨询</div>
+        <p>工单解决时间最多缩短 34%，转人工率 3.4%；把支持、产品、市场的数据打通，让 CX 从成本中心变成产品洞察来源。</p>
+        <div class="n">-34%</div>
+        <p class="small">路由与知识整合是主要贡献，不是模型参数。</p>
+        <a href="#ref-9"><a class="cite" href="#ref-9">[9]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">SoFi × Sierra</div>
+        <div class="role">金融客服 · 1370 万会员</div>
+        <p>上线三个月拦截率 61%，每周 5 万次对话，聊天 NPS 提升 33 点。agent 直连内部 API，严格 guardrails，团队可查看推理轨迹。</p>
+        <div class="n">+33 NPS</div>
+        <p class="small">受监管行业里，“可审计的轨迹”本身就是 harness 的一部分。</p>
+        <a href="#ref-8"><a class="cite" href="#ref-8">[8]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">Fin 自家客服</div>
+        <div class="role">客户支持 · 83% 自动化</div>
+        <p>先做自己的 reference customer：知识经理、对话设计师两个新角色；Guidance rules、Procedures、CX Score 逐步上线。</p>
+        <div class="n">83%</div>
+        <p class="small">“先在自己身上跑通，再卖给客户”是 vendor 案例里少见的诚实样本。</p>
+        <a href="#ref-16"><a class="cite" href="#ref-16">[16]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">美团图灵评测</div>
+        <div class="role">Agent 评测基建 · 2026-08</div>
+        <p>评测对象是“模型 + 系统 + 工具 + 流程”，分结果、过程、效率、风险四层；Rubric 二元化，人人一致率 85%、人机一致率 90%；数字站长人机一致率 99%，Beam 从 62% 提升到 92%。</p>
+        <div class="n">99%</div>
+        <p class="small">七项基建里最容易被忽略的是“沙箱按只读/可写/高风险分层”和“准入准出门禁”。</p>
+        <a href="#ref-23"><a class="cite" href="#ref-23">[23]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">蓝色光标 BlueAI</div>
+        <div class="role">营销 / 素材 / 视频 · 2024 年报</div>
+        <p>AI 覆盖 95% 以上作业场景，约 100 个智能体，覆盖一半以上案例；集团 2311 人做 608 亿元营收。效率提升自述区间 60%–1000%，宽到没有统计意义。</p>
+        <div class="n">95%</div>
+        <p class="small">值得学的是“嵌进既有工序”，不是新建一条 AI 产品线。</p>
+        <a href="#ref-29"><a class="cite" href="#ref-29">[29]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">Salesforce Agentforce</div>
+        <div class="role">客服 / 销售运营 · 2024–2025</div>
+        <p>Wiley 案件解决率较旧 bot 提升 40% 以上；OpenTable 三周承接 73% 餐厅网页查询；1-800Accountant 报税周自主解决 70%；定价 2 美元/会话。同期 Benioff 把支持岗从 9000 降到 5000。</p>
+        <div class="n">73%</div>
+        <p class="small">厂商合集口径；“案件解决率 +40%”是相对旧 bot，不是绝对解决率。</p>
+        <a href="#ref-35"><a class="cite" href="#ref-35">[35]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">Shopify Canvas</div>
+        <div class="role">商家设计 / 主题编辑 · 2026-10</div>
+        <p>agent 直接改主题文件，跑代码校验、截自己的图做视觉自检，在交还给商家前循环修正；商家实时看改动。2026 上半年发生 2500 万次主题编辑。设计总监的说法是：每个主题都有独立的 design contract、pattern 库和大量带观点的 eval 数据。</p>
+        <div class="n">2500 万</div>
+        <p class="small">“代码校验 + 截图自检”是验证层的商用形态：先自己验，再让人看。</p>
+        <a href="#ref-39"><a class="cite" href="#ref-39">[39]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">Notion Academy</div>
+        <div class="role">内容运营 / 知识工作 · 2026-09</div>
+        <p>用两个 Notion 数据库当上下文，两个专职 Custom Agent 分别找内容漂移、起草更新，MCP 连发布系统；人审卡在两个“最难撤销”的点：批准修改范围前、写入发布系统前。规模是月 140 万访问、每月 30 多个产品变更；官方只承诺“每周省几个小时”。</p>
+        <div class="n">2 个</div>
+        <p class="small">审的不是“输出好不好”，而是“下一步能不能撤销”。</p>
+        <a href="#ref-40"><a class="cite" href="#ref-40">[40]</a></a>
+      </article>
+      <article class="brief">
+        <div class="co">京东言犀数字人</div>
+        <div class="role">直播运营 · 2023–2024</div>
+        <p>补真人休息时段：京造闲时转化 +40%，数字人“伊伊”30 小时在线、同时段转化近 5 倍；商家普遍用“数字人 + 真人”组合排班。</p>
+        <div class="n">+40%</div>
+        <p class="small">先找到业务里的“闲时”，再谈替代；数字人是排班、商品知识、实时互动的组合。</p>
+        <a href="#ref-15"><a class="cite" href="#ref-15">[15]</a></a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="patterns">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">06</span><h2>跨案例的五个规律</h2></div>
+    <p class="sec-sub">把十三个案例的五层表横过来看，真正拉开差距的不是模型选型，而是五件事。</p>
+    <div class="patterns">
+      <article class="pattern">
+        <div class="pn">Pattern 01 / 上下文</div>
+        <h3>从“写提示词”到“养知识资产”</h3>
+        <p>Fin 设了 knowledge manager，把帮助中心经理转成“为 agent 优化内容”的角色；Anthropic 客服每周复盘未回答问题、每季度做内容冲刺；京小智让商家把任意格式文件拖进知识中心，自动结构化成知识；美团更进一步，把意图体系、Task 流程、订单接口的维护权交给业务运营。</p>
+        <p>更进一步的做法规避了“文档 RAG”：沃尔玛为采购助手建语义层理解自有数据，Shopify 给每个主题一套 design contract、pattern 库与 eval 数据——领域约束被编译进系统，而不是塞进提示词。共同点：上下文有 owner、有节奏、有验收。</p>
+        <div class="ev">证据：<a class="cite" href="#ref-6">[6]</a> Anthropic × Fin；<a class="cite" href="#ref-22">[22]</a> 美团；<a class="cite" href="#ref-41">[41]</a> Walmart Wally；<a class="cite" href="#ref-39">[39]</a> Shopify</div>
+      </article>
+      <article class="pattern">
+        <div class="pn">Pattern 02 / 工具</div>
+        <h3>从“能查询”到“能办理”</h3>
+        <p>Klarna 的 agent 能处理退款退货；SoFi 的 agent 直连内部 API；Airtable 的 agent 在对话里带客户完成操作；沃尔玛的任务工具直接改排班；1688 把“核价”封成一个报价 skill，把一两天压到一小时。</p>
+        <p>“能办理”意味着工具必须接到有状态、有权限的业务系统。只读工具只能做问答，不能做运营。</p>
+        <div class="ev">证据：<a class="cite" href="#ref-4">[4]</a> Klarna；<a class="cite" href="#ref-8">[8]</a> SoFi；<a class="cite" href="#ref-7">[7]</a> Airtable；<a class="cite" href="#ref-28">[28]</a> 1688</div>
+      </article>
+      <article class="pattern">
+        <div class="pn">Pattern 03 / 验证</div>
+        <h3>从“像不像人”到“对不对账”</h3>
+        <p>τ-bench 直接比对对话结束时的数据库状态；淘宝用 A/B 看点击率；沃尔玛用试点门店前后对比；美团图灵把评测拆成结果、过程、效率、风险四层，再用人人一致率与人机一致率校准评分标准。</p>
+        <p>验证对象是业务状态，不是语言质量。语言质量可以抽样，业务状态必须全量对账。Morgan Stanley 的做法更接近制度：每个用例部署前跑 eval，顾问按 accuracy / coherence 打分，Debrief 用多种会议类型的数据集测行动项抽取，还有每日回归题集。</p>
+        <div class="ev">证据：<a class="cite" href="#ref-11">[11]</a> τ-bench；<a class="cite" href="#ref-23">[23]</a> 美团图灵；<a class="cite" href="#ref-42">[42]</a> Morgan Stanley</div>
+      </article>
+      <article class="pattern">
+        <div class="pn">Pattern 04 / 纠正</div>
+        <h3>从“重试一次”到“回滚 + 人审”</h3>
+        <p>Anthropic 的工程团队用 checkpoint 与频繁提交，失败就回滚；京小智把转人工率当核心指标；抖音生活服务把触发条件写成“回复不精准 + 用户有情绪”；Klarna 的回退最贵——用回聘人工补流程缺口。</p>
+        <p>纠正能力决定系统能不能“带着错误运行”。没有回滚和人审，agent 只能做低风险建议。</p>
+        <div class="ev">证据：<a class="cite" href="#ref-1">[1]</a> Claude Code；<a class="cite" href="#ref-3">[3]</a> 京小智；<a class="cite" href="#ref-26">[26]</a> 抖音生活服务；<a class="cite" href="#ref-5">[5]</a> Klarna</div>
+      </article>
+      <article class="pattern">
+        <div class="pn">Pattern 05 / 组织</div>
+        <h3>把“人审”从对话级上移到发布级</h3>
+        <p>浦发银行把智能体生命周期拆成开发态、发布态、运行态：1026 个智能体只有 24 个通过合规校验进入生产；抖音用“有效干预率”同时评估模型与纠正的人；腾讯企点把知识隔离、内容安全审核、检索阈值做成产品能力。</p>
+        <p>当 agent 数量从几个涨到上千个，逐个对话盯人是不可能的。真正的闸门在发布：谁允许它上线、允许它碰哪些系统、出了事怎么下线。Notion 则把人工审核精确卡在两个“最难撤销”的时点：批准修改范围前、写入发布系统前。</p>
+        <div class="ev">证据：<a class="cite" href="#ref-24">[24]</a> 浦发；<a class="cite" href="#ref-25">[25]</a> 抖音电商；<a class="cite" href="#ref-40">[40]</a> Notion Academy；<a class="cite" href="#ref-17">[17]</a> Salesforce</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="failures">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">07</span><h2>失败面：四个回退案例</h2></div>
+    <p class="sec-sub">把失败案例和成功案例放在一起看，才能判断哪些是模型问题、哪些是 harness 问题。这四个都更像后者。</p>
+    <p class="small" style="margin:-18px 0 26px">另一个“不是失败的失败”是浦发银行的 1026→24：绝大多数智能体没有上线，不是建不出来，而是过不了发布态闸门。见案例 11。</p>
+    <div class="fails">
+      <article class="fail">
+        <h3>Klarna：成本赢了，质量没进闭环</h3>
+        <div class="when">2024-02 上线 · 2025-05 回聘人工</div>
+        <p>首月 230 万次对话、相当于 700 名全职、4000 万美元利润改善。但 2025 年 CEO 承认削减人力过头，重新招聘人工客服。他的复盘是：把成本当成首要评价因子，质量就会更低。</p>
+        <div class="miss"><b>缺的层：验证。</b>成本、解决时长、重复咨询都进了报表，复杂工单的体验质量没有独立度量，也没有“不允许 AI 独立关闭”的清单。</div>
+        <p class="small" style="margin-top:10px">来源 <a class="cite" href="#ref-4">[4]</a><a class="cite" href="#ref-5">[5]</a></p>
+      </article>
+      <article class="fail">
+        <h3>麦当劳：80% 的准确率不够开门</h3>
+        <div class="when">2021 试点 · 2024-07-26 关停</div>
+        <p>语音点单在 100 多家门店测试，出现“点冰淇淋却下单 25 份麦乐鸡”这类事故。据 CNBC，系统准确率只有“low-to-mid 80%”，而麦当劳需要 95% 才敢全面推开；2024 年 7 月终止与 IBM 的合作，转向 Google Cloud。</p>
+        <div class="miss"><b>缺的层：纠正与验收线。</b>开放环境里的噪声、口音、临时改单，需要实时确认与可撤销的下单动作；95% 是业务定的门槛，不是模型榜单上的分数。</div>
+        <p class="small" style="margin-top:10px">来源 <a class="cite" href="#ref-18">[18]</a><a class="cite" href="#ref-19">[19]</a><a class="cite" href="#ref-34">[34]</a></p>
+      </article>
+      <article class="fail">
+        <h3>Cursor：支持 bot 编造了一条不存在的政策</h3>
+        <div class="when">2025-04 · 退订风波</div>
+        <p>用户在多台机器登录被踢，写信给支持邮箱，收到“每个订阅仅限一台设备”的回复——这是一线 AI 支持 bot 编出来的政策。帖子在社区发酵后出现退订潮，联合创始人公开道歉，确认真实原因是慢连接下的 session 竞态。</p>
+        <div class="miss"><b>缺的层：约束与标识。</b>政策类问题必须查权威源，不能凭生成作答；AI 回复要明确标识，否则用户会把它当人工承诺；支持对话还应能回传工程信号。</div>
+        <p class="small" style="margin-top:10px">来源 <a class="cite" href="#ref-33">[33]</a></p>
+      </article>
+      <article class="fail">
+        <h3>Air Canada：聊天机器人的承诺也算公司的</h3>
+        <div class="when">2022 咨询 · 2024-02 裁决</div>
+        <p>聊天机器人告诉乘客 Moffatt 可以先按全价买票、再申请丧亲折扣，实际政策不允许追溯。Air Canada 辩称机器人是“独立实体”，被法庭驳回，判赔 812.02 加元。</p>
+        <div class="miss"><b>缺的层：约束与责任边界。</b>对外承诺类问题必须有硬约束与转人工；公司对 agent 的输出承担法律责任。</div>
+        <p class="small" style="margin-top:10px">来源 <a class="cite" href="#ref-13">[13]</a></p>
+      </article>
+    </div>
+    <p class="small" style="margin-top:18px">共同点：四个案例都不是“模型不够强”，而是验证、纠正、约束没有跟上。换句话说，harness 的缺口会以业务事故的形式出现。</p>
+  </div>
+</section>
+
+<section id="evidence">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">08</span><h2>学术证据：能演示，不等于能上岗</h2></div>
+    <p class="sec-sub">论文给的数字不好看，但正好解释了为什么企业案例都在做 harness，而不是等下一代模型。</p>
+    <div class="evidence">
+      <div class="chart">
+        <div class="bar-row">
+          <div class="top"><span>WorkArena：GPT-4o，精简配置</span><b>20.0%</b></div>
+          <div class="bar"><i style="width:20%"></i></div>
+          <div class="bar-note">ServiceNow 企业平台上的 33 个知识工作任务</div>
+        </div>
+        <div class="bar-row">
+          <div class="top"><span>WorkArena：同一模型，完整脚手架</span><b>42.7%</b></div>
+          <div class="bar g"><i style="width:42.7%"></i></div>
+          <div class="bar-note">只改 harness，不改模型，成功率翻倍</div>
+        </div>
+        <div class="bar-row">
+          <div class="top"><span>WorkArena：删掉 thinking（或动作历史）</span><b>8.5%</b></div>
+          <div class="bar"><i style="width:8.5%;background:#9a6a1f"></i></div>
+          <div class="bar-note">同一模型，少两项上下文管理，掉到不足一成</div>
+        </div>
+        <div class="bar-row">
+          <div class="top"><span>τ-bench：零售场景 pass^8</span><b>&lt; 25%</b></div>
+          <div class="bar"><i style="width:24%;background:var(--violet)"></i></div>
+          <div class="bar-note">同一任务连续 8 次都成功，考验稳定性而非单次运气</div>
+        </div>
+        <div class="bar-row">
+          <div class="top"><span>TheAgentCompany：自主完成任务</span><b>30.3%</b></div>
+          <div class="bar v"><i style="width:30.3%"></i></div>
+          <div class="bar-note">模拟软件公司，平均 27 步、单任务成本超过 4 美元</div>
+        </div>
+        <p class="small" style="margin:16px 0 0">同一模型，换一套 harness，成功率可以从 8.5% 到 42.7%——相差 5 倍。</p>
+      </div>
+      <div class="txt">
+        <p><b>WorkArena 的消融是“harness 决定成败”最干净的一组数：</b>同一个 GPT-4o，只改动作与观察空间、上下文历史管理，成功率从 20.0% 升到 42.7%；反过来删掉 thinking 或动作历史中的一项，掉到 8.5%。这不是模型能力变化，是脚手架变化。</p>
+        <p><b>τ-bench 的方法值得所有做业务 agent 的人抄：</b>它不让模型“自评”，而是把对话结束时的数据库状态与目标状态比对，再用 pass^k 衡量多次运行的一致性。这正好对应 harness 的“验证”层：看业务状态，不看措辞。</p>
+        <p><b>生产界的现实更保守。</b>MAP 访谈了 86 名来自已部署系统的从业者（另有 20 个深度案例），结果显示：68% 的 agent 在需要人介入前最多执行 10 步，70% 直接用现成模型而非微调，74% 主要靠人工评估。TheAgentCompany 里最强 agent 自主完成 30.3%，平均 27 步、单任务成本超过 4 美元。能自主跑完的长流程，仍然是少数。</p>
+        <p>这些数字解释了一个现象：企业案例里真正跑出结果的，都是把任务切窄、把工具接深、把验证做实的场景；反过来，凡是宣称“端到端替代岗位”的，大多在一年内回退。</p>
+        <p class="small">来源：<a class="cite" href="#ref-31">[31]</a> WorkArena（2024）；<a class="cite" href="#ref-11">[11]</a> τ-bench（2024）；<a class="cite" href="#ref-12">[12]</a> TheAgentCompany（2024-12）；<a class="cite" href="#ref-32">[32]</a> MAP（2025/2026）；<a class="cite" href="#ref-23">[23]</a> 美团图灵（2026-08）。</p>
+      </div>
+    </div>
+<h3 style="margin:38px 0 4px">从业者的一线经验</h3>
+    <p class="small" style="margin:0 0 14px">不是公司案例，但三条经验分别对应 harness 的验证、工具与约束层。</p>
+    <div class="fieldnotes">
+      <article class="fn">
+        <div class="who">工程博客 · Three Dots Labs</div>
+        <h4>先验证，再解释</h4>
+        <p>给编程学习平台做 AI Mentor 时，他们让 agent 先跑测试、修用户代码，再给提示；修不动就明说“不知道”。同一任务并行跑多个 agent，成功即停；eval 单次上下文常超 10 万 token，所以只把便宜快的用例放进 CI。</p>
+        <a href="#ref-43">[43]</a>
+      </article>
+      <article class="fn">
+        <div class="who">工程博客 · Anthropic</div>
+        <h4>工具是“契约”，不是函数</h4>
+        <p>工具是确定性系统与非确定性 agent 之间的契约。写法是：原型 → 用 agent 生成几十条真实任务做 eval → 与 agent 一起迭代工具。上下文不是越多越好，token 越多召回越差（context rot）。</p>
+        <a href="#ref-44">[44]</a>
+      </article>
+      <article class="fn">
+        <div class="who">个人博客 · Simon Willison</div>
+        <h4>安全边界放在工具出口</h4>
+        <p>当 agent 同时具备私有数据、不可信内容、对外通信三个条件，攻击者可以稳定窃取数据——“lethal trifecta”。防线应放在工具权限与出口（谁能读、能发到哪），而不是在系统提示里写“不要听网页的话”。</p>
+        <a href="#ref-45">[45]</a>
+      </article>
+    </div>
+  </div>
+
+    
+</section>
+
+<section id="roles">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">09</span><h2>给三类岗位的落地清单</h2></div>
+    <p class="sec-sub">不是“学提示词”，而是按 harness 的五层，检查自己手里的流程缺哪一层。</p>
+    <div class="roles">
+      <article class="role-card">
+        <div class="rh"><h3>运营</h3><span>OPS</span></div>
+        <ol>
+          <li><b>选流程：</b>高频、有明确状态、错了能回滚。客服退款、商品上架、活动素材、闲时直播都符合。</li>
+          <li><b>建台账：</b>把商品知识、活动规则、话术、历史工单整理成可更新的知识源，指定 owner；能可视化编排的流程，维护权尽量留在运营。</li>
+          <li><b>定阈值：</b>写清哪些问题必须转人工（金额、投诉、合规、情绪），把转人工率当设计指标，不是失败。</li>
+          <li><b>换指标：</b>用解决率、转化率、复购、返工率验收，不要只看“回答得像不像人”。</li>
+          <li><b>留后手：</b>每个自动化动作都要有撤销/回滚路径，先小流量灰度。</li>
+        </ol>
+      </article>
+      <article class="role-card">
+        <div class="rh"><h3>设计</h3><span>DESIGN</span></div>
+        <ol>
+          <li><b>喂规范：</b>把设计系统、品牌语气、组件库、可访问性要求变成 agent 能读的上下文，而不是口头交代。</li>
+          <li><b>要原型：</b>让 agent 产出可运行的原型，而不是更多静态图；评审时跑起来看，而不是看图说话。</li>
+          <li><b>设检查：</b>把品牌合规、法务文案、响应式断点做成检查清单，发布前自动过一遍。</li>
+          <li><b>人审前移：</b>设计师审“方向与边界”，工程审“实现与风险”，不要让 agent 直接面对发布按钮。</li>
+          <li><b>记返工：</b>统计“设计→工程”的往返次数与返工原因，这是 harness 改进的依据。</li>
+        </ol>
+      </article>
+      <article class="role-card">
+        <div class="rh"><h3>产品</h3><span>PRODUCT</span></div>
+        <ol>
+          <li><b>先写规格：</b>在写 PRD 前先写 harness 规格——上下文从哪来、工具能做什么、什么必须人批、怎么验收。</li>
+          <li><b>建评测集：</b>50–100 条真实任务，包含边界与对抗样本；每次换模型、改提示、加工具都跑一遍。</li>
+          <li><b>分开评估：</b>模型升级与 harness 升级分开上线、分开归因；评分标准先做二元化，再谈自动化。</li>
+          <li><b>设闸门：</b>把“允许上线”和“允许调什么工具”分开管；agent 数量上来后，发布态审核比逐条对话人审更可行。</li>
+          <li><b>定责任：</b>对外承诺、价格、合规口径必须有硬约束与人工兜底；agent 说错，公司担责。</li>
+        </ol>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">10</span><h2>方法与局限</h2></div>
+    <p class="sec-sub">这份简报是检索与整理，不是审计。读数字之前，先看它属于哪一类来源。</p>
+    <div class="method">
+      <div>
+        <h3>检索与筛选</h3>
+        <ul>
+          <li>时间：2026-10-19；覆盖 2023–2026 的公开资料。</li>
+          <li>渠道：公司官网与案例页、官方 PDF、新闻稿、arXiv、主流媒体；中文案例补充发布会报道与行业媒体；从业者经验取自工程博客与论坛（HN 等），只作方法旁证，不计入案例数。</li>
+          <li>筛选：必须有公司名、有自用证据、能拆出至少三层 harness；只有“发布平台”没有自用证据的，不收录。</li>
+          <li>排除：无法核验的匿名案例、纯厂商愿景稿、把“用了 ChatGPT”当“agent 落地”的案例。</li>
+          <li>平台型产品（Salesforce Agentforce、美团 CatPaw）只作为“harness 产品化”的形态参考，不单独计入业务案例。<a class="cite" href="#ref-17">[17]</a><a class="cite" href="#ref-30">[30]</a></li>
+          <li>行业背景参照 McKinsey 2025 年的调研：agent 仍处早期，规模化收益尚未普遍兑现；本简报不引用其具体比例，只用于校准预期。<a class="cite" href="#ref-20">[20]</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>口径与局限</h3>
+        <ul>
+          <li><b>厂商案例：</b>由服务商撰写、客户署名，数字未经独立审计，倾向展示最佳结果。</li>
+          <li><b>企业自述：</b>如 Anthropic 的 PDF，细节可信度高，但仍是自我选择后的样本。</li>
+          <li><b>媒体转述：</b>中文案例多来自发布会与厂商稿，数字需按“厂商口径”理解。</li>
+          <li><b>不可横向相加：</b>解决率、转人工率、NPS 的定义各公司不同；本简报只做机制对照，不做排名。</li>
+          <li><b>containment ≠ resolution：</b>Ada 的旧版产品做到 70% containment，实际解决率只有 30%；两个指标混用会把“没转人工”当成“问题解决”。跨厂商比较前先对齐定义。<a class="cite" href="#ref-37">[37]</a></li>
+          <li><b>幸存者偏差：</b>失败案例的公开信息远少于成功案例，本文只收录了有明确报道的四个。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="refs">
+  <div class="wrap">
+    <div class="sec-head"><span class="sec-num">11</span><h2>参考文献</h2></div>
+    <p class="sec-sub">按正文引用编号排列；链接为检索时可达地址，部分站点可能需要登录或已变更。</p>
+    <div class="refs">
+      <div class="ref" id="ref-1"><span class="num">[1]</span><span class="t">Anthropic. How Anthropic teams use Claude Code.</span><span class="d">2025-06. 公司自述 PDF，含增长营销、产品设计、法务等 10 个团队。</span><span class="u">https://www-cdn.anthropic.com/58284b19e702b49db9302d5b6f135ad8871e7658.pdf</span></div>
+      <div class="ref" id="ref-2"><span class="num">[2]</span><span class="t">北青网 / 消费日报. AI 助力天猫双 11 全面经营：生意管家助力 500 万商家经营提效 1.5 倍.</span><span class="d">2025-11-05. 官方发布经媒体转述。</span><span class="u">https://life.ynet.com/2025/11/05/3954356t978.html</span></div>
+      <div class="ref" id="ref-3"><span class="num">[3]</span><span class="t">央广网. 京小智 5.0 商家服务智能体平台上线.</span><span class="d">2025-04-27. 商业信息，厂商口径。</span><span class="u">https://tech.cnr.cn/techph/20250427/t20250427_527150413.shtml</span></div>
+      <div class="ref" id="ref-4"><span class="num">[4]</span><span class="t">OpenAI. Klarna's AI assistant does the work of 700 full-time agents.</span><span class="d">2024. 厂商案例。</span><span class="u">https://openai.com/index/klarna/</span></div>
+      <div class="ref" id="ref-5"><span class="num">[5]</span><span class="t">PYMNTS. Klarna Focuses on Human-Powered Customer Service.</span><span class="d">2025-05-08. 媒体报道 CEO 回聘人工。</span><span class="u">https://www.pymnts.com/bnpl/2025/klarna-focuses-on-human-powered-customer-service/</span></div>
+      <div class="ref" id="ref-6"><span class="num">[6]</span><span class="t">Fin. AI-first by design: How Anthropic transformed support operations with Fin.</span><span class="d">2025–2026. 厂商案例，客户署名。</span><span class="u">https://fin.ai/customers/anthropic-transformation</span></div>
+      <div class="ref" id="ref-7"><span class="num">[7]</span><span class="t">Sierra. How Airtable designed the support experience its customers actually need.</span><span class="d">2026. 厂商案例，客户署名。</span><span class="u">https://sierra.ai/customers/airtable</span></div>
+      <div class="ref" id="ref-8"><span class="num">[8]</span><span class="t">Sierra. How SoFi turned customer support from a bottleneck into a competitive advantage.</span><span class="d">2026. 厂商案例，客户署名。</span><span class="u">https://sierra.ai/customers/sofi</span></div>
+      <div class="ref" id="ref-9"><span class="num">[9]</span><span class="t">Decagon. Notion Customer Success Story.</span><span class="d">2025. 厂商案例，客户署名。</span><span class="u">https://decagon.ai/case-studies/notion</span></div>
+      <div class="ref" id="ref-10"><span class="num">[10]</span><span class="t">Walmart. Walmart Unveils New AI-Powered Tools To Empower 1.5 Million Associates.</span><span class="d">2025-06-24. 公司发布。</span><span class="u">https://corporate.walmart.com/news/2025/06/24/walmart-unveils-new-ai-powered-tools-to-empower-1-5-million-associates</span></div>
+      <div class="ref" id="ref-11"><span class="num">[11]</span><span class="t">Yao et al. τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains.</span><span class="d">arXiv:2406.12045, 2024. 论文。</span><span class="u">https://arxiv.org/abs/2406.12045</span></div>
+      <div class="ref" id="ref-12"><span class="num">[12]</span><span class="t">Xu et al. TheAgentCompany: Benchmarking LLM Agents on Consequential Real World Tasks.</span><span class="d">arXiv:2412.14161, 2024-12. 论文。</span><span class="u">https://arxiv.org/abs/2412.14161</span></div>
+      <div class="ref" id="ref-13"><span class="num">[13]</span><span class="t">Pinsent Masons. Air Canada chatbot case highlights AI liability risks.</span><span class="d">2024-02-27. 法律分析，引裁决原文。</span><span class="u">https://www.pinsentmasons.com/out-law/news/air-canada-chatbot-case-highlights-ai-liability-risks</span></div>
+      <div class="ref" id="ref-14"><span class="num">[14]</span><span class="t">杭州网. 双 11 备战，杭州 AI 来帮忙：1688 全面接入 Accio.</span><span class="d">2026-10-13. 媒体报道。</span><span class="u">https://ori.hangzhou.com.cn/ornews/content/2026-10/13/content_9336541.htm</span></div>
+      <div class="ref" id="ref-15"><span class="num">[15]</span><span class="t">环球网. 数字人入驻京东京造，闲时直播转化提升超 40%.</span><span class="d">2023-12-20. 媒体报道。</span><span class="u">https://m.huanqiu.com/article/4FplCQJDCFt</span></div>
+      <div class="ref" id="ref-16"><span class="num">[16]</span><span class="t">Fin. How Fin's own support team reached 83% automation and rebuilt around AI.</span><span class="d">2025–2026. 厂商案例（自述）。</span><span class="u">https://fin.ai/customers/fin-support-team</span></div>
+      <div class="ref" id="ref-17"><span class="num">[17]</span><span class="t">Salesforce. Agentforce: The AI Agent Platform.</span><span class="d">产品资料与客户案例入口；具体客户数字口径不一。</span><span class="u">https://www.salesforce.com/agentforce/</span></div>
+      <div class="ref" id="ref-18"><span class="num">[18]</span><span class="t">澎湃新闻. 点冰淇淋下单 25 份麦乐鸡，麦当劳 AI 员工疯狂点餐惨遭“解雇”.</span><span class="d">2024-06-19. 媒体报道。</span><span class="u">http://m.thepaper.cn/newsDetail_forward_27770790</span></div>
+      <div class="ref" id="ref-19"><span class="num">[19]</span><span class="t">财联社. 麦当劳将终止与 IBM 的“得来速订餐”合作.</span><span class="d">2024-06-18. 媒体报道。</span><span class="u">https://m.cls.cn/detail/1707145</span></div>
+      <div class="ref" id="ref-20"><span class="num">[20]</span><span class="t">McKinsey. The State of AI in 2025: Agents, innovation, and transformation.</span><span class="d">2025-11. 行业调研，用于背景对照。</span><span class="u">https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai</span></div>
+      <div class="ref" id="ref-21"><span class="num">[21]</span><span class="t">亿邦动力. 淘宝推出店小蜜 5.0：转人工率降低 20% 以上，成交转化率提升 35% 以上.</span><span class="d">2025-09-05. 媒体报道，测试阶段口径。</span><span class="u">https://m.ebrun.com/598491.html</span></div>
+      <div class="ref" id="ref-22"><span class="num">[22]</span><span class="t">美团技术团队. 智能客服：从意图体系到 TaskFlow 的工程实践.</span><span class="d">2021-09-30. 官方技术博客。</span><span class="u">https://tech.meituan.com/2021/09/30/Artificial-Intelligence-Customer-Service.html</span></div>
+      <div class="ref" id="ref-23"><span class="num">[23]</span><span class="t">美团技术团队. Agent 评测：从结果到过程的四层体系.</span><span class="d">2026-08-07. 官方技术博客（由内部博客公开）。</span><span class="u">https://tech.meituan.com/2026/08/07/Agent-Evaluation.html</span></div>
+      <div class="ref" id="ref-24"><span class="num">[24]</span><span class="t">上海市国资委. 浦发银行携手火山引擎打造企业级智能体创设平台.</span><span class="d">2026-01-19. 官方发布。</span><span class="u">https://www.gzw.sh.gov.cn/shgzw_zxzx_gqdt/20260119/8f05260d65ee4d8da47125f07141a7b7.html</span></div>
+      <div class="ref" id="ref-25"><span class="num">[25]</span><span class="t">扣子 Coze. 抖音电商客服如何用 Agent 重做售后：两种人机分工与“有效干预率”.</span><span class="d">2025. 厂商稿（脉脉转载），机制描述为主，无量化指标。</span><span class="u">https://maimai.cn/article/detail?fid=1871262743</span></div>
+      <div class="ref" id="ref-26"><span class="num">[26]</span><span class="t">新京报. 抖音生活服务发布“AI 即用”：私信获客的对照组数据.</span><span class="d">2025-06-20. 媒体报道（发布会）。</span><span class="u">https://m.bjnews.com.cn/detail/1750416497129404.html</span></div>
+      <div class="ref" id="ref-27"><span class="num">[27]</span><span class="t">京东云开发者社区. 三只松鼠与海信携手京东言犀.</span><span class="d">2025-04-09. 官方开发者社区。</span><span class="u">https://developer.jdcloud.com/article/4261</span></div>
+      <div class="ref" id="ref-28"><span class="num">[28]</span><span class="t">搜狐财经. 1688 为百万商家接入 Accio：Agent 交易占 40%，日调动 29 万商家.</span><span class="d">2026-10-16. 媒体采访（引 1688 副总裁王强）。</span><span class="u">https://m.sohu.com/a/1088744753_122014422/</span></div>
+      <div class="ref" id="ref-29"><span class="num">[29]</span><span class="t">蓝色光标. 2024 年年度报告（董事长致辞与业务回顾）.</span><span class="d">2025-04-25. 上市公司年报。</span><span class="u">http://disc.static.sse.org.cn/download/disc/disk03/finalpage/2025-04-25/fbd5ec2e-3468-448c-86cd-d1fa50ef040c.pdf</span></div>
+      <div class="ref" id="ref-30"><span class="num">[30]</span><span class="t">美团技术团队. CatPaw：9 万员工、3 万个 Agent 的内部平台实践.</span><span class="d">2026-07-28. 官方技术博客。</span><span class="u">https://tech.meituan.com/2026/07/28/CatPaw-LongCat.html</span></div>
+      <div class="ref" id="ref-31"><span class="num">[31]</span><span class="t">Drouin et al. WorkArena: How Capable Are Web Agents at Solving Common Knowledge Work Tasks?</span><span class="d">arXiv:2403.07718, 2024（ICLR 2024）。脚手架消融见表 4。</span><span class="u">https://arxiv.org/abs/2403.07718</span></div>
+      <div class="ref" id="ref-32"><span class="num">[32]</span><span class="t">Pan et al. Measuring Agents in Production.</span><span class="d">arXiv:2512.04123, 2025/2026（ICML 2026 Oral）。86 名从业者访谈 + 20 个深度案例。</span><span class="u">https://arxiv.org/abs/2512.04123</span></div>
+      <div class="ref" id="ref-33"><span class="num">[33]</span><span class="t">The Register. Cursor AI support bot invents policy and triggers user uproar.</span><span class="d">2025-04-18. 媒体报道，含联合创始人原话。</span><span class="u">https://www.theregister.com/2025/04/18/cursor_ai_support_bot_lies/</span></div>
+      <div class="ref" id="ref-34"><span class="num">[34]</span><span class="t">CNBC. McDonald's to end IBM AI drive-thru test.</span><span class="d">2024-06-17. 媒体报道；关停日期 2024-07-26，准确率 low-to-mid 80%、需 95%。</span><span class="u">https://www.cnbc.com/2024/06/17/mcdonalds-to-end-ibm-ai-drive-thru-test.html</span></div>
+      <div class="ref" id="ref-35"><span class="num">[35]</span><span class="t">Salesforce. Agentforce customer success stories.</span><span class="d">2025-08-04. 厂商合集，客户署名；Wiley、OpenTable、1-800Accountant 等。</span><span class="u">https://www.salesforce.com/news/stories/agentforce-customer-success-stories/</span></div>
+      <div class="ref" id="ref-36"><span class="num">[36]</span><span class="t">Fin. Anthropic customer story（较早版本：96% 介入、50.8% 解决率）.</span><span class="d">2025. 厂商案例；与 [6] 的统计时点、分母不同。</span><span class="u">https://fin.ai/customers/anthropic</span></div>
+      <div class="ref" id="ref-37"><span class="num">[37]</span><span class="t">OpenAI. Ada: turning containment into resolution.</span><span class="d">2024–2025. 厂商案例；70% containment 对应 30% resolution 的出处。</span><span class="u">https://openai.com/index/ada/</span></div>
+      <div class="ref" id="ref-38"><span class="num">[38]</span><span class="t">Figma. 3 ways product designers use the Figma agent.</span><span class="d">2026-10-06. 官方博客；含 60%+ 人工评分与 Uber 案例。</span><span class="u">https://www.figma.com/blog/3-ways-product-designers-use-the-figma-agent/</span></div>
+      <div class="ref" id="ref-39"><span class="num">[39]</span><span class="t">Shopify. Introducing Canvas.</span><span class="d">2026-10-01. 官方发布；含 design contract 与 2500 万次主题编辑。</span><span class="u">https://www.shopify.com/news/introducing-canvas</span></div>
+      <div class="ref" id="ref-40"><span class="num">[40]</span><span class="t">Notion. How Notion built a custom agent workflow to keep Academy content current.</span><span class="d">2026-09-29. 官方博客。</span><span class="u">https://www.notion.com/blog/how-notion-built-a-custom-agent-workflow-to-keep-academy-content-current</span></div>
+      <div class="ref" id="ref-41"><span class="num">[41]</span><span class="t">Walmart. Walmart develops GenAI-powered assistant for Walmart merchants (Wally).</span><span class="d">2025-03-18. 公司发布；语义层与 guardrails 表述出处。</span><span class="u">https://corporate.walmart.com/news/2025/03/18/walmart-develops-genai-powered-assistant-for-walmart-merchants</span></div>
+      <div class="ref" id="ref-42"><span class="num">[42]</span><span class="t">OpenAI. Morgan Stanley: bringing AI to wealth management.</span><span class="d">2024–2026. 厂商案例；98% 顾问团队日用、部署前 eval 与每日回归题集。</span><span class="u">https://openai.com/index/morgan-stanley/</span></div>
+      <div class="ref" id="ref-43"><span class="num">[43]</span><span class="t">Miłosz Smółka (Three Dots Labs). Shipping an AI Agent that Lies to Production.</span><span class="d">2025-08-07. 个人工程博客，一手叙述。</span><span class="u">https://threedots.tech/post/ai-agent-that-lies</span></div>
+      <div class="ref" id="ref-44"><span class="num">[44]</span><span class="t">Anthropic Engineering. Writing effective tools for agents.</span><span class="d">2025-09. 厂商工程博客；工具契约与 eval 驱动迭代。</span><span class="u">https://www.anthropic.com/engineering/writing-tools-for-agents</span></div>
+      <div class="ref" id="ref-45"><span class="num">[45]</span><span class="t">Simon Willison. The lethal trifecta for AI agents.</span><span class="d">2025-06-16. 个人博客，行业公认的安全框架。</span><span class="u">https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/</span></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="frow">
+      <div>Harness 上岗：公司里的 Agent 工程 · 研究简报 · 2026-10-19</div>
+      <div>为《深入理解 AI Agent》读者整理 · 案例数字均标注来源与口径</div>
+    </div>
+  </div>
+</footer>
+
+<!-- theme-patch:start -->
+<script id="themePatch">
+(function(){
+  var KEY='harness-theme';
+  var root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){
+    root.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeFab');
+    if(b){var l=t==='dark'?'切换为白天模式':'切换为黑夜模式';b.setAttribute('aria-label',l);b.setAttribute('title',l);}
+  }
+  apply(cur());
+  function init(){
+    if(document.getElementById('themeFab'))return;
+    var b=document.createElement('button');
+    b.id='themeFab';b.type='button';
+    b.innerHTML='<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    b.addEventListener('click',function(){
+      var t=root.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,t)}catch(e){}
+      apply(t);
+    });
+    (document.body||document.documentElement).appendChild(b);
+    apply(cur());
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  try{
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});
+    window.addEventListener('storage',function(e){if(e.key===KEY&&(e.newValue==='dark'||e.newValue==='light'))apply(e.newValue)});
+  }catch(e){}
+})();
+</script>
+<!-- theme-patch:end -->
+<script>
+(function(){
+  // 打印入口：不使用内联 onclick，便于统一 CSP 与键盘操作
+  var printBtn = document.getElementById('btnPrint');
+  if (printBtn) printBtn.addEventListener('click', function(){ window.print(); });
+
+  // 案例矩阵筛选
+  var chips = document.querySelectorAll('.chip[data-filter]');
+  var rows = document.querySelectorAll('#matrix-body tr');
+  chips.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      chips.forEach(function(b){ b.setAttribute('aria-pressed', String(b === btn)); });
+      var f = btn.getAttribute('data-filter');
+      rows.forEach(function(r){
+        var roles = (r.getAttribute('data-role') || '').split(/\s+/);
+        r.hidden = !(f === 'all' || roles.indexOf(f) !== -1);
+      });
+    });
+  });
+
+  // 目录高亮（按滚动位置，不用 IntersectionObserver，避免首屏误判）
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav-links a'));
+  var sections = Array.prototype.slice.call(document.querySelectorAll('main section[id]'));
+  function setActive(){
+    var pos = window.scrollY + 140;
+    var cur = sections[0];
+    sections.forEach(function(sec){ if (sec.offsetTop <= pos) cur = sec; });
+    links.forEach(function(a){
+      a.classList.toggle('active', a.getAttribute('href') === '#' + cur.id);
+    });
+  }
+  window.addEventListener('scroll', setActive, { passive: true });
+  window.addEventListener('resize', setActive);
+  setActive();
+})();
+</script>
+</body>
+</html>

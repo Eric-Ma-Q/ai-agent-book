@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 结论：十二件能搬走的事，五件搬不走的事 · Claude Code 源码拆解</title>
+<meta name="description" content="读源码的收益不在「知道它怎么写的」，而在「知道哪些设计换到自己的产品上还成立」。这一章把前面九章压成一张行动清单，并给出八道自测题。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" aria-current="page" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 10 章 · 能搬走的东西</p>
+  <h1>结论：十二件能搬走的事，五件搬不走的事</h1>
+  <p class="lead">读源码的收益不在「知道它怎么写的」，而在「知道哪些设计换到自己的产品上还成立」。这一章把前面九章压成一张行动清单，并给出八道自测题。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>最值得抄的是「约束」：结果预算、并发标记、权限顺序、压缩分级、中断补齐 —— 它们决定 Agent 是玩具还是工具。</li><li>最不值得抄的是「体量」：389 个界面组件、96 个渲染器文件，是三年迭代的结果，不是起点。</li><li>有五件事依赖 Anthropic 独有的东西（API beta 能力、服务端配置面、内部账号体系），照搬会踩空。</li><li>如果你的 Agent 现在只有「成功 / 失败」两种状态，先补状态机，再谈多 Agent。</li><li>八道自测题可以用来验收团队是否真的读懂了这套设计。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>十二件能搬走的事</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>#</th><th>设计</th><th>为什么有效</th><th>落地动作</th></tr></thead>
+      <tbody>
+      <tr><td>1</td><td>循环用生成器，终态显式枚举</td><td>过程可流式、可中断，结局可测试</td><td>定义 8–10 个终止原因，写进 SDK 契约</td></tr>
+      <tr><td>2</td><td>工具契约分槽位</td><td>新增工具不改 UI、不改权限引擎</td><td>把 schema / 权限 / 渲染 / 预算拆成独立方法</td></tr>
+      <tr><td>3</td><td>结果预算：落盘 + 预览</td><td>单次输出不再撑爆上下文</td><td>设单条与单轮两级上限，保留可回读路径</td></tr>
+      <tr><td>4</td><td>压缩按代价递增</td><td>先清可重取的，再摘要不可重取的</td><td>实现 3 级：清结果 → 折叠 → 摘要</td></tr>
+      <tr><td>5</td><td>权限裁决编号化</td><td>顺序即安全边界，可逐步测试</td><td>把 deny 放第一步，写 11 步测试</td></tr>
+      <tr><td>6</td><td>工具自渲染</td><td>进度展示与能力同源</td><td>让每个工具声明「正在干什么」</td></tr>
+      <tr><td>7</td><td>并发标记 fail-closed</td><td>默认不安全，显式声明才并行</td><td>isConcurrencySafe 默认 false</td></tr>
+      <tr><td>8</td><td>中断即补齐</td><td>消息序列永远合法，不会因半截工具调用崩</td><td>为每个 tool_use 造合成 tool_result</td></tr>
+      <tr><td>9</td><td>子 Agent 只回灌最终文本</td><td>父级上下文不被过程污染</td><td>过程消息不回灌，只回最终结论全文</td></tr>
+      <tr><td>10</td><td>任务统一模型</td><td>一套面板管所有后台工作</td><td>抽出 TaskType / TaskStatus / TaskOutput</td></tr>
+      <tr><td>11</td><td>编译期裁剪 + 运行期灰度两层</td><td>未完成功能不进二进制，已上线功能可急停</td><td>构建期 flag + 服务端 gate 分开设计</td></tr>
+      <tr><td>12</td><td>启动并行预热</td><td>首字延迟是体感的第一指标</td><td>钥匙串、配置、能力表并行拉</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>五件搬不走的事</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>依赖</th><th>为什么搬不走</th><th>替代方案</th></tr></thead>
+      <tbody>
+      <tr><td>API 侧 beta 能力（<code>tool_reference</code>、<code>cache_edits</code>）</td><td>工具搜索与缓存编辑都建立在这些能力上；第三方网关常直接 400</td><td>先做本地版：全量 schema + 客户端摘要</td></tr>
+      <tr><td>服务端配置面（GrowthBook、托管设置、策略）</td><td>需要一整套后端与合规流程</td><td>先用本地配置文件，留出同名开关</td></tr>
+      <tr><td>内部账号体系（<code>USER_TYPE</code>）</td><td>内外双版本是组织能力，不是代码能力</td><td>用「实验组」代替「内部版」</td></tr>
+      <tr><td>终端 React 渲染（389 组件）</td><td>三年迭代 + 自维护 Ink 分支</td><td>先做纯文本流式输出，再逐步组件化</td></tr>
+      <tr><td>swarm 的窗格方案</td><td>依赖 tmux / iTerm2，跨平台成本高</td><td>先做进程内子 Agent + 文件邮箱</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note warn"><b>一句提醒：</b>这份代码是「已经跑了很久的产品的横截面」，不是「从零搭 Agent 的教程」。直接照搬体量，大概率得到一个跑不起来、也改不动的系统。</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>风险清单：如果明天上线，先担心什么</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>风险</th><th>触发条件</th><th>缓解</th></tr></thead>
+      <tbody>
+      <tr><td>权限被绕过</td><td>新增工具忘记实现 checkPermissions，或默认 allow 被误解为放行</td><td>默认 fail-closed + 11 步测试</td></tr>
+      <tr><td>上下文雪崩</td><td>单轮并行 10 个工具各返回 40K</td><td>单轮聚合预算（20 万字符）</td></tr>
+      <tr><td>压缩死循环</td><td>压缩后仍超限，反复触发</td><td>连续失败熔断（3 次）</td></tr>
+      <tr><td>子 Agent 提权</td><td>Agent 定义里的 <code>permissionMode: bypassPermissions</code></td><td>deny 规则仍拦；但必须审第三方 Agent 定义</td></tr>
+      <tr><td>遥测泄露代码</td><td>事件字段里塞了文件路径</td><td>类型级标记 + 评审</td></tr>
+      <tr><td>远程开关误伤</td><td>策略下发错误，用户功能消失</td><td>灰度 + 回滚预案 + 本地缓存</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>八道自测</h2>
+  
+  <p>能答对六道以上，说明这套设计真的读进去了。答案在折叠里。</p>
+  <details class="quiz"><summary>主循环为什么用 async generator 而不是返回 Promise？</summary><div class="a">因为一轮里既要流式产出消息、又要允许调用方随时中断，还要把「为什么结束」作为返回值单独传递。Promise 只能一次性 resolve，做不到过程可见与提前收场。</div></details>
+  <details class="quiz"><summary>工具结果超过上限时，是截断还是丢弃？</summary><div class="a">都不是：落盘成文件，模型收到 2KB 预览与文件路径，需要时可以再读。截断会丢信息，丢弃会让模型以为命令没输出。</div></details>
+  <details class="quiz"><summary>四段压缩为什么必须按「预算 → snip → microcompact → collapse → autocompact」排序？</summary><div class="a">因为代价递增、信息损失递增。先清可重取的结果，再折叠，最后才做不可逆摘要。顺序反了会把还要用的细节先摘要掉，也会让 token 计数失真。</div></details>
+  <details class="quiz"><summary>权限裁决里，为什么 deny 必须在第一步？</summary><div class="a">因为后面的步骤包含「绕过模式」和「允许规则」。deny 放后面就可能被放行覆盖。顺序本身就是安全边界。</div></details>
+  <details class="quiz"><summary>auto 模式连续被拒几次会退回人工？</summary><div class="a">连续 3 次，或累计 20 次（DENIAL_LIMITS）。</div></details>
+  <details class="quiz"><summary>子 Agent 能绕过父级的 deny 规则吗？</summary><div class="a">不能：权限模式与规则随父级，工具集按 Agent 定义裁剪；子 Agent 没有独立的权限提升通道。</div></details>
+  <details class="quiz"><summary>泄露的源码等于线上二进制吗？</summary><div class="a">不等于。feature() 是编译期常量折叠，USER_TYPE 是构建期 --define；不同构建裁掉的分支不同，你读到的是并集。</div></details>
+  <details class="quiz"><summary>遥测能关吗？关到最彻底会失去什么？</summary><div class="a">能。DISABLE_TELEMETRY 关分析；CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC 连自动更新、版本说明等非必要流量一起关。代价是不再自动更新。</div></details>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>如果你只有一周</h2>
+  
+  <ol>
+    <li><b>第 1–2 天</b>：把主循环改成「生成器 + 显式终态」，补上中断补齐逻辑。</li>
+    <li><b>第 3 天</b>：给工具加三个字段 —— 并发安全、结果上限、权限自检。</li>
+    <li><b>第 4 天</b>：实现两级结果预算（单条 + 单轮），超限落盘。</li>
+    <li><b>第 5 天</b>：做三级压缩（清结果 → 折叠 → 摘要），加连续失败熔断。</li>
+    <li><b>第 6 天</b>：把权限裁决写成编号流水线，补测试。</li>
+    <li><b>第 7 天</b>：加一条最简单的子 Agent（只读探索 + 只回灌结论）。</li>
+  </ol>
+  <div class="note good"><b>验收标准：</b>让 Agent 在一个真实仓库里连续跑 30 分钟不被上下文打断、不因半截工具调用崩、不在危险命令上静默放行。做到这三条，产品体验会有质变。</div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>一页速查</h2>
+  
+  <div class="grid g4"><div class="stat"><b>1,884 / 512,664</b><span>TS 文件 / 代码行</span><em>本地实测</em></div><div class="stat"><b>54 / 19</b><span>注册工具 / 默认常开</span><em>tools.ts</em></div><div class="stat"><b>10</b><span>工具并行上限</span><em>toolOrchestration.ts</em></div><div class="stat"><b>200,000</b><span>单轮结果字符预算</span><em>toolLimits.ts</em></div><div class="stat"><b>167,000</b><span>autocompact 触发线（200k 模型）</span><em>autoCompact.ts</em></div><div class="stat"><b>3 / 20</b><span>权限熔断（连续 / 累计）</span><em>denialTracking.ts</em></div><div class="stat"><b>7 / 5</b><span>任务类型 / 状态</span><em>Task.ts</em></div><div class="stat"><b>659</b><span>遥测事件名</span><em>grep tengu_</em></div></div>
+  <p>十章读完，如果只记一句话：<b>Agent 产品的护城河不在模型，而在「模型出错时你还剩多少确定性」</b> —— 权限顺序、结果预算、压缩分级、中断补齐，都是这句话的实现。</p>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>本报告第 01–09 章的全部代码证据 <span>· 行号见各章</span></li><li>个人判断部分 <span>· 第 01–02、04–05 节为分析结论，不是官方设计文档</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="09-business.html"><small>← 上一章</small><b>09 遥测与远程</b></a><a class="next" href="index.html"><small>读完 →</small><b>回到阅读地图</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code 源码拆解 · 从 51 万行泄露代码看一个 Agent 产品怎么组装</title>
+<meta name="description" content="用 2026-03-31 npm sourcemap 泄露的 Claude Code v2.1.88 源码（1,884 个 TypeScript 文件 / 512,664 行），拆解主循环、工具、上下文、权限、多 Agent、未发布功能与远程控制，附代码行号证据。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span></nav>
+  <div class="hero">
+    <p class="kicker">产品功能拆解 · 源码级</p>
+    <h1>一个 Agent 产品，是怎么用 51 万行代码装起来的</h1>
+    <p class="lede">2026 年 3 月 31 日，Anthropic 把 Claude Code 的源码随 npm 包一起发了出去。这份拆解不聊八卦，只回答一个问题：<b>把一个「会自己干活的编程助手」做成产品，需要在模型外面搭多少东西</b>。每一章都给出代码位置，能点开、能复核。</p>
+  </div>
+  
+  <div class="grid g4"><div class="stat"><b>1,884</b><span>TypeScript 文件（.ts 1,332 + .tsx 552）</span><em>本地副本实测</em></div><div class="stat"><b>512,664</b><span>行 TypeScript 代码</span><em>wc -l 统计</em></div><div class="stat"><b>89</b><span>编译期功能开关（feature()）</span><em>去重后计数</em></div><div class="stat"><b>659</b><span>遥测事件名（tengu_*）</span><em>去重后计数</em></div></div>
+
+  <section>
+    <h2><span class="num">§</span>先说结论：五件事</h2>
+    <div class="grid g2">
+      <div class="card"><h3>1. 它是一个「运行时」而不是一个「提示词」</h3><p>51 万行里，直接调用模型的那部分只有几千行。其余是工具执行、权限裁决、上下文预算、会话持久化、终端 UI —— 这些才是产品差异所在。</p></div>
+      <div class="card"><h3>2. 长任务能力来自四道压缩闸门</h3><p>snip → microcompact → context collapse → autocompact，按代价从低到高排队，先做无损的，再做有损的。这是「能连续干几小时」的真正原因。</p></div>
+      <div class="card"><h3>3. 权限不是弹窗，是一条 11 步的裁决流水线</h3><p>deny 规则、工具自检、只读分类、AI 分类器、用户询问、hook 覆盖，各有明确位置；连「连续被拒」都有熔断。</p></div>
+      <div class="card"><h3>4. 泄露的代码不等于线上二进制</h3><p>89 个 <code>feature()</code> 开关在打包时做常量折叠，164 个文件按 <code>USER_TYPE</code> 分支。你读到的是「所有分支的并集」，不是任何一台机器上跑的版本。</p></div>
+      <div class="card"><h3>5. 最值得抄的是「约束」而不是「功能」</h3><p>工具结果预算、并发安全标记、子 Agent 权限继承、压缩失败熔断 —— 这些不起眼的设计决定了 Agent 是玩具还是工具。</p></div>
+      <div class="card"><h3>边界</h3><p>本拆解只做产品与工程分析：不提供可运行的分支、不复制大段源码、不评价模型能力。代码片段均为评论性引用，每段不超过十余行。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">§</span>先对齐八个词</h2>
+    <p>不熟悉 Agent 的读者，读完这张表就能看懂后面九章在争什么。</p>
+    <div class="tw"><table>
+      <thead><tr><th>词</th><th>一句话解释</th><th>在这份代码里对应什么</th></tr></thead>
+      <tbody>
+      <tr><td>Agent</td><td>能自己决定下一步做什么的 AI 程序</td><td><code>query.ts</code> 的主循环</td></tr>
+      <tr><td>工具调用</td><td>模型请求「执行一个动作」，拿到结果再继续</td><td><code>Tool.ts</code> 与 <code>tools/</code></td></tr>
+      <tr><td>上下文窗口</td><td>模型一次能读到的全部文字上限</td><td><code>utils/context.ts</code> 的窗口表</td></tr>
+      <tr><td>压缩</td><td>历史太长时，把旧内容折叠或摘要</td><td><code>services/compact/</code></td></tr>
+      <tr><td>权限模式</td><td>决定「拿不准时问不问人」</td><td><code>utils/permissions/</code></td></tr>
+      <tr><td>子 Agent</td><td>派出去干活、只把结论带回来的分身</td><td><code>tools/AgentTool/</code></td></tr>
+      <tr><td>Hook</td><td>在固定时机自动执行的外部脚本</td><td>27 个事件，见 <code>HOOK_EVENTS</code></td></tr>
+      <tr><td>MCP</td><td>让外部工具接入的标准协议</td><td><code>services/mcp/</code></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span class="num">§</span>这份报告怎么来的</h2>
+    <ul><li><b>一手材料</b>：2026-03-31 泄露的 <code>v2.1.88</code> 源码副本，本地 <code>git clone</code> 后只读分析，共 1,932 个文件。</li><li><b>取证方式</b>：每一章的关键断言都配 <code>文件:行号</code>；数字用命令行现场数出来，不抄二手文章。</li><li><b>交叉核对</b>：外部事实（泄露时间、npm 版本、DMCA 数量、官方声明）走公开报道核对；与代码冲突时以代码为准，并记录冲突。</li><li><b>不做什么</b>：不把「代码里存在」说成「线上已开启」；不把「社区推断」写成「官方设计」。凡推断都标出来。</li></ul>
+    <div class="note warn"><b>先说清楚一件事：</b>这次泄露的是<b>闭源软件被误发布的源码</b>，不是开源。代码没有附任何开源许可证，复制、再分发、拿其中的提示词做产品都有法律风险。本报告引用片段属于评论与分析，读者不要把它当 MIT/Apache 代码用。</div>
+  </section>
+
+  <section><h2><span class="num">§</span>十章阅读地图</h2>
+    <p>按顺序读是「先看事故，再看结构，再拆机制，最后取结论」；也可以按角色跳读。</p>
+    <ol class="chap-list"><li><a href="01-event.html"><span class="no">01</span><span class="t">事件与证据<small>泄露怎么发生、数字为什么对不上、哪些结论能当事实用。</small></span><span class="arrow">→</span></a></li><li><a href="02-map.html"><span class="no">02</span><span class="t">代码地图<small>目录分工、启动链、REPL / 无头 / SDK 三种形态。</small></span><span class="arrow">→</span></a></li><li><a href="03-loop.html"><span class="no">03</span><span class="t">主循环<small>为什么是 async generator、工具怎么并行、被打断怎么收场、报错怎么恢复。</small></span><span class="arrow">→</span></a></li><li><a href="04-tools.html"><span class="no">04</span><span class="t">工具系统<small>47 个字段的契约、两级结果预算、工具搜索与 MCP 并入。</small></span><span class="arrow">→</span></a></li><li><a href="05-context.html"><span class="no">05</span><span class="t">上下文<small>五段压缩流水线、autocompact 公式、记忆三层与后台整理。</small></span><span class="arrow">→</span></a></li><li><a href="06-permission.html"><span class="no">06</span><span class="t">权限<small>五种对外模式、十一步裁决、AI 分类器、沙箱边界与熔断。</small></span><span class="arrow">→</span></a></li><li><a href="07-agents.html"><span class="no">07</span><span class="t">多 Agent<small>子 Agent 契约、七种任务类型、swarm 三种后端与协调者模式。</small></span><span class="arrow">→</span></a></li><li><a href="08-unreleased.html"><span class="no">08</span><span class="t">未发布功能<small>89 个编译期开关、KAIROS / BUDDY / ULTRAPLAN / undercover 的真实状态。</small></span><span class="arrow">→</span></a></li><li><a href="09-business.html"><span class="no">09</span><span class="t">遥测与远程<small>659 个遥测事件、隐私三档、GrowthBook 灰度、版本与权限的远程开关。</small></span><span class="arrow">→</span></a></li><li><a href="10-lessons.html"><span class="no">10</span><span class="t">结论与自测<small>可迁移设计、不可照搬的依赖、风险清单与八道自测。</small></span><span class="arrow">→</span></a></li></ol>
+  </section>
+  <section><h2><span class="num">§</span>三种读法</h2>
+    <div class="grid g3">
+      <div class="card"><h3>产品经理</h3><p>先读 01、03、06、10。你会拿到一张「Agent 产品的能力清单」和每条能力背后的取舍，能直接搬进 PRD 评审。</p></div>
+      <div class="card"><h3>工程师</h3><p>先读 02、03、04、05。循环、工具契约、上下文预算三件事决定你的 Agent 能不能跑长任务。</p></div>
+      <div class="card"><h3>安全 / 合规</h3><p>先读 06、09。权限裁决顺序、沙箱边界、遥测开关与远程控制面都在这里。</p></div>
+    </div>
+  </section>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p>生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>
