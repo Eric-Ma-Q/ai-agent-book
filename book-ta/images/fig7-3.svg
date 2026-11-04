@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 512" width="880" height="512" style="background:#ffffff">
+<defs>
+<marker id="ah" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 12 4, 0 8" fill="#333333"/></marker>
+<marker id="ah-s" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="0 0, 10 3.5, 0 7" fill="#666666"/></marker>
+<marker id="ah-r" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><polygon points="10 0, 0 3.5, 10 7" fill="#666666"/></marker>
+</defs>
+<style>
+.t{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:middle;dominant-baseline:central}
+.l{font-family:Arial,'Helvetica Neue',Helvetica,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333333;text-anchor:start;dominant-baseline:central}
+.h{font-size:14px;font-weight:bold}
+.m{font-size:11px}
+.n{font-size:9.5px;fill:#666666}
+.c{font-size:9.5px;fill:#666666;font-family:'SF Mono',Menlo,Consolas,monospace}
+</style>
+
+<!-- user simulator -->
+<rect x="40" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="175" y="40">பயனர் உருவகப்படுத்தி (LLM)</text>
+<text class="l n" x="56" y="62">known_info: John Smith / 555-123-2002 / பிரான்ஸில்</text>
+<text class="l n" x="56" y="80">task_instructions: படிப்படி வெளிப்பாடு · உணர்வு · நங்கூரம்</text>
+<text class="l n" x="56" y="96">ஏற்பு: excellent மட்டுமே தீர்வு</text>
+
+<!-- Agent -->
+<rect x="570" y="20" width="270" height="86" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="705" y="40">ஏஜெண்ட் (மதிப்பீட்டில்)</text>
+<text class="l n" x="586" y="62">உள்ளீடு: டிக்கெட் + கள கொள்கை</text>
+<text class="l n" x="586" y="80">தெரியாது: சாதனத்தின் உண்மை நிலை</text>
+<text class="l n" x="586" y="96">வழிநடத்த மட்டுமே முடியும், செய்ய முடியாது</text>
+
+<!-- dialogue -->
+<line x1="316" y1="63" x2="560" y2="63" stroke="#666666" stroke-width="1.5" marker-end="url(#ah-s)" marker-start="url(#ah-r)"/>
+<text class="t n" x="438" y="50">பல சுற்று உரையாடல்</text>
+<text class="t n" x="438" y="80">படிப்படியான தகவல் வெளிப்பாடு</text>
+
+<!-- shared environment -->
+<rect x="40" y="146" width="800" height="150" rx="6" fill="#f3f0e8" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="440" y="166">பகிர் சூழல் (இரட்டைக் கட்டுப்பாடு: இரு பக்கமும் நிலையை மாற்றும்)</text>
+<rect x="60" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="245" y="200" font-weight="bold">சாதனப் பக்க நிலை</text>
+<text class="l n" x="76" y="222">விமான பயன்முறை ON · ரோமிங் OFF · சிக்கனம் · மீதி தரவு</text>
+<text class="l c" x="76" y="246">பயனர் கருவிகள்: toggle_airplane_mode / toggle_roaming</text>
+<text class="l c" x="76" y="266">      check_status_bar / run_speed_test</text>
+<rect x="450" y="182" width="370" height="98" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="635" y="200" font-weight="bold">வழங்குநர் பக்கத் தரவுத்தளம்</text>
+<text class="l n" x="466" y="222">வாடிக்கையாளர் C1001 · இணைப்புகள் L1001/L1002/L1003 · திட்டங்கள் · கட்டணம்</text>
+<text class="l c" x="466" y="246">ஏஜெண்ட் கருவிகள்: get_customer_by_phone / get_data_usage</text>
+<text class="l c" x="466" y="266">      enable_roaming / refuel_data</text>
+
+<line x1="175" y1="106" x2="175" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+<line x1="705" y1="106" x2="705" y2="178" stroke="#333333" stroke-width="2" marker-end="url(#ah)"/>
+
+<!-- re-read note -->
+<rect x="40" y="306" width="800" height="34" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text class="t n" x="440" y="323">பயனரின் toggle_roaming சூழலை மாற்றியது; ஏஜெண்ட் கருவியை மீண்டும் அழைத்தால்தான் அறியும் — சரிபார்ப்பு இதையும் உள்ளடக்கும்</text>
+
+<!-- verification -->
+<rect x="40" y="356" width="800" height="136" rx="6" fill="#f0f0f0" stroke="#333333" stroke-width="2"/>
+<text class="t h" x="440" y="376">பணி முடிந்த பின்: நான்கு அடுக்குச் சோதனை + தொகுப்பு விதி</text>
+<rect x="56" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="147" y="408">env_assertions</text>
+<text class="t n" x="147" y="428">மொபைல் தரவு கிடைக்கிறது</text>
+<text class="t n" x="147" y="444">வேகம் ≥ 200 / excellent</text>
+<rect x="254" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="345" y="408">actions</text>
+<text class="t n" x="345" y="428">toggle_airplane_mode</text>
+<text class="t n" x="345" y="444">requestor user ஆக இருக்க வேண்டும்</text>
+<rect x="452" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="543" y="408">communicate_info</text>
+<text class="t n" x="543" y="428">தேவையான தகவல் தெரிவிக்கப்பட்டதா</text>
+<text class="t n" x="543" y="444">இப்பணியில் null</text>
+<rect x="650" y="392" width="182" height="62" rx="5" fill="#ffffff" stroke="#666666" stroke-width="1.5"/>
+<text class="t m" x="741" y="408">nl_assertions</text>
+<text class="t n" x="741" y="428">இயல்மொழி மட்டத் தீர்ப்பு</text>
+<text class="t n" x="741" y="444">இப்பணியில் null</text>
+<text class="t n" x="440" y="474">reward_basis = ["ENV_ASSERTION"]  →  முதல் அடுக்கு மட்டுமே; மற்றவை பதிவாகும், வெகுமதியில் சேராது</text>
+</svg>

@@ -1,0 +1,110 @@
+---
+// Entry page for the book exam (requirement 010). The A/B papers are served by
+// the [paper] endpoint; this page only explains the split and links to them.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import { HARNESS_FAVORITES_PATH } from '../routes.mjs';
+import { PAPERS, STATS, maxOf, paperQuestions } from '../exams/data/index.mjs';
+import '../client/harness/harness.css';
+
+const papers = Object.values(PAPERS).map((paper) => {
+  const questions = paperQuestions(paper.id);
+  const open = questions
+    .filter((question) => question.type === 'open')
+    .reduce((sum, question) => sum + maxOf(question), 0);
+  return {
+    ...paper,
+    stats: STATS.byPaper[paper.id],
+    auto: STATS.byPaper[paper.id].points - open,
+    open,
+  };
+});
+---
+
+<Layout locale="zh-CN" title="书稿结业考试 · A/B 卷">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width">
+    <header class="harness-head">
+      <p class="eyebrow">依据 bojieli《深入理解 AI Agent》书稿</p>
+      <h1>书稿结业考试</h1>
+      <p class="harness-lead">
+        A/B 两卷平行，各覆盖第 1–10 章，题型与分值对齐《Harness 结业考试》。
+        每题附书中章节出处；客观题自动判分，开放题按评分细则自评，也可导出交给 LLM 批改。
+      </p>
+      <dl class="harness-stats">
+        <div><dt>合计</dt><dd>{STATS.total} 题</dd></div>
+        <div><dt>合计</dt><dd>{STATS.points} 分</dd></div>
+        <div><dt>A 卷</dt><dd>{papers[0].total} 题</dd></div>
+        <div><dt>B 卷</dt><dd>{papers[1].total} 题</dd></div>
+      </dl>
+      <p class="harness-quick">
+        <a class="harness-button" href={withBase(papers[0].route)}>打开 A 卷</a>
+        <a class="harness-link" href={withBase(papers[1].route)}>打开 B 卷</a>
+        <a class="harness-link" href={withBase(HARNESS_FAVORITES_PATH)}>我的收藏</a>
+        <a class="harness-link" href={withBase('/')}>回到阅读器</a>
+      </p>
+    </header>
+
+    <section class="harness-block" aria-labelledby="book-exam-papers">
+      <div class="harness-block-head">
+        <h2 id="book-exam-papers">两套平行卷</h2>
+        <p class="harness-count">每卷约 90–100 分钟</p>
+      </div>
+      <ul class="harness-cards">
+        {
+          papers.map((paper) => (
+            <li>
+              <a class="harness-card" href={withBase(paper.route)}>
+                <span class="harness-kind">{paper.short}</span>
+                <span class="harness-card-title">{paper.total} 题 · {paper.points} 分</span>
+                <span class="harness-card-desc">{paper.description}</span>
+                <span class="harness-tags">
+                  <span class="harness-tag">十章全覆盖</span>
+                  <span class="harness-tag">A–F 客观 {paper.auto} 分</span>
+                  <span class="harness-tag">G 开放 {paper.open} 分</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="harness-block" aria-labelledby="book-exam-notes">
+      <h2 id="book-exam-notes">使用说明</h2>
+      <ul class="harness-path">
+        <li>
+          <span class="harness-step" aria-hidden="true">1</span>
+          <div>
+            <b>两卷平行，不是上下半场</b>
+            <p>每卷都覆盖十章、都有 A–G 七个部分；可以任选一卷，也可以两卷都做。</p>
+          </div>
+        </li>
+        <li>
+          <span class="harness-step" aria-hidden="true">2</span>
+          <div>
+            <b>进度与收藏按卷分开</b>
+            <p>草稿、历次成绩与错题本保存在服务端 <code>personal/harness/progress/book-a.json</code> 与 <code>book-b.json</code>；收藏在 <code>personal/harness/favorites.json</code>，换设备可恢复。</p>
+          </div>
+        </li>
+        <li>
+          <span class="harness-step" aria-hidden="true">3</span>
+          <div>
+            <b>独立页面，不依赖 Harness 归档</b>
+            <p>题目来自 <code>book/</code> 书稿；页面只复用 Harness 考试的样式与判分引擎，归档文件没有被修改。</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+  </main>
+  <!-- The entry page has its own reader link in the header; the floating nav
+       only needs the way back to the reader. -->
+  <script
+    is:inline
+    src={withBase('/harness/nav.js')}
+    data-harness-nav
+    data-base={withBase('/')}
+    data-home-href="none"
+    defer></script>
+</Layout>

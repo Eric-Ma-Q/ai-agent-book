@@ -1,0 +1,46 @@
+---
+import type { FlowNode } from '../lib/chapter-flow';
+interface Props {
+  node: FlowNode;
+  number: number;
+  sections: Map<string, string>;
+  prefix?: string;
+}
+const { node, number, sections, prefix = 'flow' } = Astro.props;
+const slug = sections.get(node.section);
+---
+
+<details
+  class="flow-node"
+  id={`${prefix}-node-${node.id}`}
+  data-flow-node={node.id}
+>
+  <summary>
+    <span class="flow-node-number" aria-hidden="true"
+      >{String(number).padStart(2, '0')}</span
+    >
+    <span class="flow-node-label"
+      ><strong>{node.title}</strong><span>{node.summary}</span></span
+    >
+    <span class="flow-node-toggle" aria-hidden="true">+</span>
+  </summary>
+  <div class="flow-node-detail">
+    <p>{node.detail}</p>
+    {
+      node.choices && (
+        <ul class="flow-choices" aria-label="可用方式">
+          {node.choices.map((choice) => (
+            <li>{choice}</li>
+          ))}
+        </ul>
+      )
+    }
+    {
+      slug && (
+        <a href={`#${slug}`}>
+          阅读：{node.section} <span aria-hidden="true">↗</span>
+        </a>
+      )
+    }
+  </div>
+</details>

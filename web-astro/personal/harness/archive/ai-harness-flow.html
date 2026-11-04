@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Agent Harness 交互式流程图解：以 Anthropic 五份工程报告为主线的可运行核心循环、演进时间线、失败解法与基础设施拆解。">
+<title>Harness 交互流程图解 · Agent 的完整工作循环</title>
+<style>
+  :root {
+    --ink: #26241f;
+    --ink-soft: #5c574c;
+    --paper: #faf8f4;
+    --paper-2: #f3efe6;
+    --card: #ffffff;
+    --accent: #b45309;
+    --accent-deep: #8a3e06;
+    --accent-soft: #fdf1e3;
+    --line: #e6e0d4;
+    --code-bg: #2b2822;
+    --code-ink: #e8e2d5;
+    --ok: #4d7c5f;
+    --ok-soft: #edf3ee;
+    --danger: #b3402a;
+    --danger-soft: #f9ece8;
+    --shadow: 0 10px 28px rgba(38, 36, 31, 0.10);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    font-size: 16px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #f3d9b8; }
+  h1, h2, h3, h4 { font-family: "Noto Serif SC", "Songti SC", "STSong", serif; line-height: 1.5; }
+  a { color: var(--accent-deep); text-decoration: none; border-bottom: 1px solid #e3c9a8; }
+  a:hover { border-bottom-color: var(--accent-deep); }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 64px 0 8px; scroll-margin-top: 70px; }
+  h2 {
+    font-size: 25px; font-weight: 700; margin: 8px 0 10px;
+    padding-top: 26px; border-top: 1px solid var(--line);
+  }
+  h2 .sec-no {
+    display: block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px; font-weight: 600; letter-spacing: 3px;
+    color: var(--accent); margin-bottom: 4px;
+  }
+  .sec-lead { color: var(--ink-soft); max-width: 860px; margin: 0 0 26px; font-size: 15.5px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 22px 24px;
+  }
+  @media (max-width: 640px) { .card { padding: 16px 14px; } }
+
+  /* ---------- 顶部导航 ---------- */
+  .topnav {
+    position: sticky; top: 0; z-index: 80;
+    background: rgba(250, 248, 244, 0.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topnav .wrap { display: flex; align-items: center; gap: 16px; height: 54px; }
+  .topnav .brand { font-weight: 800; letter-spacing: 0.5px; font-size: 15px; white-space: nowrap; }
+  .topnav .brand b { color: var(--accent-deep); }
+  .topnav nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+  .topnav nav::-webkit-scrollbar { display: none; }
+  .topnav nav a {
+    border: none; font-size: 13.5px; color: var(--ink-soft);
+    padding: 5px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .topnav nav a:hover { background: var(--accent-soft); color: var(--accent-deep); }
+  .topnav .src {
+    border: 1px solid var(--line); border-radius: 999px; font-size: 12.5px;
+    padding: 4px 12px; white-space: nowrap; color: var(--accent-deep);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 72px 0 30px; }
+  .kicker {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase;
+  }
+  .hero h1 { font-size: 34px; font-weight: 900; margin: 10px 0 12px; letter-spacing: 0.5px; }
+  .hero .sub { font-size: 17px; color: var(--ink-soft); max-width: 780px; margin: 0 0 20px; }
+  .hero .sub em { font-style: normal; background: linear-gradient(transparent 62%, #f6e3c8 62%); color: var(--ink); }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; }
+  .hero-meta span {
+    font-size: 12.5px; color: var(--ink-soft); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 13px;
+  }
+  .hero-meta span b { color: var(--accent-deep); }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 14.5px; font-weight: 600; border-radius: 999px;
+    padding: 10px 22px; border: 1.5px solid var(--ink); background: var(--ink); color: #fdf9f2;
+    transition: transform .15s ease, box-shadow .15s ease;
+    font-family: inherit; line-height: 1.4;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(38,36,31,.18); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent-deep); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ---------- 核心循环布局 ---------- */
+  .loop-shell { position: relative; }
+  .loop-stage {
+    position: relative; background:
+      radial-gradient(circle, #ece5d6 1px, transparent 1.5px) 0 0 / 26px 26px,
+      var(--card);
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 34px 30px 30px; overflow: hidden;
+  }
+  .harness-frame {
+    position: absolute; z-index: 0;
+    border: 2px dashed var(--accent); border-radius: 16px;
+    pointer-events: none; opacity: .75;
+  }
+  .harness-frame .tag {
+    position: absolute; top: -11px; right: 18px; background: var(--card);
+    padding: 0 10px; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--accent-deep);
+  }
+  .loop-grid {
+    position: relative; z-index: 2;
+    display: grid; gap: 46px 34px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-areas:
+      "req  req  legend legend"
+      "s1   s2   s3     d1"
+      "stop cx   .      s4"
+      "done s6   s5     .";
+  }
+  .lnode {
+    position: relative; background: var(--card);
+    border: 1.5px solid #d9d2c2; border-radius: 13px;
+    padding: 13px 15px 12px; min-height: 96px; cursor: pointer;
+    transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease;
+  }
+  .lnode:hover { border-color: var(--accent); }
+  .lnode .ln-no {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px;
+    font-weight: 700; letter-spacing: 1.6px; color: var(--accent); margin-bottom: 3px;
+  }
+  .lnode .ln-title { font-weight: 800; font-size: 16.5px; line-height: 1.4; }
+  .lnode .ln-sub { font-size: 12px; color: var(--ink-soft); line-height: 1.55; margin-top: 3px; }
+  .lnode.decision { border-style: dashed; background: #fffaf1; }
+  .lnode.decision .ln-title::before { content: "◆ "; color: var(--accent); font-size: 13px; }
+  .lnode.io { background: var(--paper-2); border-color: #cfc6b4; }
+  .lnode.active {
+    border-color: var(--accent); transform: translateY(-2px);
+    box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.16), 0 12px 26px rgba(38, 36, 31, 0.14);
+  }
+  .lnode.visited::after {
+    content: "✓"; position: absolute; top: -8px; right: -8px;
+    width: 19px; height: 19px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(38,36,31,.25);
+  }
+  .lnode.party { animation: party 1s ease infinite; }
+  @keyframes party {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(180, 83, 9, 0.35); }
+    50% { box-shadow: 0 0 0 10px rgba(180, 83, 9, 0); }
+  }
+  .lnode[data-node="req"]    { grid-area: req; }
+  .lnode[data-node="legend"] { grid-area: legend; }
+  .lnode[data-node="s1"]     { grid-area: s1; }
+  .lnode[data-node="s2"]     { grid-area: s2; }
+  .lnode[data-node="s3"]     { grid-area: s3; }
+  .lnode[data-node="d1"]     { grid-area: d1; }
+  .lnode[data-node="stop"]   { grid-area: stop; }
+  .lnode[data-node="cx"]     { grid-area: cx; }
+  .lnode[data-node="s4"]     { grid-area: s4; }
+  .lnode[data-node="done"]   { grid-area: done; }
+  .lnode[data-node="s6"]     { grid-area: s6; }
+  .lnode[data-node="s5"]     { grid-area: s5; }
+  .lnode[data-node="cx"] { border-style: dashed; border-color: #cfa96b; }
+  .ln-node-legend { min-height: 0; border: none; background: transparent; padding: 2px 0; cursor: default; display: flex; flex-wrap: wrap; gap: 7px; align-content: center; justify-content: flex-end; }
+  .ln-node-legend:hover { border: none; }
+  .ln-node-legend span { font-size: 12px; color: var(--ink-soft); border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 3px 12px; }
+  .ln-node-legend span i { font-style: normal; color: var(--accent); font-weight: 700; }
+  .ln-node-legend::after { content: none !important; }
+
+  .loop-svg { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .edge { fill: none; stroke: #d8cfba; stroke-width: 1.7; stroke-dasharray: 5 6; }
+  .edge.danger { stroke: #e0b3a6; }
+  .edge.done { stroke: #dfc49a; stroke-dasharray: none; stroke-width: 2; }
+  .edge.flowing { stroke: var(--accent); stroke-width: 2.6; stroke-dasharray: 8 7; animation: dashflow .45s linear infinite; }
+  .edge.flowing.danger { stroke: var(--danger); }
+  @keyframes dashflow { to { stroke-dashoffset: -15; } }
+  .edge-label {
+    position: absolute; z-index: 3; top: 0; left: 0; pointer-events: none;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px;
+    color: var(--ink-soft); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px;
+    white-space: nowrap; line-height: 1.6;
+  }
+  .edge-label.warn { color: var(--danger); border-color: #ecc6ba; }
+
+  /* ---------- 控制条 ---------- */
+  .loop-controls {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    margin: 18px 0 0; padding: 14px 18px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  }
+  .ctl-group { display: flex; align-items: center; gap: 8px; }
+  .ctl-label { font-size: 12px; color: var(--ink-soft); letter-spacing: 1px; }
+  .seg { display: inline-flex; border: 1.5px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--card); }
+  .seg button {
+    border: none; background: transparent; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: 600; color: var(--ink-soft); padding: 6px 15px;
+  }
+  .seg button.on { background: var(--ink); color: #fdf9f2; }
+  .seg button:not(.on):hover { color: var(--accent-deep); }
+  .iter-badge {
+    margin-left: auto; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px; color: var(--accent-deep); background: var(--accent-soft);
+    border-radius: 999px; padding: 5px 14px; font-weight: 700; white-space: nowrap;
+  }
+  .btn.small { padding: 7px 16px; font-size: 13.5px; }
+
+  /* ---------- 循环下方：详情 / 仪表 / 日志 ---------- */
+  .loop-lower { display: grid; grid-template-columns: 1.15fr .95fr; gap: 16px; margin-top: 16px; align-items: stretch; }
+  .detail-card { display: flex; flex-direction: column; min-height: 300px; }
+  .detail-tag {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px;
+    letter-spacing: 2px; color: var(--accent); font-weight: 700;
+  }
+  .detail-card h4 { margin: 4px 0 8px; font-size: 19px; }
+  .detail-body { font-size: 14.5px; color: #403c33; flex: 1; }
+  .detail-body p { margin: 0 0 10px; }
+  .ref-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .ref-chips button {
+    font-family: inherit; cursor: pointer; font-size: 12px; font-weight: 600;
+    color: var(--accent-deep); background: var(--accent-soft);
+    border: 1px solid #f0dcc0; border-radius: 999px; padding: 3px 12px;
+  }
+  .ref-chips button:hover { background: #f8e5c8; }
+  .choices { margin-top: 12px; display: none; flex-direction: column; gap: 8px; }
+  .choices.has { display: flex; }
+  .ask-q { font-size: 13.5px; font-weight: 700; color: var(--accent-deep); }
+  .choice {
+    font-family: inherit; text-align: left; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--card); border-radius: 11px;
+    padding: 9px 14px; font-size: 14px; font-weight: 700; color: var(--ink);
+    transition: border-color .15s, transform .15s;
+  }
+  .choice small { display: block; font-weight: 400; font-size: 12px; color: var(--ink-soft); }
+  .choice:hover { border-color: var(--accent); transform: translateX(3px); }
+  .auto-note { margin-top: 12px; font-size: 12.5px; color: var(--ink-soft); border-top: 1px dashed var(--line); padding-top: 9px; }
+
+  .meter-card { display: flex; flex-direction: column; gap: 12px; }
+  .meter-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .meter-top b { font-size: 14px; }
+  .meter-top .pct { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-weight: 800; font-size: 15px; color: var(--accent-deep); }
+  .meter { position: relative; height: 16px; border-radius: 999px; background: #efe9dc; overflow: hidden; }
+  .meter .fill {
+    height: 100%; width: 12%; border-radius: 999px;
+    background: #6b8f5e;
+    transition: width .6s cubic-bezier(.3,.8,.3,1), background-color .5s ease;
+  }
+  .meter .threshold {
+    position: absolute; top: -3px; bottom: -3px; left: 70%; width: 2px;
+    background: var(--danger); opacity: .8;
+  }
+  .meter-cap { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-soft); }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .stat-b { background: var(--paper-2); border-radius: 10px; padding: 8px 10px; text-align: center; }
+  .stat-b .v { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-weight: 800; font-size: 15px; color: var(--ink); }
+  .stat-b .k { font-size: 10.5px; color: var(--ink-soft); letter-spacing: 1px; }
+  .console {
+    flex: 1; min-height: 180px; max-height: 260px; overflow-y: auto;
+    background: var(--code-bg); color: #bfb69f; border-radius: 12px;
+    padding: 13px 16px; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.75;
+  }
+  .console .ln { margin-bottom: 2px; animation: lnin .25s ease; }
+  @keyframes lnin { from { opacity: 0; transform: translateY(3px); } }
+  .console .t { color: #e8e2d5; }
+  .console .t b { color: #f0b26a; }
+  .console .ok { color: #a8c8a0; }
+  .console .err { color: #e08a76; }
+  .console .ev { color: #e8d9b0; }
+
+  /* ---------- 术语提示 ---------- */
+  .tip {
+    color: var(--accent-deep); border-bottom: 2px dotted var(--accent);
+    cursor: help; padding-bottom: 1px;
+  }
+  .tip:hover, .tip.pin { background: var(--accent-soft); }
+  .tip-pop {
+    position: absolute; z-index: 120; width: min(380px, calc(100vw - 32px));
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 14px 36px rgba(38, 36, 31, 0.18);
+    padding: 14px 18px; font-size: 13.5px; line-height: 1.8; display: none;
+  }
+  .tip-pop.open { display: block; }
+  .tip-pop b { color: var(--accent-deep); }
+
+  /* ---------- 时间线 ---------- */
+  .tl { position: relative; margin: 8px 0 0; padding-left: 30px; }
+  .tl::before {
+    content: ""; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px;
+    background: linear-gradient(180deg, #c98a2b, #8a3e06 55%, #26241f);
+    border-radius: 2px; opacity: .55;
+  }
+  .tl-item { position: relative; margin-bottom: 18px; }
+  .tl-item::before {
+    content: ""; position: absolute; left: -28px; top: 24px; width: 12px; height: 12px;
+    border-radius: 50%; background: var(--dot, var(--accent));
+    border: 3px solid var(--paper); box-shadow: 0 0 0 2px var(--dot, var(--accent));
+  }
+  .rep { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .acc-head {
+    width: 100%; display: flex; align-items: baseline; gap: 12px; text-align: left;
+    background: transparent; border: none; cursor: pointer; font-family: inherit;
+    padding: 17px 22px; color: var(--ink);
+  }
+  .acc-head:hover { background: #fbf7ef; }
+  .acc-head .rp-no {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11.5px;
+    font-weight: 700; letter-spacing: 1px; color: var(--accent-deep); white-space: nowrap;
+  }
+  .acc-head h3 { margin: 0; font-size: 17.5px; flex: 1; line-height: 1.5; }
+  .acc-head .rp-date { font-size: 12px; color: var(--ink-soft); white-space: nowrap; font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .acc-head .acc-x {
+    flex: none; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--paper-2); color: var(--ink-soft); font-size: 14px; align-self: center;
+    transition: transform .25s ease;
+  }
+  .acc.open .acc-x { transform: rotate(45deg); background: var(--accent); color: #fff; }
+  .acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+  .acc.open .acc-body { grid-template-rows: 1fr; }
+  .acc-inner { overflow: hidden; }
+  .acc-pad { padding: 2px 22px 20px; border-top: 1px dashed var(--line); margin: 0 0 0; padding-top: 14px; }
+  .rp-tag { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-soft); }
+  .rp-tag b { color: var(--accent-deep); font-weight: 600; }
+  .rep ul { margin: 0 0 10px; padding-left: 20px; font-size: 14.5px; }
+  .rep li { margin-bottom: 7px; }
+  .rep li strong { color: var(--accent-deep); }
+  .takeaway {
+    margin: 12px 0 0; padding: 10px 16px; background: var(--accent-soft);
+    border-radius: 10px; font-size: 13.5px;
+  }
+  .takeaway b { color: var(--accent-deep); }
+  .numchips { display: flex; flex-wrap: wrap; gap: 7px; margin: 4px 0 12px; }
+  .numchips span {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px;
+    background: var(--paper-2); border-radius: 8px; padding: 3px 10px; color: var(--ink);
+  }
+  .numchips span b { color: var(--accent-deep); }
+  .others-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+  .flash { animation: flashbg 1.2s ease; }
+  @keyframes flashbg { 0% { box-shadow: 0 0 0 4px rgba(180,83,9,.35); } 100% { box-shadow: none; } }
+
+  /* ---------- 失败 ↔ 解法 ---------- */
+  .fpair {
+    display: grid; grid-template-columns: 1fr 44px 1fr; gap: 0; align-items: stretch;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    margin-bottom: 14px; cursor: pointer; overflow: hidden;
+    transition: box-shadow .2s ease;
+  }
+  .fpair:hover { box-shadow: var(--shadow); }
+  .fcol { padding: 18px 20px; }
+  .fcol.fail { background: linear-gradient(180deg, #fdf4f0, transparent 70%); border-right: 1px dashed var(--line); }
+  .fcol.fix { position: relative; }
+  .fk {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px;
+    font-weight: 700; letter-spacing: 2px; margin-bottom: 6px;
+  }
+  .fcol.fail .fk { color: var(--danger); }
+  .fcol.fix .fk { color: var(--ok); }
+  .fcol h4 { margin: 0 0 6px; font-size: 16.5px; }
+  .fcol p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .farrow { display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 22px; font-weight: 800; }
+  .fhint {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(250, 248, 244, 0.6); backdrop-filter: blur(3px);
+    color: var(--ink-soft); font-size: 13px; font-weight: 600; letter-spacing: 1px;
+    transition: opacity .3s ease;
+  }
+  .fpair.open .fhint { opacity: 0; pointer-events: none; }
+  .fpair:not(.open) .fix > *:not(.fhint) { filter: blur(5px); user-select: none; }
+  .fpair.open .fcol.fail { background: linear-gradient(180deg, #fdf4f0, transparent 70%); }
+  .fpair.open .fcol.fix { background: linear-gradient(180deg, #f0f6f1, transparent 70%); }
+
+  /* ---------- 基础设施 ---------- */
+  .infra-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
+  .icard { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; cursor: pointer; transition: border-color .2s, transform .2s; }
+  .icard:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .icard .ic-no { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; letter-spacing: 2px; color: var(--accent); font-weight: 700; }
+  .icard h4 { margin: 4px 0 8px; font-size: 18px; }
+  .icard p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .icard .api { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; background: var(--code-bg); color: #f0b26a; border-radius: 8px; padding: 5px 10px; display: inline-block; }
+  .crash-wrap { display: grid; grid-template-columns: 1.1fr .95fr; gap: 16px; align-items: stretch; }
+  .crash-stage {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px; display: flex; flex-direction: column; gap: 14px;
+  }
+  .crash-row { display: grid; grid-template-columns: 1fr 34px 1fr 34px 1fr; gap: 0; align-items: stretch; }
+  .crash-row > .cbox { min-width: 0; }
+  .cbox { border: 1.5px solid #d9d2c2; border-radius: 12px; padding: 12px 14px; background: var(--paper-2); min-height: 128px; display: flex; flex-direction: column; }
+  .cbox .ct { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink-soft); display: flex; align-items: center; gap: 7px; }
+  .cbox .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px rgba(77,124,95,.2); }
+  .cbox .cd { font-size: 12px; color: var(--ink-soft); margin-top: 5px; line-height: 1.6; }
+  .cbox .clog { margin-top: 8px; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px; line-height: 1.7; color: #7d7666; overflow: hidden; }
+  .cbox .clog div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cbox .clog .hot { color: var(--accent-deep); font-weight: 700; }
+  .cbox.dead { border-color: var(--danger); background: var(--danger-soft); }
+  .cbox.dead .dot { background: var(--danger); box-shadow: 0 0 0 3px rgba(179,64,42,.18); animation: none; }
+  .cbox.newborn { border-color: var(--accent); background: var(--accent-soft); animation: lnin .5s ease; }
+  .cbox.newborn .dot { background: var(--accent); box-shadow: 0 0 0 3px rgba(180,83,9,.2); }
+  .carr { display: flex; align-items: center; justify-content: center; color: #c9c0ac; font-size: 18px; font-weight: 800; transition: color .3s; }
+  .carr.hot { color: var(--accent); animation: pulseA 1s ease infinite; }
+  @keyframes pulseA { 50% { transform: scale(1.25); } }
+  .cstack { display: flex; flex-direction: column; gap: 8px; }
+  .crash-ctl { display: flex; gap: 10px; flex-wrap: wrap; }
+  .crash-note { font-size: 13.5px; color: var(--ink-soft); background: var(--accent-soft); border-radius: 10px; padding: 10px 15px; min-height: 42px; }
+  .crash-note b { color: var(--accent-deep); }
+  .gain-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .gain { background: var(--paper-2); border-radius: 12px; padding: 12px 14px; }
+  .gain .g-num { font-family: "Noto Serif SC", "Songti SC", serif; font-weight: 900; font-size: 21px; color: var(--accent-deep); }
+  .gain .g-desc { font-size: 12px; color: var(--ink-soft); line-height: 1.6; margin-top: 2px; }
+
+  /* ---------- 共识 / 清单 ---------- */
+  .acc .src { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 1px 8px; margin-right: 8px; vertical-align: 1px; }
+  .src.a { background: var(--accent-soft); color: var(--accent-deep); }
+  .src.o { background: #eef2f6; color: #3c5a78; }
+  .src.s { background: #f1eef6; color: #5b4a78; }
+  .ev-line { margin: 0 0 8px; font-size: 13.5px; }
+  .split-card { display: grid; grid-template-columns: 1fr 1fr; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); margin-top: 20px; }
+  .split-card > div { padding: 20px 22px; font-size: 14px; }
+  .split-card .l { background: var(--accent-soft); }
+  .split-card .r { background: #eef2f6; border-left: 1px dashed var(--line); }
+  .split-card h4 { margin: 0 0 8px; font-size: 15.5px; }
+  .split-card p { margin: 0; color: var(--ink-soft); font-size: 13.5px; }
+  .split-card .coin { grid-column: 1 / -1; text-align: center; background: var(--ink); color: #efe9dc; padding: 12px 20px; font-size: 13.5px; }
+  .split-card .coin em { font-style: normal; color: #f0b26a; }
+
+  /* ---------- 深挖 ---------- */
+  .deep-nav { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 22px; }
+  .deep-nav a { font-size: 13px; font-weight: 600; border: 1px solid var(--line); border-radius: 999px; padding: 5px 15px; color: var(--ink-soft); }
+  .deep-nav a:hover { border-color: var(--accent); color: var(--accent-deep); }
+  h3.deep-h { font-size: 19px; margin: 44px 0 14px; }
+  .ladder { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 16px; }
+  .lstep {
+    flex: 1; height: var(--h, 100px); border: 1.5px solid var(--line);
+    background: var(--card); border-radius: 12px 12px 0 0; border-bottom: none;
+    cursor: pointer; font-family: inherit; text-align: left; padding: 12px 14px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: background .2s, border-color .2s;
+  }
+  .lstep .ln { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 800; color: var(--accent); }
+  .lstep .lt { font-size: 13px; font-weight: 700; line-height: 1.45; color: var(--ink); }
+  .lstep.on { background: var(--ink); border-color: var(--ink); }
+  .lstep.on .lt { color: #fdf9f2; }
+  .lstep.on .ln { color: #f0b26a; }
+  .lstep:not(.on):hover { border-color: var(--accent); }
+  .ladder-base { height: 4px; background: linear-gradient(90deg, #c98a2b, #26241f); border-radius: 4px; margin-bottom: 18px; }
+  .ldetail h4 { margin: 0 0 6px; font-size: 17px; }
+  .ldetail .paper { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12px; color: var(--accent-deep); font-weight: 700; }
+  .ldetail p { font-size: 14px; margin: 8px 0; color: #403c33; }
+  .routes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+  .rcard { background: var(--card); border: 1px solid var(--line); border-radius: 13px; padding: 15px 17px; cursor: pointer; transition: border-color .2s; }
+  .rcard:hover { border-color: var(--accent); }
+  .rcard h5 { margin: 0 0 5px; font-size: 14.5px; }
+  .rcard .reps { font-size: 12px; color: var(--ink-soft); line-height: 1.6; }
+  .rcard .more { display: none; margin-top: 9px; border-top: 1px dashed var(--line); padding-top: 9px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.7; }
+  .rcard.open .more { display: block; }
+  .rcard .risk { color: var(--danger); }
+  .evlayer { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  .evlayer .el-head { width: 100%; display: flex; align-items: center; gap: 12px; background: transparent; border: none; cursor: pointer; font-family: inherit; padding: 13px 18px; text-align: left; }
+  .el-tag { flex: none; color: #fff; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; border-radius: 7px; padding: 3px 10px; }
+  .el-tag.et0 { background: #26241f; }
+  .el-tag.et1 { background: #5c4632; }
+  .el-tag.et2 { background: #8a5a28; }
+  .el-tag.et3 { background: #b45309; }
+  .el-tag.et4 { background: #c98a2b; }
+  .el-head h5 { margin: 0; font-size: 14.5px; flex: 1; }
+  .el-head .el-study { font-size: 11.5px; color: var(--ink-soft); font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .evlayer .el-body { display: none; padding: 0 18px 15px; font-size: 13.5px; color: var(--ink-soft); border-top: 1px dashed var(--line); padding-top: 11px; }
+  .evlayer.open .el-body { display: block; }
+  .evlayer .el-body b { color: var(--ink); }
+
+  /* ---------- 动效 & 响应式 ---------- */
+  .rv { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .rv.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    .rv { opacity: 1; transform: none; }
+  }
+  footer {
+    margin-top: 70px; padding: 26px 24px 40px; border-top: 1px solid var(--line);
+    font-size: 13px; color: var(--ink-soft); text-align: center;
+  }
+  @media (max-width: 900px) {
+    .loop-lower, .crash-wrap { grid-template-columns: 1fr; }
+    .infra-grid { grid-template-columns: 1fr; }
+    .routes { grid-template-columns: 1fr 1fr; }
+    .others-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .hero h1 { font-size: 27px; }
+    .loop-stage { padding: 24px 16px; }
+    .loop-grid { display: flex; flex-direction: column; gap: 10px; }
+    .loop-svg, .edge-label, .harness-frame { display: none; }
+    .lnode { min-height: 0; }
+    .lnode[data-node="legend"] { display: none; }
+    .loop-grid .lnode:not(:last-child)::after {
+      content: "↓"; display: block; text-align: center; color: var(--accent);
+      font-weight: 800; margin: 6px 0 -4px;
+    }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .fpair { grid-template-columns: 1fr; }
+    .farrow { transform: rotate(90deg); padding: 2px 0; }
+    .fcol.fail { border-right: none; border-bottom: 1px dashed var(--line); }
+    .routes { grid-template-columns: 1fr; }
+    .ladder { flex-direction: column; align-items: stretch; }
+    .lstep { height: auto !important; border-radius: 12px; border-bottom: 1.5px solid var(--line); }
+    .lstep.on { border-color: var(--ink); }
+    .gain-chips, .split-card { grid-template-columns: 1fr; }
+    .split-card .r { border-left: none; border-top: 1px dashed var(--line); }
+    .crash-row { grid-template-columns: 1fr; }
+    .carr { transform: rotate(90deg); padding: 4px 0; }
+  }
+</style>
+<!-- theme-patch:start -->
+<style id="themePatchStyle">
+/* ===== theme patch ===== */
+:where(body *){transition:background-color .22s ease,border-color .22s ease,color .22s ease}
+html.dark{color-scheme:dark}
+#themeFab{position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#themeFab:hover{transform:scale(1.08)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+
+html.dark{--ink:#e9e4d7;--ink-soft:#a8a193;--paper:#171512;--paper-2:#201d17;--card:#211f19;--accent:#e29b52;
+  --accent-deep:#f0b670;--accent-soft:rgba(226,155,82,.14);--line:#3a362b;--code-bg:#0f0d0a;--code-ink:#d9d3c3;
+  --ok:#8fbc9e;--ok-soft:rgba(77,124,95,.18);--danger:#e08a72;--danger-soft:rgba(179,64,42,.18);
+  --shadow:0 10px 28px rgba(0,0,0,.5)}
+html.dark ::selection{background:rgba(226,155,82,.35)}
+html.dark a{border-bottom-color:rgba(226,155,82,.45)}
+html.dark .topnav{background:rgba(23,21,18,.9)}
+html.dark .hero .sub em{background:linear-gradient(transparent 62%,rgba(226,155,82,.25) 62%)}
+html.dark .btn:hover{box-shadow:0 8px 18px rgba(0,0,0,.5)}
+html.dark .loop-stage{background:radial-gradient(circle,#2b271d 1px,transparent 1.5px) 0 0/26px 26px,var(--paper-2)}
+html.dark .lnode{border-color:#4a4536}
+html.dark .lnode.decision{background:#262218}
+html.dark .lnode.io{border-color:#5a5443}
+html.dark .lnode.active{box-shadow:0 0 0 3px rgba(226,155,82,.22),0 12px 26px rgba(0,0,0,.45)}
+html.dark .edge{stroke:#4a4536}
+html.dark .edge.danger{stroke:rgba(224,138,114,.55)}
+html.dark .edge.done{stroke:rgba(226,155,82,.5)}
+html.dark .edge-label.warn{border-color:rgba(224,138,114,.4)}
+html.dark .detail-body,html.dark .ldetail p{color:var(--ink)}
+html.dark .ref-chips button{border-color:rgba(226,155,82,.3)}
+html.dark .ref-chips button:hover{background:rgba(226,155,82,.14)}
+html.dark .meter{background:#262218}
+html.dark .meter .fill{background:#7fa872}
+html.dark .tip-pop{box-shadow:0 14px 36px rgba(0,0,0,.55)}
+html.dark .acc-head:hover{background:#221f18}
+html.dark .fcol.fail,html.dark .fpair.open .fcol.fail{background:linear-gradient(180deg,rgba(179,64,42,.12),transparent 70%)}
+html.dark .fhint{background:rgba(23,21,18,.6)}
+html.dark .fpair.open .fcol.fix{background:linear-gradient(180deg,rgba(77,124,95,.12),transparent 70%)}
+html.dark .cbox{border-color:#4a4536}
+html.dark .cbox .clog{color:#8a8375}
+html.dark .carr{color:#5a5443}
+html.dark .src.o{background:rgba(59,110,165,.18);color:#8fb5df}
+html.dark .src.s{background:rgba(124,95,180,.18);color:#b7a3dd}
+html.dark .split-card .r{background:#26231b}
+html.dark .ladder-base{background:linear-gradient(90deg,#c98a2b,#3a362b)}
+
+html.dark .btn:not(.ghost),html.dark .seg button.on{color:#171512}
+html.dark .el-tag{color:#fff}
+html.dark .el-tag.et0{background:#454032}
+html.dark .el-tag.et1{background:#6d5540}
+html.dark .el-tag.et4{background:#9c6a17}
+html.dark .lstep.on .lt,html.dark .split-card .coin{color:#171512}
+html.dark .lstep.on .ln,html.dark .split-card .coin em{color:#8a5a1a}
+</style>
+<script id="themePatch">
+(function(){
+  var KEY='harness-theme';
+  var root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){
+    root.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeFab');
+    if(b){var l=t==='dark'?'切换为白天模式':'切换为黑夜模式';b.setAttribute('aria-label',l);b.setAttribute('title',l);}
+  }
+  apply(cur());
+  function init(){
+    if(document.getElementById('themeFab'))return;
+    var b=document.createElement('button');
+    b.id='themeFab';b.type='button';
+    b.innerHTML='<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    b.addEventListener('click',function(){
+      var t=root.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,t)}catch(e){}
+      apply(t);
+    });
+    (document.body||document.documentElement).appendChild(b);
+    apply(cur());
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  try{
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});
+    window.addEventListener('storage',function(e){if(e.key===KEY&&(e.newValue==='dark'||e.newValue==='light'))apply(e.newValue)});
+  }catch(e){}
+})();
+</script>
+<!-- theme-patch:end -->
+<!-- home-patch:start -->
+<style id="homePatchStyle">
+#homeFab{position:fixed;left:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#homeFab:hover{transform:scale(1.08)}
+#homeFab svg{width:18px;height:18px}
+@media print{#homeFab{display:none}}
+</style>
+<script id="homePatch">
+(function(){
+  function init(){
+    if(document.getElementById('homeFab'))return;
+    var a=document.createElement('a');
+    a.id='homeFab';a.href='index.html';a.title='返回页面总览';a.setAttribute('aria-label','返回页面总览');
+    a.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+    (document.body||document.documentElement).appendChild(a);
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+})();
+</script>
+<!-- home-patch:end -->
+</head>
+<body>
+
+<!-- ======================= 导航 ======================= -->
+<header class="topnav">
+  <div class="wrap">
+    <span class="brand">Harness · <b>交互流程图解</b></span>
+    <nav>
+      <a href="#loop">核心循环</a>
+      <a href="#timeline">演进主线</a>
+      <a href="#others">业界回应</a>
+      <a href="#failure">失败与解法</a>
+      <a href="#infra">基础设施</a>
+      <a href="#consensus">共识与清单</a>
+      <a href="#deep">深挖</a>
+    </nav>
+    <a class="src" href="./ai-harness-explained.html">阅读原文 ↗</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ======================= Hero ======================= -->
+  <section class="hero" id="top">
+    <p class="kicker">Interactive · Flow Atlas</p>
+    <h1>Agent Harness 工作循环 · 可交互全景</h1>
+    <p class="sub">模型只会「读文本、产文本」；把预测能力变成工作成果的，是包裹在它外面的运行框架——<em>harness</em>。本页把《Harness 深度解读》的全部主线画成一条<strong>可以亲手运行的循环</strong>：自动演示、手动驾驶、上下文压缩、权限分支、崩溃续跑，全部可点。</p>
+    <div class="hero-meta">
+      <span>基于 <b>Anthropic 五份工程报告</b> + 多智能体实践文</span>
+      <span><b>5</b> 条跨机构共识</span>
+      <span><b>7</b> 条施工清单</span>
+      <span><b>3</b> 个深挖专题</span>
+      <span>伴读 <b><a href="./ai-harness-explained.html" style="border-bottom:none">原文</a></b></span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn" href="#loop">▶ 运行核心循环</a>
+      <a class="btn ghost" href="#timeline">先看演进主线</a>
+    </div>
+  </section>
+
+  <!-- ======================= 01 核心循环 ======================= -->
+  <section id="loop">
+    <h2><span class="sec-no">01 / CORE LOOP</span>核心循环：一条可以跑起来的流水线</h2>
+    <p class="sec-lead">agent 的本质是<strong>在循环中根据环境反馈使用工具的 LLM</strong>（报告 01）。这个循环本身就是 harness——点「自动演示」看它跑起来，或切到「手动驾驶」在每个分叉口亲自决策：调不调工具、放不放行、上下文满了怎么清理、能不能宣告完成。</p>
+
+    <div class="loop-stage" id="loopStage">
+      <div class="harness-frame" id="harnessFrame"><span class="tag">HARNESS — 运行框架</span></div>
+      <svg class="loop-svg" id="edgeSvg"></svg>
+      <div id="edgeLabels"></div>
+      <div class="loop-grid" id="loopGrid">
+        <div class="lnode io" data-node="req">
+          <div class="ln-no">INPUT</div>
+          <div class="ln-title">用户请求</div>
+          <div class="ln-sub">一句目标即可，例：「做一个 claude.ai 的克隆」</div>
+        </div>
+        <div class="lnode ln-node-legend" data-node="legend">
+          <span><i>◆</i> 决策分流</span><span><i>⬇</i> 自动演示</span><span><i>✋</i> 手动驾驶</span><span>点击节点看细节</span>
+        </div>
+        <div class="lnode" data-node="s1">
+          <div class="ln-no">STEP 1 · CONTEXT</div>
+          <div class="ln-title">组装上下文</div>
+          <div class="ln-sub">系统提示词 · 项目记忆 · 对话历史 · 工具定义</div>
+        </div>
+        <div class="lnode" data-node="s2">
+          <div class="ln-no">STEP 2 · MODEL</div>
+          <div class="ln-title">模型（大脑）</div>
+          <div class="ln-sub">读入上下文，决定下一步动作——模型只出现在这一格</div>
+        </div>
+        <div class="lnode" data-node="s3">
+          <div class="ln-no">STEP 3 · PARSE</div>
+          <div class="ln-title">解析输出</div>
+          <div class="ln-sub">工具调用？文字回复？还是「我做完了」？</div>
+        </div>
+        <div class="lnode decision" data-node="d1">
+          <div class="ln-no">分流</div>
+          <div class="ln-title">是工具调用？</div>
+          <div class="ln-sub">agent 与 workflow 的分界线</div>
+        </div>
+        <div class="lnode decision" data-node="stop">
+          <div class="ln-no">分流</div>
+          <div class="ln-title">停止条件满足？</div>
+          <div class="ln-sub">says_done ∧ budget_ok</div>
+        </div>
+        <div class="lnode decision" data-node="cx">
+          <div class="ln-no">分支 · CONTEXT OPS</div>
+          <div class="ln-title">上下文管理</div>
+          <div class="ln-sub">≥70% 触发：压缩 / 笔记 / 子代理</div>
+        </div>
+        <div class="lnode" data-node="s4">
+          <div class="ln-no">STEP 4 · GUARD</div>
+          <div class="ln-title">权限检查</div>
+          <div class="ln-sub">决定「能不能跑」，拒绝也是结果</div>
+        </div>
+        <div class="lnode" data-node="s5">
+          <div class="ln-no">STEP 5 · SANDBOX</div>
+          <div class="ln-title">沙箱执行</div>
+          <div class="ln-sub">隔离环境里真刀真枪地跑</div>
+        </div>
+        <div class="lnode" data-node="s6">
+          <div class="ln-no">STEP 6 · FEEDBACK</div>
+          <div class="ln-title">结果回填</div>
+          <div class="ln-sub">截断 / 档位控制，喂回下一轮</div>
+        </div>
+        <div class="lnode io" data-node="done">
+          <div class="ln-no">OUTPUT</div>
+          <div class="ln-title">任务完成</div>
+          <div class="ln-sub">可合并的仓库 + 全绿的功能清单</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loop-controls">
+      <div class="ctl-group">
+        <button class="btn small" id="btnPlay">▶ 自动演示</button>
+        <button class="btn small ghost" id="btnStep">⏭ 单步</button>
+        <button class="btn small ghost" id="btnReset">↺ 重置</button>
+      </div>
+      <div class="ctl-group">
+        <span class="ctl-label">速度</span>
+        <div class="seg" id="segSpeed">
+          <button class="on" data-v="1">1×</button><button data-v="2">2×</button><button data-v="4">4×</button>
+        </div>
+      </div>
+      <div class="ctl-group">
+        <span class="ctl-label">模式</span>
+        <div class="seg" id="segMode">
+          <button class="on" data-v="auto">🤖 自动演示</button><button data-v="manual">✋ 手动驾驶</button>
+        </div>
+      </div>
+      <span class="iter-badge" id="iterBadge">ROUND 0</span>
+    </div>
+
+    <div class="loop-lower">
+      <div class="card detail-card" id="detailCard">
+        <span class="detail-tag" id="detailTag">GUIDE</span>
+        <h4 id="detailTitle">怎么玩这一页</h4>
+        <div class="detail-body" id="detailBody"></div>
+        <div class="choices" id="choices"></div>
+        <div class="ref-chips" id="detailRefs"></div>
+      </div>
+      <div class="card meter-card">
+        <div class="meter-top">
+          <b>上下文窗口压力</b>
+          <span class="pct" id="meterPct">12%</span>
+        </div>
+        <div class="meter"><div class="fill" id="meterFill"></div><div class="threshold" title="演示用阈值 70%（MemGPT 警告线 / Gemini CLI 早期默认）"></div></div>
+        <div class="meter-cap"><span>0</span><span>70% 触发上下文管理</span><span>200,000 tokens</span></div>
+        <div class="stats-row">
+          <div class="stat-b"><div class="v" id="stIter">0</div><div class="k">轮次</div></div>
+          <div class="stat-b"><div class="v" id="stTools">0</div><div class="k">工具调用</div></div>
+          <div class="stat-b"><div class="v" id="stPeak">12%</div><div class="k">峰值压力</div></div>
+          <div class="stat-b"><div class="v" id="stComp">0</div><div class="k">压缩次数</div></div>
+        </div>
+        <button class="btn small ghost" id="btnCxDemo" style="justify-content:center">🧹 演示一次「上下文管理」分支</button>
+        <div class="console" id="console"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= 02 演进主线 ======================= -->
+  <section id="timeline">
+    <h2><span class="sec-no">02 / TIMELINE</span>演进主线：五份报告如何从「理念」走到「基础设施」</h2>
+    <p class="sec-lead">每份报告回答的问题逐步下移：agent 是什么 → 多 agent 值不值 → 工具与上下文怎么设计 → 长任务瓶颈在哪 → harness 如何变成基础设施。<strong>点开每张卡片看解读</strong>。</p>
+    <div class="tl" id="tlList"></div>
+  </section>
+
+  <!-- ======================= 03 业界回应 ======================= -->
+  <section id="others">
+    <h2><span class="sec-no">03 / OTHERS</span>业界与学术界的回应</h2>
+    <p class="sec-lead">harness engineering 在 2025–2026 年从 Anthropic 的内部术语扩散成行业学科：官方工程实践、技术长文、学术研究、评测体系四个层面都有回应。</p>
+    <div class="others-grid" id="othersGrid"></div>
+  </section>
+
+  <!-- ======================= 04 失败与解法 ======================= -->
+  <section id="failure">
+    <h2><span class="sec-no">04 / FAILURE → FIX</span>长任务的四种失败，与 harness 的四张药方</h2>
+    <p class="sec-lead">报告 04 让 Opus 4.5 只凭一句「做一个 claude.ai 的克隆」自主循环。结论：模型能力完全够，失败方式极有规律，<strong>全部出在 harness 层</strong>。先看失败，<strong>点击揭晓解法</strong>。</p>
+    <div id="fpairs"></div>
+  </section>
+
+  <!-- ======================= 05 基础设施 ======================= -->
+  <section id="infra">
+    <h2><span class="sec-no">05 / INFRASTRUCTURE</span>把大脑与双手解耦：三大虚拟化组件</h2>
+    <p class="sec-lead">报告 05 的出发点近乎尖锐：<strong>harness 里写满了「模型做不到什么」的假设，而这些假设会过时</strong>（Sonnet 4.5 的 context reset 补丁，在 Opus 4.5 上成了累赘）。解法借鉴操作系统：拆成三个可独立替换的组件。</p>
+    <div class="infra-grid" id="infraGrid"></div>
+    <div class="crash-wrap">
+      <div class="crash-stage">
+        <div class="crash-row">
+          <div class="cbox" id="cbSession">
+            <div class="ct"><span class="dot"></span>SESSION · 只追加日志</div>
+            <div class="cd">一切发生之事的日志，存活于上下文窗口之外</div>
+            <div class="clog" id="cbSessionLog">
+              <div>#12 model.call → tool:bash</div>
+              <div>#13 tool.result (ok, 1.2s)</div>
+              <div>#14 model.call → tool:edit_file</div>
+            </div>
+          </div>
+          <div class="carr" id="ca1">→</div>
+          <div class="cstack">
+            <div class="cbox" id="cbHarness">
+              <div class="ct"><span class="dot"></span>HARNESS · 实例 A</div>
+              <div class="cd">调用模型、路由工具的循环。牛而非宠物：不留本地状态。</div>
+            </div>
+            <div class="cbox newborn" id="cbHarnessB" hidden>
+              <div class="ct"><span class="dot"></span>HARNESS · 实例 B</div>
+              <div class="cd">凭 wake(sessionId) 从日志断点续跑，状态零迁移。</div>
+            </div>
+          </div>
+          <div class="carr" id="ca2">→</div>
+          <div class="cbox" id="cbSandbox">
+            <div class="ct"><span class="dot"></span>SANDBOX</div>
+            <div class="cd">模型干活的执行环境：容器、手机、游戏模拟器……对 harness 只是统一接口。</div>
+            <div class="clog"><div>execute("edit_file", …) → "+42 −7"</div><div>execute("bash", …) → "12 passed"</div></div>
+          </div>
+        </div>
+        <div class="crash-ctl">
+          <button class="btn small" id="btnCrash">⚡ 模拟 Harness 崩溃</button>
+          <button class="btn small ghost" id="btnCrashReset" hidden>↺ 复位</button>
+        </div>
+      </div>
+      <div class="crash-stage">
+        <div class="crash-note" id="crashNote">实例 A 正在运行。点「⚡ 模拟 Harness 崩溃」，看为什么 <b>Session 才是必须存活的「真实状态」</b>，而 harness 只是可随时替换的「牛」。</div>
+        <div class="gain-chips">
+          <div class="gain"><div class="g-num">p50 TTFT −60%</div><div class="g-desc">推理与执行环境分离后，到首个响应 token 的中位等待下降约六成</div></div>
+          <div class="gain"><div class="g-num">p95 TTFT −90%+</div><div class="g-desc">扩容只需启动更多无状态实例，尾部延迟几乎消失</div></div>
+          <div class="gain"><div class="g-num">结构性安全</div><div class="g-desc">凭据被架构性地置于沙箱代码不可触及之处：git access token + <span class="tip" data-t="mcp">MCP + OAuth vault</span></div></div>
+        </div>
+        <div class="crash-note" style="background:var(--paper-2)">定位是 <b>meta-harness</b>：「对具体 harness 不持立场，只对接口有主见」——正如操作系统的 read() 不关心磁盘是 1970 年代的还是 SSD 的。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= 06 共识与清单 ======================= -->
+  <section id="consensus">
+    <h2><span class="sec-no">06 / CONSENSUS</span>五条跨机构共识 + 七条施工清单</h2>
+    <p class="sec-lead">把 Anthropic、OpenAI、Lilian Weng 与学术界的材料并排放，五条结论被独立反复验证——<strong>点开每条看三条证据链</strong>。</p>
+    <div id="consensusList"></div>
+    <div class="split-card">
+      <div class="l"><h4>Anthropic：抽象稳定</h4><p>harness 假设会随模型过时，所以要「对实现不持立场」，接口先于实现。</p></div>
+      <div class="r"><h4>OpenAI：深度耦合</h4><p>极端重度投资单一 harness（Codex + 特定仓库结构），展示了这条路能走多远。</p></div>
+      <div class="coin">这不是矛盾，而是同一枚硬币的两面——<em>产品级 harness 要抽象稳定，团队级 harness 可以深度耦合</em>。</div>
+    </div>
+    <h2 style="margin-top:48px"><span class="sec-no">PLAYBOOK</span>从报告里提炼的施工清单</h2>
+    <div id="playbookList"></div>
+  </section>
+
+  <!-- ======================= 07 深挖 ======================= -->
+  <section id="deep">
+    <h2><span class="sec-no">07 / DEEP DIVES</span>三个深挖专题</h2>
+    <div class="deep-nav">
+      <a href="#deep-ladder">🪜 自我改进阶梯</a>
+      <a href="#deep-routes">🧹 六条「什么不进窗口」路线</a>
+      <a href="#deep-evidence">🔬 腐烂的五层证据链</a>
+    </div>
+
+    <h3 class="deep-h" id="deep-ladder">🪜 优化对象的递进阶梯（Lilian Weng）</h3>
+    <p class="sec-lead">「自我改进」最近的发生地在 harness 层而非权重层——因为 harness 就是代码。每一级台阶点开看机制与数字。</p>
+    <div class="ladder" id="ladder"></div>
+    <div class="ladder-base"></div>
+    <div class="card ldetail" id="ladderDetail"></div>
+    <div class="numchips" style="margin-top:12px">
+      <span>🛡 护栏一：<b>评测必须在循环之外</b>——agent 不能改自己的考卷</span>
+      <span>🛡 护栏二：<b>底座必须足够强</b>——递归只放大已有能力</span>
+      <span>🛡 护栏三：<b>档案与日志可审计</b>——每一次进化可回溯</span>
+    </div>
+
+    <h3 class="deep-h" id="deep-routes">🧹 主动决定什么不进窗口：六条路线</h3>
+    <p class="sec-lead">十个跨机构实现收敛成六条路线，区别在「<strong>在哪个环节做决定</strong>」：入窗前、入窗时、临近上限、还是窗口之外。<strong>点卡片展开</strong>。</p>
+    <div class="routes" id="routes"></div>
+    <div class="numchips" style="margin-top:14px">
+      <span>趋同信号一：<b>70%</b>——Gemini CLI 早期压缩阈值与 MemGPT 驱逐警告线相互独立、数值相同（Gemini CLI 现已下调到 50%）</span>
+      <span>趋同信号二：<b>1,000–2,000 tok</b>——子代理回传摘要的收敛量级</span>
+      <span>⚠ 制衡：<b>keep the wrong stuff in</b>——错误轨迹是证据，激进清理等于销毁证据</span>
+    </div>
+
+    <h3 class="deep-h" id="deep-evidence">🔬 上下文为什么会腐烂：五层证据链</h3>
+    <p class="sec-lead">从注意力数学到生产账单，每层都有可溯源的原始研究。<strong>点开每一层</strong>。</p>
+    <div id="evlist"></div>
+    <div class="takeaway" style="margin-top:16px"><b>一句话总结：</b>腐烂是模型的，对策是 harness 的——模型自己意识不到自己在腐烂；检测、驱逐、压缩、复述，全部由 harness 代劳。</div>
+  </section>
+
+</div>
+
+<footer>
+  本页为《<a href="./ai-harness-explained.html">Harness 深度解读：以 Anthropic 工程报告为主线</a>》的交互式伴读图解 · 流程、数据与结论均出自原文<br>
+  模型是发动机，harness 是整辆车 · 用一个 harness（ZCode）绘制 :)
+</footer>
+
+<div class="tip-pop" id="tipPop"></div>
+
+<script>
+/* ================================================================
+   一、数据
+================================================================ */
+const NODE_INFO = {
+  intro: { tag: 'GUIDE', title: '怎么玩这一页', body: `<p><b>▶ 自动演示</b>：harness 自己跑完整个循环——包括权限放行/拒绝、70% 阈值触发的上下文管理、停止条件验收。</p><p><b>✋ 手动驾驶</b>：在每个分叉口停下来等你决策——调不调工具、放不放行、怎么清理上下文、能不能宣告完成。</p><p>点任意节点可随时查看它的职责与出处；右侧仪表盘实时显示上下文压力，下方控制台记录每一步。</p>`, refs: [] },
+  req: { tag: 'INPUT', title: '用户请求', body: `<p>一句话目标即可启动，例如报告 04 实验中的「做一个 claude.ai 的克隆」。剩下的所有编排——拆解、执行、验收、续接——全部交给 harness。</p>`, refs: [['报告 04 · 长任务实验', '#tlList']] },
+  s1: { tag: 'STEP 1 · CONTEXT', title: '组装上下文', body: `<p>每一轮都重新拼装「喂给模型什么」：系统提示词 + 项目记忆 + 对话历史 + 工具定义。</p><p>上下文是<span class="tip" data-t="rot">稀缺资源</span>：token 越多，注意力越稀释。所以 harness 必须<span class="tip" data-t="budget">策展</span>，而不是堆砌——「找到最小的高信号 token 集合」。</p>`, refs: [['报告 03 · 上下文工程', '#tlList']] },
+  s2: { tag: 'STEP 2 · MODEL', title: '模型（大脑）', body: `<p>模型只出现在这一格：读入上下文，决定下一步动作。模型之外的一切——执行工具、管理上下文、控制权限、判断停止——都是 harness 的职责。</p><p>报告 04 的耐人寻味细节：两种 agent 行为差异巨大，系统提示、工具和 harness 却完全一致——<b>分歧全部来自 harness 内的提示词编排</b>。</p>`, refs: [['报告 01 · agent 定义', '#tlList']] },
+  s3: { tag: 'STEP 3 · PARSE', title: '解析输出', body: `<p>模型的输出只有三种可能：<b>工具调用</b>、<b>文字回复</b>、或「我做完了」的完成声明。harness 负责解析并分流。</p>`, refs: [] },
+  d1: { tag: 'DECISION', title: '是工具调用？', body: `<p>这是 workflow 与 agent 的分界线：流程由代码写死的是 workflow，由模型在这一步动态决定的是 agent。</p><p>报告 01 的态度：agent 用延迟和成本换表现、错误会累积——<b>能用单次调用加检索解决的，就不要上 agent</b>。</p>`, refs: [['报告 01 · 五种 workflow 模式', '#tlList']] },
+  s4: { tag: 'STEP 4 · GUARD', title: '权限检查', body: `<p>权限检查决定「能不能跑」：读操作自动放行，写操作与网络请求需要批准。</p><p>被拒绝的调用也会作为结果回填历史，让模型在下一轮调整策略——拒绝不是死胡同，是反馈。</p>`, refs: [['Claude Code 权限门控', '#infraGrid']] },
+  s5: { tag: 'STEP 5 · SANDBOX', title: '沙箱执行', body: `<p>沙箱保证「跑起来也出不了事」：与宿主隔离的受限环境。权限决定能不能跑，沙箱保证出不了事——两者把「让模型执行任意代码」从信任问题降级为工程问题。</p><p>报告 05 里它是三大虚拟化组件之一，接口统一为 <span class="mono" style="background:#f1ece1;border-radius:5px;padding:1px 6px;font-size:.86em">execute(name, input) → string</span>——容器、手机甚至游戏模拟器都可以。</p>`, refs: [['报告 05 · Sandbox', '#infraGrid'], ['§05 崩溃续跑模拟', '#infra']] },
+  s6: { tag: 'STEP 6 · FEEDBACK', title: '结果回填', body: `<p>工具结果追加进历史、喂回下一轮。但结果不能来者不拒：Claude Code 对超长工具返回做 <b>25,000 token 截断</b>；工具提供 DETAILED / CONCISE 档位让 agent 自选详略——Slack 工具的 concise 档把 token 用量降到约三分之一。</p>`, refs: [['报告 02 · 工具契约', '#tlList']] },
+  cx: { tag: 'BRANCH · CONTEXT OPS', title: '上下文管理（70% 分支）', body: `<p>临近阈值（常见取值 <b>70%</b>，如 MemGPT；Gemini CLI 早期也是 70%，现为 50%）必须主动清理，三副药按任务形态选择：<b>压缩</b>（摘要重启，保留决策/bug/细节）、<b>结构化笔记</b>（写入窗口外的 to-do / NOTES.md）、<b>子代理</b>（干净窗口干脏活，只回传 1–2k token 摘要）。</p><p>反面制衡：Manus 的 <span class="tip" data-t="kvc">keep the wrong stuff in</span>——错误轨迹是证据，不能全丢。</p>`, refs: [['报告 03 · 三副药', '#tlList'], ['深挖 · 六条路线', '#deep-routes']] },
+  stop: { tag: 'DECISION', title: '停止条件满足？', body: `<p>满足 <span class="mono" style="background:#f1ece1;border-radius:5px;padding:1px 6px;font-size:.86em">says_done ∧ budget_ok</span> 才能跳出循环。</p><p>「过早宣告完成」是报告 04 记录的失败模式②：后接手的会话看到已有进展就倾向宣布完工。解法是把需求展开为 <b>JSON 功能清单</b>（200+ 项，初始全部 passes:false）逐项验收——模型更难篡改 JSON，且被强措辞禁止改动验收标准本身。</p>`, refs: [['报告 04 · 失败模式②', '#failure']] },
+  done: { tag: 'OUTPUT', title: '任务完成', body: `<p>代码库始终处于「可合并」状态：小步 git 提交、进度文件、验收清单全绿。下一个会话靠 init.sh + 启动仪式（确认目录 → 读 git log → 读进度 → 读清单 → 冒烟测试）无缝接手。</p>`, refs: [['报告 04 · 施工图', '#failure']] }
+};
+
+const TOOLS = [
+  { n: 'bash',      d: '运行测试 pytest -q',            res: '12 passed in 3.2s',            add: [5, 8] },
+  { n: 'edit_file', d: '修改 src/app.tsx',              res: '+42 −7 · lint 通过',           add: [3, 5] },
+  { n: 'browser',   d: '打开 /dashboard 截图自测',      res: '截图 OK · 无 console 报错',    add: [6, 10] },
+  { n: 'grep',      d: '搜索 handleLogin 的引用',       res: '6 处匹配',                     add: [3, 5] },
+  { n: 'read_file', d: '读取进度文件 PROGRESS.md',      res: '已完成 3/9 个功能',            add: [2, 4] }
+];
+
+const TIMELINE = [
+  { no: '报告 01', date: '2024-12-19', dot: '#c98a2b', title: 'Building Effective Agents', q: 'agent 到底是什么？什么时候该用？',
+    tag: '领域原则宣言。定义了后来所有报告共用的语言。',
+    pts: ['一句话定义被引用无数次：<strong>agent 就是在循环中根据环境反馈使用工具的 LLM</strong>——这个循环本身就是 harness。',
+          '从简到繁的五种 workflow 模式：提示链、路由、并行化、编排者-工作者、评估者-优化者。',
+          '三大原则：保持简洁、优先透明、<strong>精心打造 ACI</strong>（为模型而非人类设计的工具接口）。',
+          '常被忽视的自白：在 SWE-bench 项目上，<em>花在优化工具上的时间超过了整体提示词</em>。'],
+    nums: [], take: '把「工具接口设计」提到与提示词工程同级的地位——为后面所有 harness 工程埋下伏笔。' },
+  { no: '补遗 · 2025-06', date: '2025-06', dot: '#b45309', title: 'How We Built Our Multi-Agent Research System', q: '多 agent 值不值、怎么管？',
+    tag: '产品复盘，但它是最重要的证据底座。',
+    pts: ['编排者-工作者架构：一个领队动态拆任务、多个子代理并行执行。',
+          '两条踩坑经验：<strong>教领队 agent 委派</strong>（早期任务描述模糊导致重复搜索）；<strong>减少传话游戏</strong>（子代理直接写文件系统，只传轻量引用）。',
+          '这两条后来分别演化为报告 04 的「功能清单」与「文件即记忆」模式。'],
+    nums: ['15× token 用量', '90.2% 内评超越单 Opus', '80% 方差由 token 解释', '研究时间最多 −90%'], take: '并行探索是用资源换时间；token 用量在难检索任务上几乎等于性能。' },
+  { no: '报告 02', date: '2025-09-11', dot: '#b45309', title: 'Writing Effective Tools for Agents', q: '工具怎么为模型设计？',
+    tag: 'ACI 的方法论落地：工具是给不确定的调用者写的契约。',
+    pts: ['精确定义：<strong>工具是确定性系统与非确定性 agent 之间的契约</strong>——agent 可能调工具、硬答、反问甚至幻觉出调用。',
+          '方法论是评估驱动的闭环：原型 → 真实评估任务 → 程序化跑分 → 用 Claude Code 分析执行轨迹并自动重构工具 → 循环。',
+          '返回有意义的上下文：拒绝 uuid 类技术标识符，提供 ResponseFormat 枚举自选详略。',
+          '工具描述也是提示词工程：纠正如「query 后多余追加 2025」的偏移；优化后的工具在 held-out 测试上超过「专家」手写版本。'],
+    nums: ['Slack 206→72 tok（≈1/3）', '25,000 tok 截断', 'SWE-bench Verified 当时 SOTA'], take: '「改工具」和「改提示词」一样，是提升 agent 成绩的一等公民手段。' },
+  { no: '报告 03', date: '2025-09-29', dot: '#a16207', title: 'Effective Context Engineering for AI Agents', q: '上下文怎么管？',
+    tag: 'harness 核心职责之一——上下文管理——的专论。',
+    pts: ['上下文是<strong>有限资源</strong>：<span class="tip" data-t="rot">context rot</span>——token 越多，准确回忆与利用信息的能力越差。',
+          '机理是<span class="tip" data-t="budget">注意力预算</span>：n² 个成对关系，训练数据以短序列为主，长上下文天然被稀释。',
+          '指导原则：<strong>找到最小的高信号 token 集合</strong>——策展而非堆砌。',
+          '三副药：<strong>压缩</strong>（摘要重启，附带最近 5 个文件）、<strong>结构化笔记</strong>（to-do / NOTES.md 写窗口外）、<strong>子代理</strong>（干净窗口干脏活，回传 1–2k 摘要）。',
+          '最有传播力的案例：Claude 玩《宝可梦》自发发展出精确计数、画地图、记策略，上下文重置后继续训练数小时。'],
+    nums: ['子代理回传 1–2k tok'], take: 'harness 必须主动决定什么不进窗口——这成为所有长任务 harness 的第一设计约束。' },
+  { no: '报告 04', date: '2026 年初', dot: '#8a3e06', title: 'Effective Harnesses for Long-Running Agents', q: '跨会话长任务怎么不崩？',
+    tag: '「harness」首次成为标题。一份诚实的失败报告。',
+    pts: ['实验：Opus 4.5 在 Claude Agent SDK 上自主循环，只给一句「做一个 claude.ai 的克隆」。',
+          '<strong>失败全在 harness 层</strong>：一次性硬做、过早宣告完成、未验证就标完成、新会话不知接手（见 04 节配对解法）。',
+          '耐人寻味的细节：「初始化 agent」与「编码 agent」只是初始提示词不同——系统提示、工具和 harness 完全一致。'],
+    nums: ['200+ 项 JSON 功能清单', '4 种失败模式 → 4 张药方'], take: '四种失败没有一种是「模型不够聪明」——长任务的瓶颈在 harness。' },
+  { no: '报告 05', date: '2026-04-08', dot: 'var(--ink)', title: 'Scaling Managed Agents: Decoupling the Brain from the Hands', q: 'harness 如何基础设施化？',
+    tag: '把 harness 从「一段代码」升格为「可虚拟化的基础设施角色」。',
+    pts: ['清醒的出发点：<strong>harness 里写满了「模型做不到什么」的假设，而假设会过时</strong>——Sonnet 4.5 的「上下文焦虑」用 context reset 治好，换 Opus 4.5 后 reset 反成累赘。',
+          '三大虚拟化组件：<strong>Session</strong>（只追加日志 + getEvents() 切片回读）、<strong>Harness</strong>（<span class="tip" data-t="cattle">牛而非宠物</span>，wake(sessionId) 断点续跑）、<strong>Sandbox</strong>（统一 execute 接口）。',
+          '定位是 <span class="tip" data-t="meta">meta-harness</span>：「对具体 harness 不持立场，只对接口有主见」。'],
+    nums: ['p50 TTFT −60%', 'p95 TTFT −90%+', '结构性安全'], take: '成熟形态 = 抽象稳定的接口 + 可自由替换的实现——大脑不应该关心「手」长什么样。' }
+];
+
+const OTHERS = [
+  { no: '业界回应 01', date: 'OpenAI · 2026-02', title: 'Harness Engineering: Leveraging Codex in an Agent-First World',
+    tag: '团队级对照实验：把全身心押在 harness 上之后，工程组织变成了什么样。',
+    pts: ['<strong>瓶颈不在模型在环境</strong>：进展慢「不是因为 Codex 不行，而是环境欠规格」——与报告 04 完全同构。',
+          '<strong>给地图，不给千页说明书</strong>：约 100 行的 <span class="tip" data-t="agentsmd">AGENTS.md</span> 只当目录，docs/ 是事实源，CI 机械校验 + 文档园艺 agent。',
+          '<strong>把应用变得对 agent 可读</strong>：<span class="tip" data-t="worktree">git worktree</span> 逐改动启动、<span class="tip" data-t="cdp">Chrome DevTools 协议</span>接入运行时、<span class="tip" data-t="logql">LogQL/PromQL</span> 可查询的神经系统。',
+          '<strong>约束不变量</strong>：自研 linter 强制分层架构，lint 报错本身注入修复指引——「纪律不再体现在代码里，而体现在脚手架上」。',
+          '<strong>熵与垃圾回收</strong>：agent 会复制坏模式（<span class="tip" data-t="slop">AI slop</span>），后台任务定期扫描开重构 PR，「像垃圾回收一样持续小额偿还技术债」。'],
+    nums: ['5 个月', '≈1,000,000 行', '0 行手写', '1/10 成本', '1,500 PR · 3.5 PR/天'] },
+  { no: '业界回应 02', date: 'Lilian Weng · 2026-07-04', title: 'Harness Engineering for Self-Improvement',
+    tag: '理论化的第一篇系统长文：harness 是围绕基础模型的操作系统。',
+    pts: ['完整定义：harness 负责<strong>编排执行、规划、工具调用、上下文感知与管理、产物存储与结果评估</strong>——类比操作系统。',
+          '最有价值的贡献是「优化对象的递进阶梯」：提示词 → 工作流 → harness 代码 → 优化器本身（见下方深挖阶梯）。',
+          '关键警示：<span class="tip" data-t="stop">STOP</span> 在 GPT-4 上越改越好，在 GPT-3.5 / Mixtral 上反而退化——递归结构本身不够，底座必须足够强。',
+          '克制的判断：许多 harness 改进最终会像提示工程史那样被内化进模型——「智能仍是核心」。'],
+    nums: ['DGM：SWE-bench 20%→50%', '近期的自改进主要发生在 harness 层'] },
+  { no: '学术界', date: 'Princeton NLP · arXiv 2024–2026', title: '把 harness 变成可测量的变量',
+    tag: 'ACI 概念的出处，以及「harness 披露」的主张。',
+    pts: ['<strong>SWE-agent</strong>（NeurIPS 2024）：仅靠为模型重设工具接口（受限文件查看器、精简搜索、带 lint 防护的编辑），同一版 GPT-4 Turbo 创下 SWE-bench 12.47% 纪录。',
+          '<strong>Stop Comparing LLM Agents Without Disclosing the Harness</strong>：同一个 Claude Opus，标准化 scaffold 45.9% vs Claude Code harness 55.4%（SWE-bench Pro）——近 10 个点 ≈ 模型迭代一代。',
+          '<strong>Empirical Study of Harness Design</strong>：4 模型 × 176 组配置的<span class="tip" data-t="ablation">消融</span>——上下文管理在窗口紧张时最值钱（先规则删减、再 LLM 摘要）；规划对弱模型是脚手架、对强模型只是省钱。',
+          '「The Last Harness You\'ll Ever Build」：给出 Agent = Model + Harness 的形式化与两层自动演化框架。'],
+    nums: ['12.47%', '45.9% vs 55.4%', '4 模型 × 176 配置'] },
+  { no: '评测侧', date: 'EleutherAI · ICLR · Terminal-Bench', title: '另一种 harness：评测框架',
+    tag: '分数随 harness 天差地别——这正是这门学科存在的理由。',
+    pts: ['<strong>lm-evaluation-harness</strong> 仍是事实标准：200+ 任务，Hugging Face 排行榜与 Mozilla 审计均采用。',
+          'ICLR 2024（Sclar et al.）：仅改动提示词格式（分隔符、空格、大小写等），LLaMA-2-13B 成绩最多波动 <strong>76 个准确率点</strong>。',
+          'Terminal-Bench 著名对比：同一 Claude Opus，统一口径约 42 分、Claude Code harness + 人工校验报出 95.5 分——口径不同本不该直接比，但差距本身就是学科存在的理由。'],
+    nums: ['200+ 任务', '±76 点波动', '42 vs 95.5'] }
+];
+
+const FAILFIX = [
+  { f: '一次性硬做', fd: '试图一口气实现整个应用，中途耗尽上下文，下个会话面对无文档的半成品。',
+    x: '一会话一功能 + 小步提交', xd: '每个会话只做一个功能；结束时小步 git 提交并维护进度文件，代码库始终处于「可合并」状态。' },
+  { f: '过早宣告完成', fd: '后接手的会话看到已有进展，就倾向于宣布「项目已完成」。',
+    x: 'JSON 功能清单逐项验收', xd: '需求展开为结构化 JSON 功能清单（200+ 项，初始全部 passes:false）。特意用 JSON 而非 Markdown——模型更难篡改；并用强措辞禁止改动测试项本身。' },
+  { f: '未验证就标「完成」', fd: 'agent 说做完了就当做完，实际功能并不工作。',
+    x: '强制自我验证闭环', xd: '用浏览器自动化像真实用户一样操作，验证通过才允许标为 passing；也如实记录局限——模型看不到浏览器原生 alert 弹窗。' },
+  { f: '新会话不知如何接手', fd: '每个新会话都要从头摸索现状，重复踩坑。',
+    x: 'init.sh + 会话启动仪式', xd: '一键启动脚本 + 规定仪式：确认目录 → 读 git log → 读进度文件 → 读功能清单 → 冒烟测试确认环境没坏。' }
+];
+
+const INFRA = [
+  { no: '组件一', t: 'Session', d: '一切发生之事的<strong>只追加日志</strong>，存活于上下文窗口之外。大脑可以按位置切片回读：从上次停止处续读、回看前因、重读某动作前的上下文。', api: 'getEvents(position)' },
+  { no: '组件二', t: 'Harness', d: '调用模型、把工具调用路由到基础设施的<strong>循环本身</strong>。牛而非宠物：不留任何本地状态，崩溃后新实例从日志断点续跑——所以可以随时被杀、被替换、被横向扩容。', api: 'wake(sessionId)' },
+  { no: '组件三', t: 'Sandbox', d: '模型干活的执行环境。对 harness 而言只是一个统一接口——可以是容器、手机甚至游戏模拟器，实现自由替换。', api: 'execute(name, input) → string' }
+];
+
+const CONSENSUS = [
+  { t: '瓶颈在 harness，不在模型',
+    ev: [['a', '报告 04：四种失败模式没有一种「模型不够聪明」，解法也没有一种「等下一代模型」。'],
+         ['o', '0 行手写代码实验：早期进展慢，「不是因为 Codex 不行，而是环境欠规格」。'],
+         ['s', '同一个 Claude Opus：标准化 scaffold 45.9% vs Claude Code harness 55.4%——换 harness ≈ 模型迭代一代。']] },
+  { t: '上下文是稀缺资源，要策展不要堆砌',
+    ev: [['a', 'context rot 与「最小高信号集合」：token 越多注意力越稀释。'],
+         ['o', '「给地图，不给千页说明书」：大号 AGENTS.md 被上下文腐烂击垮，收敛为 100 行目录。'],
+         ['s', 'SWE-agent 的受限文件查看器：每轮只显示 100 行，从接口源头限制输出。']] },
+  { t: '接口为模型设计，而非为人',
+    ev: [['a', 'ACI（承继普林斯顿）：在 SWE-bench 上优化工具的时间超过了整体提示词。'],
+         ['o', '对 agent 可读性：lint 报错信息本身向 agent 上下文注入修复指引。'],
+         ['s', '工具是被评测驱动的独立工程对象，不是 API 的包装。']] },
+  { t: '验证闭环是 harness 的宪法',
+    ev: [['a', '强制浏览器自测 + JSON 功能清单；「agent 说我做完了」不算做完。'],
+         ['o', 'agent 互审 + 机械强制的 linter + CI。'],
+         ['s', 'Lilian Weng：评估器与权限控制在自改进循环之外——agent 不能改自己的考卷。']] },
+  { t: 'harness 正在被自动化与优化',
+    ev: [['a', 'meta-harness 定位：对实现不持立场，只对接口有主见。'],
+         ['o', 'agent 写 linter、文档园艺 agent、后台任务自动开重构 PR。'],
+         ['s', '优化阶梯与 DGM：SWE-bench 20%→50%，harness 工程本身正在被 agent 接管。']] }
+];
+
+const PLAYBOOK = [
+  { t: '外部记忆先行', d: '进度文件 + 小步 git 提交（Anthropic 04）；仓库即事实源，AGENTS.md 只做目录（OpenAI）；文件系统即持久记忆（Lilian Weng）——三家给出的是同一个模式。' },
+  { t: '机器可校验的完成标准', d: 'JSON 功能清单、逐项 passes 验收、禁止 agent 改验收标准本身；用 linter 和 CI 把「品味」变成机械规则。' },
+  { t: '自我验证闭环', d: '浏览器自动化、测试运行器、agent 互审——「agent 说我做完了」不算做完。' },
+  { t: '工具单独做评测', d: '命名空间、返回自然语言、控制 token；工具描述的迭代用评估驱动，而不是凭直觉。' },
+  { t: '上下文分阶段管理', d: '先规则化删减、再 LLM 摘要（arXiv 消融结论）；长任务在压缩、笔记、子代理三者中按任务形态选择。' },
+  { t: '为换模型而设计', d: '不要把对当前模型缺陷的补丁写死在架构里（context reset 教训）；升级模型后重新审视 harness 的每个组件。' },
+  { t: '评测必须披露 harness', d: '引用任何 agent 成绩时，先问用的什么 harness、什么提示词模板。' }
+];
+
+const LADDER = [
+  { n: 'Ⅰ', t: '提示词 → 结构化上下文', h: 104, paper: 'ACE · 斯坦福等 · ICLR 2026',
+    d: '把上下文当作「不断演进的 playbook」：Generator 执行、Reflector 反思、Curator 整理。Curator 只做结构化增量 delta 更新而非整体重写，防两个病：context collapse（迭代重写侵蚀细节）与 brevity bias（为简洁丢掉领域洞见）。',
+    nums: 'agent 任务 +10.6% · 金融 +8.6% · AppWorld 上用更小的开源模型追平榜首' },
+  { n: 'Ⅱ', t: '工作流', h: 140, paper: 'AFlow · 2024',
+    d: '把 agentic 工作流表示成「LLM 调用节点 + 边」的代码图，用蒙特卡洛树搜索（MCTS）在「修改这段代码」的动作空间里探索，以执行反馈（分数、成本）为信号。',
+    nums: '六基准平均 +5.7% · 小模型以 4.55% 推理成本反超基于 GPT-4o 的工作流' },
+  { n: 'Ⅲ', t: 'agent / harness 代码', h: 176, paper: 'ADAS 2024 · 达尔文·哥德机 DGM 2025',
+    d: '代码即搜索空间：ADAS 的元 agent 基于不断增长的发现档案持续「发明」新 agent，且发现可跨领域、跨底座迁移。DGM 走得更远——编码 agent 直接改写自己的 harness 代码，档案树允许从次优祖先重启，避免困在局部最优。',
+    nums: 'DGM：SWE-bench 20.0%→50.0% · Polyglot 14.2%→30.7% · 自主发现：编辑工具 / 窗口管理 / 互查机制' },
+  { n: 'Ⅳ', t: '优化器 / 元层', h: 212, paper: 'STOP 2023 · Self-Harness / Meta-Harness 2026',
+    d: 'STOP 让「改进器」程序改进它自己：种子改进器以自身为输入形成递归，每轮实证跑分。Self-Harness 走「弱点挖掘 → 有界提案 → 验证闭环」，为不同模型学出专属 harness 指令；Meta-Harness 研究「优化 harness 的代码」如何再被优化。',
+    nums: 'GPT-4 上越改越好 · 弱底座反而退化 · Terminal-Bench-2 学出 MiniMax / Qwen / GLM 专属指令' }
+];
+
+const ROUTES = [
+  { t: '规则截断 / 滑窗', reps: 'Cline 旧版（删 1/2~3/4 历史）',
+    scene: '最便宜的第一道防线。', risk: '丢失关键上下文', extra: '随后演进为 Auto Compact：临近窗口上限时改用 LLM 摘要（官方未给出具体百分比），保留技术决策与关键细节——一块「行业演化化石」。' },
+  { t: 'LLM 摘要（阈值 + 保尾）', reps: 'Claude Code · Gemini CLI（早期 70%、现 50% 阈值，保尾 30%）· OpenHands · Cline',
+    scene: '长对话通用兜底。', risk: '丢「微妙但关键」的细节；摘要本身烧 token', extra: 'OpenHands 把窗口管理做成可插拔 Condenser 管线，LLMSummarizingCondenser 固定捕捉四类信息：用户目标、已完成/待办任务、代码状态、错误历史。' },
+  { t: '入窗前排序 / 受限接口', reps: 'Aider repo map（默认 1k，tree-sitter 图排序）· SWE-agent（100 行查看器）',
+    scene: '大仓库、搜索类工具。', risk: '冷门符号进不来', extra: 'Aider 在入窗之前先做全库重要性排序：只有被引用最多的标识符连同签名行进入 map；SWE-agent 让工具「吐不出那么多」——搜索只列匹配文件名，不给上下文。' },
+  { t: '可逆外置（文件即记忆）', reps: 'Manus（网页只留 URL、文档只留沙箱路径）· Codex 实验性换窗',
+    scene: '观察对象巨大、长程任务。', risk: '需要额外的回捞机制', extra: 'Codex 更新的实验不做摘要、直接切换全新窗口，旧窗口完整历史按需回捞——与 Anthropic 的 Session + getEvents() 构想互为镜像。' },
+  { t: '模型自我分页', reps: 'MemGPT / Letta（70% 警告线 · working context · pgvector）',
+    scene: '跨会话记忆。', risk: '依赖模型函数调用能力', extra: 'harness 只提供记忆层级与压力警告，「搬什么」由模型自己决定。深度记忆检索 GPT-4 从 32.1% 提到 92.5%。' },
+  { t: '知识蒸馏式 playbook', reps: 'ACE（不断演进的剧本）· Manus recitation（每步重写 todo.md）',
+    scene: '重复型任务的经验积累。', risk: '整理器本身可能引入错误', extra: 'recitation 把全局计划反复「推入模型近期注意力范围」，对冲 lost-in-the-middle——这是「该反复进窗口的东西」。' }
+];
+
+const EVIDENCE = [
+  { tag: '机理层', color: '#26241f', study: 'Anthropic · StreamingLLM (ICLR 2024)', t: 'n² 注意力稀释 + attention sinks',
+    d: '每个 token 与其他 token 形成 n² 个成对关系，序列越长单个 token 分到的注意力份额越小。softmax 强制分配注意力——<b>前几个 token 总是吸走超量注意力</b>，滑窗一旦扔掉开头 token 的 KV 缓存，性能立刻崩塌。', ins: '策展而非堆砌；关键内容放在结构性有利位置。' },
+  { tag: '位置层', color: '#5c4632', study: 'Lost in the Middle · 斯坦福 TACL', t: 'U 形曲线：中间的信息「看得见但不记住」',
+    d: '相关信息放开头或结尾成绩最好，放中间显著下滑——GPT-3.5-Turbo 下跌超过 20%；部分设定下「闭卷硬答」反而好于「答案就摆在中间」。<b>上下文的顺序本身就是信号</b>。', ins: '关键约束放首尾；计划要「复述」回注意力近端。' },
+  { tag: '基准层', color: '#8a5a28', study: 'RULER (COLM 2024) · NoLiMa (ICML 2025)', t: '标称 128K ≠ 有效 128K',
+    d: 'RULER：17 个标称 32K+ 的模型中只有约一半在 32K 处保持满意成绩。NoLiMa 去掉字面重叠后更惨：13 个模型中 11 个在 32K 跌破短序列基线的一半，GPT-4o 从 99.3% 掉到 69.7%。', ins: '有效窗口远小于标称；换模型必须重测，宣传口径不可信。' },
+  { tag: '任务层', color: '#b45309', study: 'Chroma Research · 18 模型 19 万次调用', t: '连「机械任务」也随长度腐烂',
+    d: '即便「复述重复单词」这种机械任务，性能也随输入变长非均匀下降。更反直觉：<b>把 <span class="tip" data-t="shuffle">haystack 洗牌打散结构</span>，成绩反而稳定变好</b>。检索 100% 准确也挡不住腐烂——它发生在「读」这一步。', ins: '呈现方式本身就是变量：减干扰、慎用「高度连贯」长文。' },
+  { tag: '产品层', color: '#c98a2b', study: 'Manus 生产复盘', t: 'KV-cache 经济学：腐烂的另一半是账单',
+    d: '典型 agent 任务约 50 次工具调用，输入输出比约 <b>100:1</b>，而缓存命中的输入价格约为未命中的十分之一——「KV-cache 命中率是生产阶段 agent 最重要的单一指标」。', ins: 'append-only + 稳定前缀 + 确定性序列化：少改历史，既是注意力卫生，也是财务纪律。' }
+];
+
+const TERMS = {
+  rot: '<b>context rot（上下文腐烂）</b>：token 越多，模型准确回忆和利用信息的能力越差——上下文不是越大越好，而是会「腐烂」的稀缺资源。',
+  budget: '<b>注意力预算</b>：transformer 中每个 token 与其他 token 形成 n² 个成对关系，softmax 下序列越长、单 token 分到的注意力越少——每进一个 token 都在花一份会贬值的预算。',
+  kvc: '<b>KV-cache</b>：推理时前缀的键值缓存；命中价格约为未命中的 1/10，前缀一变即作废。「keep the wrong stuff in」是 Manus 的原则——错误轨迹是证据，删掉它模型就无法适应。',
+  meta: '<b>meta-harness</b>：不绑定任何具体 harness 实现、只对接口有主见的上层框架——Anthropic Managed Agents 的自我定位。',
+  cattle: '<b>牛而非宠物</b>：云运维格言——宠物式运维给服务器起名、坏了抢救；牛式只给编号、坏了直接换。harness 实例不留本地状态，凭 wake(sessionId) 从 Session 日志断点续跑。',
+  mcp: '<b>MCP + OAuth vault</b>：MCP 是 Anthropic 2024-11 开源的 agent 工具接入标准（生态的「USB-C」）；OAuth vault 把第三方凭据集中放在隔离保管服务，agent 和 harness 只拿到「可用的调用权」，拿不到凭据本身。',
+  stop: '<b>STOP（Self-Taught Optimizer）</b>：递归自改进的最早可运行原型——改进器把自己喂给自己。GPT-4 底座上越改越好，弱底座上反而退化：递归结构本身不够，底座必须足够强。',
+  ablation: '<b>消融（ablation）</b>：控制变量实验——把系统拆成组件，逐一去掉或替换，量化其对整体的贡献。arXiv 消融研究拆了规划、动作空间、上下文管理三组件，4 模型 × 176 组配置。',
+  agentsmd: '<b>AGENTS.md</b>：写给编码 agent 看的仓库说明书。OpenAI 试过「一个大号 AGENTS.md」失败（挤占上下文、规则互相稀释），收敛为约 100 行目录 + docs/ 事实源 + CI 机械校验。',
+  worktree: '<b>git worktree</b>：同一仓库同时检出多个工作目录。agent 时代它成了多 agent 并行互不踩踏的最廉价隔离——OpenAI 让每个改动都可按 worktree 启动服务。',
+  cdp: '<b>Chrome DevTools 协议（CDP）</b>：编程控制浏览器（导航、截图、读 DOM、抓网络）。报告 04 的「浏览器自测」、OpenAI 的 agent 运行时都建在它上面——给 agent 一双「看得见网页」的手。',
+  logql: '<b>LogQL / PromQL</b>：Grafana Loki 与 Prometheus 的查询语言。给 agent 配上这两样，等于给它「可查询的神经系统」——「服务启动在 800ms 内」从玄学提示词变成可执行、可验证的查询。',
+  slop: '<b>AI slop</b>：agent 复制进仓库的坏模式。不清理就会成为下一代 agent 模仿的「范例」，形成正反馈腐烂；对策是把「黄金原则」编码进仓库，后台任务定期扫描开重构 PR。',
+  shuffle: '<b>洗牌 haystack（shuffled haystack）</b>：大海捞针测试里包住「针」（目标信息）的填充文本。Chroma 把连贯原文的句序随机打乱再测——18 个模型、8 种输入长度 × 11 个针位，打散后的成绩一致地更好，与「结构清晰更好」的直觉相反。作者的猜测：高度连贯的长文处处是结构关联，注意力被叙事模式牵引，「针」反而被埋没；机理尚无定论。'
+};
+
+/* ================================================================
+   二、通用小组件：手风琴 / 提示词气泡 / 渐显
+================================================================ */
+function el(html) { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; }
+
+function buildAccordion(host, items, opts = {}) {
+  items.forEach((it, i) => {
+    const head = opts.head ? opts.head(it, i)
+      : `<button class="acc-head"><span class="rp-no">${it.no || String(i + 1).padStart(2, '0')}</span><h3>${it.t}</h3><span class="acc-x">＋</span></button>`;
+    const node = el(`<div class="acc rep">${head}<div class="acc-body"><div class="acc-inner"><div class="acc-pad">${it.body || ''}</div></div></div></div>`);
+    node.querySelector('.acc-head').addEventListener('click', () => node.classList.toggle('open'));
+    host.appendChild(node);
+    return node;
+  });
+}
+
+/* 渐显：IO 驱动 + 兜底（渲染被节流/遮挡时内容绝不可消失） */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .08 });
+function observeRv(root = document) {
+  root.querySelectorAll('.rv:not(.in)').forEach(n => io.observe(n));
+  setTimeout(() => { root.querySelectorAll('.rv:not(.in)').forEach(n => n.classList.add('in')); }, 1200);
+}
+
+/* 术语提示 */
+const tipPop = document.getElementById('tipPop');
+let pinnedTip = null;
+function showTip(target) {
+  const key = target.dataset.t; if (!TERMS[key]) return;
+  tipPop.innerHTML = TERMS[key];
+  tipPop.classList.add('open');
+  tipPop.style.visibility = 'hidden';
+  const r = target.getBoundingClientRect();
+  const pw = tipPop.offsetWidth, ph = tipPop.offsetHeight;
+  let left = r.left + r.width / 2 - pw / 2;
+  left = Math.max(10, Math.min(left, window.innerWidth - pw - 10));
+  const below = r.bottom + ph + 14 <= window.innerHeight;
+  tipPop.style.left = left + 'px';
+  tipPop.style.top = (below ? r.bottom + window.scrollY + 9 : r.top + window.scrollY - ph - 9) + 'px';
+  tipPop.style.visibility = '';
+}
+function hideTip() { tipPop.classList.remove('open'); pinnedTip = null; }
+document.addEventListener('mouseover', e => { const t = e.target.closest('.tip'); if (t && !pinnedTip) showTip(t); });
+document.addEventListener('mouseout', e => { if (!pinnedTip && e.target.closest('.tip')) hideTip(); });
+document.addEventListener('click', e => {
+  const t = e.target.closest('.tip');
+  if (t) { if (pinnedTip === t) { hideTip(); } else { document.querySelectorAll('.tip.pin').forEach(x => x.classList.remove('pin')); t.classList.add('pin'); pinnedTip = t; showTip(t); } }
+  else if (!tipPop.contains(e.target)) { hideTip(); document.querySelectorAll('.tip.pin').forEach(x => x.classList.remove('pin')); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+window.addEventListener('scroll', () => { if (pinnedTip) { showTip(pinnedTip); } }, { passive: true });
+
+/* ================================================================
+   三、静态区块渲染
+================================================================ */
+/* 时间线 */
+(function () {
+  const host = document.getElementById('tlList');
+  TIMELINE.forEach((r, i) => {
+    const nums = r.nums.length ? `<div class="numchips">${r.nums.map(n => `<span>${n}</span>`).join('')}</div>` : '';
+    const node = el(`<div class="tl-item rv" style="--dot:${r.dot}">
+      <div class="acc rep">
+        <button class="acc-head"><span class="rp-no">${r.no}</span><h3>${r.title}</h3><span class="rp-date">${r.date}</span><span class="acc-x">＋</span></button>
+        <div class="acc-body"><div class="acc-inner"><div class="acc-pad">
+          <p class="rp-tag"><b>回答的问题：</b>${r.q}　<b>定位：</b>${r.tag}</p>
+          ${nums}
+          <ul>${r.pts.map(p => `<li>${p}</li>`).join('')}</ul>
+          <div class="takeaway"><b>一句话 takeaway：</b>${r.take}</div>
+        </div></div></div>
+      </div></div>`);
+    node.querySelector('.acc-head').addEventListener('click', () => node.querySelector('.acc').classList.toggle('open'));
+    host.appendChild(node);
+  });
+})();
+
+/* 业界回应 */
+(function () {
+  const host = document.getElementById('othersGrid');
+  OTHERS.forEach(r => {
+    const node = el(`<div class="acc rep rv">
+      <button class="acc-head"><span class="rp-no">${r.no}</span><h3 style="font-size:15.5px">${r.title}</h3><span class="acc-x">＋</span></button>
+      <div class="acc-body"><div class="acc-inner"><div class="acc-pad">
+        <p class="rp-tag"><b>来源：</b>${r.date}　<b>定位：</b>${r.tag}</p>
+        <div class="numchips">${r.nums.map(n => `<span>${n}</span>`).join('')}</div>
+        <ul>${r.pts.map(p => `<li>${p}</li>`).join('')}</ul>
+      </div></div></div></div>`);
+    node.querySelector('.acc-head').addEventListener('click', () => node.classList.toggle('open'));
+    host.appendChild(node);
+  });
+})();
+
+/* 失败 ↔ 解法 */
+(function () {
+  const host = document.getElementById('fpairs');
+  FAILFIX.forEach((p, i) => {
+    const node = el(`<div class="fpair rv" role="button" tabindex="0">
+      <div class="fcol fail"><div class="fk">失败模式 ${'①②③④'[i]}</div><h4>${p.f}</h4><p>${p.fd}</p></div>
+      <div class="farrow">⇢</div>
+      <div class="fcol fix"><div class="fk">HARNESS 解法</div><h4>${p.x}</h4><p>${p.xd}</p><div class="fhint">点击揭晓解法 →</div></div>
+    </div>`);
+    const toggle = () => node.classList.toggle('open');
+    node.addEventListener('click', toggle);
+    node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    host.appendChild(node);
+  });
+  host.insertAdjacentHTML('beforeend', '<div class="takeaway rv"><b>一句话 takeaway：</b>四种失败没有一种是「模型不够聪明」，四张药方也没有一张是「等下一代模型」——这是 Anthropic 第一次系统性论证：长任务的瓶颈在 harness。</div>');
+})();
+
+/* 基础设施卡片 */
+(function () {
+  const host = document.getElementById('infraGrid');
+  INFRA.forEach(c => {
+    host.appendChild(el(`<div class="icard rv"><div class="ic-no">${c.no}</div><h4>${c.t}</h4><p>${c.d}</p><span class="api">${c.api}</span></div>`));
+  });
+})();
+
+/* 共识 */
+(function () {
+  const host = document.getElementById('consensusList');
+  CONSENSUS.forEach((c, i) => {
+    const body = c.ev.map(([s, t]) => `<p class="ev-line"><b class="src ${s}">${{ a: 'Anthropic', o: 'OpenAI', s: '学术 / 理论' }[s]}</b>${t}</p>`).join('');
+    buildAccordion(host, [{ no: String(i + 1).padStart(2, '0'), t: c.t, body }]);
+  });
+})();
+
+/* 施工清单 */
+(function () {
+  const host = document.getElementById('playbookList');
+  PLAYBOOK.forEach((p, i) => {
+    buildAccordion(host, [{ no: '✓ ' + String(i + 1).padStart(2, '0'), t: p.t, body: `<p class="ev-line" style="margin:0">${p.d}</p>` }]);
+  });
+})();
+
+/* 阶梯 */
+(function () {
+  const host = document.getElementById('ladder');
+  const det = document.getElementById('ladderDetail');
+  LADDER.forEach((s, i) => {
+    const b = el(`<button class="lstep" style="--h:${s.h}px"><span class="ln">${s.n}</span><span class="lt">${s.t}</span></button>`);
+    b.addEventListener('click', () => { host.querySelectorAll('.lstep').forEach(x => x.classList.remove('on')); b.classList.add('on'); render(i); });
+    host.appendChild(b);
+  });
+  function render(i) {
+    const s = LADDER[i];
+    det.innerHTML = `<span class="detail-tag">STEP ${s.n} / Ⅳ</span><h4>${s.t}</h4><div class="paper">${s.paper}</div><p>${s.d}</p><div class="numchips">${s.nums.split(' · ').map(n => `<span>${n}</span>`).join('')}</div>`;
+  }
+  host.firstChild.classList.add('on'); render(0);
+})();
+
+/* 六条路线 */
+(function () {
+  const host = document.getElementById('routes');
+  ROUTES.forEach(r => {
+    const node = el(`<div class="rcard rv" role="button" tabindex="0"><h5>${r.t}</h5><div class="reps">${r.reps}</div>
+      <div class="more"><p style="margin:0 0 5px">${r.extra}</p><p style="margin:0"><b>场景：</b>${r.scene}<br><span class="risk"><b>代价：</b>${r.risk}</span></p></div></div>`);
+    const t = () => node.classList.toggle('open');
+    node.addEventListener('click', t);
+    node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); t(); } });
+    host.appendChild(node);
+  });
+})();
+
+/* 五层证据链 */
+(function () {
+  const host = document.getElementById('evlist');
+  EVIDENCE.forEach((e, i) => {
+    const node = el(`<div class="evlayer rv">
+      <button class="el-head"><span class="el-tag et${i}">${e.tag}</span><h5>${e.t}</h5><span class="el-study">${e.study}</span></button>
+      <div class="el-body">${e.d}<div class="takeaway" style="margin-top:10px"><b>对 harness 的指令：</b>${e.ins}</div></div></div>`);
+    node.querySelector('.el-head').addEventListener('click', () => node.classList.toggle('open'));
+    host.appendChild(node);
+  });
+})();
+
+/* ================================================================
+   四、核心循环：几何（连线 / 边标签 / HARNESS 框）
+================================================================ */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const stage = document.getElementById('loopStage');
+const svg = document.getElementById('edgeSvg');
+const frame = document.getElementById('harnessFrame');
+const labelLayer = document.getElementById('edgeLabels');
+const N = {};
+document.querySelectorAll('#loopGrid .lnode[data-node]').forEach(n => N[n.dataset.node] = n);
+
+function rectOf(name) {
+  const r = N[name].getBoundingClientRect(), s = stage.getBoundingClientRect();
+  return { left: r.left - s.left, top: r.top - s.top, right: r.right - s.left, bottom: r.bottom - s.top,
+           cx: r.left - s.left + r.width / 2, cy: r.top - s.top + r.height / 2, w: r.width, h: r.height };
+}
+function A(name, side, off = 0) {
+  const r = rectOf(name);
+  if (side === 'top') return { x: r.cx + off, y: r.top };
+  if (side === 'bottom') return { x: r.cx + off, y: r.bottom };
+  if (side === 'left') return { x: r.left, y: r.cy + off };
+  return { x: r.right, y: r.cy + off };
+}
+function gapY1() { return rectOf('s1').bottom + 20; }
+
+function pathFrom(pts, r = 12) {
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const p = pts[i], prev = pts[i - 1], next = pts[i + 1];
+    const dx1 = Math.sign(p.x - prev.x), dy1 = Math.sign(p.y - prev.y);
+    const dx2 = Math.sign(next.x - p.x), dy2 = Math.sign(next.y - p.y);
+    const segIn = Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y);
+    const segOut = Math.abs(next.x - p.x) + Math.abs(next.y - p.y);
+    const rr = Math.max(2, Math.min(r, segIn / 2, segOut / 2));
+    d += ` L ${(p.x - dx1 * rr).toFixed(1)} ${(p.y - dy1 * rr).toFixed(1)} Q ${p.x.toFixed(1)} ${p.y.toFixed(1)} ${(p.x + dx2 * rr).toFixed(1)} ${(p.y + dy2 * rr).toFixed(1)}`;
+  }
+  d += ` L ${pts[pts.length - 1].x.toFixed(1)} ${pts[pts.length - 1].y.toFixed(1)}`;
+  return d;
+}
+
+const EDGE_DEFS = [
+  { id: 'req-s1',   pts: () => [A('req', 'bottom'), A('s1', 'top')] },
+  { id: 's1-s2',    pts: () => [A('s1', 'right'), A('s2', 'left')] },
+  { id: 's2-s3',    pts: () => [A('s2', 'right'), A('s3', 'left')] },
+  { id: 's3-d1',    pts: () => [A('s3', 'right'), A('d1', 'left')] },
+  { id: 'd1-s4',    pts: () => [A('d1', 'bottom'), A('s4', 'top')], label: '是 · 工具调用', ratio: .42 },
+  { id: 'd1-stop',  pts: () => { const r = A('d1', 'right'), gy = gapY1(), t = A('stop', 'top', 14);
+                      return [r, { x: rectOf('s4').right + 24, y: r.y }, { x: rectOf('s4').right + 24, y: gy }, { x: t.x, y: gy }, t]; },
+                    label: '否 · 文字 / 完成声明', ratio: .55 },
+  { id: 's4-s5',    pts: () => { const a = A('s4', 'bottom'), b = A('s5', 'top'); const m = (a.y + b.y) / 2;
+                      return [a, { x: a.x, y: m }, { x: b.x, y: m }, b]; } },
+  { id: 's5-s6',    pts: () => [A('s5', 'left'), A('s6', 'right')] },
+  { id: 's6-s1',    pts: () => { const a = A('s6', 'bottom'), b = A('s1', 'left');
+                      const rd = rectOf('done'); const laneY = rd.bottom + 16;
+                      return [a, { x: a.x, y: laneY }, { x: 10, y: laneY }, { x: 10, y: b.y }, b]; },
+                    label: '结果回填 → 下一轮', ratio: .26 },
+  { id: 'stop-s1',  pts: () => [A('stop', 'top', -16), A('s1', 'bottom', -16)], label: '否 · 继续循环', ratio: .5 },
+  { id: 'stop-done',pts: () => [A('stop', 'bottom'), A('done', 'top')], label: '是 · budget_ok', ratio: .55 },
+  { id: 'cx-s1',    pts: () => { const a = A('cx', 'top'), b = A('s1', 'bottom', 18), gy = gapY1() + 13;
+                      return [a, { x: a.x, y: gy }, { x: b.x, y: gy }, b]; }, label: '压缩 / 笔记 / 子代理', ratio: .5 },
+  { id: 's4-s6',    pts: () => { const a = A('s4', 'bottom', 16), b = A('s6', 'top', 16);
+                      const m = (A('s4', 'bottom').y + A('s5', 'top').y) / 2 + 13;
+                      return [a, { x: a.x, y: m }, { x: b.x, y: m }, b]; }, label: '✗ 拒绝 → 结果回填', ratio: .5, cls: 'danger' }
+];
+const edgeEls = {}, labelEls = {};
+
+function layoutEdges() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('width', w); svg.setAttribute('height', h);
+  const rs = rectOf('s1'), rd = rectOf('d1'), rb = rectOf('done');
+  frame.style.left = (rs.left - 20) + 'px';
+  frame.style.top = (rs.top - 18) + 'px';
+  frame.style.width = (rd.right - rs.left + 40) + 'px';
+  frame.style.height = (rb.bottom - rs.top + 36) + 'px';
+  EDGE_DEFS.forEach(def => {
+    let p = edgeEls[def.id];
+    if (!p) { p = document.createElementNS(SVGNS, 'path'); p.setAttribute('class', 'edge' + (def.cls ? ' ' + def.cls : '')); svg.appendChild(p); edgeEls[def.id] = p; }
+    p.setAttribute('d', pathFrom(def.pts()));
+    if (def.label) {
+      let lab = labelEls[def.id];
+      if (!lab) { lab = document.createElement('div'); lab.className = 'edge-label' + (def.cls === 'danger' ? ' warn' : ''); labelLayer.appendChild(lab); labelEls[def.id] = lab; lab.textContent = def.label; }
+      const len = p.getTotalLength(), pt = p.getPointAtLength(len * (def.ratio || .5));
+      lab.style.transform = `translate(${pt.x.toFixed(1)}px, ${pt.y.toFixed(1)}px) translate(-50%,-50%)`;
+    }
+  });
+}
+let layoutTimer;
+function scheduleLayout() { clearTimeout(layoutTimer); layoutTimer = setTimeout(layoutEdges, 80); }
+window.addEventListener('resize', scheduleLayout);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleLayout);
+setTimeout(layoutEdges, 60);
+
+/* ================================================================
+   五、核心循环：状态机
+================================================================ */
+const $id = x => document.getElementById(x);
+const meterFill = $id('meterFill'), meterPct = $id('meterPct');
+const detailTag = $id('detailTag'), detailTitle = $id('detailTitle'), detailBody = $id('detailBody'), detailRefs = $id('detailRefs'), choicesBox = $id('choices');
+const consoleEl = $id('console'), iterBadge = $id('iterBadge');
+const btnPlay = $id('btnPlay'), btnStep = $id('btnStep'), btnReset = $id('btnReset');
+const segSpeed = $id('segSpeed'), segMode = $id('segMode');
+
+let S, runToken = 0, pendingAsk = null;
+function freshState() {
+  const modeBtn = document.querySelector('#segMode button.on');
+  const speedBtn = document.querySelector('#segSpeed button.on');
+  S = { phase: 'idle', iter: 0, usage: 12, peak: 12, tools: 0, compacts: 0, done: false, running: false,
+        mode: modeBtn ? modeBtn.dataset.v : 'auto', speed: speedBtn ? +speedBtn.dataset.v : 1,
+        action: null, deny: false, cxTries: 0 };
+}
+freshState();
+
+const sleep = (g, ms) => new Promise((res, rej) => setTimeout(() => runToken === g ? res() : rej('cancel'), ms / S.speed));
+
+function setDetail(id) {
+  const info = NODE_INFO[id]; if (!info) return;
+  detailTag.textContent = info.tag; detailTitle.textContent = info.title;
+  detailBody.innerHTML = info.body;
+  detailRefs.innerHTML = '';
+  (info.refs || []).forEach(([label, href]) => {
+    const b = document.createElement('button'); b.textContent = '→ ' + label;
+    b.addEventListener('click', () => {
+      const target = document.querySelector(href);
+      if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); target.classList.remove('flash'); void target.offsetWidth; target.classList.add('flash'); if (href === '#tlList') { const first = target.querySelector('.tl-item .acc'); if (first) first.classList.add('open'); } }
+    });
+    detailRefs.appendChild(b);
+  });
+}
+function setChoicesEmpty() { choicesBox.classList.remove('has'); choicesBox.innerHTML = ''; }
+function ask(question, options) {
+  return new Promise(res => {
+    pendingAsk = res;
+    choicesBox.innerHTML = '';
+    choicesBox.appendChild(el(`<div class="ask-q">✋ ${question}</div>`));
+    options.forEach(o => {
+      const b = el(`<button class="choice">${o.label}<small>${o.sub || ''}</small></button>`);
+      b.addEventListener('click', () => { choicesBox.classList.remove('has'); choicesBox.innerHTML = ''; pendingAsk = null; res(o.k); });
+      choicesBox.appendChild(b);
+    });
+    choicesBox.classList.add('has');
+  });
+}
+function log(html, cls = 't') {
+  const d = document.createElement('div'); d.className = 'ln ' + cls; d.innerHTML = html;
+  consoleEl.appendChild(d);
+  while (consoleEl.children.length > 90) consoleEl.removeChild(consoleEl.firstChild);
+  consoleEl.scrollTop = consoleEl.scrollHeight;
+}
+function meter() {
+  meterFill.style.width = S.usage.toFixed(1) + '%';
+  meterFill.style.background = S.usage >= 70 ? '#b3402a' : (S.usage >= 50 ? '#c98a2b' : '#6b8f5e');
+  meterPct.textContent = Math.round(S.usage) + '%';
+  $id('stPeak').textContent = Math.round(S.peak) + '%';
+}
+function stats() {
+  $id('stIter').textContent = S.iter; $id('stTools').textContent = S.tools; $id('stComp').textContent = S.compacts;
+  iterBadge.textContent = S.done ? 'DONE ✓' : 'ROUND ' + S.iter;
+}
+function addUsage(x) { S.usage = Math.min(100, S.usage + x); S.peak = Math.max(S.peak, S.usage); meter(); }
+function activate(name) {
+  document.querySelectorAll('.lnode.active').forEach(n => n.classList.remove('active'));
+  if (name && N[name]) N[name].classList.add('active', 'visited');
+}
+function flow(id, extra) {
+  const e = edgeEls[id]; if (!e) return;
+  e.classList.remove('flowing'); void e.getBoundingClientRect();
+  e.classList.add('flowing'); if (extra) e.classList.add(extra);
+  setTimeout(() => e.classList.add('done'), 400);
+}
+const pct = () => Math.round(S.usage);
+
+function updateControls() {
+  btnPlay.innerHTML = S.running ? '⏸ 暂停' : (S.done ? '✓ 已完成' : '▶ 自动演示');
+  btnPlay.disabled = S.done;
+  btnStep.disabled = S.running || S.done;
+}
+function pauseLoop() { S.running = false; runToken++; if (pendingAsk) { const p = pendingAsk; pendingAsk = null; setChoicesEmpty(); p('cancel'); } updateControls(); }
+
+function autoAction() {
+  if (S.iter >= 4 && Math.random() < 0.28) return 'done';
+  return Math.random() < 0.66 ? 'tool' : 'text';
+}
+function autoStrategy() {
+  if (S.usage >= 88 || S.cxTries >= 2) return 'compact';
+  const r = Math.random();
+  if (r < 0.55) return 'compact';
+  if (r < 0.8) return 'subagent';
+  return 'notes';
+}
+function applyStrategy(k) {
+  if (k === 'compact') {
+    const old = pct();
+    S.usage = 27 + Math.random() * 6; S.compacts++; meter(); stats();
+    log(`🗜 压缩：总结对话 → 保留架构决策 / 未解决 bug / 实现细节，丢弃冗余工具输出，附带最近 5 个文件（${old}% → ${pct()}%）`, 'ev');
+  } else if (k === 'notes') {
+    S.usage = Math.max(8, S.usage - 1); meter();
+    log(`📝 结构化笔记：状态写入窗口外的 NOTES.md，窗口内只留指针`, 'ev');
+  } else {
+    const burn = 18000 + Math.floor(Math.random() * 14000);
+    S.usage = Math.min(98, S.usage + 1); meter();
+    log(`🧪 子代理在独立干净窗口烧掉 ~${burn.toLocaleString()} tok → 仅回传 ~1,800 tok 浓缩摘要`, 'ev');
+  }
+  stats();
+}
+
+async function doStep(g) {
+  switch (S.phase) {
+    case 'idle': {
+      activate('req'); setDetail('req');
+      log('── 新任务开始 ──', 'ev');
+      log('📥 用户请求：「做一个 claude.ai 的克隆」（报告 04 的实验设定）', 't');
+      S.phase = 'to-s1'; await sleep(g, 800); break;
+    }
+    case 'to-s1': { flow('req-s1'); activate('s1'); S.phase = 's1'; await sleep(g, 320); break; }
+    case 's1': {
+      S.iter++; stats();
+      log(`▶ <b>第 ${S.iter} 轮</b> · 组装上下文：系统提示词 + 项目记忆 + 对话历史 + 工具定义`, 't');
+      addUsage(4.2);
+      if (S.usage >= 70) { S.phase = 'cx'; break; }
+      setDetail('s1'); S.phase = 's1b'; await sleep(g, 850); break;
+    }
+    case 'cx': {
+      activate('cx'); setDetail('cx'); flow('cx-s1');
+      log(`⚠ 上下文用量 ${pct()}% ≥ 70% 阈值 → 触发上下文管理`, 'ev');
+      S.cxTries++;
+      let k;
+      if (S.mode === 'manual') {
+        k = await ask('上下文压力过高，选择管理策略：', [
+          { k: 'compact', label: '🗜 压缩 Compaction', sub: '摘要重启 · 保留决策 / 未解决 bug / 实现细节' },
+          { k: 'notes', label: '📝 结构化笔记', sub: '写入窗口外 NOTES.md · 窗口内只留指针' },
+          { k: 'subagent', label: '🧪 派子代理', sub: '干净窗口干脏活 · 只回传 1–2k token 摘要' }]);
+      } else { await sleep(g, 750); k = autoStrategy(); log(`（自动决策：${{ compact: '压缩', notes: '结构化笔记', subagent: '派子代理' }[k]}）`, 'ev'); }
+      if (k === 'cancel') throw 'cancel';
+      applyStrategy(k);
+      S.cxTries = 0;
+      S.phase = 's1b'; await sleep(g, 500); break;
+    }
+    case 's1b': { setDetail('s1'); S.phase = 'to-s2'; await sleep(g, 700); break; }
+    case 'to-s2': { flow('s1-s2'); activate('s2'); S.phase = 's2'; await sleep(g, 300); break; }
+    case 's2': {
+      setDetail('s2');
+      log('🧠 模型推理中… 读取上下文，决定下一步动作', 't');
+      S.phase = 'to-s3'; await sleep(g, 1000); break;
+    }
+    case 'to-s3': { flow('s2-s3'); activate('s3'); S.phase = 's3'; await sleep(g, 300); break; }
+    case 's3': {
+      setDetail('s3'); await sleep(g, 550);
+      let act;
+      if (S.mode === 'manual') {
+        act = await ask('解析输出：模型的下一步是？', [
+          { k: 'tool', label: '🛠 调用工具', sub: '例：edit_file · bash · browser' },
+          { k: 'text', label: '💬 文字回复', sub: '中间答复，追加进历史继续' },
+          { k: 'done', label: '🏁 宣告任务完成', sub: '交给停止条件逐项验收' }]);
+      } else { await sleep(g, 450); act = autoAction(); }
+      if (act === 'cancel') throw 'cancel';
+      S.action = act;
+      log(`🔀 解析输出 → <b>${act === 'tool' ? '工具调用' : act === 'done' ? '完成声明' : '文字回复'}</b>`, 't');
+      flow('s3-d1'); activate('d1'); setDetail('d1');
+      S.phase = act === 'tool' ? 'd1tool' : 'd1pass';
+      await sleep(g, 650); break;
+    }
+    case 'd1tool': { flow('d1-s4'); activate('s4'); S.phase = 'perm'; await sleep(g, 320); break; }
+    case 'd1pass': { flow('d1-stop'); activate('stop'); S.phase = 'stopchk'; await sleep(g, 320); break; }
+    case 'perm': {
+      setDetail('s4');
+      let deny;
+      if (S.mode === 'manual') {
+        const r = await ask('权限检查：edit_file 是写操作，是否放行？', [
+          { k: 'allow', label: '✓ 允许执行', sub: '已获授权的写操作' },
+          { k: 'deny', label: '✗ 拒绝', sub: '拒绝也是结果：回填让模型调整' }]);
+        if (r === 'cancel') throw 'cancel';
+        deny = r === 'deny';
+      } else { await sleep(g, 750); deny = Math.random() < 0.18; }
+      S.deny = deny;
+      if (deny) {
+        log('🔐 权限检查 → <b>✗ 已拒绝</b>：写操作未获批准', 'err');
+        flow('s4-s6', 'danger'); activate('s6'); setDetail('s6');
+        addUsage(0.5); S.phase = 'fb2';
+      } else {
+        log('🔐 权限检查 → ✓ 放行（已授权写操作）', 't');
+        S.phase = 'exec'; await sleep(g, 380);
+      }
+      break;
+    }
+    case 'exec': {
+      const t = TOOLS[Math.floor(Math.random() * TOOLS.length)];
+      S.tools++; stats();
+      flow('s4-s5'); activate('s5'); setDetail('s5');
+      log(`📦 沙箱执行 <b>${t.n}</b>：${t.d} …`, 't');
+      await sleep(g, 1150);
+      const add = t.add[0] + Math.random() * (t.add[1] - t.add[0]);
+      const toks = Math.round(add * 2000 / 100) * 100;
+      log(`↩ 结果：${t.res}（+${toks.toLocaleString()} tok）`, 'ok');
+      addUsage(add);
+      S.phase = 'fb'; break;
+    }
+    case 'fb': { flow('s5-s6'); activate('s6'); setDetail('s6'); await sleep(g, 480); S.phase = 'fb2'; break; }
+    case 'fb2': {
+      if (!S.deny) flow('s6-s1');
+      log('↩ 结果回填 → 进入下一轮循环', 't');
+      S.deny = false;
+      await sleep(g, 560); S.phase = 's1'; break;
+    }
+    case 'stopchk': {
+      setDetail('stop');
+      let pass = false;
+      if (S.action === 'done') {
+        if (S.mode === 'manual') {
+          pass = S.iter >= 3;
+          if (!pass) log(`⛔ 停止条件验收：功能清单仍有 ${214 - S.iter * 47} 项 passes:false → <b>拒绝过早完成</b>（这正是失败模式②）`, 'err');
+        } else {
+          pass = S.iter >= 4 && (Math.random() < 0.6 || S.iter >= 9);
+          if (!pass) log(`⛔ 停止条件：says_done 但功能清单仅 ${Math.min(214, S.iter * 40 + 30)}/214 项通过 → 继续循环`, 'ev');
+        }
+      } else {
+        log('💬 文字回复：追加进历史，任务继续', 't');
+        if (S.mode === 'auto') log('⛔ 未满足停止条件（非完成声明）→ 继续循环', 'ev');
+        else log('⛔ 停止条件未满足 → 继续循环', 'ev');
+      }
+      await sleep(g, 850);
+      if (pass) { S.phase = 'done'; }
+      else { flow('stop-s1'); S.phase = 's1'; }
+      break;
+    }
+    case 'done': {
+      flow('stop-done'); activate('done'); setDetail('done');
+      log('✅ 停止条件满足（says_done ∧ budget_ok）→ <b>任务完成</b>', 'ok');
+      log(`🎉 共 ${S.iter} 轮 · ${S.tools} 次工具调用 · 峰值上下文 ${Math.round(S.peak)}% · 压缩 ${S.compacts} 次`, 'ok');
+      N['done'].classList.add('party');
+      S.done = true; S.running = false; stats(); updateControls();
+      break;
+    }
+  }
+}
+
+async function runLoop(g) {
+  try {
+    while (S.running && !S.done) await doStep(g);
+  } catch (e) {
+    if (e !== 'cancel') console.error(e);
+  }
+  if (!S.done) { S.running = false; updateControls(); }
+}
+
+/* 独立演示：随时体验「上下文管理」分支 */
+let cxDemoBusy = false;
+async function cxBranchDemo() {
+  if (cxDemoBusy || S.running) return;
+  cxDemoBusy = true;
+  activate('cx'); setDetail('cx'); flow('cx-s1');
+  log(`⚠ 手动演示：上下文用量 ${pct()}% → 进入上下文管理分支`, 'ev');
+  let k = 'compact';
+  if (S.mode === 'manual') {
+    k = await ask('上下文压力过高，选择管理策略：', [
+      { k: 'compact', label: '🗜 压缩 Compaction', sub: '摘要重启 · 保留决策 / 未解决 bug / 实现细节' },
+      { k: 'notes', label: '📝 结构化笔记', sub: '写入窗口外 NOTES.md · 窗口内只留指针' },
+      { k: 'subagent', label: '🧪 派子代理', sub: '干净窗口干脏活 · 只回传 1–2k token 摘要' }]);
+    if (k === 'cancel') { cxDemoBusy = false; return; }
+  } else {
+    log('（自动决策：压缩——到达 70% 阈值时的常见动作）', 'ev');
+  }
+  applyStrategy(k);
+  await new Promise(r => setTimeout(r, 500));
+  if (!S.running) { document.querySelectorAll('.lnode.active').forEach(n => n.classList.remove('active')); setDetail('intro'); }
+  cxDemoBusy = false;
+}
+$id('btnCxDemo').addEventListener('click', cxBranchDemo);
+
+btnPlay.addEventListener('click', () => {
+  if (S.done || S.running) { if (S.running) pauseLoop(); return; }
+  S.running = true; updateControls();
+  runLoop(++runToken);
+});
+btnStep.addEventListener('click', () => {
+  if (S.running || S.done) return;
+  const g = ++runToken;
+  doStep(g).catch(e => { if (e !== 'cancel') console.error(e); });
+});
+btnReset.addEventListener('click', () => {
+  runToken++;
+  if (pendingAsk) { const p = pendingAsk; pendingAsk = null; p('cancel'); }
+  setChoicesEmpty();
+  freshState();
+  Object.values(edgeEls).forEach(e => e.classList.remove('flowing', 'done', 'danger'));
+  Object.values(N).forEach(n => n.classList.remove('active', 'visited', 'party'));
+  consoleEl.innerHTML = '';
+  S.usage = 12; meter(); stats();
+  setDetail('intro');
+  log('↺ 已重置。点「▶ 自动演示」重新运行，或切到「手动驾驶」亲自决策。', 'ev');
+  updateControls();
+});
+segSpeed.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  segSpeed.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  S.speed = +b.dataset.v;
+});
+segMode.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  segMode.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  S.mode = b.dataset.v;
+  if (S.mode === 'auto' && pendingAsk) {
+    const p = pendingAsk; pendingAsk = null; setChoicesEmpty(); p('cancel');
+  }
+  log(S.mode === 'manual' ? '✋ 手动驾驶：分叉口会停下来等你决策' : '🤖 自动演示：harness 自主决策', 'ev');
+});
+Object.entries(N).forEach(([name, node]) => {
+  if (name === 'legend') return;
+  node.addEventListener('click', () => { if (!pendingAsk) setDetail(name); });
+});
+
+/* 初始化 */
+meter(); stats(); setDetail('intro');
+log('控制台就绪。这个控制台本身就是 harness 的「执行轨迹」——报告 02 就是用它来做工具归因的。', 'ev');
+updateControls();
+
+/* ================================================================
+   六、崩溃续跑模拟
+================================================================ */
+(function () {
+  const btn = $id('btnCrash'), btnR = $id('btnCrashReset');
+  const cbH = $id('cbHarness'), cbB = $id('cbHarnessB');
+  const cbS = $id('cbSession'), slog = $id('cbSessionLog');
+  const ca1 = $id('ca1'), ca2 = $id('ca2'), note = $id('crashNote');
+  let timer = null, step = 0;
+  function setNote(html) { note.innerHTML = html; }
+  function reset() {
+    clearTimeout(timer); step = 0;
+    cbH.classList.remove('dead'); cbB.hidden = true;
+    cbS.classList.remove('dead');
+    ca1.classList.remove('hot'); ca2.classList.remove('hot');
+    slog.innerHTML = '<div>#12 model.call → tool:bash</div><div>#13 tool.result (ok, 1.2s)</div><div>#14 model.call → tool:edit_file</div>';
+    btn.hidden = false; btnR.hidden = true;
+    setNote('实例 A 正在运行。点「⚡ 模拟 Harness 崩溃」，看为什么 <b>Session 才是必须存活的「真实状态」</b>，而 harness 只是可随时替换的「牛」。<b>HARNESS</b> 调用模型、路由工具的循环。');
+  }
+  btn.addEventListener('click', () => {
+    btn.hidden = true;
+    step = 1;
+    cbH.classList.add('dead');
+    ca1.classList.remove('hot');
+    setNote('💥 <b>实例 A 已崩溃终止</b>——但注意：Session 日志安然无恙，因为它存活于上下文窗口之外；Sandbox 也不受影响。harness 不留任何本地状态，所以没有任何东西「丢在它肚子里」。');
+    timer = setTimeout(() => {
+      step = 2;
+      cbB.hidden = false;
+      ca1.classList.add('hot');
+      slog.insertAdjacentHTML('beforeend', '<div class="hot">#15 wake(sessionId) → 从断点续跑</div>');
+      setNote('🚀 <b>实例 B 启动</b>：凭 <b>wake(sessionId)</b> 从 Session 日志的断点续跑——大脑可以用 getEvents() 从上次停止处切片回读。实例 A 不需要抢救，直接换一头「牛」。');
+      timer = setTimeout(() => {
+        step = 3;
+        ca1.classList.remove('hot'); ca2.classList.add('hot');
+        cbB.querySelector('.cd').textContent = '已从事件 #14 断点续跑 · 状态零迁移。';
+        setNote('✅ 续跑完成。这正是 p95 TTFT −90%+ 的来源：<b>无状态实例随起随用、横向扩容</b>；也是「结构性安全」的底座——状态只在 Session 与 Sandbox 的接口后面流动。');
+        btnR.hidden = false;
+      }, 1600);
+    }, 1500);
+  });
+  btnR.addEventListener('click', reset);
+})();
+
+observeRv();
+</script>
+</body>
+</html>

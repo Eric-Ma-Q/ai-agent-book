@@ -1,0 +1,90 @@
+{
+ "version": 1,
+ "entries": {
+  "471ecedb8a824e6f8dcd": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Theuser is asking about the coreformula of an Agent andtherolesof its three components. Letme search the book for thiscontent.Let me search for relevantterms.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent 核心公式\"}",
+        "name": "search_book"
+       },
+       "id": "call_a8df35e5127749da929cca97",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent = LLM + 规划 + 记忆 + 工具\"}",
+        "name": "search_book"
+       },
+       "id": "call_41ea159c8c7f43f68a439bde",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1169,
+     "cached_tokens": 1024,
+     "completion_tokens": 125,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 2086,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "8d0aa4741a4bab506509": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme read the relevant section toget the exactquotes.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"现代-agent--llm--上下文--工具\"}",
+        "name": "read_section"
+       },
+       "id": "call_a3e1c1db66264adc939cbe1c",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 3072,
+     "cached_tokens": 2816,
+     "completion_tokens": 83,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 2702,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "74d19f837d16587eafca": [
+   {
+    "message": {
+     "content": "## 结论\n\n书中给出的 Agent 核心公式是 **Agent = LLM + 上下文 + 工具**，也可以直观地理解为 **大脑 + 眼睛 + 手脚**。三个组成部分分别对应决策、感知和行动三类职责。\n\n## 分点展开\n\n**1. 核心公式**\n\n> 现代 Agent 的最小工程实现可以用一个简洁的公式来表达：Agent = LLM（大语言模型，Large Language Model）+ 上下文 + 工具。\n\n需要说明两点：这里的加号表示**工程组件的组合**，不是强化学习中的形式化定义；而且这个公式只描述 **Agent 边界之内**的实现，不包含与之交互的 Environment（环境）。\n\n**2. LLM —— 大脑（决策）**\n\nLLM 不只是模型参数，而是 Agent 的整个决策内核，负责理解意图、思考规划、做出判断。它的能力来自两部分：预训练积累的世界知识与语言能力，以及后训练固化的决策策略。\n\n> LLM 是 Agent 的大脑：它不只是一组模型参数，而是 Agent 的整个决策内核——理解意图、思考规划、做出判断。\n\n在学术概念上对应**策略（Policy）**——决定\"下一步做什么\"的决策逻辑。\n\n**3. 上下文 —— 眼睛（感知）**\n\n上下文不只是输入给模型的文本，而是 Agent 在每个决策点收到并保留的信息表示，包括环境观察、用户记忆、领域知识、自身状态和任务进展。\n\n> 上下文是 Agent 的眼睛：它不只是输入给模型的那段文本，而是 Agent 在每个决策点收到并保留的信息表示——来自环境的观察、用户记忆、领域知识、自身状态和任务进展。\n\n在学术概念上对应**观察与历史**——把环境返回的观察与已有历史组织成当前决策所需的信息。\n\n**4. 工具 —— 手脚（行动）**\n\n工具是 Agent 用来感知或改变外部世界的接口，包括工具定义、调用协议和适配器，从预定义的工具调用到动态生成代码，从委托子 Agent 协作到主动与用户沟通。\n\n> 工具是 Agent 的手脚：这里的\"工具\"指 Agent 用来感知或改变外部世界的接口，包括工具定义、调用协议和适配器。\n\n在学术概念上对应**观察/行动接口**——规定 Agent 可以读取哪些观察、发出哪些行动，以及接口采用什么格式。\n\n## 补充说明\n\n书中还提到，这个公式可以映射到强化学习的策略与交互接口，但不是严格的一一等同关系：上下文是具体观察和历史在 Agent 内部的表示，并不等于整个观察空间；工具背后的对象仍属于环境。另外，生产形态下公式会进一步展开为 **Agent = Model + Harness**，其中\"上下文 + 工具\"构成最小 Harness，生产系统还会加入约束、验证和纠正三层保障机制。\n\n## 引用\n\n- [[ch1#现代-agent--llm--上下文--工具|Agent = LLM + 上下文 + 工具]]\n- [[ch1#现代-agent--llm--上下文--工具|LLM 是 Agent 的大脑……]]\n- [[ch1#现代-agent--llm--上下文--工具|上下文是 Agent 的眼睛……]]\n- [[ch1#现代-agent--llm--上下文--工具|工具是 Agent 的手脚……]]\n- [[ch1#harness-工程模型之外的竞争力|Harness 的核心是原公式中的\"上下文管理 + 工具接口\"……]]",
+     "reasoning_content": "Theuser asks aboutthe core formula ofAgent and therolesof itsthree components. I have theanswerfrom the book. Let meprovide a clear answer withcitations.The core formula is: Agent = LLM +上下文 + 工具(or大脑 + 眼睛 +手脚).\n\nLetme structurethe answer.",
+     "role": "assistant"
+    },
+    "usage": {
+     "prompt_tokens": 3998,
+     "cached_tokens": 3840,
+     "completion_tokens": 786,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 12000,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "stop"
+   }
+  ]
+ }
+}

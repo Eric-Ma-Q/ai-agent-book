@@ -1,0 +1,44 @@
+{
+  "format": "pptx",
+  "verdict": "pass",
+  "checks": [
+    {
+      "id": "package",
+      "status": "pass"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u6a21\u578b\u4e4b\u5916\u7684\u90a3\u5c42\u5de5\u7a0b"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "47% \u2192 67%"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "slack_search_messages"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "1,949"
+    },
+    {
+      "id": "contains",
+      "status": "pass",
+      "text": "\u628a\u9a8c\u8bc1\u710a\u8fdb\u5faa\u73af"
+    },
+    {
+      "id": "count",
+      "status": "pass",
+      "expected": 16,
+      "actual": 16
+    }
+  ],
+  "summary": {
+    "slides": 16
+  }
+}

@@ -1,0 +1,13 @@
+/* Header button for the Harness archive. Only adds the selected state and a
+   tighter size on narrow phones; the base .icon-button stays untouched. */
+.harness-entry[aria-current='page'] {
+  background: var(--surface);
+  border-color: var(--muted);
+}
+
+@media (max-width: 400px) {
+  .harness-entry {
+    width: 36px;
+    height: 36px;
+  }
+}

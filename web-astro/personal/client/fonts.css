@@ -1,0 +1,6 @@
+/* The reader sets body text in a serif stack, which renders Chinese in Songti.
+   Reuse each locale's sans (黑体) stack instead. `html:root:root` outranks the
+   upstream per-locale `:root:lang(...)` rules that also set --serif. */
+html:root:root {
+  --serif: var(--sans);
+}

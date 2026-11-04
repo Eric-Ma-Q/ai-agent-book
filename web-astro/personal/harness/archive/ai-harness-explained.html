@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness 深度解读：以 Anthropic 工程报告为主线</title>
+<style>
+  :root {
+    --ink: #26241f;
+    --ink-soft: #5c574c;
+    --paper: #faf8f4;
+    --card: #ffffff;
+    --accent: #b45309;
+    --accent-deep: #8a3e06;
+    --accent-soft: #fdf1e3;
+    --line: #e6e0d4;
+    --code-bg: #2b2822;
+    --code-ink: #e8e2d5;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    font-size: 17px;
+    line-height: 1.95;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #f3d9b8; }
+  main { max-width: 800px; margin: 0 auto; padding: 56px 24px 96px; }
+  h1, h2, h3, h4 { font-family: "Noto Serif SC", "Songti SC", "STSong", serif; line-height: 1.5; }
+  h1 { font-size: 33px; font-weight: 900; margin: 8px 0 6px; letter-spacing: 0.5px; }
+  h2 {
+    font-size: 25px; font-weight: 700; margin: 72px 0 20px;
+    padding-top: 28px; border-top: 1px solid var(--line);
+  }
+  h2 .sec-no {
+    display: block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 13px; font-weight: 600; letter-spacing: 3px;
+    color: var(--accent); margin-bottom: 6px;
+  }
+  h3 { font-size: 20px; margin: 40px 0 14px; }
+  h4 { font-size: 17px; margin: 26px 0 10px; }
+  p { margin: 0 0 18px; }
+  strong { color: var(--accent-deep); }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #f6e3c8 62%); }
+  a { color: var(--accent-deep); text-decoration: none; border-bottom: 1px solid #e3c9a8; }
+  a:hover { border-bottom-color: var(--accent-deep); }
+  sup a { border: none; font-size: 12px; margin: 0 1px; }
+  code {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.86em; background: #f1ece1; border-radius: 5px; padding: 1px 6px;
+  }
+
+  /* ---------- 头部 ---------- */
+  .kicker {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 13px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase;
+  }
+  .subtitle { font-size: 18px; color: var(--ink-soft); margin: 10px 0 26px; line-height: 1.8; }
+  .meta {
+    font-size: 13.5px; color: var(--ink-soft); display: flex; flex-wrap: wrap;
+    gap: 6px 18px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .meta b { font-weight: 600; color: var(--ink); }
+
+  /* ---------- 术语卡 ---------- */
+  .glossary {
+    background: var(--accent-soft); border: 1px solid #f0dcc0; border-radius: 12px;
+    padding: 20px 24px; margin: 32px 0; font-size: 15.5px;
+  }
+  .glossary h3 { margin: 0 0 10px; font-size: 15px; letter-spacing: 2px; color: var(--accent-deep); font-family: inherit; }
+  .glossary dl { margin: 0; }
+  .glossary dt { font-weight: 700; margin-top: 10px; }
+  .glossary dd { margin: 2px 0 0; color: var(--ink-soft); }
+
+  /* ---------- 引用块 ---------- */
+  blockquote {
+    margin: 28px 0; padding: 4px 24px; border-left: 3px solid var(--accent);
+    color: var(--ink-soft); font-size: 16px;
+  }
+  blockquote .who { display: block; margin-top: 8px; font-size: 13.5px; }
+
+  /* ---------- 报告解读卡 ---------- */
+  .report {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 26px 28px 20px; margin: 34px 0;
+  }
+  .report-head { border-bottom: 1px dashed var(--line); padding-bottom: 14px; margin-bottom: 16px; }
+  .report-head .rp-line {
+    display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px; letter-spacing: 1px;
+  }
+  .rp-no { color: var(--accent-deep); font-weight: 700; }
+  .rp-date { color: var(--ink-soft); }
+  .report-head h3 { margin: 8px 0 4px; font-size: 21px; }
+  .report-head h3 a { border: none; }
+  .rp-tag { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+  .rp-tag b { color: var(--accent-deep); font-weight: 600; }
+  .report ul { padding-left: 22px; }
+  .report li { margin-bottom: 8px; }
+  .takeaway {
+    margin-top: 18px; padding: 12px 18px; background: var(--accent-soft);
+    border-radius: 10px; font-size: 15.5px;
+  }
+  .takeaway b { color: var(--accent-deep); }
+
+  /* ---------- 弹窗备注 ---------- */
+  .note-term {
+    color: var(--accent-deep);
+    border-bottom: 2px dotted var(--accent);
+    cursor: pointer;
+    padding-bottom: 1px;
+  }
+  .note-term:hover, .note-term.active { background: var(--accent-soft); }
+  .note-pop {
+    position: absolute; z-index: 60;
+    width: min(430px, calc(100vw - 32px));
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: 0 14px 36px rgba(38, 36, 31, 0.18);
+    padding: 18px 22px 12px; text-align: left;
+    font-size: 14px; line-height: 1.8; display: none;
+  }
+  .note-pop.open { display: block; }
+  .note-pop h4 { margin: 0 0 10px; font-size: 15px; color: var(--accent-deep); line-height: 1.6; }
+  .note-pop p { margin: 0 0 9px; }
+  .note-pop b { color: var(--accent-deep); }
+  .note-pop .hint {
+    margin: 10px -22px -12px; padding: 8px 22px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  .note-pop .more { margin: 4px 0 10px; }
+  .note-pop .more a { font-size: 13px; }
+
+  /* ---------- 顶部标签页 ---------- */
+  .tabs {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    padding: 12px 0; margin: 24px 0 4px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    font-size: 14px; font-weight: 600; letter-spacing: 1px;
+    padding: 8px 20px; border-radius: 999px; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink-soft);
+  }
+  .tab:hover { border-color: var(--accent); color: var(--accent-deep); }
+  .tab.active { background: var(--ink); border-color: var(--ink); color: #fdf9f2; }
+  [hidden] { display: none !important; }
+  [id] { scroll-margin-top: 64px; }
+  .cases-title { margin-top: 16px; border-top: none; padding-top: 0; }
+  .back-link { text-align: center; margin: 48px 0 0; }
+
+  /* ---------- 循环示意图 ---------- */
+  figure.diagram { margin: 36px 0; }
+  .diagram { text-align: center; }
+  .diagram figcaption { font-size: 13.5px; color: var(--ink-soft); margin-top: 14px; line-height: 1.7; }
+  .flow-box {
+    display: inline-block; background: var(--card); border: 1.5px solid var(--ink);
+    border-radius: 10px; padding: 10px 22px; font-size: 15px; font-weight: 600;
+  }
+  .flow-arrow { font-size: 20px; color: var(--accent); margin: 6px 0; line-height: 1.2; }
+  .harness-frame {
+    border: 2px dashed var(--accent); border-radius: 14px; padding: 18px 20px 14px;
+    margin: 0 auto; max-width: 540px; text-align: left; position: relative;
+  }
+  .harness-frame > .tag {
+    position: absolute; top: -12px; left: 18px; background: var(--paper); padding: 0 10px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px;
+    font-weight: 700; letter-spacing: 2px; color: var(--accent-deep);
+  }
+  .loop-step { display: flex; gap: 10px; align-items: baseline; font-size: 15px; padding: 6px 0; }
+  .loop-step .n {
+    flex: 0 0 auto; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px; font-weight: 700; color: var(--accent);
+  }
+  .model-chip {
+    display: block; text-align: center; background: var(--ink); color: #fdf9f2;
+    border-radius: 8px; padding: 8px 16px; font-size: 15px; font-weight: 700;
+    margin: 10px auto; max-width: 340px;
+  }
+  .model-chip small { display: block; font-weight: 400; font-size: 12.5px; color: #cfc6b4; }
+
+  /* ---------- 代码块 ---------- */
+  pre {
+    background: var(--code-bg); color: var(--code-ink); border-radius: 12px;
+    padding: 20px 22px; overflow-x: auto;
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13.5px; line-height: 1.8;
+  }
+  pre .cm { color: #97917f; }
+  pre .kw { color: #f0b26a; }
+  pre .fn { color: #a8c8f0; }
+
+  /* ---------- 表格 ---------- */
+  .tblwrap { overflow-x: auto; margin: 28px 0; -webkit-overflow-scrolling: touch; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 28px 0; font-size: 15px;
+    background: var(--card); border-radius: 10px; overflow: hidden;
+  }
+  .tblwrap > table { margin: 0; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.7; }
+  th { background: #f3efe6; font-weight: 700; font-size: 14px; letter-spacing: 1px; }
+  tr:last-child td { border-bottom: none; }
+  td.k { white-space: nowrap; font-weight: 600; }
+  td.carry { background: #f3efe6; }
+
+  /* ---------- 大数字卡片 ---------- */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 14px; margin: 32px 0;
+  }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .stat .num {
+    font-family: "Noto Serif SC", "Songti SC", serif; font-size: 28px;
+    font-weight: 900; color: var(--accent-deep); line-height: 1.3;
+  }
+  .stat .desc { font-size: 13.5px; color: var(--ink-soft); line-height: 1.7; margin-top: 6px; }
+
+  /* ---------- 清单 ---------- */
+  ul.checklist { padding-left: 0; list-style: none; }
+  ul.checklist li { padding: 10px 0 10px 34px; position: relative; border-bottom: 1px dashed var(--line); }
+  ul.checklist li:last-child { border-bottom: none; }
+  ul.checklist li::before { content: "✓"; position: absolute; left: 6px; color: var(--accent); font-weight: 800; }
+
+  /* ---------- 结语与参考 ---------- */
+  .finale { background: var(--ink); color: #efe9dc; border-radius: 16px; padding: 30px 32px; margin: 56px 0; }
+  .finale h2 { border: none; color: #fdf9f2; margin: 0 0 14px; padding: 0; }
+  .finale p { color: #cfc6b4; }
+  .finale strong { color: #f0b26a; }
+  .finale em { background: none; color: #f0b26a; font-weight: 600; }
+  .refs { font-size: 14.5px; color: var(--ink-soft); line-height: 1.9; }
+  .refs ol { padding-left: 22px; margin: 12px 0 0; }
+  .refs li { margin-bottom: 10px; }
+  footer {
+    margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
+    font-size: 13px; color: var(--ink-soft); text-align: center;
+  }
+  /* ---------- 深挖 tab：实践难点的 SVG 图例 ---------- */
+  .more { margin: 14px 0 0; font-size: 14.5px; }
+  .dg { width: 100%; height: auto; display: block; margin: 0 auto; }
+  .dg text { font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+  .dg .t { font-size: 13.5px; fill: var(--ink); }
+  .dg .t-soft { font-size: 12.5px; fill: var(--ink-soft); }
+  .dg .t-bold { font-weight: 700; }
+  .dg .t-no { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 700; letter-spacing: 2px; fill: var(--accent-deep); }
+  .dg .t-danger { fill: #a63a2a; }
+  .dg .box { fill: var(--card); stroke: #d8d0bf; stroke-width: 1.2; }
+  .dg .box-amber { fill: var(--accent-soft); stroke: #e3c9a8; stroke-width: 1.2; }
+  .dg .box-danger { fill: #f9ece7; stroke: #d8a08e; stroke-width: 1.2; }
+  .dg .ln { stroke: #a89f8a; stroke-width: 1.4; fill: none; }
+  .dg .ln-dash { stroke: #a89f8a; stroke-width: 1.2; fill: none; stroke-dasharray: 5 4; }
+  .dg .ln-danger { stroke: #c05b45; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+  .dg .curve { stroke: var(--accent); stroke-width: 2.5; fill: none; }
+  .dg .bar { fill: #eadfc8; stroke: #d8d0bf; stroke-width: 0.8; }
+  .dg .pin { fill: var(--accent-deep); }
+  .dg .pin-t { fill: #fdf9f2; font-size: 12px; font-weight: 700; }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 26px; }
+    body { font-size: 16px; }
+    .harness-frame { padding: 16px 14px 10px; }
+    .report { padding: 20px 16px 14px; }
+  }
+</style>
+<!-- theme-patch:start -->
+<style id="themePatchStyle">
+/* ===== theme patch ===== */
+:where(body *){transition:background-color .22s ease,border-color .22s ease,color .22s ease}
+html.dark{color-scheme:dark}
+#themeFab{position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#themeFab:hover{transform:scale(1.08)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+
+html.dark{--ink:#e9e4d7;--ink-soft:#a8a193;--paper:#171512;--card:#211f19;--accent:#e29b52;--accent-deep:#f0b670;
+  --accent-soft:rgba(226,155,82,.14);--line:#3a362b;--code-bg:#0f0d0a;--code-ink:#d9d3c3}
+html.dark ::selection{background:rgba(226,155,82,.35)}
+html.dark em{background:linear-gradient(transparent 62%,rgba(226,155,82,.25) 62%)}
+html.dark a{border-bottom-color:rgba(226,155,82,.45)}
+html.dark code{background:#2b2820}
+html.dark .glossary{border-color:rgba(226,155,82,.3)}
+html.dark .note-pop{box-shadow:0 14px 36px rgba(0,0,0,.55)}
+html.dark th{background:#2b2820}
+html.dark .dg .t-danger{fill:#e08a72}
+html.dark .dg .box{stroke:#4a4536}
+html.dark .dg .box-amber{stroke:rgba(226,155,82,.5)}
+html.dark .dg .box-danger{fill:rgba(179,64,42,.2);stroke:rgba(224,138,114,.5)}
+html.dark .dg .ln,html.dark .dg .ln-dash{stroke:#5a5545}
+html.dark .dg .ln-danger{stroke:#d97a5f}
+html.dark .dg .bar{fill:#2e2a20;stroke:#4a4536}
+html.dark .dg .pin-t{fill:#211f19}
+html.dark td.carry{background:#26231b}
+
+html.dark .tab.active,html.dark .model-chip{color:#171512}
+html.dark .model-chip small{color:#5c574c}
+html.dark .finale{background:#26231b;border:1px solid var(--line)}
+</style>
+<script id="themePatch">
+(function(){
+  var KEY='harness-theme';
+  var root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){
+    root.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeFab');
+    if(b){var l=t==='dark'?'切换为白天模式':'切换为黑夜模式';b.setAttribute('aria-label',l);b.setAttribute('title',l);}
+  }
+  apply(cur());
+  function init(){
+    if(document.getElementById('themeFab'))return;
+    var b=document.createElement('button');
+    b.id='themeFab';b.type='button';
+    b.innerHTML='<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    b.addEventListener('click',function(){
+      var t=root.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,t)}catch(e){}
+      apply(t);
+    });
+    (document.body||document.documentElement).appendChild(b);
+    apply(cur());
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  try{
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});
+    window.addEventListener('storage',function(e){if(e.key===KEY&&(e.newValue==='dark'||e.newValue==='light'))apply(e.newValue)});
+  }catch(e){}
+})();
+</script>
+<!-- theme-patch:end -->
+<!-- home-patch:start -->
+<style id="homePatchStyle">
+#homeFab{position:fixed;left:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#homeFab:hover{transform:scale(1.08)}
+#homeFab svg{width:18px;height:18px}
+@media print{#homeFab{display:none}}
+</style>
+<script id="homePatch">
+(function(){
+  function init(){
+    if(document.getElementById('homeFab'))return;
+    var a=document.createElement('a');
+    a.id='homeFab';a.href='index.html';a.title='返回页面总览';a.setAttribute('aria-label','返回页面总览');
+    a.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+    (document.body||document.documentElement).appendChild(a);
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+})();
+</script>
+<!-- home-patch:end -->
+</head>
+<body>
+<main>
+
+  <p class="kicker">AI Engineering · Deep Read</p>
+  <h1>Harness 深度解读：以 Anthropic 工程报告为主线</h1>
+  <p class="subtitle">过去 18 个月，Anthropic 用五份工程报告回答了同一个问题：如何把"会预测文本的模型"变成"能干活的智能体"。这份报告把它们逐篇拆开、连成一条演进主线，并盘点 OpenAI、Lilian Weng 与学术界等其他方向的回应。</p>
+  <div class="meta">
+    <span>版本：<b>第二版（重构稿）</b></span>
+    <span>写作日期：<b>2026-10-02</b></span>
+    <span>阅读时长：<b>约 25 分钟</b></span>
+    <span>主线：<b>Anthropic 五份报告 → 业界回应 → 交叉共识</b></span>
+  </div>
+
+  <nav class="tabs" aria-label="页面切换">
+    <button class="tab active" data-tab="main" type="button">正文</button>
+    <button class="tab" data-tab="cases" type="button">深挖案例 · 什么不进窗口</button>
+    <button class="tab" data-tab="selfimprove" type="button">深挖 · 自我改进与元 harness</button>
+    <button class="tab" data-tab="mechanics" type="button">深挖 · 腐烂的机理</button>
+    <button class="tab" data-tab="practice" type="button">深挖 · 实践难点</button>
+    <button class="tab" data-tab="evolution" type="button">深挖 · 两条经验的演化</button>
+  </nav>
+
+  <div id="tab-main">
+
+  <p>如果你只读一家公司的工程博客来理解 agent 落地，Anthropic 大概是最合适的选择：他们既造模型，又运营着被广泛模仿的 agent 产品（<span class="note-term" id="note-term-claudecode" data-note="note-pop-claudecode" role="button" tabindex="0" aria-expanded="false">Claude Code</span>），还把踩坑过程公开写成长文。更重要的是，这五份报告合起来恰好是一条完整的演进线——<em>从"什么是 agent"的原则宣言，一路走到"harness 是基础设施"的架构主张</em>。</p>
+
+  <div class="glossary">
+    <h3>术语速查卡</h3>
+    <dl>
+      <dt>Harness（挽具 / 运行框架）</dt>
+      <dd>包裹在模型外面、让模型真正完成任务的整套运行时软件。模型只会"读文本、产文本"，其余一切——执行工具、管理上下文、控制权限、判断停止——都由 harness 完成。</dd>
+      <dt>Scaffold（脚手架）</dt>
+      <dd>agent 文献中对 harness 的近义说法。</dd>
+      <dt>ACI（Agent–Computer Interface）</dt>
+      <dd>为模型（而非人类）设计的工具接口，源自普林斯顿 SWE-agent 论文，被 Anthropic 报告沿用并推广。</dd>
+      <dt>Context Engineering（上下文工程）</dt>
+      <dd>在整个推理过程中持续策展"喂给模型什么"的工程，harness 的核心职责之一。</dd>
+      <dt>Meta-harness</dt>
+      <dd>不绑定任何具体 harness 实现、只对接口有主见的上层框架——Anthropic Managed Agents 的自我定位。</dd>
+    </dl>
+  </div>
+
+  <h2><span class="sec-no">01 / PRIMER</span>一分钟的 harness 入门</h2>
+
+  <p>Harness 的本义是<strong>马具</strong>：马提供动力，挽具决定动力往哪使、能不能被控制。软件工程早年借走这个词造了 <code>test harness</code>（测试脚手架）；AI 时代它指<em>包裹在模型外面、把"预测能力"转化为"工作成果"的整套运行框架</em>。一个编程智能体的核心循环长这样：</p>
+
+  <figure class="diagram">
+    <div class="flow-box">用户请求</div>
+    <div class="flow-arrow">↓</div>
+    <div class="harness-frame">
+      <span class="tag">HARNESS — 运行框架</span>
+      <div class="loop-step"><span class="n">STEP 1</span><span>组装上下文：系统提示词 + 项目记忆 + 对话历史 + 工具定义</span></div>
+      <div class="flow-arrow" style="margin:2px 0;">↓</div>
+      <div class="model-chip">模型（大脑）<small>读入上下文，决定下一步动作</small></div>
+      <div class="flow-arrow" style="margin:2px 0;">↓</div>
+      <div class="loop-step"><span class="n">STEP 2</span><span>解析输出：是文字回复，还是工具调用？</span></div>
+      <div class="flow-arrow" style="margin:2px 0;">↓</div>
+      <div class="loop-step"><span class="n">STEP 3</span><span>执行工具：权限检查 → <span class="note-term" id="note-term-sandbox" data-note="note-pop-sandbox" role="button" tabindex="0" aria-expanded="false">沙箱执行</span> → 结果喂回模型</span></div>
+      <div class="flow-arrow" style="margin:2px 0;">↻ 回到 STEP 1，循环直到满足停止条件</div>
+    </div>
+    <div class="flow-arrow">↓</div>
+    <div class="flow-box" style="border-style: dashed;">任务完成</div>
+    <figcaption>Agent harness 的工作循环。模型只出现在中间那一格，其余全是 harness 的职责。</figcaption>
+  </figure>
+
+<pre><span class="kw">while</span> <span class="kw">True</span>:
+    context = <span class="fn">build_context</span>(system_prompt, memory, history, tools)  <span class="cm"># ① 组装上下文</span>
+    response = <span class="fn">model</span>(context)            <span class="cm"># ② 模型决定下一步</span>
+    action = <span class="fn">parse</span>(response)              <span class="cm"># ③ 解析：文字回复，还是工具调用？</span>
+    <span class="kw">if</span> action.is_tool_call:
+        result = <span class="fn">sandbox.run</span>(action, permissions)  <span class="cm"># ④ 权限+沙箱执行</span>
+        history.<span class="fn">append</span>(result)                 <span class="cm"># ⑤ 结果喂回，继续循环</span>
+    <span class="kw">elif</span> action.says_done <span class="kw">and</span> budget_ok:
+        <span class="kw">break</span></pre>
+
+  <p>这份报告关心的问题只有一个：<em>这个循环外面的每一行代码，应该怎么写？</em>Anthropic 的五份报告，恰好是这个问题在不同阶段的答案。</p>
+
+  <h2><span class="sec-no">02 / ANTHROPIC</span>Anthropic 五份报告逐篇解读</h2>
+
+  <p>先把主线摆出来。下表是这五份报告（外加一份重要的多智能体实践文）的时间线——注意每份报告"回答的问题"是如何逐步从<strong>理念</strong>滑向<strong>基础设施</strong>的：</p>
+
+  <div class="tblwrap"><table>
+    <tr><th style="width:15%">时间</th><th style="width:33%">报告</th><th style="width:30%">回答的问题</th><th>关键词</th></tr>
+    <tr><td class="k">2024.12</td><td>Building Effective Agents</td><td>agent 到底是什么？什么时候该用？</td><td>workflow vs agent、ACI</td></tr>
+    <tr><td class="k">2025.06</td><td>How We Built Our Multi-Agent Research System</td><td>多 agent 值不值、怎么管？</td><td>orchestrator-worker、15× token</td></tr>
+    <tr><td class="k">2025.09</td><td>Writing Effective Tools for Agents</td><td>工具怎么为模型设计？</td><td>契约、评估驱动迭代</td></tr>
+    <tr><td class="k">2025.09</td><td>Effective Context Engineering for AI Agents</td><td>上下文怎么管？</td><td>context rot、压缩/笔记/子代理</td></tr>
+    <tr><td class="k">2025-11</td><td>Effective Harnesses for Long-Running Agents</td><td>跨会话长任务怎么不崩？</td><td>功能清单、小步提交、自我验证</td></tr>
+    <tr><td class="k">2026.04</td><td>Scaling Managed Agents</td><td>harness 如何基础设施化？</td><td>meta-harness、虚拟化三组件</td></tr>
+  </table></div>
+
+  <h3>2.1《Building Effective Agents》：给整个领域定坐标系</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">报告 01</span><span class="rp-date">2024-12-19</span><span class="rp-date">anthropic.com/research</span></div>
+      <h3><a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">Building Effective Agents ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>领域原则宣言。它定义了后来所有报告共用的语言。</p>
+    </div>
+    <p>这份报告最持久的贡献是一个<strong>区分</strong>：workflow 是"LLM 和工具走预定义代码路径"，agent 是"LLM 动态主导自己的流程和工具使用"。后者的一句话定义后来被引用无数次——<em>agent 就是在循环中根据环境反馈使用工具的 LLM</em><sup><a href="#ref-1">[1]</a></sup>。对照 01 节的示意图你会发现：这个循环本身，就是 harness。</p>
+    <p>报告给出了从简到繁的<span class="note-term" id="note-term-wfpatterns" data-note="note-pop-wfpatterns" role="button" tabindex="0" aria-expanded="false">五种 workflow 模式</span>（提示链、路由、并行化、编排者-工作者、评估者-优化者），但真正值得划线的是它对复杂度的态度：</p>
+    <ul>
+      <li><strong>能用单次 LLM 调用加检索解决的，就不要上 agent</strong>——agentic 系统用延迟和成本换表现，错误会累积；</li>
+      <li>三大原则：<strong>保持简洁、优先透明、精心打造 ACI</strong>（agent-computer interface）；</li>
+      <li>一个常被忽视的自白：作者在 <span class="note-term" id="note-term-swebench" data-note="note-pop-swebench" role="button" tabindex="0" aria-expanded="false">SWE-bench 项目</span>上，<em>花在优化工具上的时间超过了整体提示词</em>。</li>
+    </ul>
+    <p class="takeaway"><b>一句话 takeaway：</b>这份报告把"工具接口设计"提到了与提示词工程同级的地位——为后面四份报告里 harness 工程的每一项技术埋下了伏笔。</p>
+  </div>
+
+  <h3>2.2《Writing Effective Tools for Agents》：工具是给不确定的调用者写的契约</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">报告 02</span><span class="rp-date">2025-09-11</span><span class="rp-date">anthropic.com/engineering</span></div>
+      <h3><a href="https://www.anthropic.com/engineering/writing-tools-for-agents" target="_blank" rel="noopener">Writing Effective Tools for Agents — with Agents ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>ACI 的方法论落地。回答"为模型设计接口"到底意味着什么。</p>
+    </div>
+    <p>报告开头给工具下了一个精确定义：<strong>工具是确定性系统与非确定性 agent 之间的契约</strong><sup><a href="#ref-2">[2]</a></sup>。人类开发者面对同一个 API 只会以一种方式调用；agent 面对同一个任务却可能调工具、凭通用知识硬答、反问澄清，甚至幻觉出一个调用。所以工具文档不能再按"给开发者写 API 文档"的标准写。</p>
+    <ul>
+      <li><strong>方法论是评估驱动的闭环</strong>：快速原型 → 生成真实评估任务 → 程序化跑评估 → <span class="note-term" id="note-term-trace" data-note="note-pop-trace" role="button" tabindex="0" aria-expanded="false">用 Claude Code 分析执行轨迹并自动重构工具</span> → 循环。这份报告的建议本身大多来自这个过程。</li>
+      <li><strong>命名空间</strong>：像 <code>asana_projects_search</code> 这样的前缀帮 agent 选对工具；文档坦承前缀还是后缀更好"对评估结果有非平凡影响"，要靠自己的评测决定。</li>
+      <li><strong>返回有意义的上下文</strong>：避免 uuid、mime_type 这类技术标识符，优先自然语言名称；提供 <code>ResponseFormat</code> 枚举让 agent 自选详略。</li>
+      <li><strong>token 效率有实锤</strong>：Slack 工具的返回从 detailed（206 tokens）改出 concise 档（72 tokens），用量降到约三分之一；Claude Code 默认对工具结果做 25,000 token 截断。</li>
+      <li><strong>工具描述也要做提示词工程</strong>：他们发现 Claude 搜索时会在 query 后多余地追加年份"2025"导致结果偏移，改工具描述就纠正了；对工具描述的精细调整帮 Sonnet 3.5 在 SWE-bench Verified 达到当时 SOTA，且优化后的工具在 <span class="note-term" id="note-term-heldout" data-note="note-pop-heldout" role="button" tabindex="0" aria-expanded="false">held-out 测试</span>上超过了“专家”手写版本。</li>
+    </ul>
+    <p class="takeaway"><b>一句话 takeaway：</b>工具不是 API 的包装，而是被评测驱动的独立工程对象——"改工具"和"改提示词"一样，是提升 agent 成绩的一等公民手段。</p>
+  </div>
+
+  <h3>2.3《Effective Context Engineering for AI Agents》：上下文是会腐烂的稀缺资源</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">报告 03</span><span class="rp-date">2025-09-29</span><span class="rp-date">anthropic.com/engineering</span></div>
+      <h3><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Effective Context Engineering for AI Agents ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>harness 核心职责之一——上下文管理——的专论。</p>
+    </div>
+    <p>这份报告把上下文定义为<strong>有限资源</strong>，并给出"context rot"（<span class="note-term" id="note-term-rot" data-note="note-pop-rot" role="button" tabindex="0" aria-expanded="false">上下文腐烂</span>）概念：token 越多，模型准确回忆和利用信息的能力越差<sup><a href="#ref-3">[3]</a></sup>。机理在<span class="note-term" id="note-term-attnbudget" data-note="note-pop-attnbudget" role="button" tabindex="0" aria-expanded="false">注意力预算</span>——transformer 中每个 token 与其他 token 形成 n² 个成对关系，而训练数据以短序列为主，长上下文能力天然被稀释。指导原则因此是：<em>找到最小的高信号 token 集合</em>。</p>
+    <p>对长时程任务，报告开出三副药，并明确给出选择标准：</p>
+    <div class="tblwrap"><table>
+      <tr><th style="width:26%">技术</th><th style="width:44%">怎么做</th><th>适用场景</th></tr>
+      <tr><td class="k">Compaction 压缩</td><td>接近窗口上限时把对话总结后重启新窗口：保留架构决策、未解决 bug、实现细节，丢弃冗余工具输出，续跑时附带最近访问的 5 个文件</td><td>需要大量来回对话的任务</td></tr>
+      <tr><td class="k">结构化笔记</td><td>定期把状态写到上下文窗口之外（to-do 列表、NOTES.md），需要时取回</td><td>有清晰里程碑的迭代开发</td></tr>
+      <tr><td class="k">Sub-agent 子代理</td><td>子代理用干净窗口执行聚焦任务，可消耗数万 token，只把约 1,000–2,000 token 的浓缩摘要交回主 agent</td><td>需要并行探索的复杂研究分析</td></tr>
+    </table></div>
+    <p>报告里最有传播力的案例是 <strong>Claude 玩《宝可梦》</strong>：不给任何记忆结构提示，agent 自己发展出精确计数（"过去 1,234 步在 1 号路训练，皮卡丘已从目标 10 级升到 8 级"）、绘制已探索地图、记录战斗策略，并在上下文重置后继续训练数小时。这证明了结构化笔记是模型可以自发使用的机制——前提是 harness 给了它"窗口外的存储"。</p>
+    <p class="takeaway"><b>一句话 takeaway：</b>上下文工程的本质是策展而非堆砌——"上下文腐烂"意味着 <span class="note-term" id="note-term-window" data-note="note-pop-window" role="button" tabindex="0" aria-expanded="false">harness 必须主动决定什么不进窗口</span>，这后来成为所有长任务 harness 的第一设计约束。</p>
+  </div>
+
+  <h3>2.4《Effective Harnesses for Long-Running Agents》：第一份以 harness 命名的报告</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">报告 04</span><span class="rp-date">2025-11-26</span><span class="rp-date">anthropic.com/engineering</span></div>
+      <h3><a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">Effective Harnesses for Long-Running Agents ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>"harness" 一词首次成为标题本身。一份诚实的失败报告。</p>
+    </div>
+    <p>实验设置很狠：让 Opus 4.5 在 <span class="note-term" id="note-term-agentsdk" data-note="note-pop-agentsdk" role="button" tabindex="0" aria-expanded="false">Claude Agent SDK</span> 上自主循环运行，只给一句"做一个 claude.ai 的克隆"<sup><a href="#ref-4">[4]</a></sup>。结论是——<strong>模型能力完全够，但失败方式极有规律，且全部出在 harness 层</strong>：</p>
+    <ul>
+      <li><strong>失败模式一：一次性硬做</strong>——agent 试图一口气实现整个应用，中途耗尽上下文，下个会话面对无文档的半成品；</li>
+      <li><strong>失败模式二：过早宣告完成</strong>——后接手的会话看到已有进展，就倾向于宣布"项目已完成"。</li>
+    </ul>
+    <p>对应的 harness 解法构成了一份可以直接抄的施工图：</p>
+    <div class="tblwrap"><table>
+      <tr><th style="width:44%">失败模式（模型视角）</th><th>解法（harness 视角）</th></tr>
+      <tr><td class="k">一次性硬做、中途断档</td><td>每个会话只做一个功能；结束时小步 git 提交 + 维护进度文件，代码库始终处于"可合并"状态</td></tr>
+      <tr><td class="k">过早宣告完成</td><td>把用户需求展开为结构化 JSON 功能清单（这个克隆被拆成 200+ 项功能，初始全部 <code>passes: false</code>）逐项验收；特意用 JSON 而非 Markdown，因为模型更不容易篡改 JSON，并用强措辞禁止改动测试项本身</td></tr>
+      <tr><td class="k">未验证就标"完成"</td><td>强制自我验证闭环：用浏览器自动化像真实用户一样操作，验证通过才允许把功能标为 passing（也如实记录了局限：模型看不到浏览器原生 alert 弹窗）</td></tr>
+      <tr><td class="k">新会话不知如何接手</td><td>init.sh 一键启动脚本 + 规定"会话启动仪式"：确认目录 → 读 git log → 读进度文件 → 读功能清单 → 冒烟测试确认环境没坏</td></tr>
+    </table></div>
+    <p>一个耐人寻味的细节：文末脚注写明，"初始化 agent"和"编码 agent"只是初始提示词不同——<em>系统提示、工具和 harness 完全一致</em>。分歧巨大的行为差异完全由 harness 内的提示词编排产生。</p>
+    <p class="takeaway"><b>一句话 takeaway：</b>四种失败没有一种是"模型不够聪明"，解法也没有一种是"等下一代模型"——这是 Anthropic 第一次系统性论证：长任务的瓶颈在 harness。</p>
+  </div>
+  <p class="more"><a href="#tab-practice" data-jump-tab="practice" data-anchor="practice-top">深挖：报告没写的另一半——六个实践难点 →</a></p>
+
+  <h3>2.5《Scaling Managed Agents》：harness 成为基础设施</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">报告 05</span><span class="rp-date">2026-04-08</span><span class="rp-date">anthropic.com/engineering</span></div>
+      <h3><a href="https://www.anthropic.com/engineering/managed-agents" target="_blank" rel="noopener">Scaling Managed Agents: Decoupling the Brain from the Hands ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>把 harness 从"一段代码"提升为"一种可虚拟化的基础设施角色"。</p>
+    </div>
+    <p>这份报告有一个清醒到近乎尖锐的出发点：<strong>harness 里写满了关于"模型做不到什么"的假设，而这些假设会随模型进步过时</strong><sup><a href="#ref-5">[5]</a></sup>。他们的真实案例：Sonnet 4.5 有"上下文焦虑"（临近窗口上限就提前收工），团队用 context reset 治好了它；换成 Opus 4.5 后这个行为消失了，reset 反而成了累赘。<em>为一个模型缺陷设计的 harness 补丁，在下一代模型上变成了负担。</em></p>
+    <p>解法借用操作系统哲学——为"尚未被设想出的程序"而设计。Managed Agents 把 agent 系统拆成三个可独立替换的虚拟化组件：</p>
+    <ul>
+      <li><strong>Session</strong>：一切发生之事的只追加日志，存活于上下文窗口之外，大脑可以用 <code>getEvents()</code> 按位置切片回读——从上次停止处续读、回看前因、重读某动作前的上下文；</li>
+      <li><strong>Harness</strong>：调用 Claude、把工具调用路由到基础设施的循环本身——它也是<span class="note-term" id="note-term-cattle" data-note="note-pop-cattle" role="button" tabindex="0" aria-expanded="false">“牛”而非“宠物”</span>，崩溃后新实例凭 <code>wake(sessionId)</code> 从日志断点续跑，不留任何本地状态；</li>
+      <li><strong>Sandbox</strong>：模型干活的执行环境，对 harness 而言只是一个统一接口 <code>execute(name, input) → string</code>，可以是容器、手机甚至游戏模拟器。</li>
+    </ul>
+    <p>把大脑与双手解耦后，报告给出两组实打实的工程收益：</p>
+    <div class="stats">
+      <div class="stat"><div class="num"><span class="note-term" id="note-term-ttft" data-note="note-pop-ttft" role="button" tabindex="0" aria-expanded="false">p50 TTFT</span> −60%</div><div class="desc">推理与执行环境分离后，会话接受任务到产出首个响应 token 的中位等待时间下降约六成<sup><a href="#ref-5">[5]</a></sup></div></div>
+      <div class="stat"><div class="num">p95 TTFT −90%+</div><div class="desc">尾部延迟几乎消失——扩容只需启动更多无状态 harness 实例</div></div>
+      <div class="stat"><div class="num">结构性安全</div><div class="desc">token 被架构性地置于沙箱代码不可触及之处：git 用 access token 在初始化时接入，自定义工具走 <span class="note-term" id="note-term-mcp" data-note="note-pop-mcp" role="button" tabindex="0" aria-expanded="false">MCP + OAuth vault</span>，harness 全程接触不到凭据</div></div>
+    </div>
+    <p>报告对自身的定位也值得原文记录：Managed Agents 是 <strong>meta-harness</strong>——"对具体 harness 不持立场，只对接口有主见"。Claude Code 是优秀 harness，领域专用 harness 也能被容纳。</p>
+    <p class="takeaway"><b>一句话 takeaway：</b>这份报告宣告 harness 的成熟形态是"抽象稳定的接口 + 可自由替换的实现"——正如操作系统的 read() 不关心磁盘是 1970 年代的还是 SSD 的，大脑也不应该关心"手"长什么样。</p>
+  </div>
+
+  <h3>2.6 补遗：《How We Built Our Multi-Agent Research System》</h3>
+
+  <p>严格说这是六份里最"产品复盘"性质的一篇（2025-06），但它的几个数字是后面所有理论文章的证据底座，值得单独记下<sup><a href="#ref-6">[6]</a></sup>：</p>
+
+  <div class="stats">
+    <div class="stat"><div class="num">15×</div><div class="desc">多智能体系统相对普通聊天的 token 用量（普通 agent 约 4×）——并行探索是用资源换时间</div></div>
+    <div class="stat"><div class="num">90.2%</div><div class="desc">Opus 4 领队 + Sonnet 4 子代理的组合，在内评中超越单 Opus 4 的幅度</div></div>
+    <div class="stat"><div class="num">80%</div><div class="desc"><span class="note-term" id="note-term-browsecomp" data-note="note-pop-browsecomp" role="button" tabindex="0" aria-expanded="false">BrowseComp</span> 评测中，仅 token 用量一项就能解释的性能方差占比（加工具调用次数与模型选择，三者合计 95%）</div></div>
+    <div class="stat"><div class="num">−90%</div><div class="desc">3–5 个子代理并行加多工具并跑时，复杂查询研究时间的最大缩短幅度</div></div>
+  </div>
+
+  <p>两条最实用的踩坑经验：一是<strong>教领队 agent 委派</strong>——早期子代理任务描述模糊，导致多个子代理重复搜索同一主题；二是<strong>减少"传话游戏"</strong>——让子代理把输出直接写入文件系统、只向领队传轻量引用，避免大段输出经对话历史层层复制造成信息损失。这两条后来分别演化为报告 04 的"功能清单"和"文件即记忆"模式。</p>
+  <p class="more"><a href="#tab-evolution" data-jump-tab="evolution" data-anchor="evo-top">深挖：这两条"演化"怎么对上的——原文对照与两个澄清 →</a></p>
+
+  <h2><span class="sec-no">03 / OTHERS</span>其他报告：业界与学术界的回应</h2>
+
+  <p>答案是：<strong>有，而且不少。</strong>harness engineering 在 2025–2026 年已从 Anthropic 的内部术语扩散成行业学科。下面按"官方工程实践 → 技术长文 → 学术研究 → 评测体系"四层盘点。</p>
+
+  <h3>3.1 OpenAI《Harness Engineering》：团队级的对照实验</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">业界回应 01</span><span class="rp-date">2026-02</span><span class="rp-date">openai.com</span></div>
+      <h3><a href="https://openai.com/index/harness-engineering" target="_blank" rel="noopener">Harness Engineering: Leveraging Codex in an Agent-First World ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>OpenAI 的正面回应。把 harness 工程写到"整个工程团队重构工作方式"的尺度。</p>
+    </div>
+    <p>OpenAI 用一个极端实验切入：五个月、从空 git 仓库开始，<strong>0 行手写代码</strong>——应用逻辑、测试、CI、文档、内部工具全部由 <span class="note-term" id="note-term-codex" data-note="note-pop-codex" role="button" tabindex="0" aria-expanded="false">Codex</span> 写成，共约 <strong>100 万行</strong>，人力成本约为手工的<strong>十分之一</strong>。起初 3 名、后来扩到 7 名工程师，驱动约 1,500 个 PR 合入，人均 3.5 PR/天，团队核心哲学被写成一句口号：<em>Humans steer. Agents execute.</em><sup><a href="#ref-7">[7]</a></sup></p>
+    <p>与 Anthropic 报告逐条呼应的是这些发现：</p>
+    <ul>
+      <li><strong>瓶颈不在模型在环境</strong>：早期进展慢于预期，"不是因为 Codex 不行，而是环境欠规格"。工程师的修复几乎从来不是"再试试"，而是问：缺什么能力？怎么让它对 agent 可读、可执行？——这与报告 04 的结论完全同构。</li>
+      <li><strong>给地图，不给千页说明书</strong>：他们试过"一个大号 AGENTS.md"，失败方式很典型（挤占上下文、规则互相稀释、迅速腐烂、无法机械校验）。改为约 100 行的 <span class="note-term" id="note-term-agentsmd" data-note="note-pop-agentsmd" role="button" tabindex="0" aria-expanded="false">AGENTS.md</span> 只当“目录”，结构化的 <code>docs/</code> 是事实源，配合机械校验的 CI 和定期"文档园艺" agent——这正是报告 03 "最小高信号 token 集合"的团队级实践。</li>
+      <li><strong>把应用变得对 agent 可读</strong>：应用可按 <span class="note-term" id="note-term-worktree" data-note="note-pop-worktree" role="button" tabindex="0" aria-expanded="false">git worktree</span> 逐改动启动；<span class="note-term" id="note-term-cdp" data-note="note-pop-cdp" role="button" tabindex="0" aria-expanded="false">Chrome DevTools 协议</span>接入 agent 运行时（DOM 快照、截图、导航）；每个 worktree 配一套临时可观测性栈，agent 能用 <span class="note-term" id="note-term-logql" data-note="note-pop-logql" role="button" tabindex="0" aria-expanded="false">LogQL/PromQL</span> 查日志指标——于是"确保服务启动在 800ms 内完成"这类提示词变得可执行。单次 Codex 任务连续跑 6 小时以上是常态。</li>
+      <li><strong>约束不变量，而不是微管实现</strong>：自研 linter 强制分层架构与依赖方向，且 lint 报错信息本身会"向 agent 上下文注入修复指引"。原文的总结句可以直接当 harness 的定义读：<em>纪律不再体现在代码里，而体现在脚手架上</em>。</li>
+      <li><strong>熵与垃圾回收</strong>：agent 会复制仓库里已有的一切模式——包括坏模式。团队曾把每周五花 20% 时间清理<span class="note-term" id="note-term-slop" data-note="note-pop-slop" role="button" tabindex="0" aria-expanded="false">“AI slop”</span>，后来改为把"黄金原则"编码进仓库、由后台 Codex 任务定期扫描并开重构 PR，"像垃圾回收一样持续小额偿还技术债"。</li>
+    </ul>
+    <p class="takeaway"><b>一句话 takeaway：</b>Anthropic 的报告写的是"harness 应该怎么设计"，OpenAI 这篇写的是"一个团队把全身心押在 harness 上之后，工程组织变成了什么样"。两份材料互为微观与宏观。</p>
+  </div>
+
+  <h3>3.2 Lilian Weng《Harness Engineering for Self-Improvement》：理论化与"自改进"视角</h3>
+
+  <div class="report">
+    <div class="report-head">
+      <div class="rp-line"><span class="rp-no">业界回应 02</span><span class="rp-date">2026-07-04</span><span class="rp-date">lilianweng.github.io</span></div>
+      <h3><a href="https://lilianweng.github.io/posts/2026-07-04-harness" target="_blank" rel="noopener">Harness Engineering for Self-Improvement ↗</a></h3>
+      <p class="rp-tag"><b>定位：</b>把 harness 工程理论化的第一篇系统长文，并推到"自我改进"的尽头。</p>
+    </div>
+    <p>前 OpenAI 安全研究副总裁 Lilian Weng 给出目前最完整的学术化定义：harness 是<strong>围绕基础模型的系统，负责编排执行、决定模型如何规划、调用工具与行动、感知和管理上下文、存储产物并评估结果</strong>。相比早期"agent = LLM + 记忆 + 工具 + 规划"的框架论，harness 工程额外多了循环工程、评估、权限控制与持久状态管理——她直接将其类比为<em>操作系统</em><sup><a href="#ref-8">[8]</a></sup>。</p>
+    <p>报告最有价值的贡献是一条"优化对象的递进阶梯"：</p>
+    <div class="tblwrap"><table>
+      <tr><th style="width:34%">优化对象</th><th>代表工作与结论</th></tr>
+      <tr><td class="k">提示词 → 结构化上下文</td><td>ACE：把上下文当"不断演进的剧本"，Generator–Reflector–Curator 三组件增量更新</td></tr>
+      <tr><td class="k">工作流</td><td><span class="note-term" id="note-term-aflow" data-note="note-pop-aflow" role="button" tabindex="0" aria-expanded="false">AFlow</span>：把工作流表示为图并用 MCTS 搜索，胜过手工设计与 ADAS</td></tr>
+      <tr><td class="k">harness 代码本身</td><td>Meta-Harness："一个优化 harness 的 harness"；<span class="note-term" id="note-term-dgm" data-note="note-pop-dgm" role="button" tabindex="0" aria-expanded="false">达尔文·哥德机（DGM）</span>让编码 agent 修改自身 harness 代码，SWE-bench Verified 从 20% 升到 <strong>50%</strong>（Claude 3.5 Sonnet 底座）</td></tr>
+      <tr><td class="k">优化器代码</td><td>Self-Harness 等自改进循环：在 MiniMax、Qwen、GLM 等模型上于 <span class="note-term" id="note-term-tbench" data-note="note-pop-tbench" role="button" tabindex="0" aria-expanded="false">Terminal-Bench-2</span> 学出模型专属 harness 指令</td></tr>
+    </table></div>
+    <p><strong>深挖专题：</strong>这条阶梯上的关键论文（STOP、ADAS、AFlow、DGM、ACE）已在 <a href="#tab-selfimprove" data-jump-tab="selfimprove" data-anchor="si-top">「自我改进与元 harness」专题页</a>逐篇拆解——机制、数字与安全护栏。</p>
+    <p>她同时记录了关键的警示结果：<span class="note-term" id="note-term-stop" data-note="note-pop-stop" role="button" tabindex="0" aria-expanded="false">STOP 递归自改进</span>在 GPT-4 上越改越好，但在 GPT-3.5 和 Mixtral 上反而退化——<em>递归结构本身不够，底座模型必须足够强</em>。结论克制而清晰：近期的"自我改进"更可能发生在 harness 层而非权重层，而许多 harness 改进最终会像提示工程史那样被内化进模型——"智能仍是核心"。</p>
+    <p class="takeaway"><b>一句话 takeaway：</b>如果说 Anthropic 和 OpenAI 在写"harness 怎么做"，这篇在写"harness 会变成什么"——一个可以成为优化目标本身、乃至通向自我改进回路的研究对象。</p>
+  </div>
+
+  <h3>3.3 学术界：把 harness 变成可测量的变量</h3>
+
+  <ul>
+    <li><strong>SWE-agent（普林斯顿，NeurIPS 2024）</strong><sup><a href="#ref-9">[9]</a></sup>：ACI 概念的出处。证明仅靠为模型重新设计工具接口（受限文件查看器、精简搜索结果、带 lint 防护的编辑），同样的 GPT-4 Turbo 就创下当时 SWE-bench 最高纪录 12.47%。Anthropic 报告 01、02 的工具观直接承继于此。</li>
+    <li><strong>Stop Comparing LLM Agents Without Disclosing the Harness（arXiv 2026）</strong><sup><a href="#ref-10">[10]</a></sup>：同一个 Claude Opus，标准化 scaffold 上 45.9%、Claude Code harness 上 55.4%（SWE-bench Pro）——近 10 个百分点，约等于模型迭代一代。学术层面的主张：评测 agent 不披露 harness，数字就没有意义。</li>
+    <li><strong>An Empirical Study of Harness Design for Coding Agents（arXiv 2026-09）</strong><sup><a href="#ref-11">[11]</a></sup>：把 harness 拆成规划、动作空间、上下文管理三组件，4 模型 × 176 组配置做<span class="note-term" id="note-term-ablation" data-note="note-pop-ablation" role="button" tabindex="0" aria-expanded="false">消融</span>：上下文管理在窗口预算紧张时最值钱（"先规则删减、再 LLM 摘要"最优）；规划对弱模型是提分脚手架、对强模型只是省钱；bash 能力强的模型只给 bash 接口反而更便宜。元结论：<em>harness 与模型能力耦合，换一代模型就该重调 harness</em>。</li>
+    <li><strong>The Last Harness You'll Ever Build（arXiv 2026）</strong><sup><a href="#ref-12">[12]</a></sup>：提出 "Agent = Model + Harness" 的形式化，把 harness 定义为"模型之外的所有代码、配置与执行逻辑"，并给出两层自动演化框架（Harness Evolution Loop + Meta-Evolution Loop）——与 Lilian Weng 的"元 harness"互相印证。目前是框架论文，实验待发布。</li>
+    <li><strong>综述类</strong>：已有《A Survey on Agent System and Harness Design》等综述出现<sup><a href="#ref-13">[13]</a></sup>，说明这个方向在学术建制化。</li>
+  </ul>
+
+  <h3>3.4 评测侧：另一种 harness</h3>
+
+  <p>以上都是"干活的 harness"；评测侧的 harness 同样在演化。EleutherAI 的 <strong>lm-evaluation-harness</strong> 仍是事实标准（200+ 任务，Hugging Face 排行榜与 Mozilla 审计均采用）<sup><a href="#ref-14">[14]</a></sup><sup><a href="#ref-15">[15]</a></sup>；而它存在理由的最好注脚来自 ICLR 2024 的研究（Sclar et al.）——同一任务仅改动提示词格式（分隔符、空格、大小写等与语义无关的细节），LLaMA-2-13B 的成绩最多波动 <strong>76 个准确率点</strong><sup><a href="#ref-16">[16]</a></sup>。社区侧，Terminal-Bench 曾出现同一 Claude Opus 在统一口径约 42 分、而 Claude Code harness 加人工校验口径报出 95.5 分的著名对比<sup><a href="#ref-17">[17]</a></sup>——两个数字口径不同本不该直接比，但"分数随 harness 天差地别"这件事本身，正是这个学科存在的理由。</p>
+
+  <h2><span class="sec-no">04 / SYNTHESIS</span>交叉验证：五条跨机构的共识</h2>
+
+  <p>把 Anthropic 五份报告与 OpenAI、Lilian Weng、学术界的材料并排放，会看到五条被独立反复验证的结论——这比任何单一报告都更值得信任：</p>
+
+  <ul class="checklist">
+    <li><strong>瓶颈在 harness，不在模型。</strong>Anthropic 的四种失败模式全是 harness 层的（报告 04）；OpenAI 的环境欠规格论（0 行手写代码实验）；学术界换 harness 差近 10 个点的量化。三条独立证据链指向同一处。</li>
+    <li><strong>上下文是稀缺资源，要策展不要堆砌。</strong>Anthropic 的 context rot 与"最小高信号集合"（报告 03）；OpenAI 的"给地图不给千页说明书"；SWE-agent 的受限文件查看器——三家从三个角度撞出同一条原则。</li>
+    <li><strong>接口为模型设计，而非为人。</strong>ACI（普林斯顿 → Anthropic 报告 01/02）；OpenAI 的"对 agent 可读性"、lint 报错注入修复指引。工具是被评测驱动的工程对象，不是 API 的包装。</li>
+    <li><strong>验证闭环是 harness 的宪法。</strong>Anthropic 强制浏览器自测 + JSON 功能清单（报告 04）；OpenAI 的 agent 互审与机械强制的 linter；Lilian Weng 把"评估在自改进循环之外"列为安全底线。</li>
+    <li><strong>harness 正在成为自动化与优化的对象。</strong>Anthropic 的 meta-harness 定位（报告 05）；OpenAI 的 agent 写 linter、文档园艺 agent；Lilian Weng 的优化阶梯与 DGM 的 20%→50%——harness 工程本身正在被 agent 接管。</li>
+  </ul>
+  <p class="more"><a href="#tab-practice" data-jump-tab="practice" data-anchor="practice-top">深挖：这些原则落到生产，真正卡住人的六个地方 →</a></p>
+
+  <p>分歧同样值得记录：Anthropic 强调 harness 假设会随模型过时、因此要"对实现不持立场"；而 OpenAI 的实践展示了极端重度投资单一 harness（Codex + 特定仓库结构）可以走多远。这不是矛盾，而是同一枚硬币的两面——<em><span class="note-term" id="note-term-prod-vs-team" data-note="note-pop-prod-vs-team" role="button" tabindex="0" aria-expanded="false">产品级 harness 要抽象稳定，团队级 harness 可以深度耦合</span></em>。</p>
+
+  <h2><span class="sec-no">05 / PLAYBOOK</span>从报告里提炼的施工清单</h2>
+
+  <ul class="checklist">
+    <li><strong>外部记忆先行：</strong>进度文件 + 小步 git 提交（Anthropic 04）；仓库即事实源，AGENTS.md 只做目录（OpenAI）；文件系统即持久记忆（Lilian Weng）——三家给出的是同一个模式。</li>
+    <li><strong>机器可校验的完成标准：</strong>JSON 功能清单、逐项 <code>passes</code> 验收、禁止 agent 改验收标准本身；用 linter 和 CI 把"品味"变成机械规则。</li>
+    <li><strong>自我验证闭环：</strong>浏览器自动化、测试运行器、agent 互审——"agent 说我做完了"不算做完。</li>
+    <li><strong>工具单独做评测：</strong>命名空间、返回自然语言、控制 token（Anthropic 02）；工具描述的迭代用评估驱动，而不是凭直觉。</li>
+    <li><strong>上下文分阶段管理：</strong>先规则化删减、再 LLM 摘要（arXiv 消融）；长任务在压缩、笔记、子代理三者中按任务形态选择（Anthropic 03）。</li>
+    <li><strong>为换模型而设计：</strong>不要把对当前模型缺陷的补丁写死在架构里（Anthropic 05 的 context reset 教训）；升级模型后重新审视 harness 的每个组件。</li>
+    <li><strong>评测必须披露 harness：</strong>引用任何 agent 成绩时，先问用的什么 harness、什么提示词模板（arXiv 2605.23950）。</li>
+  </ul>
+
+  <div class="finale">
+    <h2>结语：一条从原则到基础设施的演进线</h2>
+    <p>把六份 Anthropic 报告连起来看，是一条清晰的路线：<strong>2024 年底定义 agent 是什么（原则）→ 2025 年中证明多 agent 值不值（实践）→ 2025 年秋把上下文与工具变成方法论（学科）→ 2025 年末正面承认长任务瓶颈在 harness（命名）→ 2026 年春把 harness 升格为可虚拟化的基础设施（架构）</strong>。几乎同一时期（2026-02），OpenAI 用一个"零行手写代码"的团队实验从工业侧汇合，Lilian Weng 和 arXiv 论文们把它推到自我改进的理论边界。</p>
+    <p>Harness engineering 已经不再是一个比喻，而是一门有定义、有方法论、有量化证据、有未决问题的工程学科。它最好的一句话总结，恰好来自这份报告里两位主角不约而同的表达——Anthropic 说，harness 是<em>为尚未设想出的模型而设计的接口</em>；OpenAI 说，<em>纪律体现在脚手架，而不是代码里</em>。模型是发动机，harness 是整辆车；而现在，全行业都在学怎么造这辆车。</p>
+  </div>
+
+  <section class="refs">
+    <h2 id="references"><span class="sec-no">REFERENCES</span>参考资料</h2>
+    <ol>
+      <li id="ref-1">Anthropic — <a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">Building Effective Agents</a>（2024-12-19）</li>
+      <li id="ref-2">Anthropic — <a href="https://www.anthropic.com/engineering/writing-tools-for-agents" target="_blank" rel="noopener">Writing Effective Tools for Agents — with Agents</a>（2025-09-11）</li>
+      <li id="ref-3">Anthropic — <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Effective Context Engineering for AI Agents</a>（2025-09-29）</li>
+      <li id="ref-4">Anthropic — <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">Effective Harnesses for Long-Running Agents</a>（2025-11-26）</li>
+      <li id="ref-5">Anthropic — <a href="https://www.anthropic.com/engineering/managed-agents" target="_blank" rel="noopener">Scaling Managed Agents: Decoupling the Brain from the Hands</a>（2026-04-08）</li>
+      <li id="ref-6">Anthropic — <a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener">How We Built Our Multi-Agent Research System</a>（2025-06）</li>
+      <li id="ref-7">OpenAI — <a href="https://openai.com/index/harness-engineering" target="_blank" rel="noopener">Harness Engineering: Leveraging Codex in an Agent-First World</a>（2026-02）</li>
+      <li id="ref-8">Lilian Weng — <a href="https://lilianweng.github.io/posts/2026-07-04-harness" target="_blank" rel="noopener">Harness Engineering for Self-Improvement</a>（2026-07-04）</li>
+      <li id="ref-9">Yang et al., Princeton NLP — <a href="https://arxiv.org/abs/2405.15793" target="_blank" rel="noopener">SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering</a>（NeurIPS 2024）</li>
+      <li id="ref-10">— <a href="https://arxiv.org/html/2605.23950v1" target="_blank" rel="noopener">Stop Comparing LLM Agents Without Disclosing the Harness</a>（arXiv:2605.23950）</li>
+      <li id="ref-11">— <a href="https://arxiv.org/abs/2609.20804" target="_blank" rel="noopener">An Empirical Study of Harness Design for Coding Agents</a>（arXiv:2609.20804）</li>
+      <li id="ref-12">— <a href="https://arxiv.org/html/2604.21003v3" target="_blank" rel="noopener">The Last Harness You'll Ever Build</a>（arXiv:2604.21003）</li>
+      <li id="ref-13">— <a href="https://www.preprints.org/manuscript/202606.1312" target="_blank" rel="noopener">A Survey on Agent System and Harness Design</a>（Preprints.org, 2026-06）</li>
+      <li id="ref-14">EleutherAI — <a href="https://github.com/eleutherai/lm-evaluation-harness" target="_blank" rel="noopener">lm-evaluation-harness</a>（GitHub）</li>
+      <li id="ref-15">Mozilla Foundation — <a href="https://www.mozillafoundation.org/en/blog/evaluation-harness-is-setting-the-benchmark-for-auditing-large-language-models" target="_blank" rel="noopener">Evaluation Harness Is Setting the Benchmark for Auditing LLMs</a></li>
+      <li id="ref-16">Sclar et al. — <a href="https://arxiv.org/abs/2310.11324" target="_blank" rel="noopener">Quantifying Language Models' Sensitivity to Spurious Features in Prompt Design</a>（ICLR 2024）</li>
+      <li id="ref-17">OpenReplay Blog — <a href="https://blog.openreplay.com/llm-harnesses-wrapper-beats-model" target="_blank" rel="noopener">LLM Harnesses: Why the Wrapper Matters More Than the Model</a></li>
+    </ol>
+  </section>
+  </div>
+
+  <div id="tab-cases" hidden>
+    <h2 class="cases-title" id="cases-top"><span class="sec-no">DEEP DIVE / COMPANION</span>主动决定什么不进窗口：十个跨机构实现</h2>
+    <p>这是正文 2.3 节备注「harness 必须主动决定什么不进窗口」的深挖专题：十个来自开源社区、商业产品与学术界的实现，按"怎么实现、什么场景、什么数字"拆解。它们不限于 Claude 或 GPT 生态——检索于 2026-10-02，全部链接可溯源。</p>
+
+    <h2><span class="sec-no">01 / SYSTEMS</span>开源与学术系统</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 01</span><span class="rp-date">Aider · 开源 AI 结对编程</span><span class="rp-date"><a href="https://aider.chat/docs/repomap.html" target="_blank" rel="noopener">aider.chat/docs/repomap ↗</a></span></div>
+        <h3>Repo Map：用图排序决定"哪 1k token 代表整个仓库"</h3>
+        <p class="rp-tag"><b>场景：</b>大仓库装不进窗口，整文件投喂又太浪费——"sending whole files is a bulky way to send code context, wasting the precious context window"。模型不需要看每个函数的完整实现，"只需要理解到能调用的程度"。</p>
+      </div>
+      <p>aider 的做法是在<strong>入窗之前</strong>先做一次全库重要性排序：<span class="note-term" id="note-term-treesitter" data-note="note-pop-treesitter" role="button" tabindex="0" aria-expanded="false">tree-sitter</span> 把源码解析成 AST，抽取所有类/函数/变量的定义与引用；以源文件为节点、依赖关系为边建图，在图上跑排序算法；最终只有<strong>被其他代码引用最多的标识符</strong>连同签名行进入 map。</p>
+      <ul>
+        <li>token 预算由 <code>--map-tokens</code> 控制，<strong>默认 1k</strong>，并按聊天状态动态调整——用户还没添加任何文件时显著扩大，让模型先看"全仓库目录"，需要细节再点名具体文件；</li>
+        <li>冷门符号不进窗口，但模型可以借 map 主动请求查看具体文件。</li>
+      </ul>
+      <p class="takeaway"><b>机制：入窗前排序。</b>每个 token 名额都给了被引用最多的符号，而非事后删减。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 02</span><span class="rp-date">SWE-agent · 普林斯顿 NLP</span><span class="rp-date"><a href="https://swe-agent.com/latest/background/aci/" target="_blank" rel="noopener">swe-agent.com/background/aci ↗</a></span></div>
+        <h3>ACI：从工具接口源头限制"能吐出来多少"</h3>
+        <p class="rp-tag"><b>场景：</b>agent 用 cat 读文件、用搜索命令找代码，返回内容完全失控。</p>
+      </div>
+      <p>SWE-agent 不做事后修剪，而是把工具造得"吐不出那么多"——这正是正文 3.3 节 ACI 概念的出处：</p>
+      <ul>
+        <li>文件查看器<strong>每轮只显示 100 行</strong>，配合上下滚动与文件内搜索命令使用；</li>
+        <li>全目录搜索<strong>只列出有匹配的文件名</strong>，不给匹配行上下文——"Showing the model more context about each match proved to be too confusing for the model"；</li>
+        <li>编辑命令执行前先跑 linter，语法不正确就不让编辑生效；命令无输出时返回"命令成功但无输出"提示，防止模型误判。</li>
+      </ul>
+      <p class="takeaway"><b>机制：接口级预防。</b>窗口污染在工具层被物理堵住——同一版 GPT-4 Turbo 靠它创下当时 SWE-bench 纪录 12.47%。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 03</span><span class="rp-date">MemGPT / Letta · UC Berkeley</span><span class="rp-date"><a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">arXiv:2310.08560 ↗</a></span></div>
+        <h3>把窗口当主存、数据库当磁盘——分页决策交给模型自己</h3>
+        <p class="rp-tag"><b>场景：</b>多会话聊天与超窗口文档分析，记忆需要跨会话存活。</p>
+      </div>
+      <p>MemGPT 是"模型自我管理窗口"的代表：主上下文 = 只读系统指令 + <strong>working context</strong>（固定大小的可写文本块，只能通过函数调用修改，存用户偏好与关键事实）+ FIFO 消息队列（队首保留被逐出消息的递归摘要）；外部上下文 = recall storage（全部消息）+ archival storage（PostgreSQL + <span class="note-term" id="note-term-pgvector" data-note="note-pop-pgvector" role="button" tabindex="0" aria-expanded="false">pgvector</span>）。</p>
+      <ul>
+        <li>模型通过 core memory 写入、archival 检索（<strong>自带分页</strong>——"implement pagination to prevent retrieval calls from overflowing the context window"）、conversation_search 回捞历史等函数自我分页；</li>
+        <li>用量到<strong>约 70%</strong> 时系统插入"即将驱逐"警告消息，让模型主动把重要信息搬进 working context 或档案库；到 100% 驱逐约一半并更新递归摘要；</li>
+        <li>效果：深度记忆检索 GPT-4 从 32.1% 提到 <strong>92.5%</strong>；嵌套 KV 检索超过 2 层后只有 MemGPT 能稳定完成。</li>
+      </ul>
+      <p class="takeaway"><b>机制：模型自我分页。</b>harness 只提供记忆层级与压力警告，"搬什么"由模型自己决定。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 04</span><span class="rp-date">OpenHands · 开源 agent 平台</span><span class="rp-date"><a href="https://docs.openhands.dev/sdk/arch/condenser" target="_blank" rel="noopener">docs.openhands.dev/sdk/arch/condenser ↗</a></span></div>
+        <h3>Condenser：把"什么不进窗口"抽象成可替换组件</h3>
+        <p class="rp-tag"><b>场景：</b>长编码会话，历史无限增长。</p>
+      </div>
+      <p>OpenHands 把窗口管理做成<strong>可插拔的 Condenser 管线</strong>，策略可自由组合：<code>RecentEventsCondenser</code> 只保留最近 N 个事件、更早的直接丢弃；<code>LLMSummarizingCondenser</code>（SDK 默认）把旧历史替换成 LLM 摘要，固定捕捉四类信息——<strong>用户目标、已完成/待办任务、代码状态、错误历史</strong>。触发既可以是被动（抛 <code>ContextWindowExceededError</code>），也可以是主动预防。</p>
+      <p class="takeaway"><b>机制：策略管线化。</b>官方博客报告每轮 API 成本最多降低约 <strong>2 倍</strong>，长会话响应时间保持稳定。</p>
+    </div>
+
+    <h2><span class="sec-no">02 / PRODUCTS</span>生产级产品</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 05</span><span class="rp-date">Manus · 通用 agent 产品</span><span class="rp-date"><a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus" target="_blank" rel="noopener">manus.im/blog/context-engineering ↗</a></span></div>
+        <h3>生产级五件套：进出管理 + 缓存感知 + 反直觉的"保留错误"</h3>
+        <p class="rp-tag"><b>场景：</b>平均约 50 次工具调用的长任务，输入输出比约 100:1——缓存命中决定成本结构。</p>
+      </div>
+      <p>Manus（不造模型，用第三方底座）的生产复盘是目前最完整的一手材料，五个机制环环相扣：</p>
+      <ul>
+        <li><strong><span class="note-term" id="note-term-kvcache" data-note="note-pop-kvcache" role="button" tabindex="0" aria-expanded="false">KV-cache</span> 感知的 append-only</strong>："the KV-cache hit rate is the single most important metric for a production-stage AI agent"。系统提示开头绝不放时间戳——"Sure, it lets the model tell you the current time, but it also kills your cache hit rate"；JSON 序列化必须确定，key 顺序不稳定会"silently break the cache"；</li>
+        <li><strong>Mask, don't remove</strong>：任务中途增删工具会让前部缓存全失效，改用解码时 <span class="note-term" id="note-term-logits" data-note="note-pop-logits" role="button" tabindex="0" aria-expanded="false">logits 掩码</span>控制工具可用性；工具命名用统一前缀（<code>browser_</code>、<code>shell_</code>）即可整组约束；</li>
+        <li><strong>Recitation 复述</strong>：维护 todo.md 每步重写勾选，把全局计划"推入模型近期注意力范围"，对冲 <span class="note-term" id="note-term-litm" data-note="note-pop-litm" role="button" tabindex="0" aria-expanded="false">lost-in-the-middle</span>——这是"该<strong>反复</strong>进窗口的东西"的案例；</li>
+        <li><strong>Keep the wrong stuff in</strong>：错误轨迹不清理——"Erasing failure removes evidence. And without evidence, the model can't adapt."（<em>决定什么不进窗口 ≠ 越激进越好</em>）；</li>
+        <li><strong>可逆压缩</strong>：网页只留 URL、文档只留沙箱路径即可丢弃正文——"you can't reliably predict which observation might become critical ten steps later"。</li>
+      </ul>
+      <p class="takeaway"><b>机制：全链路管理。</b>压缩永远留还原路径，错误是高信号要留下。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 06</span><span class="rp-date">Codex CLI · OpenAI</span><span class="rp-date"><a href="https://community.openai.com/t/experimental-context-management-compaction-in-codex/1395578" target="_blank" rel="noopener">OpenAI Community ↗</a></span></div>
+        <h3>从"压缩"走向"换窗"：不做摘要，直接开新窗口</h3>
+        <p class="rp-tag"><b>场景：</b>单次任务连续数小时的编码会话。</p>
+      </div>
+      <p>临近窗口上限触发自动 compaction：一次专门的 LLM 调用把旧历史摘要成替代上下文。工程细节很真实——如果压缩请求本身就会撑爆窗口，就<strong>丢掉最老的一条历史再重试</strong>，循环到装得下为止；<code>/compact</code> 可随时手动触发。</p>
+      <p>更新的实验性方案走得更远：<strong>不做摘要，直接切换到全新窗口</strong>，旧窗口的完整历史通过"历史工具"按需回捞——与正文 2.5 节 Anthropic Managed Agents 的 Session + <code>getEvents()</code> 构想互为镜像。</p>
+      <p class="takeaway"><b>机制：压缩 → 换窗。</b>窗口从"必须保住的工作记忆"变成"可丢弃的缓存"，事实源移到窗口之外。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 07</span><span class="rp-date">Gemini CLI · Google</span><span class="rp-date"><a href="https://github.com/google-gemini/gemini-cli/issues/12068" target="_blank" rel="noopener">gemini-cli issue #12068 ↗</a></span></div>
+        <h3>一个阈值数字：早期 70% 触发、保尾 30%</h3>
+        <p class="rp-tag"><b>场景：</b>长终端会话的通用兜底。</p>
+      </div>
+      <p>早期版本源码里 <code>COMPRESSION_TOKEN_THRESHOLD = 0.7</code>：用量达到模型窗口的 <strong>70%</strong> 即自动压缩，保留最近 30% 的历史；阈值可配置。后续版本调整过默认值——截至 2026-10，主分支为 <code>DEFAULT_COMPRESSION_TOKEN_THRESHOLD = 0.5</code>（保尾仍是 30%），即压得更早，牺牲一点容量换稳定性。</p>
+      <p class="takeaway"><b>机制：阈值触发 + 保尾压缩。</b>早期默认值与 MemGPT 的 70% 警告线相互独立却数值趋同（见 04 节）；它后来被下调，也说明阈值是随版本调整的工程参数。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 08</span><span class="rp-date">Cline · VS Code 编码 agent</span><span class="rp-date"><a href="https://docs.cline.bot/features/auto-compact" target="_blank" rel="noopener">docs.cline.bot/features/auto-compact ↗</a></span></div>
+        <h3>一块"行业演化化石"：从规则截断到 LLM 摘要</h3>
+        <p class="rp-tag"><b>场景：</b>IDE 内长会话。</p>
+      </div>
+      <p>旧版 Cline 是纯粹的规则截断——超限后删掉<strong>一半到四分之三</strong>的对话历史，结果"丢失重要上下文"；随后演进为 Auto Compact：<strong>临近窗口上限</strong>时改用 LLM 摘要，保留技术决策与关键细节（官方文档未给出具体触发百分比，社区说法从约 80% 到约 95% 不等）。</p>
+      <p class="takeaway"><b>机制：先规则删减、再 LLM 摘要。</b>这条演化路径与正文 3.3 节 arXiv 消融研究（176 组配置）的结论互相印证。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 09</span><span class="rp-date">Cognition / Devin</span><span class="rp-date"><a href="https://cognition.com/blog/dont-build-multi-agents" target="_blank" rel="noopener">cognition.com/blog/dont-build-multi-agents ↗</a></span></div>
+        <h3>单线程 + 任务间压缩：只留"关键细节、事件与决策"</h3>
+        <p class="rp-tag"><b>场景：</b>长程软件工程任务；对并行子代理的系统性批评。</p>
+      </div>
+      <p>他们的出发点："上下文工程是构建 agent 的工程师的头号工作"。单线程 agent 的优势是 "the context is continuous"——所有决策都在同一条历史里。任务之间用专门模型把历史压缩成 <strong>"key details, events, and decisions"</strong>，难到他们甚至<strong>为此微调了一个小模型</strong>专职做压缩。</p>
+      <ul>
+        <li>原则一："Share context, and share full agent traces, not just individual messages"——共享完整轨迹，不是单条消息；</li>
+        <li>原则二："Actions carry implicit decisions, and conflicting decisions carry bad results"——Flappy Bird 例子：一个子代理把背景做成超级马里奥风格、另一个做的鸟手感不对，因为隐含决策冲突；</li>
+        <li>同时点名认可 Claude Code 子代理的设计：子代理只做定义明确的问题、不并行写码，"调查不占用主代理的历史，轨迹可以跑得更长"。</li>
+      </ul>
+      <p class="takeaway"><b>机制：决策蒸馏。</b>压缩的目标不是"变短"，而是保住决策链。</p>
+    </div>
+
+    <h2><span class="sec-no">03 / FRONTIER</span>研究前沿</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 10</span><span class="rp-date">ACE · 斯坦福等（ICLR 2026）</span><span class="rp-date"><a href="https://arxiv.org/abs/2510.04618" target="_blank" rel="noopener">arXiv:2510.04618 ↗</a></span></div>
+        <h3>换一个层次：进窗口的不是轨迹，而是蒸馏出的 playbook</h3>
+        <p class="rp-tag"><b>场景：</b>重复型任务的经验积累，全程无标注监督、只靠自然执行反馈。</p>
+      </div>
+      <p>前面九个案例都在管理"原始历史"，ACE（Agentic Context Engineering）把进窗口的内容换成<strong>不断演进的 playbook</strong>：Generator 执行、Reflector 反思、Curator 整理。Curator 只做<strong>结构化增量 delta 更新</strong>而非整体重写，防两个病："context collapse"（迭代重写侵蚀细节）与 "brevity bias"（为简洁丢掉领域洞见）。</p>
+      <p class="takeaway"><b>机制：知识蒸馏式入窗。</b>agent 任务 +10.6%、金融 +8.6%；在 AppWorld 上用更小的开源模型追平榜首生产级 agent。</p>
+    </div>
+
+    <h2 id="cases-synthesis"><span class="sec-no">04 / SYNTHESIS</span>六条路线与两个趋同信号</h2>
+
+    <p>把十个实现按机制归位，会看到业界收敛出的六条路线——区别主要在"<strong>在哪个环节做决定</strong>"：入窗前、入窗时、临近上限、还是窗口之外。</p>
+
+    <div class="tblwrap"><table>
+      <tr><th style="width:29%">路线</th><th style="width:27%">代表实现</th><th style="width:18%">适用场景</th><th>代价 / 风险</th></tr>
+      <tr><td class="k" style="white-space:normal">规则截断 / 滑窗</td><td>Cline 旧版</td><td>最便宜的第一道防线</td><td>丢关键上下文</td></tr>
+      <tr><td class="k" style="white-space:normal">LLM 摘要（阈值触发 + 保尾）</td><td>Claude Code、Gemini CLI（早期 70%，现 50%）、OpenHands、Cline</td><td>长对话通用</td><td>丢"微妙但关键"的细节；摘要本身烧 token</td></tr>
+      <tr><td class="k" style="white-space:normal">入窗前排序 / 受限接口</td><td>Aider repo map（1k）、SWE-agent（100 行）</td><td>大仓库、搜索类工具</td><td>冷门符号进不来</td></tr>
+      <tr><td class="k" style="white-space:normal">可逆外置（文件即记忆）</td><td>Manus、Codex 实验性换窗</td><td>观察对象巨大、长程任务</td><td>需要额外的回捞机制</td></tr>
+      <tr><td class="k" style="white-space:normal">模型自我分页</td><td>MemGPT / Letta</td><td>跨会话记忆</td><td>依赖模型函数调用能力</td></tr>
+      <tr><td class="k" style="white-space:normal">知识蒸馏式 playbook</td><td>ACE、Manus recitation</td><td>重复型任务的经验积累</td><td>整理器本身可能引入错误</td></tr>
+    </table></div>
+
+    <ul class="checklist">
+      <li><strong>趋同信号一：70%。</strong>Gemini CLI 早期的压缩阈值与 MemGPT 的驱逐警告线相互独立、数值相同——业界对"何时开始清理"出现了相近的量级。但 Gemini CLI 现已把默认值下调到 50%：把它理解为"大致区间"，而不是固定标准。</li>
+      <li><strong>趋同信号二：1,000–2,000 token。</strong>Anthropic 子代理回传摘要、Cognition 的任务间压缩、Devin 的设计反复落在这个量级——"多长的浓缩摘要值得占窗口"也在收敛。</li>
+      <li><strong>一个重要制衡：</strong>Manus 的 "keep the wrong stuff in"——错误轨迹是高信号，决定什么不进窗口绝不等于越激进越好。</li>
+    </ul>
+
+    <section class="refs">
+      <h2 id="case-references"><span class="sec-no">REFERENCES</span>深挖案例来源</h2>
+      <ol>
+        <li>Aider — <a href="https://aider.chat/docs/repomap.html" target="_blank" rel="noopener">Repo Map</a> 与 <a href="https://aider.chat/2023/10/22/repomap.html" target="_blank" rel="noopener">Building a Repository Map</a></li>
+        <li>Princeton NLP — <a href="https://swe-agent.com/latest/background/aci/" target="_blank" rel="noopener">SWE-agent: Agent-Computer Interface</a></li>
+        <li>Packer et al. — <a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener">MemGPT: Towards LLMs as Operating Systems</a>（arXiv:2310.08560）</li>
+        <li>OpenHands — <a href="https://docs.openhands.dev/sdk/arch/condenser" target="_blank" rel="noopener">Condenser 架构文档</a> 与 <a href="https://www.openhands.dev/blog/openhands-context-condensensation-for-more-efficient-ai-agents" target="_blank" rel="noopener">Context Condensation 博客</a></li>
+        <li>Manus — <a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus" target="_blank" rel="noopener">Context Engineering for AI Agents: Lessons from Building Manus</a></li>
+        <li>OpenAI — <a href="https://community.openai.com/t/experimental-context-management-compaction-in-codex/1395578" target="_blank" rel="noopener">Experimental Context Management / Compaction in Codex</a>（OpenAI Community）</li>
+        <li>Google Gemini CLI — <a href="https://github.com/google-gemini/gemini-cli/issues/12068" target="_blank" rel="noopener">COMPRESSION_TOKEN_THRESHOLD issue #12068</a> 与 <a href="https://github.com/google-gemini/gemini-cli/discussions/12311" target="_blank" rel="noopener">容量与可靠性讨论 #12311</a></li>
+        <li>Cline — <a href="https://docs.cline.bot/features/auto-compact" target="_blank" rel="noopener">Auto Compact 文档</a></li>
+        <li>Cognition — <a href="https://cognition.com/blog/dont-build-multi-agents" target="_blank" rel="noopener">Don't Build Multi-Agents</a></li>
+        <li>Zhang et al. — <a href="https://arxiv.org/abs/2510.04618" target="_blank" rel="noopener">ACE: Agentic Context Engineering</a>（arXiv:2510.04618，ICLR 2026）</li>
+      </ol>
+    </section>
+
+    <p class="back-link"><a href="#tab-main" data-jump-tab="main">← 返回正文</a></p>
+  </div>
+
+  <div id="tab-selfimprove" hidden>
+    <h2 class="cases-title" id="si-top"><span class="sec-no">DEEP DIVE / COMPANION</span>自我改进与元 harness：优化对象的递进阶梯</h2>
+    <p>这是正文 3.2 节 Lilian Weng「优化对象的递进阶梯」的深挖专题：把每一级台阶上最关键的论文逐篇拆开——它们提出了什么机制、做出了什么数字、暴露了什么风险。检索于 2026-10-02，摘要与数字均已对照 arXiv 原文核对。</p>
+
+    <div class="tblwrap"><table>
+      <tr><th style="width:36%">台阶（优化对象）</th><th style="width:34%">代表工作</th><th>被优化的东西</th></tr>
+      <tr><td class="k">① 提示词 → 结构化上下文</td><td>ACE（2025，ICLR 2026）</td><td>窗口里的“剧本”</td></tr>
+      <tr><td class="k">② 工作流</td><td>AFlow（2024）</td><td>LLM 调用的编排图</td></tr>
+      <tr><td class="k">③ agent 设计 / harness 代码</td><td>ADAS（2024）、DGM（2025）</td><td>agent 自身的代码</td></tr>
+      <tr><td class="k">④ 优化器 / 元层</td><td>STOP（2023）、Self-Harness / Meta-Harness（2026）</td><td>写优化器的代码</td></tr>
+    </table></div>
+
+    <h2><span class="sec-no">01 / LADDER</span>逐篇拆解</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 01</span><span class="rp-date">斯坦福 · COLM 2024 · 2023-10</span><span class="rp-date"><a href="https://arxiv.org/abs/2310.02304" target="_blank" rel="noopener">arXiv:2310.02304 ↗</a></span></div>
+        <h3>STOP（Self-Taught Optimizer）：让“改进器”程序改进它自己</h3>
+        <p class="rp-tag"><b>场景：</b>递归自改进（RSI）最早的可运行原型——不碰权重，只改脚手架。</p>
+      </div>
+      <p>Schmidhuber 的哥德机要求“任何改动必须先证明更优”，而证明本身不可行；STOP 把证明换成实证：给出一个种子改进器 <code>improve()</code>——它调用 LLM，读入任意程序与效用函数、输出改进版；然后把 <code>improve()</code> 自己作为输入喂给它。每一轮产出的新改进器都要在下游任务上真刀真枪跑分，胜者进入下一轮。</p>
+      <ul>
+        <li>论文记录到 LLM 自主提出了<b>束搜索、遗传算法、模拟退火</b>等经典优化策略来改写改进器；</li>
+        <li>GPT-4 底座上，自改进后的改进器<b>显著优于种子</b>；但换上更弱的底座，递归反而退化——Lilian Weng 的梳理把这条写成了明确结论：递归结构本身不够，底座必须足够强；</li>
+        <li>作者专门评估了生成代码<b>“绕过沙箱”的频率</b>，并说明这还不是完整 RSI——模型权重自始至终没动。</li>
+      </ul>
+      <p class="takeaway"><b>机制：自我引用的实证改进循环。</b>它定义了这条研究线的实验范式，也第一次把“底座强度是自改进前提”写成结论。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 02</span><span class="rp-date">Hu, Lu &amp; Clune · 2024-08</span><span class="rp-date"><a href="https://arxiv.org/abs/2408.08435" target="_blank" rel="noopener">arXiv:2408.08435 ↗</a></span></div>
+        <h3>ADAS：让元 agent 用代码“发明”新 agent</h3>
+        <p class="rp-tag"><b>场景：</b>CoT、Self-Refine、Toolformer……这些手工设计的 agent 组件，历史上都在被学习方法取代——agent 设计本身能不能也交给搜索？</p>
+      </div>
+      <p>ADAS（Automated Design of Agentic Systems）的答案是“代码即搜索空间”：编程语言图灵完备，所以“用代码定义 agent”理论上能表达任何可能的智能体系统。Meta Agent Search 让一个元 agent 基于不断增长的<b>发现档案（archive）</b>迭代编写新 agent，每一代都实测、入库、作为下一代的素材。</p>
+      <ul>
+        <li>在编程、科学、数学三类任务上，被发现的 agent <b>大幅超过当时最强的手工设计 agent</b>；</li>
+        <li>这些发现能<b>跨领域、跨底座模型迁移</b>——说明搜到的是可复用的设计模式，不是对单一评测的过拟合。</li>
+      </ul>
+      <p class="takeaway"><b>机制：开放式代码搜索 + 经验档案。</b>DGM 的 archive 结构直接承继于此。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 03</span><span class="rp-date">Zhang et al. · 2024-10</span><span class="rp-date"><a href="https://arxiv.org/abs/2410.10762" target="_blank" rel="noopener">arXiv:2410.10762 ↗</a></span></div>
+        <h3>AFlow：用 MCTS 在“工作流代码”的版本树上搜索</h3>
+        <p class="rp-tag"><b>场景：</b>工作流是人肉编排的（提示链、路由、并行……），换一个任务就要重新编排——能不能把它变成搜索问题？</p>
+      </div>
+      <p>AFlow 把 agentic 工作流表示成“LLM 调用节点 + 边”的代码图，用<b>蒙特卡洛树搜索（MCTS）</b>在“修改这段代码”的动作空间里探索，每一步都以执行反馈（分数、成本）为信号，配合树状经验积累。</p>
+      <ul>
+        <li>六个基准上平均超过当时最强基线 <b>5.7%</b>；</li>
+        <li>成本侧的反转更惊人：搜出的工作流让<b>更小的模型在特定任务上反超基于 GPT-4o 的工作流</b>，推理成本只有其 <b>4.55%</b>。</li>
+      </ul>
+      <p class="takeaway"><b>机制：树搜索 + 执行反馈自动设计工作流。</b>“优化者写代码、被优化者执行”范式的代表作。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 04</span><span class="rp-date">Sakana AI + UBC + Vector · 2025-05</span><span class="rp-date"><a href="https://arxiv.org/abs/2505.22954" target="_blank" rel="noopener">arXiv:2505.22954 ↗</a></span></div>
+        <h3>Darwin Gödel Machine：agent 改写自己的 harness 代码</h3>
+        <p class="rp-tag"><b>场景：</b>前面几篇优化的都是“agent 用的东西”；DGM 让编码 agent 直接优化 agent 本身——它的工具、pipeline，乃至“负责修改它自己”的那段代码。</p>
+      </div>
+      <p>每轮从<b>agent 档案</b>中采样一个个体，用基础模型生成一个“有趣的”变体（修改自身代码），再到 SWE-bench 等基准上实证验收；改进与失败全部入档，长成一棵不断分叉的树——允许从“次优祖先”重新出发，避免单线进化困在局部最优。</p>
+      <ul>
+        <li>SWE-bench <b>20.0% → 50.0%</b>，Polyglot <b>14.2% → 30.7%</b>；</li>
+        <li>自主发现的改进包括：<b>更好的代码编辑工具、长上下文窗口管理</b>（与正文 2.3 的“什么不进窗口”撞车）、<b>类同行评议的互查机制</b>；</li>
+        <li>名字里的“哥德”是致敬而非复刻：Schmidhuber 的 Gödel machine 要求“先证明后改动”，DGM 用实证验证替代不可行的证明；</li>
+        <li>全程<b>沙箱 + 人工监督</b>——这也是 Lilian Weng 把“评估与权限控制在自编辑循环之外”列为安全底线的实证依据。</li>
+      </ul>
+      <p class="takeaway"><b>机制：开放式进化 + 实证验收的自我改写 harness。</b>正文 3.2 表中 20%→50% 的出处。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 05</span><span class="rp-date">斯坦福 / SambaNova / UC Berkeley · ICLR 2026</span><span class="rp-date"><a href="https://arxiv.org/abs/2510.04618" target="_blank" rel="noopener">arXiv:2510.04618 ↗</a></span></div>
+        <h3>ACE：把上下文当作“不断演进的 playbook”</h3>
+        <p class="rp-tag"><b>场景：</b>阶梯第一级——优化对象不是代码，而是窗口内容本身（深挖案例 tab 的案例 10 是它的机制详解，这里看它在阶梯上的位置）。</p>
+      </div>
+      <p>Generator 执行、Reflector 反思、Curator 整理；关键防病设计是<b>结构化增量 delta 更新</b>而非整体重写——防 context collapse（迭代重写侵蚀细节）与 brevity bias（为简洁丢掉领域洞见）。全程无标注监督，只靠自然执行反馈。</p>
+      <ul>
+        <li>agent 任务 <b>+10.6%</b>、金融 <b>+8.6%</b>；</li>
+        <li>AppWorld 排行榜上用<b>更小的开源模型</b>追平榜首生产级 agent，在更难的 test-challenge 上反超；</li>
+        <li>既能离线优化系统提示词，也能在线优化 agent 记忆，适配延迟与 rollout 成本同时下降。</li>
+      </ul>
+      <p class="takeaway"><b>机制：知识蒸馏式入窗。</b>“提示词 → 结构化上下文”这一级的代表作。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">案例 06</span><span class="rp-date">2026 前沿 · 据 Lilian Weng 梳理</span><span class="rp-date"><a href="https://lilianweng.github.io/posts/2026-07-04-harness" target="_blank" rel="noopener">lilianweng.github.io ↗</a></span></div>
+        <h3>阶梯顶端：学出“模型专属”的 harness</h3>
+        <p class="rp-tag"><b>场景：</b>优化对象到达“优化器代码”本身——元层。</p>
+      </div>
+      <p>据 Weng 2026-07 的长文：<b>Self-Harness</b>（Zhang et al., 2026）走“弱点挖掘 → 有界提案 → 验证闭环”三步，在 Terminal-Bench-2 上为 MiniMax M2.5、Qwen3.5-35B-A3B、GLM-5 各自学出模型专属的 harness 指令；<b>Meta-Harness</b>（Lee et al., 2026）研究“优化 harness 的代码”如何再被优化。同期还有 MCE、AlphaEvolve、ShinkaEvolve、Promptbreeder、GEPA 等一众自动优化器。</p>
+      <p class="takeaway"><b>机制：优化器本身成为被优化的对象。</b>与 Anthropic 报告 05 的 meta-harness 定位（“对接口有主见、对实现不持立场”）互为表里——当 harness 可以被 agent 自动改写，“接口稳定”就从设计品味变成了安全前提。</p>
+    </div>
+
+    <h2 id="si-synthesis"><span class="sec-no">02 / SYNTHESIS</span>三条护栏与一个判断</h2>
+
+    <ul class="checklist">
+      <li><strong>护栏一：评测必须在循环之外。</strong>STOP 专门评估“绕过沙箱”的频率；DGM 全程沙箱 + 人工监督；Lilian Weng 把“评估器与权限控制不进自编辑回路”列为第一安全底线——一旦 agent 能改自己的考卷，分数就不再有意义。</li>
+      <li><strong>护栏二：底座必须足够强。</strong>STOP 在 GPT-4 上越改越好、在弱底座上退化——递归结构不产生能力，只放大已有能力。</li>
+      <li><strong>护栏三：档案与日志要可审计。</strong>ADAS/DGM 的 archive 让每一次进化都可回溯；开放式探索（允许从次优祖先重启）同时是对抗局部最优与多样性坍缩的手段。</li>
+      <li><strong>一个判断：</strong>近期“自我改进”将主要经由 harness 层而非权重层发生——因为 harness 就是代码，而代码是自改进的通用介质；但正如 Weng 的结语，许多 harness 改进最终会像提示工程史那样被内化进模型——<em>智能仍是核心</em>。</li>
+    </ul>
+
+    <section class="refs">
+      <h2 id="si-refs"><span class="sec-no">REFERENCES</span>深挖来源（均已对照原文核对）</h2>
+      <ol>
+        <li>Zelikman, Lorch, Mackey &amp; Kalai — <a href="https://arxiv.org/abs/2310.02304" target="_blank" rel="noopener">Self-Taught Optimizer (STOP)</a>（arXiv:2310.02304，COLM 2024）</li>
+        <li>Hu, Lu &amp; Clune — <a href="https://arxiv.org/abs/2408.08435" target="_blank" rel="noopener">Automated Design of Agentic Systems (ADAS)</a>（arXiv:2408.08435）</li>
+        <li>Zhang et al. — <a href="https://arxiv.org/abs/2410.10762" target="_blank" rel="noopener">AFlow: Automating Agentic Workflow Generation</a>（arXiv:2410.10762）</li>
+        <li>Zhang, Hu, Lu, Lange &amp; Clune — <a href="https://arxiv.org/abs/2505.22954" target="_blank" rel="noopener">Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents</a>（arXiv:2505.22954）</li>
+        <li>Zhang et al. — <a href="https://arxiv.org/abs/2510.04618" target="_blank" rel="noopener">ACE: Agentic Context Engineering</a>（arXiv:2510.04618，ICLR 2026）</li>
+        <li>Lilian Weng — <a href="https://lilianweng.github.io/posts/2026-07-04-harness" target="_blank" rel="noopener">Harness Engineering for Self-Improvement</a>（2026-07-04）</li>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/managed-agents" target="_blank" rel="noopener">Scaling Managed Agents</a>（正文报告 05，meta-harness 定位）</li>
+      </ol>
+    </section>
+
+    <p class="back-link"><a href="#tab-main" data-jump-tab="main">← 返回正文</a></p>
+  </div>
+
+  <div id="tab-mechanics" hidden>
+    <h2 class="cases-title" id="mech-top"><span class="sec-no">DEEP DIVE / COMPANION</span>上下文为什么会腐烂：从注意力数学到账单</h2>
+    <p>这是正文 2.3 节备注「上下文腐烂」与「什么不进窗口」背后的证据链专题，按<b>机理层 → 位置层 → 基准层 → 任务层 → 产品层</b>五层拆解，每层给出可溯源的原始研究。检索于 2026-10-02，摘要与数字均已对照原文核对。</p>
+
+    <h2><span class="sec-no">01 / EVIDENCE</span>五层证据链</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 01</span><span class="rp-date">Anthropic · 2025-09-29</span><span class="rp-date"><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">anthropic.com/engineering ↗</a></span></div>
+        <h3>注意力预算：n² 个成对关系，腐烂的数学起点</h3>
+        <p class="rp-tag"><b>层级：机理。</b>为什么“token 越多、回忆越差”是架构性质，不是工程瑕疵。</p>
+      </div>
+      <p>transformer 的自注意力让每个 token 都能“看见”其他所有 token——n 个 token 就是 n² 个成对关系。上下文变长，固定的参数容量被摊薄；softmax 归一化下，每份注意力的“质量”被稀释。再叠加训练分布以短序列为主，长程依赖天然是欠拟合区。Anthropic 把这称为<b>注意力预算</b>：每进一个 token 都在花预算，而预算随消耗贬值。</p>
+      <ul>
+        <li>位置编码插值等技术能延长窗口，但会损害模型对 token 位置的理解——窗口变长与位置感变弱在互相抵消；</li>
+        <li>context rot 是“性能梯度”而非“悬崖”：表现为长上下文下检索与长程推理的<b>精度缓慢下降</b>，而非突然失败——所以它容易被忽视；</li>
+        <li>指导结论因此是策展而非堆砌：找“最小的高信号 token 集合”。</li>
+      </ul>
+      <p class="takeaway"><b>含义：</b>“什么不进窗口”是第一设计约束，不是性能优化项。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 02</span><span class="rp-date">Xiao et al. · ICLR 2024</span><span class="rp-date"><a href="https://arxiv.org/abs/2309.17453" target="_blank" rel="noopener">arXiv:2309.17453 ↗</a></span></div>
+        <h3>Attention sinks：softmax 强制分配注意力，开头 token 成了“下水道”</h3>
+        <p class="rp-tag"><b>层级：机理。</b>位置偏置的微观机制。</p>
+      </div>
+      <p>StreamingLLM（MIT Han Lab / Meta）发现：不管语义多无关，<b>前几个 token 总是吸走超量注意力</b>——softmax 要求注意力总量分配出去，模型就把多余的“倒”进开头，它们成了 attention sink。实验上，滑窗注意力一旦把开头 token 的 KV 缓存扔掉，性能立刻崩塌；保留最初 4 个 token 的缓存则大幅恢复，模型得以在 400 万 token 以上的流上稳定生成。</p>
+      <p class="takeaway"><b>含义：</b>序列开头是结构性重要位置，与内容重要性无关——这也是位置层证据的机理注脚。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 03</span><span class="rp-date">Liu et al. · 斯坦福 · TACL</span><span class="rp-date"><a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener">arXiv:2307.03172 ↗</a></span></div>
+        <h3>Lost in the Middle：U 形曲线，中间的信息“看得见但不记住”</h3>
+        <p class="rp-tag"><b>层级：位置。</b>腐烂不止“变长”，还有“放哪儿”。</p>
+      </div>
+      <p>在多文档问答与键值检索两类任务上系统改变“相关信息”的位置：放开头或结尾成绩最好，<b>放中间显著下滑</b>——连专攻长上下文的模型也不例外；GPT-3.5-Turbo 在相关文档位于中间时成绩下跌超过 20%。部分设定下，模型“闭卷硬答”的成绩甚至好于“相关信息就摆在中间”。</p>
+      <ul>
+        <li>对 harness 的直接推论：<b>上下文的顺序本身就是信号</b>——关键约束放首尾，参考材料放中间并辅以结构化标记；</li>
+        <li>这也是 Manus “recitation 复述”（把计划反复推回近期注意力）的理论依据（见深挖案例 tab 案例 05）。</li>
+      </ul>
+      <p class="takeaway"><b>含义：</b>同一段内容，换个位置就是另一个成绩——策展要管内容，也要管次序。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 04</span><span class="rp-date">Hsieh et al. · NVIDIA · COLM 2024</span><span class="rp-date"><a href="https://arxiv.org/abs/2404.06654" target="_blank" rel="noopener">arXiv:2404.06654 ↗</a></span></div>
+        <h3>RULER：标称 128K ≠ 有效 128K</h3>
+        <p class="rp-tag"><b>层级：基准。</b>“有效上下文长度”成为与标称窗口并列的指标。</p>
+      </div>
+      <p>经典“大海捞针”（NIAH）太简单——单根针、线性检索，参测模型几乎满分。RULER 把针换成 <b>13 类任务</b>（多针变体、多跳追踪、聚合），让难度随长度一起增长：17 个标称 32K+ 的模型中，<b>只有约一半在 32K 处还能保持满意成绩</b>；标称 200K 的 Yi-34B 同样露出巨大水分。</p>
+      <p class="takeaway"><b>含义：</b>为换模型而设计（正文 05 节）时，先重测有效窗口——宣传口径不可信，RULER 式自测才可信。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 05</span><span class="rp-date">Modarressi et al. · ICML 2025</span><span class="rp-date"><a href="https://arxiv.org/abs/2502.05167" target="_blank" rel="noopener">arXiv:2502.05167 ↗</a></span></div>
+        <h3>NoLiMa：不许字面匹配，窗口立刻“缩水”</h3>
+        <p class="rp-tag"><b>层级：基准。</b>任务越“语义”、越接近真实工作，有效窗口越短。</p>
+      </div>
+      <p>NoLiMa 把“针”与问题之间的<b>字面重叠也去掉</b>，逼模型靠潜在关联检索：13 个标称 ≥128K 的模型中，<b>11 个在 32K 处跌破短序列基线的一半</b>；GPT-4o 从 99.3% 掉到 69.7%。结论直指注意力机制——没有字面锚点时，长上下文的关联检索是软肋，推理能力与思维链提示也救不回来。</p>
+      <p class="takeaway"><b>含义：</b>用 NIAH 满分安慰自己最危险——真实工作几乎没有“字面针”。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 06</span><span class="rp-date">Chroma Research · 2025-07-14</span><span class="rp-date"><a href="https://www.trychroma.com/research/context-rot" target="_blank" rel="noopener">trychroma.com/research ↗</a></span></div>
+        <h3>《Context Rot》实测：18 个模型，连“机械任务”也随长度腐烂</h3>
+        <p class="rp-tag"><b>层级：任务。</b>“怎么呈现”与“是否在场”同等重要。</p>
+      </div>
+      <p>Chroma 用 19 万次调用测了 18 个模型：即便任务复杂度不变——比如“复述重复单词”这种对人类毫无难度的机械任务——性能也随输入变长<b>非均匀下降</b>。干扰项一出现就掉分；更反直觉的是：<b>把 haystack 洗牌打散结构，成绩反而稳定变好</b>——“结构连贯性本身在伤害模型”。检索 100% 准确也挡不住腐烂：它发生在“读”这一步，不是“找”这一步。</p>
+      <ul>
+        <li>针-问题相似度越低，随长度衰减越快——语义关联是腐烂的加速器；</li>
+        <li>Claude 系模型倾向弃答（幻觉率最低），GPT 系模型幻觉率最高——同一根腐烂曲线，不同模型长出不同的失败模式；</li>
+        <li>LongMemEval 对话 QA 上，“聚焦窗口”全面好于“全量窗口”——正是正文 2.3 策展原则的任务级实证。</li>
+      </ul>
+      <p class="takeaway"><b>含义：</b>context engineering 存在的实验依据——呈现方式本身就是变量。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">证据 07</span><span class="rp-date">Manus · 生产复盘</span><span class="rp-date"><a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus" target="_blank" rel="noopener">manus.im/blog ↗</a></span></div>
+        <h3>KV-cache 经济学：腐烂的另一半是账单</h3>
+        <p class="rp-tag"><b>层级：产品。</b>不进窗口的不只是注意力预算，还有成本。</p>
+      </div>
+      <p>Manus 的生产复盘给了“什么不进窗口”一个财务版本：典型 agent 任务约 50 次工具调用，输入输出比约 <b>100:1</b>，而缓存命中的输入价格约为未命中的<b>十分之一</b>——“KV-cache 命中率是生产阶段 agent 最重要的单一指标”。于是三条铁律：append-only（只追加不改写）、稳定前缀（系统提示开头不放时间戳）、确定性序列化（JSON key 顺序稳定，否则 “silently break the cache”）。</p>
+      <p class="takeaway"><b>含义：</b>机理层与产品层在“append-only”上会师——少改历史，既是注意力卫生，也是财务纪律。</p>
+    </div>
+
+    <h2 id="mech-synthesis"><span class="sec-no">02 / SYNTHESIS</span>一条贯穿五层的证据链</h2>
+
+    <div class="tblwrap"><table>
+      <tr><th style="width:18%">层级</th><th style="width:34%">证据</th><th>对 harness 的指令</th></tr>
+      <tr><td class="k">机理层</td><td>n² 注意力稀释、attention sinks</td><td>策展而非堆砌；把关键内容放在结构性有利位置</td></tr>
+      <tr><td class="k">位置层</td><td>Lost in the Middle 的 U 形曲线</td><td>关键约束放首尾；计划要“复述”回注意力近端</td></tr>
+      <tr><td class="k">基准层</td><td>RULER（17 模型）、NoLiMa（13 模型）</td><td>有效窗口远小于标称；换模型必须重测</td></tr>
+      <tr><td class="k">任务层</td><td>Chroma 18 模型实测</td><td>呈现方式是变量：减干扰、慎用“高度连贯”长文</td></tr>
+      <tr><td class="k">产品层</td><td>Manus KV-cache 复盘</td><td>append-only + 稳定前缀 + 确定性序列化</td></tr>
+    </table></div>
+
+    <ul class="checklist">
+      <li><strong>最小高信号集合：</strong>策展而非堆砌（Anthropic）——窗口里的每个 token 都在花注意力预算。</li>
+      <li><strong>位置即信号：</strong>首尾放关键、结构化标记辅助、计划反复入窗——顺序是被浪费最多的自由度。</li>
+      <li><strong>腐烂是模型的，对策是 harness 的：</strong>模型自己意识不到自己在腐烂——检测、驱逐、压缩、复述，全部由 harness 代劳（回到正文 2.3 的备注与深挖案例 tab 的十个实现）。</li>
+    </ul>
+
+    <section class="refs">
+      <h2 id="mech-refs"><span class="sec-no">REFERENCES</span>深挖来源（均已对照原文核对）</h2>
+      <ol>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Effective Context Engineering for AI Agents</a>（2025-09-29）</li>
+        <li>Xiao, Tian, Chen, Han &amp; Lewis — <a href="https://arxiv.org/abs/2309.17453" target="_blank" rel="noopener">Efficient Streaming Language Models with Attention Sinks</a>（arXiv:2309.17453，ICLR 2024）</li>
+        <li>Liu et al. — <a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener">Lost in the Middle: How Language Models Use Long Contexts</a>（arXiv:2307.03172，TACL）</li>
+        <li>Hsieh et al.（NVIDIA）— <a href="https://arxiv.org/abs/2404.06654" target="_blank" rel="noopener">RULER: What's the Real Context Size of Your Long-Context Language Models?</a>（arXiv:2404.06654，COLM 2024）</li>
+        <li>Modarressi et al. — <a href="https://arxiv.org/abs/2502.05167" target="_blank" rel="noopener">NoLiMa: Long-Context Evaluation Beyond Literal Matching</a>（arXiv:2502.05167，ICML 2025）</li>
+        <li>Hong, Troynikov &amp; Huber（Chroma）— <a href="https://www.trychroma.com/research/context-rot" target="_blank" rel="noopener">Context Rot</a>（2025-07-14）</li>
+        <li>Manus — <a href="https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus" target="_blank" rel="noopener">Context Engineering for AI Agents: Lessons from Building Manus</a></li>
+        <li>Kamradt — <a href="https://github.com/gkamradt/LLMTest_NeedleInAHaystack" target="_blank" rel="noopener">Needle in a Haystack</a>（GitHub，NIAH 原始测试）</li>
+      </ol>
+    </section>
+
+    <p class="back-link"><a href="#tab-main" data-jump-tab="main">← 返回正文</a></p>
+  </div>
+
+  <div id="tab-practice" hidden>
+    <h2 class="cases-title" id="practice-top"><span class="sec-no">DEEP DIVE / COMPANION</span>实践难点：报告没写的那一半</h2>
+    <p>正文与深挖案例讲的是"设计原则怎么定、别人怎么实现"；这一页补上另一半——<b>原则落进生产之后，真正反复卡住实践者的六个难点</b>。它们在报告里大多只以一行结论带过，因为难的部分恰恰是"没有通用答案"。六个难点不是并列的坑，而是同一个结构的六个投影：harness 的每个组件都在往同一个有限、有损、可被污染的窗口里喂东西，所以<em>没有任何局部最优解，全是全局权衡</em>。文中标注的出处均已联网核对，检索于 2026-10-02。</p>
+
+    <h2><span class="sec-no">01 / OVERVIEW</span>六个难点，挂在同一条循环上</h2>
+
+    <figure class="diagram">
+      <svg class="dg" viewBox="0 0 740 340" role="img" aria-label="工作循环与六个实践难点的位置图">
+        <defs>
+          <marker id="arr0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89f8a"/></marker>
+        </defs>
+        <rect x="15" y="28" width="160" height="58" rx="10" class="box"/>
+        <text x="31" y="52" class="t-no">STEP 1</text>
+        <text x="31" y="74" class="t t-bold">组装上下文</text>
+        <line x1="179" y1="57" x2="201" y2="57" class="ln" marker-end="url(#arr0)"/>
+        <rect x="205" y="28" width="150" height="58" rx="10" class="box"/>
+        <text x="221" y="52" class="t-no">STEP 2</text>
+        <text x="221" y="74" class="t t-bold">模型决策</text>
+        <line x1="359" y1="57" x2="381" y2="57" class="ln" marker-end="url(#arr0)"/>
+        <rect x="385" y="28" width="150" height="58" rx="10" class="box"/>
+        <text x="401" y="52" class="t-no">STEP 3</text>
+        <text x="401" y="74" class="t t-bold">执行工具</text>
+        <line x1="539" y1="57" x2="561" y2="57" class="ln" marker-end="url(#arr0)"/>
+        <rect x="565" y="28" width="160" height="58" rx="10" class="box"/>
+        <text x="581" y="52" class="t-no">STOP</text>
+        <text x="581" y="74" class="t t-bold">停止条件判定</text>
+        <path d="M645,86 V112 H95 V92" class="ln" marker-end="url(#arr0)"/>
+        <text x="500" y="126" class="t-soft" text-anchor="middle">↻ 循环，直到满足停止条件</text>
+        <line x1="120" y1="164" x2="100" y2="92" class="ln-dash"/>
+        <line x1="380" y1="164" x2="372" y2="84" class="ln-dash"/>
+        <line x1="640" y1="164" x2="645" y2="92" class="ln-dash"/>
+        <line x1="120" y1="236" x2="120" y2="118" class="ln-dash"/>
+        <line x1="360" y1="236" x2="360" y2="118" class="ln-dash"/>
+        <line x1="602" y1="236" x2="600" y2="118" class="ln-dash"/>
+        <rect x="15" y="168" width="210" height="46" rx="10" class="box-amber"/>
+        <circle cx="33" cy="191" r="11" class="pin"/><text x="33" y="195" class="pin-t" text-anchor="middle">2</text>
+        <text x="52" y="187" class="t t-bold">压缩的损失延迟显现</text>
+        <text x="52" y="205" class="t-soft">该留的被删了</text>
+        <rect x="290" y="168" width="180" height="46" rx="10" class="box-amber"/>
+        <circle cx="308" cy="191" r="11" class="pin"/><text x="308" y="195" class="pin-t" text-anchor="middle">5</text>
+        <text x="327" y="187" class="t t-bold">权限粒度</text>
+        <text x="327" y="205" class="t-soft">太细疲劳 / 太粗失控</text>
+        <rect x="555" y="168" width="170" height="46" rx="10" class="box-amber"/>
+        <circle cx="573" cy="191" r="11" class="pin"/><text x="573" y="195" class="pin-t" text-anchor="middle">1</text>
+        <text x="592" y="187" class="t t-bold">完成判定</text>
+        <text x="592" y="205" class="t-soft">oracle 从哪来</text>
+        <rect x="15" y="240" width="225" height="46" rx="10" class="box-amber"/>
+        <circle cx="33" cy="263" r="11" class="pin"/><text x="33" y="267" class="pin-t" text-anchor="middle">3</text>
+        <text x="52" y="259" class="t t-bold">归因考古</text>
+        <text x="52" y="277" class="t-soft">失败远离病因、无法重放</text>
+        <rect x="255" y="240" width="210" height="46" rx="10" class="box-amber"/>
+        <circle cx="273" cy="263" r="11" class="pin"/><text x="273" y="267" class="pin-t" text-anchor="middle">4</text>
+        <text x="292" y="259" class="t t-bold">checkpoint ≠ restore</text>
+        <text x="292" y="277" class="t-soft">agent 存档了，世界漂移了</text>
+        <rect x="480" y="240" width="245" height="46" rx="10" class="box-amber"/>
+        <circle cx="498" cy="263" r="11" class="pin"/><text x="498" y="267" class="pin-t" text-anchor="middle">6</text>
+        <text x="517" y="259" class="t t-bold">紧耦合回归 + 模型漂移</text>
+        <text x="517" y="277" class="t-soft">改一处坏三处，升级即失效</text>
+        <text x="370" y="318" class="t-soft" text-anchor="middle">六个难点挂在同一条循环上——所有组件都在往同一个有限、有损、可被污染的窗口里喂东西。</text>
+      </svg>
+      <figcaption>图例：六个实践难点在工作循环上的位置——①③④⑥属于整个循环，②在组装上下文处，⑤在工具执行的闸门上。</figcaption>
+    </figure>
+
+    <h2><span class="sec-no">02 / DIFFICULTIES</span>逐一拆解</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">难点 01 / 06</span><span class="rp-date">oracle 问题</span><span class="rp-date">对照正文 2.4 节</span></div>
+        <h3>验证器的缺口：判定"完成"比完成任务更难</h3>
+        <p class="rp-tag"><b>症状：</b>"agent 说我做完了"之后，没有人能便宜地反驳它。</p>
+      </div>
+      <p>报告 04 用"JSON 功能清单 + 浏览器自动化"把"过早宣告完成"挡了回去，容易让人以为自我验证闭环是通用解。它其实只覆盖了最幸运的情形——存在<span class="note-term" id="note-term-oracle" data-note="note-pop-oracle" role="button" tabindex="0" aria-expanded="false">oracle（机械判据）</span>的任务：有测试套件的代码、可执行的验收脚本、可逐项核对的清单。<strong>生成与验证的成本严重不对称：生成便宜，验证贵，于是可靠性的上限卡在验证那一侧，而不是模型那一侧。</strong>没有机械判据的领域——重构是否改变了行为、UX 是否"更好"、一段模糊需求是否被满足——测试全绿也不代表做对了，验证绕一圈最后还是回到人；人在环上，人就是吞吐量的瓶颈。</p>
+      <figure class="diagram">
+        <svg class="dg" viewBox="0 0 740 252" role="img" aria-label="生成与验证的成本不对称，以及判据分岔">
+          <defs>
+            <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89f8a"/></marker>
+          </defs>
+          <rect x="15" y="24" width="185" height="52" rx="10" class="box"/>
+          <text x="31" y="46" class="t t-bold">生成：说"做完了"</text>
+          <text x="31" y="64" class="t-soft">便宜 · 快 · 每次都成功</text>
+          <polygon points="204,24 268,42 268,58 204,76" class="box"/>
+          <line x1="268" y1="42" x2="288" y2="48" class="ln"/>
+          <line x1="268" y1="58" x2="288" y2="52" class="ln"/>
+          <rect x="292" y="24" width="195" height="52" rx="10" class="box-amber"/>
+          <text x="308" y="46" class="t t-bold">验证：证明做对了</text>
+          <text x="308" y="64" class="t-soft">贵 · 慢 · 判据难找</text>
+          <line x1="491" y1="50" x2="509" y2="50" class="ln" marker-end="url(#arr1)"/>
+          <rect x="513" y="24" width="212" height="52" rx="10" class="box-danger"/>
+          <text x="529" y="46" class="t t-bold t-danger">可靠性上限卡在验证侧</text>
+          <text x="529" y="64" class="t-soft">生成便宜，验证贵</text>
+          <rect x="15" y="96" width="70" height="8" class="bar"/>
+          <text x="15" y="122" class="t-soft">生成的相对成本</text>
+          <rect x="292" y="96" width="185" height="8" class="bar"/>
+          <text x="292" y="122" class="t-soft">验证的相对成本</text>
+          <polygon points="370,146 470,188 370,230 270,188" class="box"/>
+          <text x="370" y="193" class="t t-bold" text-anchor="middle">任务有机械判据吗？</text>
+          <line x1="268" y1="188" x2="246" y2="188" class="ln" marker-end="url(#arr1)"/>
+          <line x1="472" y1="188" x2="494" y2="188" class="ln" marker-end="url(#arr1)"/>
+          <rect x="15" y="160" width="225" height="56" rx="10" class="box-amber"/>
+          <text x="31" y="182" class="t t-bold">有 → 自我验证闭环</text>
+          <text x="31" y="200" class="t-soft">报告 04：功能清单逐项验收</text>
+          <rect x="500" y="160" width="225" height="56" rx="10" class="box-danger"/>
+          <text x="516" y="182" class="t t-bold t-danger">没有 → 绕回人</text>
+          <text x="516" y="200" class="t-soft">测试全绿 ≠ 做对了，人成瓶颈</text>
+        </svg>
+        <figcaption>图例 1：验证是漏斗的细颈——有 oracle 的任务可以闭环，没有的绕回人。</figcaption>
+      </figure>
+      <ul>
+        <li>实践症状：agent 的"90% 自主"发生在有测试覆盖的任务上；一旦进入无判据的长尾任务，自动化率断崖式下跌；</li>
+        <li>部分对策：把模糊需求在开工前翻译成可核对的验收清单（报告 04 的 200+ 项 JSON 功能清单）；给验证设独立的"评估者"角色（报告 01 的评估者-优化者模式）；</li>
+        <li>对策的代价：清单本身成为新的维护面——<b>清单错了，agent 会坚定地做完一件错事</b>。</li>
+      </ul>
+      <p class="takeaway"><b>含义：</b>判定"完成"的依据从哪来，是 harness 设计的第一道主观题——没有 oracle 的任务，自主性没有意义。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">难点 02 / 06</span><span class="rp-date">删错与留错</span><span class="rp-date">对照正文 2.3 节</span></div>
+        <h3>压缩的损失会延迟显现，污染的方向会持续放大</h3>
+        <p class="rp-tag"><b>症状：</b>失败在离病因很远的地方冒出来，而且说不清是哪一步开始的。</p>
+      </div>
+      <p>正文 2.3 与深挖案例 tab 已给出压缩、笔记、子代理三条路线；实践中真正难的不是选路线，而是"删 / 留"两类错误都延迟暴露。<b>删错</b>：你在 t=100 无法知道哪些细节在 t=500 变成关键约束——被压缩掉的细节里，总有一部分后来被证明是要害。70% / 50% 阈值（Gemini CLI 早期 / 当前默认）、保尾 30%、"关键细节、事件与决策"（Cognition 甚至为压缩专门微调了小模型）都是对策，但没有一个可以照抄。<b>留错</b>：一条错误或带噪声的工具结果一旦进窗，模型把它当作事实反复引用，后续决策全部建在它上面——社区称之为 <span class="note-term" id="note-term-poisoning" data-note="note-pop-poisoning" role="button" tabindex="0" aria-expanded="false">context poisoning（上下文污染）</span>。它与 <span class="note-term" id="note-term-rot-p" data-note="note-pop-rot" role="button" tabindex="0" aria-expanded="false">context rot</span> 是两种病：rot 是精度随长度的衰减，poisoning 是方向性跑偏，模型对"错误的前提"几乎没有自我纠偏能力。正文 2.3 说的"保留错误"是保留真实失败让模型学到教训——前提是那个错误是真的；对假错误，保留等于投毒。</p>
+      <figure class="diagram">
+        <svg class="dg" viewBox="0 0 740 296" role="img" aria-label="删错与留错两种对称失败">
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c05b45"/></marker>
+          </defs>
+          <line x1="372" y1="28" x2="372" y2="192" class="ln-dash"/>
+          <text x="15" y="36" class="t-no">失败 A · 删错</text>
+          <text x="15" y="58" class="t t-bold">该留的被压缩掉了</text>
+          <rect x="40" y="106" width="300" height="12" class="bar"/>
+          <rect x="135" y="106" width="45" height="12" fill="#cfc6b0"/>
+          <circle cx="44" cy="112" r="4" fill="#8a3e06"/>
+          <text x="40" y="96" class="t-soft">t=0 约束写入</text>
+          <text x="150" y="96" class="t-soft">t=100 压缩掉一段细节</text>
+          <line x1="186" y1="152" x2="274" y2="152" class="ln-danger" marker-start="url(#arr2)" marker-end="url(#arr2)"/>
+          <text x="230" y="142" class="t-soft" text-anchor="middle">归因距离</text>
+          <rect x="280" y="130" width="86" height="44" rx="8" class="box-danger"/>
+          <text x="323" y="150" class="t t-bold t-danger" text-anchor="middle">t=500</text>
+          <text x="323" y="168" class="t-danger" font-size="12.5" text-anchor="middle">违反约束</text>
+          <text x="380" y="36" class="t-no">失败 B · 留错</text>
+          <text x="380" y="58" class="t t-bold">一个错误结果污染全程</text>
+          <rect x="405" y="106" width="300" height="12" class="bar"/>
+          <polygon points="445,112 705,86 705,140" fill="#a63a2a" opacity="0.12"/>
+          <circle cx="445" cy="112" r="7" fill="#a63a2a"/>
+          <text x="445" y="117" font-size="11" fill="#fdf9f2" text-anchor="middle">✕</text>
+          <text x="405" y="96" class="t-soft">t=80 一条错误的工具结果进窗</text>
+          <text x="585" y="74" class="t t-danger" text-anchor="middle">污染扇面：后续决策全部建在错误上</text>
+          <rect x="15" y="208" width="710" height="68" rx="10" class="box-amber"/>
+          <text x="31" y="234" class="t t-bold">四分类（Horthy / HumanLayer）：poisoning 留错污染 · distraction 过载 · confusion 干扰 · clash 冲突</text>
+          <text x="31" y="258" class="t-soft">与 context rot 的区别：rot 是精度随长度的衰减，poisoning 是方向性跑偏——模型对错误前提几乎没有自我纠偏能力。</text>
+        </svg>
+        <figcaption>图例 2：上下文工程的两个对称失败——删错（该留的被删了）与留错（不该留的留下了），都在离病因很远的地方才暴露。</figcaption>
+      </figure>
+      <p class="takeaway"><b>含义：</b>压缩在赌"以后用不上"，不压缩在赌"现在装得下"——harness 每一轮都在下注，而输赢要很多步之后才揭晓。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">难点 03 / 06</span><span class="rp-date">归因与评估</span><span class="rp-date">对照正文 3.1 节</span></div>
+        <h3>归因考古：失败是几十万 token 里的遥远回声</h3>
+        <p class="rp-tag"><b>症状：</b>"这是模型的锅、工具的锅，还是我的锅？"——没有捷径可问。</p>
+      </div>
+      <p>harness 出问题的第一问永远是归因，而非确定性让这问没有捷径：<b>同一输入两次运行，一次成功一次失败，无法重放</b>。排查因此变成考古——在一整条几十万 token 的轨迹里，找"错误信念在哪一步形成"。OpenAI 的应对是把这变成制度而非救火：程序化跑评估留下完整 transcript，再用 Claude Code 在工具设计层面批量归因（正文 3.1 节）；报告 02 的做法是先建评估、再动工具——<em>评估先行不是美德说教，是因为没有它，归因根本无从下手</em>。次序反过来（先改 harness 再补评估）的团队，每一次改动都是盲调。</p>
+      <figure class="diagram">
+        <svg class="dg" viewBox="0 0 740 288" role="img" aria-label="轨迹考古与无法重放">
+          <defs>
+            <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89f8a"/></marker>
+          </defs>
+          <line x1="372" y1="28" x2="372" y2="270" class="ln-dash"/>
+          <text x="15" y="34" class="t-no">考古对象</text>
+          <text x="15" y="56" class="t t-bold">一条几十万 token 的轨迹</text>
+          <rect x="30" y="74" width="200" height="12" rx="4" class="box"/>
+          <rect x="30" y="94" width="186" height="12" rx="4" class="box"/>
+          <rect x="30" y="114" width="200" height="12" rx="4" class="box-amber"/>
+          <rect x="30" y="134" width="193" height="12" rx="4" class="box"/>
+          <rect x="30" y="154" width="200" height="12" rx="4" class="box"/>
+          <rect x="30" y="174" width="180" height="12" rx="4" class="box"/>
+          <rect x="30" y="194" width="196" height="12" rx="4" class="box"/>
+          <rect x="30" y="214" width="188" height="12" rx="4" class="box"/>
+          <rect x="30" y="234" width="200" height="12" rx="4" class="box"/>
+          <rect x="30" y="254" width="198" height="12" rx="4" class="box-danger"/>
+          <line x1="232" y1="120" x2="244" y2="120" class="ln-dash"/>
+          <text x="248" y="116" class="t-soft">错误信念在</text>
+          <text x="248" y="132" class="t-soft">这一步形成</text>
+          <text x="248" y="180" class="t-soft">中间隔着</text>
+          <text x="248" y="196" class="t-soft">几万 token</text>
+          <line x1="232" y1="260" x2="244" y2="260" class="ln-dash"/>
+          <text x="248" y="256" class="t t-danger">失败在几十万</text>
+          <text x="248" y="272" class="t t-danger">token 之后显现</text>
+          <text x="395" y="34" class="t-no">重放失败</text>
+          <text x="395" y="56" class="t t-bold">同一输入，不同结局</text>
+          <rect x="455" y="76" width="170" height="44" rx="10" class="box"/>
+          <text x="540" y="94" class="t t-bold" text-anchor="middle">同一输入</text>
+          <text x="540" y="112" class="t-soft" text-anchor="middle">跑两次</text>
+          <line x1="505" y1="120" x2="462" y2="156" class="ln" marker-end="url(#arr3)"/>
+          <line x1="575" y1="120" x2="618" y2="156" class="ln" marker-end="url(#arr3)"/>
+          <rect x="385" y="160" width="145" height="52" rx="10" class="box-amber"/>
+          <text x="457" y="182" class="t t-bold" text-anchor="middle">运行 A</text>
+          <text x="457" y="200" class="t-soft" text-anchor="middle">成功</text>
+          <rect x="555" y="160" width="145" height="52" rx="10" class="box-danger"/>
+          <text x="627" y="182" class="t t-bold" text-anchor="middle">运行 B</text>
+          <text x="627" y="200" class="t t-danger" text-anchor="middle">失败</text>
+          <text x="552" y="244" class="t-soft" text-anchor="middle">非确定性："复现一次"都做不到，</text>
+          <text x="552" y="262" class="t-soft" text-anchor="middle">排查只能逐条通读轨迹</text>
+        </svg>
+        <figcaption>图例 3：归因考古——病因与失败相隔数万 token，且非确定性让重放失效。</figcaption>
+      </figure>
+      <ul>
+        <li>实践症状：改一行工具描述，三天后在另一类任务上出回归——紧耦合系统的经典表现（难点 06 的一半）；</li>
+        <li>部分对策：评估先行 + held-out 防过拟合（报告 02）；逐步 tracing——每步记 token、工具结果与决策依据；</li>
+        <li>对策的代价：评估本身贵且 flaky——同一任务多跑几次方差可观，"显著改进"需要多次重复，<b>迭代速度被钱和时间封顶</b>。</li>
+      </ul>
+      <p class="takeaway"><b>含义：</b>没有 eval 套件与轨迹留痕的 harness 调优，等于闭着眼睛修表。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">难点 04 / 06</span><span class="rp-date">状态与世界</span><span class="rp-date">对照正文 2.4 / 2.5 节</span></div>
+        <h3>checkpoint ≠ restore：存档的是 agent，漂移的是世界</h3>
+        <p class="rp-tag"><b>症状：</b>续跑的 agent 把半成品当成自己的起点，或重做已完成的工作。</p>
+      </div>
+      <p>崩溃续跑的难点不在存档，而在恢复的那一刻，<b>外部世界已经变了</b>：文件被用户改过、git 前进了几个提交、端口被别的进程占了、依赖悄悄升级。checkpoint 里存的是 agent 的记忆，而 agent 的计划引用的是一个不再存在的世界。报告 04 的"会话启动仪式"（确认目录 → 读 git log → 读进度文件 → 冒烟测试）本质上是一套"重测世界"的仪式；报告 05 走得更彻底——Session 是窗口之外的只追加日志，harness 本身不留本地状态，崩溃后凭 <code>wake(sessionId)</code> 续跑：这是把数据库 WAL/journaling 的思想搬进 agent。剩下最难的部分报告没有展开：让工具调用幂等、可重入——"创建前先检查""改库前先探状态"，这些约束没有框架强制，全靠 harness 作者逐个补。还有一层报告不写的脏活：跑 5 小时撞上 429 限流或断流——瞬态基础设施故障的退避重试与断点续传，是纯工程耐力活。</p>
+      <figure class="diagram">
+        <svg class="dg" viewBox="0 0 740 278" role="img" aria-label="存档与恢复之间的世界漂移">
+          <defs>
+            <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89f8a"/></marker>
+          </defs>
+          <rect x="15" y="52" width="325" height="150" rx="12" class="box"/>
+          <text x="31" y="80" class="t-no">存档时 · t=0</text>
+          <text x="35" y="108" class="t">文件树：src/ 12 个文件</text>
+          <text x="35" y="132" class="t">git HEAD @ a1b2c3d</text>
+          <text x="35" y="156" class="t">端口 8931 空闲</text>
+          <text x="35" y="180" class="t">依赖锁 v2.1</text>
+          <line x1="345" y1="127" x2="393" y2="127" class="ln" marker-end="url(#arr4)"/>
+          <rect x="400" y="52" width="325" height="150" rx="12" class="box-danger"/>
+          <text x="416" y="80" class="t-no">恢复时 · t=5h</text>
+          <text x="420" y="108" class="t t-danger">≠</text><text x="442" y="108" class="t">文件树：13 个文件（用户改过）</text>
+          <text x="420" y="132" class="t t-danger">≠</text><text x="442" y="132" class="t">git 前进 3 个提交</text>
+          <text x="420" y="156" class="t t-danger">≠</text><text x="442" y="156" class="t">端口 8931 被占</text>
+          <text x="420" y="180" class="t t-danger">≠</text><text x="442" y="180" class="t">依赖锁 v2.3（自动升级）</text>
+          <text x="370" y="226" class="t-soft" text-anchor="middle">checkpoint 只存了 agent 的记忆，没存世界的状态</text>
+          <rect x="15" y="242" width="710" height="30" rx="8" class="box-amber"/>
+          <text x="370" y="261" class="t" text-anchor="middle">对策：副作用幂等、可重入 + Session 只追加日志（正文 2.5）——把 WAL 的思想搬进 agent</text>
+        </svg>
+        <figcaption>图例 4：恢复前必须先"重测世界"——报告 04 的会话启动仪式正是这个用途。</figcaption>
+      </figure>
+      <p class="takeaway"><b>含义：</b>恢复的可靠程度，决定长任务敢不敢交给 agent——这是 OS 类比里最难兑现的部分。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">难点 05 / 06</span><span class="rp-date">信任边界</span><span class="rp-date">对照正文 2.5 节</span></div>
+        <h3>权限粒度是产品决策，不是工程参数</h3>
+        <p class="rp-tag"><b>症状：</b>要么人被"允许"按钮淹死，要么 agent 拿着 secrets 裸奔。</p>
+      </div>
+      <p>太细——人一天点 200 次"允许"，被训练成不看内容秒批的橡皮图章（permission fatigue），安全形同虚设；太粗——agent 能读环境变量里的 secrets、能通过工具参数把数据外传，<span class="note-term" id="note-term-sandbox-p" data-note="note-pop-sandbox" role="button" tabindex="0" aria-expanded="false">沙箱</span>逃逸是真实威胁（STOP 论文专门把"绕过沙箱的频率"列为评估项，DGM 全程沙箱加人工监督）。两端的失败方式完全不同，中间没有理论最优点，只有按任务组合调出来的信任边界：分级授权（只读免批 / 写入待批 / 危险动作人工复核）加事件触发升级。正文 2.5 的自主度阶梯与 MCP + OAuth vault（凭据进保险库、agent 只拿调用权）是这一层的两个代表答案。<em>每家的 harness 长得都不一样，症状主要出在这一层——它是产品价值观的直接投影。</em></p>
+      <figure class="diagram">
+        <svg class="dg" viewBox="0 0 740 268" role="img" aria-label="自主度的 U 形风险曲线">
+          <rect x="295" y="158" width="160" height="38" class="box-amber"/>
+          <line x1="60" y1="36" x2="60" y2="196" class="ln"/>
+          <line x1="60" y1="196" x2="690" y2="196" class="ln"/>
+          <path d="M85,62 C170,176 250,188 375,188 C500,188 580,176 655,62" class="curve"/>
+          <text x="40" y="118" class="t-soft" text-anchor="middle">实际风险</text>
+          <text x="115" y="44" class="t t-bold t-danger">太细 → 橡皮图章化</text>
+          <text x="115" y="62" class="t-soft">200 次/天的"允许"训练出秒批反射</text>
+          <text x="655" y="40" class="t t-bold t-danger" text-anchor="end">太粗 → 风险失控</text>
+          <text x="655" y="58" class="t-soft" text-anchor="end">secrets 可读、凭据外传、沙箱逃逸</text>
+          <text x="375" y="224" class="t t-bold" text-anchor="middle">分级授权 + 事件触发升级</text>
+          <text x="375" y="244" class="t-soft" text-anchor="middle">只读免批 · 写入待批 · 危险动作人工复核</text>
+          <text x="60" y="216" class="t-soft">自主度：事事都问</text>
+          <text x="690" y="216" class="t-soft" text-anchor="end">全自动</text>
+        </svg>
+        <figcaption>图例 5：自主度的 U 形风险曲线——两端都是失败，可行解是按风险分级的信任边界。</figcaption>
+      </figure>
+      <p class="takeaway"><b>含义：</b>权限系统没有工程最优解，只有"你愿意把多少信任交给一个不可靠的循环"这一个问题。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">难点 06 / 06</span><span class="rp-date">耦合与漂移</span><span class="rp-date">对照正文 3.1 / 2.5 节</span></div>
+        <h3>紧耦合回归与模型漂移：harness 是一个会随模型腐烂的系统</h3>
+        <p class="rp-tag"><b>症状：</b>没改坏的组件坏了一个；没动过的 harness 悄悄变差了。</p>
+      </div>
+      <p>harness 是紧耦合系统：工具描述、压缩阈值、权限规则、系统提示互相作用——<b>改一处，往往三步之后在别处坏</b>，而每次完整验证都要真金白银跑长任务，迭代极慢（难点 03 的代价在这里再次出现）。更深一层是时间维度的耦合：harness 里写满了关于"当前模型做不到什么"的假设。报告 05 的原案例：Sonnet 4.5 有"上下文焦虑"（临近窗口上限就提前收工），团队用 context reset 治好；换 Opus 4.5 后这个行为消失了，reset 反而成了累赘——<em>为一个模型缺陷打的补丁，在下一代模型上变成负担</em>。且这种退化是静默的：不报错，成功率掉几个点。跨模型更甚：工具调用纪律、报错恢复习惯的模型间差异，让"同一套 harness"基本不存在。实践者的结论收敛为报告 04/05 的那句设计纲领：<b>为换模型而设计（design for model replacement）</b>——把补丁做成可开关的假设，而不是焊死的规则。</p>
+      <figure class="diagram">
+        <svg class="dg" viewBox="0 0 740 300" role="img" aria-label="组件紧耦合网络与模型升级后的静默退化">
+          <defs>
+            <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89f8a"/></marker>
+          </defs>
+          <line x1="372" y1="28" x2="372" y2="270" class="ln-dash"/>
+          <text x="15" y="32" class="t-no">空间维度的耦合</text>
+          <text x="15" y="54" class="t t-bold">改一处，三步后在别处坏</text>
+          <line x1="155" y1="97" x2="221" y2="124" class="ln" marker-end="url(#arr5)"/>
+          <line x1="155" y1="160" x2="221" y2="136" class="ln" marker-end="url(#arr5)"/>
+          <line x1="155" y1="172" x2="221" y2="213" class="ln" marker-end="url(#arr5)"/>
+          <line x1="155" y1="237" x2="221" y2="226" class="ln" marker-end="url(#arr5)"/>
+          <line x1="290" y1="149" x2="290" y2="201" class="ln" marker-end="url(#arr5)"/>
+          <rect x="25" y="80" width="130" height="34" rx="8" class="box"/>
+          <text x="90" y="101" class="t" text-anchor="middle">工具描述</text>
+          <rect x="25" y="150" width="130" height="34" rx="8" class="box-amber"/>
+          <text x="90" y="171" class="t t-bold" text-anchor="middle">压缩阈值</text>
+          <text x="25" y="202" class="t-no">↑ 从这里改起</text>
+          <rect x="25" y="220" width="130" height="34" rx="8" class="box"/>
+          <text x="90" y="241" class="t" text-anchor="middle">权限规则</text>
+          <rect x="225" y="115" width="130" height="34" rx="8" class="box"/>
+          <text x="290" y="136" class="t" text-anchor="middle">系统提示</text>
+          <rect x="225" y="205" width="130" height="34" rx="8" class="box-danger"/>
+          <text x="290" y="226" class="t t-bold" text-anchor="middle">评估集</text>
+          <text x="290" y="258" class="t t-danger" text-anchor="middle">回归在这里爆出来</text>
+          <text x="395" y="32" class="t-no">时间维度的耦合</text>
+          <text x="395" y="54" class="t t-bold">模型一升级，补丁悄悄失效</text>
+          <line x1="410" y1="70" x2="410" y2="232" class="ln"/>
+          <line x1="410" y1="232" x2="720" y2="232" class="ln"/>
+          <text x="404" y="152" class="t-soft" text-anchor="end">成功率</text>
+          <path d="M420,96 C470,90 520,92 560,90" class="curve"/>
+          <path d="M560,90 C600,130 640,150 700,158" class="ln-danger"/>
+          <line x1="490" y1="232" x2="490" y2="238" class="ln"/>
+          <line x1="655" y1="232" x2="655" y2="238" class="ln"/>
+          <text x="490" y="252" class="t-soft" text-anchor="middle">当前模型</text>
+          <text x="655" y="252" class="t-soft" text-anchor="middle">下一代模型</text>
+          <text x="455" y="186" class="t t-danger">静默退化：不报错，</text>
+          <text x="455" y="204" class="t t-danger">成功率掉几个点</text>
+          <text x="410" y="274" class="t-soft">案例：Sonnet 4.5 的"上下文焦虑" reset 补丁，</text>
+          <text x="410" y="292" class="t-soft">在 Opus 4.5 上成了累赘（报告 05）</text>
+        </svg>
+        <figcaption>图例 6：harness 的双重腐烂——空间上组件紧耦合，时间上随模型版本漂移。</figcaption>
+      </figure>
+      <p class="takeaway"><b>含义：</b>harness 不是一次性工程，而是随模型版本持续维护的"移植层"——它的半衰期由模型进步的速度决定。</p>
+    </div>
+
+    <h2 id="practice-synthesis"><span class="sec-no">03 / SYNTHESIS</span>一张对照表：为什么没有通用解</h2>
+
+    <div class="tblwrap"><table>
+      <tr><th style="width:16%">难点</th><th style="width:28%">为什么没有通用解</th><th style="width:28%">实践中的部分对策</th><th>对策的代价</th></tr>
+      <tr><td class="k">01 验证器缺口</td><td>模糊任务没有机械判据</td><td>验收清单化、独立评估者</td><td>清单成为新的维护面</td></tr>
+      <tr><td class="k">02 删错 / 留错</td><td>t=100 不知道 t=500 需要什么</td><td>阈值压缩 + 保尾、笔记外置、按任务选路线</td><td>输赢延迟揭晓，调参靠长跑实验</td></tr>
+      <tr><td class="k">03 归因考古</td><td>非确定性、无法重放</td><td>评估先行、逐步 tracing、held-out</td><td>评估贵且 flaky，迭代被成本封顶</td></tr>
+      <tr><td class="k">04 世界漂移</td><td>副作用不可事务化</td><td>Session 日志、幂等工具、"重测世界"仪式</td><td>每个工具都要逐个补幂等约束</td></tr>
+      <tr><td class="k">05 权限粒度</td><td>信任边界是价值观，不是参数</td><td>分级授权、凭据 vault、事件触发升级</td><td>无最优解，需随产品持续校准</td></tr>
+      <tr><td class="k">06 耦合与漂移</td><td>假设随模型进步过时</td><td>design for model replacement、补丁可开关</td><td>持续维护成本永不归零</td></tr>
+    </table></div>
+
+    <ul class="checklist">
+      <li><strong>先建评估，再动 harness：</strong>没有轨迹与分数，一切归因都是猜测（OpenAI 的 transcript 复盘；报告 02 的评估驱动工具重构）。</li>
+      <li><strong>压缩与保留都是下注：</strong>关键约束外置成文件或清单，别把"以后要用"的东西只存在窗口里。</li>
+      <li><strong>把模型相关的补丁写成可开关的假设：</strong>为换模型而设计（报告 04/05）——harness 的半衰期由模型决定。</li>
+    </ul>
+
+    <section class="refs">
+      <h2 id="practice-refs"><span class="sec-no">REFERENCES</span>深挖来源（均已联网核对，检索于 2026-10-02）</h2>
+      <ol>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">Effective Harnesses for Long-Running Agents</a>（2025-11-26，四种失败模式与验证闭环）</li>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Effective Context Engineering for AI Agents</a>（2025-09-29，"保留错误"与策展原则）</li>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/managed-agents" target="_blank" rel="noopener">Scaling Managed Agents</a>（2026-04-08，Session 日志与"上下文焦虑"补丁案例）</li>
+        <li>OpenAI — <a href="https://openai.com/index/harness-engineering" target="_blank" rel="noopener">Harness Engineering</a>（2026-02，transcript 归因与评估先行）</li>
+        <li>Dex Horthy（HumanLayer）× LangChain — <a href="https://www.langchain.com/blog/context-engineering-for-agents" target="_blank" rel="noopener">Context Engineering</a>（context poisoning / distraction / confusion / clash 四分类出处）</li>
+        <li>Cognition — <a href="https://cognition.com/blog/dont-build-multi-agents" target="_blank" rel="noopener">Don't Build Multi-Agents</a>（为压缩专门微调小模型）</li>
+        <li>Lilian Weng — <a href="https://lilianweng.github.io/posts/2026-07-04-harness" target="_blank" rel="noopener">Harness Engineering for Self-Improvement</a>（2026-07-04，评估器与权限控制不进自编辑回路）</li>
+      </ol>
+    </section>
+
+    <p class="back-link"><a href="#tab-main" data-jump-tab="main">← 返回正文</a></p>
+  </div>
+
+  <div id="tab-evolution" hidden>
+    <h2 class="cases-title" id="evo-top"><span class="sec-no">DEEP DIVE / LINEAGE</span>两条踩坑经验的演化链：从多智能体复盘到报告 04</h2>
+    <p>正文 2.6 末尾说"这两条后来分别演化为报告 04 的'功能清单'和'文件即记忆'模式"，但正文只写了这一句，此前页面上没有任何一处把这条线铺开——找不到是正常的。本页补上对照。先把两个结论摆在前面：<b>两组机制确实一一对应</b>；但<b>"文件即记忆"不是报告 04 的原词</b>（04 只给出了具体机制，这个词是本页的概括），且<b>04 全文没有引用那篇复盘</b>，"演化为"是按机制相似与时间先后做的综述判读，不是 Anthropic 官方写明的传承。文中引文均已联网核对原文，检索于 2026-10-03。</p>
+
+    <h2><span class="sec-no">01 / SOURCE</span>出发点：2025-06 复盘里，两条经验的原貌</h2>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">经验 01</span><span class="rp-date">2025-06</span><span class="rp-date">anthropic.com/engineering</span></div>
+        <h3>教领队 agent 委派：把"一次委派"当成要规格化的接口</h3>
+        <p class="rp-tag"><b>症状：</b>子代理任务描述模糊，多个子代理重复搜索同一主题，并行反而放大浪费。</p>
+      </div>
+      <p>正文 2.6 已给出症状；复盘给出的处方是一段可以直接抄进提示词的委派规范，原文：</p>
+      <p><em>"Each subagent needs an objective, an output format, guidance on the tools and sources to use, and clear task boundaries."</em></p>
+      <p>也就是说，领队的"委派"被当作一个 harness 必须规格化的接口：目标、输出格式、工具与信息源指引、任务边界，四件套缺一不可。注意它作用的尺度——<strong>一次委派</strong>。</p>
+    </div>
+
+    <div class="report">
+      <div class="report-head">
+        <div class="rp-line"><span class="rp-no">经验 02</span><span class="rp-date">2025-06</span><span class="rp-date">anthropic.com/engineering</span></div>
+        <h3>减少"传话游戏"：产物落文件，只传轻量引用</h3>
+        <p class="rp-tag"><b>症状：</b>大段输出经对话历史层层复制，信息在转述中损失，token 开销随复制层层叠加。</p>
+      </div>
+      <p>这条在复盘的附录里——条目标题就叫 <em>"Subagent output to a filesystem to minimize the 'game of telephone.'"</em>（正文 2.6 说"写入文件系统"依据的正是这个标题），原话相当直白：</p>
+      <p><em>"Subagents call tools to store their work in external systems, then pass lightweight references back to the coordinator."——"This prevents information loss during multi-stage processing and reduces token overhead from copying large outputs through conversation history."</em></p>
+      <p>另有一处容易被忽略的伏笔：复盘还让领队<strong>把研究计划写入 Memory</strong>，上下文触顶后凭存储恢复进度。"状态放在窗口之外"在这篇复盘里已经出现，只是还挂在运行时的记忆机制上，没有落成文件。</p>
+    </div>
+
+    <h2><span class="sec-no">02 / ARRIVAL</span>五个月后：报告 04 里的对应机制</h2>
+
+    <p>报告 04（2025-11）没有引用这篇复盘，但把它那张施工图逐件摆出来，能找到两条经验各自被"放大"之后的版本：</p>
+
+    <div class="tblwrap"><table>
+      <tr><th style="width:46%">2025-06 复盘（一次交互的尺度）</th><th>报告 04（项目 / 跨会话的尺度）</th></tr>
+      <tr><td>委派四件套：目标、输出格式、工具指引、边界，逐项显式</td><td>一句"做一个 claude.ai 的克隆"被展开成 <strong>200+ 项 JSON 功能清单</strong>，全部初始 <code>failing</code>；agent 只准改 <code>passes</code> 字段——"It is unacceptable to remove or edit tests"</td></tr>
+      <tr><td colspan="2" class="carry"><b>承继点（本页判读）：</b>同一个操作——把模糊意图显式化——从"一次委派"放大到"整个项目"，并加装机械验收</td></tr>
+      <tr><td>子代理把成果存外部系统，只给领队传轻量引用</td><td><strong>git 小步提交 + claude-progress.txt + feature_list.json</strong>；启动仪式：pwd → 读 git log → 读进度文件 → 读功能清单 → 冒烟测试</td></tr>
+      <tr><td colspan="2" class="carry"><b>承继点（本页判读）：</b>同一个操作——状态外置到窗口之外——从"子代理 → 领队"放大到"上个会话 → 下个会话"</td></tr>
+    </table></div>
+
+    <p>还有两个与两条经验同族的细节，和一个小伏笔的归宿。其一，外置的文件本身也被当作不可信面来设防：功能清单特意用 JSON 而非 Markdown，原文解释是 "we landed on using JSON for this, as the model is less likely to inappropriately change or overwrite JSON files compared to Markdown files"——防的不是传话损失，而是 agent 篡改验收标准本身。其二，接手的成本被当成一等公民：原文说启动仪式 "saves Claude some tokens in every session since it doesn't have to figure out how to test the code"，init.sh（一键起开发服务器）正是其中一环。还有那个小伏笔的归宿：复盘里领队"把计划存入 Memory"，理由原文写得很实——上下文超过 200,000 token 会被截断，"it is important to retain the plan"；到 04 变成了纯文件版——claude-progress.txt 加 git 历史就是续跑的上下文，不再依赖运行时的 Memory 工具。</p>
+
+    <h2><span class="sec-no">03 / MAPPING</span>一张图：两个"放大器"</h2>
+
+    <figure class="diagram">
+      <svg class="dg" viewBox="0 0 740 330" role="img" aria-label="两条经验到报告 04 两个模式的演化链">
+        <defs>
+          <marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a89f8a"/></marker>
+        </defs>
+        <rect x="15" y="40" width="230" height="88" rx="10" class="box-amber"/>
+        <text x="31" y="64" class="t-no">2025-06 · 复盘</text>
+        <text x="31" y="88" class="t t-bold">教领队 agent 委派</text>
+        <text x="31" y="110" class="t-soft">每次委派都要显式化</text>
+        <text x="370" y="66" class="t-soft" text-anchor="middle">放大器①：显式化 × 项目规模</text>
+        <line x1="249" y1="88" x2="487" y2="88" class="ln" marker-end="url(#arr6)"/>
+        <rect x="495" y="40" width="230" height="88" rx="10" class="box"/>
+        <text x="511" y="64" class="t-no">2025-11 · 报告 04</text>
+        <text x="511" y="88" class="t t-bold">JSON 功能清单</text>
+        <text x="511" y="110" class="t-soft">一句模糊需求 → 200+ 项验收</text>
+        <rect x="15" y="176" width="230" height="88" rx="10" class="box-amber"/>
+        <text x="31" y="200" class="t-no">2025-06 · 复盘</text>
+        <text x="31" y="224" class="t t-bold">减少"传话游戏"</text>
+        <text x="31" y="246" class="t-soft">产物落文件，只传轻量引用</text>
+        <text x="370" y="202" class="t-soft" text-anchor="middle">放大器②：外置化 × 会话边界</text>
+        <line x1="249" y1="224" x2="487" y2="224" class="ln" marker-end="url(#arr6)"/>
+        <rect x="495" y="176" width="230" height="88" rx="10" class="box"/>
+        <text x="511" y="200" class="t-no">2025-11 · 报告 04</text>
+        <text x="511" y="224" class="t t-bold">文件即记忆 *</text>
+        <text x="511" y="246" class="t-soft">git + 进度文件，接手只读文件</text>
+        <text x="370" y="308" class="t-soft" text-anchor="middle">* 本页命名，04 原文未用此词；两条链的共同点：显式化与外置化各被放大了一个尺度。</text>
+      </svg>
+      <figcaption>图例：两条经验 → 报告 04 两个模式的演化链。左列是 2025-06 复盘的原文经验，右列是 2025-11 报告 04 的对应机制，中间是本页对"演化怎么发生"的概括。</figcaption>
+    </figure>
+
+    <p class="takeaway"><b>一句话 takeaway：</b>两条经验在 2025-06 还只是"一次交互"里的战术，报告 04 把它们升格为"整个项目 / 跨会话"的架构——显式化从委派规范变成 200+ 项验收清单，外置化从传文件引用变成"git 历史即上下文"。</p>
+
+    <h2><span class="sec-no">04 / CAVEATS</span>两个必须澄清的地方</h2>
+    <ul class="checklist">
+      <li><strong>"文件即记忆"是本页起的名字，不是 04 的原词。</strong>04 全文没有 "file as memory" 一类的表述，原文给出的是具体机制：进度文件 "keeps a log of what agents have done"，与 git 历史一起让新会话 "quickly understand the state of work when starting with a fresh context window"。所以正文里当然找不到以这个词命名的"04 模式"。另注意术语撞车：深挖案例 tab 的六路线表里有一行"可逆外置（文件即记忆）"，归在 <b>Manus / Codex</b> 名下——那是上下文管理语境里的"大观察对象外置 + 回捞"，与 04 的"跨会话状态外置"是同一思想的两种用途，不要混为一谈。</li>
+      <li><strong>"演化为"是综述判读，不是官方传承。</strong>04 全文没有引用那篇复盘；它的 Future work 一节反而写着：单一通用编码 agent 与多 agent 架构孰优 "still unclear"。准确的读法是：<b>机制承继 + 时间先后</b>，而非 Anthropic 写明的演化路径。这也解释了为什么两篇原文里都找不到这句话——它只存在于本页的综述里。</li>
+    </ul>
+
+    <section class="refs">
+      <h2 id="evo-refs"><span class="sec-no">REFERENCES</span>深挖来源（均已联网核对，检索于 2026-10-03）</h2>
+      <ol>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/multi-agent-research-system" target="_blank" rel="noopener">How We Built Our Multi-Agent Research System</a>（2025-06，"Teach the orchestrator how to delegate" 与附录 "game of telephone"）</li>
+        <li>Anthropic — <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noopener">Effective Harnesses for Long-Running Agents</a>（2025-11-26，200+ 项 JSON 功能清单、claude-progress.txt 与启动仪式）</li>
+      </ol>
+    </section>
+
+    <p class="back-link"><a href="#tab-main" data-jump-tab="main">← 返回正文</a></p>
+  </div>
+
+  <footer>
+    第二版 · 写作于 2026 年 10 月 2 日 · 资料检索于同日 · 2026-10-03 勘误：OpenAI 报告日期、团队人数、Gemini CLI 阈值、76 点研究出处、SWE-agent 底座、Cline 触发点 · 用一个 harness（ZCode）写成 :)
+  </footer>
+
+</main>
+
+  <aside class="note-pop" id="note-pop-oracle" role="dialog" aria-label="备注：oracle（机械判据）">
+    <h4>「oracle（机械判据）」指什么？</h4>
+    <p><b>定义</b>：不需要另一个智能体参与、纯程序就能裁决成败的判据——测试套件、编译器、可执行的验收脚本、可逐项核对的清单。它是"自我验证闭环"能自动转起来的前提。</p>
+    <p><b>为什么稀缺</b>：编程恰好是全世界 oracle 最富集的任务领域（测试、编译、diff 都是现成判据），所以 agent 在这个领域进步最快；而重构是否改变了行为、设计是否"更好"、模糊需求是否被正确理解，都没有机械判据。</p>
+    <p><b>推论</b>：oracle 富集处自动化易，oracle 贫瘠处必须有人在环——提高自主性的根本办法不是等更好的模型，而是先把判据造出来（报告 04 的做法：把模糊需求翻译成 200+ 项 JSON 功能清单再逐项验收）。</p>
+    <p class="hint">与 3.2 节"评估必须在自改进循环之外"同源：一旦被评对象能改判据，判据就失效了。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-poisoning" role="dialog" aria-label="备注：context poisoning（上下文污染）">
+    <h4>「context poisoning（上下文污染）」是什么？</h4>
+    <p><b>定义</b>：一条幻觉或错误的工具结果进入窗口后，被模型当作事实反复引用——agent "相信自己撒的谎"，后续规划全部建在错误前提上。出自 Dex Horthy（HumanLayer）提出的四分类：poisoning（污染）、distraction（过载分心）、confusion（干扰稀释）、clash（新旧冲突）。</p>
+    <p><b>与 context rot 的区别</b>：rot 是精度随长度缓慢衰减的"梯度"，poisoning 是方向性跑偏的"拐点"——一条坏数据足以让整条轨迹改道，且模型几乎没有自我纠偏能力。</p>
+    <p><b>与"保留错误"的区别</b>：正文 2.3 的"保留错误"指保留真实失败，让模型从教训中学习，前提是那个错误是真的；对假错误（幻觉、脏数据），保留等于持续投毒。</p>
+    <p><b>部分对策</b>：工具返回带可信度信息；关键结论外置成文件而非只存窗口；用子代理隔离探索性搜索的原始噪声。</p>
+    <p class="hint">这也是"轨迹要留痕"的又一理由：没有 trace，你甚至不知道是从哪一条坏数据开始跑偏的。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-window" role="dialog" aria-label="备注：harness 必须主动决定什么不进窗口">
+    <h4>「harness 必须主动决定什么不进窗口」为什么、怎么做？</h4>
+    <p><b>为什么是 harness</b>：模型只能往对话里追加内容，删不掉自己已经"看过"的历史；每一轮窗口里放什么，由 harness 在循环外拼装——"丢弃"这个动作只能发生在模型之外。</p>
+    <p><b>案例一 · 工具结果清理</b>：Claude Code 把深埋在历史里的笨重工具返回直接清空、不做摘要——"agent 不需要再看一遍原始结果"。</p>
+    <p><b>案例二 · Auto-compact</b>：临近窗口上限自动压缩对话——保留架构决策、未解决 bug、实现细节，丢弃冗余工具输出，新窗口附带最近 5 个文件。</p>
+    <p><b>案例三 · 子代理</b>：子代理在自己干净的窗口里烧掉数万 token 做搜索，只回传 1,000–2,000 token 的浓缩摘要，原始结果永不进主窗口——15× 的总 token 换主窗口始终高信号。</p>
+    <p><b>案例四 · 状态外置</b>：把进度写进窗口之外（to-do、NOTES.md），窗口里只留指针——《宝可梦》案例靠读笔记在上下文重置后续训数小时；大数据对象用 head / tail 切片分析，永不整体载入。</p>
+    <p><b>反面案例</b>：OpenAI 的"一个大号 AGENTS.md"被 context rot 击垮（规则互相稀释、迅速腐烂），改为约 100 行的目录 + docs/ 按需取用；报告 04 的"一次性硬做、耗尽上下文"同样是不筛选的后果。</p>
+    <p class="more"><a href="#tab-cases" data-jump-tab="cases" data-anchor="cases-top">深挖全文：十个跨机构实现案例 →</a></p>
+    <p class="hint">窗口是 agent 唯一的工作记忆，而"遗忘"的能力模型自己不具备——筛选、驱逐、压缩必须由 harness 代为执行。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-rot" role="dialog" aria-label="备注：上下文腐烂（context rot）">
+    <h4>「上下文腐烂（context rot）」是什么？</h4>
+    <p><b>现象</b>：token 越多，模型准确回忆和利用信息的能力越差——上下文不是越大越好，而是会"腐烂"的稀缺资源。</p>
+    <p><b>机理</b>：注意力预算。transformer 中每个 token 与其他 token 形成 n² 个成对关系，而训练数据以短序列为主，长上下文能力天然被稀释。</p>
+    <p><b>指导原则</b>：找到最小的高信号 token 集合——策展而非堆砌。这意味着 harness 必须主动决定什么不进窗口，而不是来者不拒。</p>
+    <p><b>落地手段</b>：长任务在压缩（compaction）、结构化笔记、子代理三者中按任务形态选择；工具侧用精简返回档位（如 DETAILED / CONCISE）控制每次进窗口的内容。</p>
+    <p class="more"><a href="#tab-cases" data-jump-tab="cases" data-anchor="cases-top">十个实现案例：Aider、MemGPT、Manus… →</a></p>
+    <p class="more"><a href="#tab-mechanics" data-jump-tab="mechanics" data-anchor="mech-top">科学依据：五层证据链拆解腐烂的机理 →</a></p>
+    <p class="hint">这是 2.3 节的核心结论，后来成为所有长任务 harness 的第一设计约束。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-trace" role="dialog" aria-label="备注：分析执行轨迹并自动重构工具">
+    <h4>「用 Claude Code 分析执行轨迹并自动重构工具」具体指什么？</h4>
+    <p><b>执行轨迹</b>：程序化跑评估留下的完整记录——agent 每一轮的推理、每次工具调用的参数与返回、报错、token 消耗，以及任务是否通过验证。几十个任务跑下来，就积累几十份 transcript。</p>
+    <p><b>分析</b>：把这些轨迹拼接后直接交给 Claude Code，让它在工具设计层面归因失败——反复调用同一工具 → 分页 / token 上限不合理；大量参数报错 → 描述或示例不清；选错工具 → 命名与描述有歧义。</p>
+    <p><b>重构</b>：Claude Code 直接修改工具定义（重写描述、增加 ResponseFormat 枚举、精简返回字段、合并冗余工具），随后重跑评估对比分数，用 held-out 测试集防止过拟合——有效则保留，进入下一轮循环。</p>
+    <p><b>真实案例</b>：从轨迹中发现 Claude 搜索时总在 query 后多余追加"2025"，导致结果偏向新文档，改工具描述即纠正；给 Slack 工具增加 DETAILED / CONCISE 两档后，token 用量降到约三分之一。</p>
+    <p class="hint">本质：人在循环里只负责设计评估任务与审阅改动；"读日志 → 定位原因 → 微调工具 → 重跑验证"整个交给 agent 自己。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-claudecode" role="dialog" aria-label="备注：Claude Code">
+    <h4>「Claude Code」是什么？</h4>
+    <p><b>定位</b>：Anthropic 的 agentic 编程工具（2025 年 2 月研究预览，现覆盖终端 CLI、IDE 插件与 Web/移动端），也是本文反复出现的“参照 harness”——报告 02 的工具评测、报告 03 的压缩与笔记、报告 04 的双 agent 实验都以它或它的 SDK 为底座。</p>
+    <p><b>为什么重要</b>：它被广泛模仿，说明它的 harness 设计——权限门控、上下文压缩、子代理、CLAUDE.md 记忆文件——事实上成了行业模板。</p>
+    <p class="hint">正文 2.2 的 25,000 token 工具结果截断、2.3 的“清空深埋工具返回”都是它的真实行为。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-sandbox" role="dialog" aria-label="备注：沙箱">
+    <h4>「沙箱（sandbox）」指什么？</h4>
+    <p><b>定义</b>：与宿主系统隔离的受限执行环境——容器、虚拟机或专用运行时。agent 生成的代码和命令只能在沙箱里跑，越权操作在边界处被拦下。</p>
+    <p><b>在 harness 里的位置</b>：权限检查决定“能不能跑”，沙箱保证“跑起来也出不了事”，两者合起来把“让模型执行任意代码”从信任问题降级为工程问题。报告 05 里 Sandbox 是三大虚拟化组件之一，接口统一为 <code>execute(name, input) → string</code>。</p>
+    <p class="hint">OpenAI 报告里每个 worktree 配一套临时可观测性栈，也是沙箱的配套：跑得起，还看得见。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-wfpatterns" role="dialog" aria-label="备注：五种 workflow 模式">
+    <h4>五种 workflow 模式分别是什么？</h4>
+    <p>报告 01 给出的从简到繁五个模式：<b>提示链</b>——任务拆成固定步骤串行，每步可加程序化检查点；<b>路由</b>——先分类，再按类型走专门分支；<b>并行化</b>——同时开多个 LLM 调用，分区处理或投票评审；<b>编排者-工作者</b>——一个 LLM 动态拆解任务、分发给工作者 LLM 再汇总；<b>评估者-优化者</b>——一个 LLM 生成、另一个 LLM 评审打回，循环到通过。</p>
+    <p><b>与 agent 的分界</b>：这五个模式里流程由代码写死；agent 则是 LLM 自己决定流程——报告的态度是，能靠前者就不要上后者。</p>
+    <p class="hint">其中“编排者-工作者”后来长成了报告 06（2.6 节）的多智能体研究系统。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-swebench" role="dialog" aria-label="备注：SWE-bench">
+    <h4>「SWE-bench」是什么？</h4>
+    <p><b>定义</b>：普林斯顿 2023 年发布的软件工程基准（ICLR 2024）：给模型一个真实 GitHub 仓库加一个真实 issue，要求产出能通过测试的补丁，以“解决率”计分——编程能力第一次有了端到端、可复现的量法。</p>
+    <p><b>家族成员</b>：<b>SWE-bench Verified</b>（2024-08，OpenAI 与作者合作人工核验的 500 题子集，剔除题目本身有缺陷的部分，是最常被引用的口径）；<b>SWE-bench Pro</b>（2025 年推出的商业级更难版本，正文 3.3 节“换 harness 差近 10 个点”的实验用的就是它）。</p>
+    <p><b>与本文的关系</b>：SWE-agent 论文（ACI 概念出处）、报告 01/02 的工具优化、DGM 的 20%→50%，全部以它为标尺。</p>
+    <p class="hint">正文中 12.47%（SWE-agent 纪录）、50%（DGM）都是它上面的数字。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-heldout" role="dialog" aria-label="备注：held-out 测试">
+    <h4>「held-out 测试」是什么？</h4>
+    <p><b>定义</b>：从数据里切出一部分“考试时不许看”的样本，只用于最终评估，迭代过程中不许参照。它是防过拟合的最低配置——在迭代集上调到满分、held-out 上掉回去，说明改动记住的是题、不是规律。</p>
+    <p><b>在这里的用法</b>：报告 02 重构工具描述后，用 held-out 任务验证改进真的泛化，而不是恰好修好了评测集里的那几十个任务。</p>
+    <p class="hint">与 3.2 节“评估必须在自改进循环之外”是同一思想的两个应用场景。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-attnbudget" role="dialog" aria-label="备注：注意力预算">
+    <h4>「注意力预算」是什么？</h4>
+    <p><b>定义</b>：Anthropic 对“模型注意力是有限资源”的比喻——每个进入窗口的 token 都要占用一份注意力，而这份注意力的“质量”随总量增加被稀释，就像人类的工作记忆。</p>
+    <p><b>机理</b>：transformer 每层注意力要对全部 token 两两计算相关性，n 个 token 就是 n² 个成对关系；softmax 归一化下序列越长、单个 token 分到的注意力份额越小。训练数据又以短序列为主，长程依赖天然是欠拟合区。</p>
+    <p class="more"><a href="#tab-mechanics" data-jump-tab="mechanics" data-anchor="mech-top">深挖：五层证据链（attention sinks、lost-in-the-middle、RULER、NoLiMa、Chroma 实测）→</a></p>
+    <p class="hint">这就是“什么不进窗口”的物理依据——不是加载变慢，是注意力真的会不够用。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-agentsdk" role="dialog" aria-label="备注：Claude Agent SDK">
+    <h4>「Claude Agent SDK」是什么？</h4>
+    <p><b>定义</b>：Anthropic 把 Claude Code 的 harness 内部件——循环编排、工具调度、权限、上下文压缩、子代理、MCP 接入——抽成的公开开发包（2025 年 9 月由 Claude Code SDK 更名而来），定位是“用造 Claude Code 的同一套零件造自己的 agent”。</p>
+    <p><b>在报告 04 里的角色</b>：长任务实验跑在它上面。“模型能力够、失败全在 harness 层”的结论，等于说 SDK 之外的编排层才是决定成败的地方。</p>
+    <p class="hint">与报告 05 的 Managed Agents 是两回事：SDK 给你零件自己装，Managed Agents 直接提供托管好的 meta-harness。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-mcp" role="dialog" aria-label="备注：MCP + OAuth vault">
+    <h4>「MCP + OAuth vault」是什么？</h4>
+    <p><b>MCP（Model Context Protocol）</b>：Anthropic 2024 年 11 月开源的工具接入标准——把“模型怎么发现、调用外部工具与数据源”统一成一套协议，MCP 服务器可被不同 agent 复用；后被 OpenAI、Google 等主要厂商采纳，成了 agent 生态的“USB-C”。</p>
+    <p><b>OAuth vault</b>：授权凭据的保险库模式——第三方服务的 access token 集中存放在隔离的保管服务里，agent 和 harness 只拿到“可用的调用权”，拿不到凭据本身。</p>
+    <p><b>合起来的意义</b>：报告 05 把“token 被架构性地置于沙箱代码不可触及之处”列为结构性安全收益。工具越多、越外部，凭据暴露面越大——协议化接入加集中保管是行业收敛出的答案。</p>
+    <p class="hint">与 3.1 节“lint 报错注入修复指引”对照：一个是让工具接得安全，一个是让工具反过来教育 agent。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-cattle" role="dialog" aria-label="备注：牛而非宠物">
+    <h4>“牛”而非“宠物”是什么梗？</h4>
+    <p><b>出处</b>：云运维圈的老格言（2000 年代末成型）——宠物式运维给每台服务器起名字、生病了开机抢救；牛式运维只给编号，坏了直接杀掉换一头，因为状态都在外部（镜像、配置、存储）。</p>
+    <p><b>移到 harness 上</b>：报告 05 要求 harness 实例不留任何本地状态，崩溃后新实例凭 <code>wake(sessionId)</code> 从只追加日志的断点续跑——harness 是牛：可随时被杀、被替换、被横向扩容；Session 日志才是必须存活的“真实状态”。</p>
+    <p class="hint">正文 2.5 的 p95 TTFT −90% 正是靠“无状态实例随便加”实现的。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-ttft" role="dialog" aria-label="备注：TTFT / p50 / p95">
+    <h4>「TTFT / p50 / p95」是什么？</h4>
+    <p><b>TTFT（Time To First Token）</b>：从提交任务到看到第一个响应 token 的时间——交互体感的决定指标，用户对“开始响应”远比对“响应完毕”敏感。</p>
+    <p><b>p50 / p95</b>：百分位数。p50 是中位数（一半请求快于此）；p95 表示 95% 的请求快于此——尾部指标专门抓“最倒霉的那批请求”。</p>
+    <p><b>这里为什么重要</b>：p50 降 60% 说明平均体感大幅改善；p95 降 90%+ 说明“偶尔卡几分钟”的尾延迟几乎消失——后者只有无状态架构（实例随起随用、不迁移状态）能做到。</p>
+    <p class="hint">与“牛而非宠物”备注连读。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-browsecomp" role="dialog" aria-label="备注：BrowseComp">
+    <h4>「BrowseComp」是什么？</h4>
+    <p><b>定义</b>：OpenAI 2025 年 4 月发布的浏览智能体基准（Jason Wei 等）：1,266 道难题，答案简短、可自动核验，但找到答案需要持续多轮网页导航——信息被刻意“打散缠结”在各处。</p>
+    <p><b>发布时的反差</b>：人类对照组能拿九成以上分数，当时的模型多数只有个位数百分比——它量的不是检索，是持久性与创造力。</p>
+    <p><b>本报告引用它的原因</b>：2.6 节那个相关性发现——BrowseComp 上约 80% 的性能方差可由 token 用量一项解释：在难检索任务上，“烧得多”几乎等于“找得深”。</p>
+    <p class="hint">与 SWE-bench（考改代码）互补：一个考“查”，一个考“改”。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-codex" role="dialog" aria-label="备注：Codex">
+    <h4>「Codex」是什么？</h4>
+    <p><b>定义</b>：OpenAI 的编码智能体家族（2025 年起）：云端 agent（给它一个任务，它在隔离环境里自己改仓库、跑测试、开 PR）、本地 CLI、IDE 插件与 ChatGPT 内集成，共享同一批底层模型。</p>
+    <p><b>在本文的角色</b>：3.1 节 OpenAI 报告的主角——五个月 100 万行、0 行手写代码的实验即以 Codex 为执行者；“1,500 个 PR、人均 3.5 PR/天”的组织形态，由它的能力边界决定。</p>
+    <p class="hint">与 Claude Code 分别是 OpenAI 与 Anthropic 的旗舰 harness，正文 04 节的两条证据链各出一支。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-agentsmd" role="dialog" aria-label="备注：AGENTS.md">
+    <h4>「AGENTS.md」是什么？</h4>
+    <p><b>定义</b>：2025 年兴起的开源约定：在仓库里放一个纯 Markdown 文件，向 coding agent 说明本仓库的规矩——构建/测试命令、代码风格、目录结构、禁区。写给人看的 README 之外，写给 agent 看的说明书。</p>
+    <p><b>扩散</b>：由 OpenAI Codex 采纳后迅速成为事实标准，主流编码 agent 普遍支持。</p>
+    <p><b>本文的教训</b>：OpenAI 试过“一个大号 AGENTS.md”，失败方式很典型——挤占上下文、规则互相稀释、无法机械校验；最终收敛为“约 100 行目录 + docs/ 事实源 + CI 机械校验”。文件是标准，怎么填仍是 context engineering 问题。</p>
+    <p class="hint">正文 2.3 的“最小高信号 token 集合”在团队级实践的样子。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-worktree" role="dialog" aria-label="备注：git worktree">
+    <h4>「git worktree」是什么？</h4>
+    <p><b>定义</b>：git 原生功能（2015 年起）：允许同一个仓库同时检出多个工作目录，各有各的分支与未提交状态，共享同一份对象库。</p>
+    <p><b>为什么 agent 时代突然重要</b>：多个 agent 并行改同一个仓库时，worktree 提供“每人一个互不踩踏的工作区”的最廉价方案——不用完整 clone，也不污染彼此的暂存区。OpenAI 让“每个改动都可按 worktree 启动服务”，等于把这条 git 能力升级成了 agent 的运行时接口。</p>
+    <p class="hint">与报告 04 的“每个会话只做一个功能 + 小步提交”连读：并行与隔离是长任务 harness 的一对基本操作。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-cdp" role="dialog" aria-label="备注：Chrome DevTools 协议">
+    <h4>「Chrome DevTools 协议」是什么？</h4>
+    <p><b>定义</b>（CDP）：Chrome/Chromium 暴露的调试协议——可以编程方式控制浏览器：导航、点击、截图、读取 DOM、抓网络请求与控制台。Puppeteer、Playwright 等自动化工具都构建在它上面。</p>
+    <p><b>在 agent 里的用途</b>：给 agent 一双“看得见网页”的手。报告 04 的“浏览器自测”、以及它如实记录的局限“模型看不到浏览器原生 alert 弹窗”，都属于这一层；OpenAI 把 CDP 接入 agent 运行时后，“页面要在 800ms 内可用”才变成 agent 可执行的验收标准。</p>
+    <p class="hint">它也是正文 05 节“验证闭环”清单的技术底座。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-logql" role="dialog" aria-label="备注：LogQL / PromQL">
+    <h4>「LogQL / PromQL」是什么？</h4>
+    <p><b>PromQL</b>：Prometheus（指标监控系统）的查询语言——“过去 5 分钟 p99 延迟是多少”“错误率有没有抬升”。</p>
+    <p><b>LogQL</b>：Grafana Loki（日志聚合系统）的查询语言——像 grep 一样在集中式日志里筛“哪个服务报了什么错”。</p>
+    <p><b>为什么正文提它们</b>：给 agent 配上这两样，等于给它“可查询的神经系统”——“确保服务启动在 800ms 内”不再是玄学提示词，而是 agent 自己能执行、能验证的查询。这是“环境对 agent 可读”的 observability 部分。</p>
+    <p class="hint">与 CDP 备注（看 UI）、worktree 备注（隔离工作区）同属“把环境改造成 agent 可操作”的三件套。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-slop" role="dialog" aria-label="备注：AI slop">
+    <h4>「AI slop」是什么？</h4>
+    <p><b>定义</b>：对“AI 批量生成的低质量内容”的统称——语义通顺但空洞、互相重复、悄悄失真的文本/代码/图片。2024 年起流行，原指社交媒体上的 AI 垃圾内容，2025 年被 OpenAI 借来形容 agent 在代码库里留下的坏模式。</p>
+    <p><b>代码版 slop 的危险</b>：agent 会复制仓库里已有的一切模式——包括坏模式；slop 不清理，就会成为下一代 agent 模仿的“范例”，形成正反馈腐烂。</p>
+    <p><b>OpenAI 的对策演化</b>：每周五花 20% 时间人工清理 → 把“黄金原则”编码进仓库、后台 Codex 任务定期扫描并开重构 PR——“像垃圾回收一样持续小额偿还技术债”。</p>
+    <p class="hint">这是 04 节共识第五条“harness 正在被 agent 接管”的治理面向。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-aflow" role="dialog" aria-label="备注：AFlow / MCTS / ADAS">
+    <h4>「AFlow / MCTS / ADAS」是什么？</h4>
+    <p><b>MCTS（蒙特卡洛树搜索）</b>：经典搜索算法——在“往哪走”的决策树里反复模拟、评估、回传，把探索集中在有希望的分支（AlphaGo 的核心引擎之一）。</p>
+    <p><b>AFlow</b>：把 agentic 工作流表示为代码图，用 MCTS 在“修改工作流代码”的动作空间里搜索、以执行反馈为信号；六个基准平均超过最强基线 5.7%，还能让更小的模型在特定任务上以 4.55% 的推理成本反超基于 GPT-4o 的工作流。</p>
+    <p><b>ADAS</b>：更早一步的工作——“用代码定义 agent”让搜索空间图灵完备，元 agent 基于不断增长的发现档案持续“发明”新 agent；AFlow 可视为在它开辟的方向上换了更高效的搜索器。</p>
+    <p class="more"><a href="#tab-selfimprove" data-jump-tab="selfimprove" data-anchor="si-top">深挖：五篇论文逐篇拆解 →</a></p>
+    <p class="hint">这是 Lilian Weng 阶梯“工作流”一级的两大代表作。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-dgm" role="dialog" aria-label="备注：达尔文·哥德机（DGM）">
+    <h4>「达尔文·哥德机（DGM）」是什么？</h4>
+    <p><b>全称</b> Darwin Gödel Machine（Sakana AI + UBC + Vector Institute，2025-05）：一个会改写自己 harness 代码的编码 agent——包括“负责修改它自己”的那段代码。</p>
+    <p><b>机制</b>：维护所有历史变体的档案（archive），每轮采样一个个体、由基础模型生成“有趣的”变体、在 SWE-bench 上实证验收；允许从次优祖先重新出发——用达尔文式开放探索，替代哥德机“先证明后改动”的不可行要求。</p>
+    <p><b>成绩</b>：SWE-bench 20.0% → 50.0%，Polyglot 14.2% → 30.7%；自主发现的改进包括更好的代码编辑工具、长上下文窗口管理、类同行评议的互查机制。</p>
+    <p class="more"><a href="#tab-selfimprove" data-jump-tab="selfimprove" data-anchor="si-top">深挖：五篇论文逐篇拆解 →</a></p>
+    <p class="hint">全程沙箱 + 人工监督——自改进系统的安全底线。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-stop" role="dialog" aria-label="备注：STOP 递归自改进">
+    <h4>「STOP 递归自改进」是什么？</h4>
+    <p><b>全称</b> Self-Taught Optimizer（斯坦福，2023-10，COLM 2024）：给 agent 一个种子“改进器”程序，它读入任意程序与效用函数、输出改进版——然后把它自己喂给自己，形成递归。</p>
+    <p><b>结果的两面</b>：GPT-4 底座上，自改进后的改进器显著优于种子（LLM 自主提出了束搜索、遗传算法、模拟退火等策略）；但换成更弱的底座，递归反而退化——递归结构本身不够，底座必须足够强。</p>
+    <p><b>安全含义</b>：作者专门评估了生成代码“绕过沙箱”的频率，并明确这不是完整 RSI（模型权重自始至终未变）——但它定义了后来整条“自改进 harness”研究线的实验范式与警戒线。</p>
+    <p class="more"><a href="#tab-selfimprove" data-jump-tab="selfimprove" data-anchor="si-top">深挖：五篇论文逐篇拆解 →</a></p>
+    <p class="hint">与 DGM 备注连读：一个是最早原型，一个是当前最强实证。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-tbench" role="dialog" aria-label="备注：Terminal-Bench">
+    <h4>「Terminal-Bench」是什么？</h4>
+    <p><b>定义</b>：2025 年发布的终端任务基准：给 agent 一个真实终端环境，考“把环境装好、命令跑通、结果落盘”的完整链路——SWE-bench 考“改对代码”，它考“在命令行里把活干成”。</p>
+    <p><b>家族</b>：Terminal-Bench 2 是更难的第二版；正文 3.2 的 Self-Harness 实验在它上面为 MiniMax M2.5、Qwen3.5-35B-A3B、GLM-5 各自学出模型专属的 harness 指令。</p>
+    <p><b>为什么值得记</b>：它也是“harness 披露”讨论（3.4 节）的著名现场——同一个 Claude Opus，统一口径约 42 分、换 Claude Code harness 加人工校验报出 95.5 分。</p>
+    <p class="hint">与 lm-evaluation-harness（考模型）互补：一个考 agent 干活。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-ablation" role="dialog" aria-label="备注：消融">
+    <h4>「消融（ablation）」是什么？</h4>
+    <p><b>定义</b>：控制变量实验——把系统拆成组件，逐一去掉或替换某个组件，量化它对整体成绩的贡献。名字来自神经科学的“切除研究”。</p>
+    <p><b>在这里</b>：arXiv 消融研究把 harness 拆成规划、动作空间、上下文管理三组件，4 个模型 × 176 组配置逐一试——“上下文管理在窗口预算紧张时最值钱、规划对弱模型是脚手架、强模型只给 bash 反而更便宜”就是消融跑出来的，不是拍脑袋。</p>
+    <p class="hint">3.4 节“改提示词格式波动 76 个点”的研究同理：把变量拆开，才知道分数是谁贡献的。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-treesitter" role="dialog" aria-label="备注：tree-sitter / AST">
+    <h4>「tree-sitter / AST」是什么？</h4>
+    <p><b>tree-sitter</b>：增量语法解析器生成器（Neovim、GitHub 代码高亮的底层）——把源码解析成语法树，速度快到可以在每次击键后增量重析。</p>
+    <p><b>AST（抽象语法树）</b>：源码的树状结构表示——类、函数、变量的定义与引用都是树上的节点。aider 借它拿到“全仓库的符号图谱”，而不需要真的“理解”代码。</p>
+    <p class="hint">repo map 的关键在于：排序发生在 AST 层（结构）而非语义层——便宜、确定、可复现。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-pgvector" role="dialog" aria-label="备注：pgvector">
+    <h4>「pgvector」是什么？</h4>
+    <p>PostgreSQL 的向量检索扩展——在普通关系数据库里直接存 embedding、做相似度近邻查询。MemGPT 用它做 archival storage：历史消息与文档切块存进去，模型用检索函数按语义回捞。</p>
+    <p class="hint">在“数据库当磁盘”的比喻里，PostgreSQL 是磁盘，pgvector 是磁盘上的语义索引。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-kvcache" role="dialog" aria-label="备注：KV-cache">
+    <h4>「KV-cache」是什么？</h4>
+    <p><b>定义</b>：推理时每个 token 的键值中间结果缓存——自回归生成的每一步都要“看”全部历史，缓存避免了逐 token 重算。前缀不变，缓存直接复用；前缀一变，从变动处开始全部作废。</p>
+    <p><b>为什么是生产指标</b>：命中缓存的输入价格约为未命中的十分之一，而 agent 任务的输入输出比可达 100:1——命中率直接决定成本曲线。这就是“append-only、稳定前缀、确定性序列化”三条铁律的由来。</p>
+    <p class="hint">“KV-cache 感知”因此是“什么不进窗口”的财务镜像：改写历史不仅丢上下文，还烧钱。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-litm" role="dialog" aria-label="备注：lost-in-the-middle">
+    <h4>「lost-in-the-middle」是什么？</h4>
+    <p><b>现象</b>（斯坦福，TACL）：把相关信息放在长上下文开头或结尾时成绩最好，放在中间显著下滑——U 形曲线；部分设定下“闭卷硬答”反而好于“答案就摆在中间”。即使检索 100% 命中也救不了：模型“读”这一步本身带位置偏置。</p>
+    <p class="more"><a href="#tab-mechanics" data-jump-tab="mechanics" data-anchor="mech-top">深挖：五层证据链 →</a></p>
+    <p class="hint">Manus 的 recitation（反复重写 todo.md，把计划推回注意力近端）就是针对它的对策。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-logits" role="dialog" aria-label="备注：logits 掩码">
+    <h4>「logits 掩码」是什么？</h4>
+    <p><b>logits</b>：模型输出层在 softmax 之前对每个 token 的原始打分。解码时把某些 token 的分数压到负无穷，模型这一步就“永远选不出”它们。</p>
+    <p><b>掩码 = 按步关工具</b>：harness 每一步按任务状态生成“当前允许的工具”掩码——工具定义都还在上下文里（前缀不变、缓存不破），但模型此刻只能“说”允许的那几个。这就是 Manus “Mask, don't remove” 的实现。</p>
+    <p class="hint">对比：直接从上下文删工具定义会破坏 KV-cache 前缀（见 KV-cache 备注）。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <aside class="note-pop" id="note-pop-prod-vs-team" role="dialog" aria-label="备注：产品级与团队级 harness">
+    <h4>「产品级抽象稳定、团队级深度耦合」是什么意思？</h4>
+    <p><b>产品级 harness</b>：服务成千上万个你无法预见的用法，而它依赖的模型还在持续换代——今天押注的假设（模型会规划、上下文多长、哪些工具可靠）可能半年后全部失效。所以接口要抽象、实现可替换：Anthropic 的“对实现不持立场”就是这一侧的表述——把赌注押在某个具体实现上，模型一升级，赌注就变成包袱。</p>
+    <p><b>团队级 harness</b>：服务一个已知仓库、已知流程、已知的一群人，维护者就是受益者。Codex + 特定仓库结构那种“极端重度投资”正是靠深度耦合换效率：假设越具体，流程越锋利；假设过时了，团队自己改得起——耦合的维护成本有明确的人买单。</p>
+    <p><b>判断标准</b>：不是“耦合好不好”，而是两个变量——假设多久过时一次（换模型/换任务的频率）、过时之后的维护成本由谁承担。产品级赌的是适应力，耦合越深死得越快；团队级榨的是确定性，耦合越深跑得越快。同一家公司对外抽象、对内耦合，并不矛盾。</p>
+    <p class="hint">一句话版：产品级 harness 为“未知”设计，团队级 harness 为“已知”优化。与 Codex 备注连读——深度耦合的团队级样本。点击空白处或按 Esc 关闭。</p>
+  </aside>
+
+  <script>
+  (function () {
+    var terms = [].slice.call(document.querySelectorAll('.note-term[data-note]'));
+
+    function popOf(term) { return document.getElementById(term.getAttribute('data-note')); }
+    function place(term, pop) {
+      pop.classList.add('open');
+      pop.style.visibility = 'hidden';
+      var r = term.getBoundingClientRect();
+      var sx = window.scrollX, sy = window.scrollY;
+      var pw = pop.offsetWidth, ph = pop.offsetHeight;
+      var left = sx + r.left + r.width / 2 - pw / 2;
+      left = Math.max(sx + 16, Math.min(left, sx + window.innerWidth - pw - 16));
+      var roomBelow = r.bottom + ph + 24 <= window.innerHeight;
+      var roomAbove = r.top - ph - 24 >= 0;
+      var below = roomBelow || !roomAbove;
+      pop.style.left = Math.round(left) + 'px';
+      pop.style.top = Math.round(below ? r.bottom + sy + 10 : r.top + sy - ph - 10) + 'px';
+      pop.style.visibility = '';
+    }
+    function close(term, pop) {
+      pop.classList.remove('open');
+      term.classList.remove('active');
+      term.setAttribute('aria-expanded', 'false');
+    }
+    function closeAll(except) {
+      terms.forEach(function (t) {
+        if (t === except) return;
+        var p = popOf(t);
+        if (p && p.classList.contains('open')) close(t, p);
+      });
+    }
+
+    terms.forEach(function (term) {
+      var pop = popOf(term);
+      if (!pop) return;
+      term.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (pop.classList.contains('open')) { close(term, pop); return; }
+        closeAll(term);
+        place(term, pop);
+        term.classList.add('active');
+        term.setAttribute('aria-expanded', 'true');
+      });
+      term.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); term.click(); }
+      });
+      pop.addEventListener('click', function (e) { e.stopPropagation(); });
+    });
+
+    document.addEventListener('click', function (e) {
+      terms.forEach(function (term) {
+        var pop = popOf(term);
+        if (pop && pop.classList.contains('open') && !pop.contains(e.target)) close(term, pop);
+      });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAll();
+    });
+    window.addEventListener('resize', function () {
+      terms.forEach(function (term) {
+        var pop = popOf(term);
+        if (pop && pop.classList.contains('open')) place(term, pop);
+      });
+    });
+  })();
+  </script>
+
+  <script>
+  (function () {
+    var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
+    var panes = {
+      main: document.getElementById('tab-main'),
+      cases: document.getElementById('tab-cases'),
+      selfimprove: document.getElementById('tab-selfimprove'),
+      mechanics: document.getElementById('tab-mechanics'),
+      practice: document.getElementById('tab-practice'),
+      evolution: document.getElementById('tab-evolution')
+    };
+
+    /* ---------- 阅读记忆：每个标签各自记住滚动位置，切换/重开页面时还原 ---------- */
+    var MEM_KEY = 'ahe-read-mem-v1';
+    var mem = { tab: 'main', pos: {} };
+    var storageOK = false;
+    try {
+      var savedMem = JSON.parse(localStorage.getItem(MEM_KEY) || 'null');
+      if (savedMem && savedMem.pos) mem = savedMem;
+      storageOK = true;
+    } catch (e) {}
+    if (!panes[mem.tab]) mem.tab = 'main';
+
+    var active = mem.tab;
+    var shown = {}; // 本次会话真正渲染过的标签；深链直开时不得覆盖未展示标签的旧记忆
+
+    function currentY() {
+      return window.pageYOffset || document.documentElement.scrollTop || 0;
+    }
+    function remember() {
+      mem.pos[active] = currentY();
+      if (!storageOK) return;
+      try { localStorage.setItem(MEM_KEY, JSON.stringify(mem)); } catch (e) {}
+    }
+
+    var rafPending = false;
+    window.addEventListener('scroll', function () {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(function () { rafPending = false; remember(); });
+    }, { passive: true });
+    window.addEventListener('pagehide', remember);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') remember();
+    });
+
+    function jumpTo(y) {
+      // html 上有 scroll-behavior:smooth，必须显式 instant，否则还原会变成一场长途平滑动画
+      try {
+        window.scrollTo({ top: y, behavior: 'instant' });
+      } catch (e) {
+        var root = document.documentElement;
+        var prev = root.style.scrollBehavior;
+        root.style.scrollBehavior = 'auto';
+        window.scrollTo(0, y);
+        root.style.scrollBehavior = prev;
+      }
+    }
+
+    function restore(name) {
+      var y = mem.pos[name];
+      // 同步定位：面板刚重新参与布局，rAF 在被遮挡/节流的窗口里可能迟迟不触发
+      jumpTo(typeof y === 'number' ? y : 0);
+    }
+
+    function activate(name, scroll) {
+      if (!panes[name]) return;
+      if (name !== active) {
+        if (shown[active]) remember();
+        active = name;
+        mem.tab = name;
+      }
+      shown[name] = true;
+      tabs.forEach(function (t) {
+        t.classList.toggle('active', t.getAttribute('data-tab') === name);
+      });
+      Object.keys(panes).forEach(function (k) { panes[k].hidden = k !== name; });
+      if (scroll) restore(name);
+    }
+
+    tabs.forEach(function (t) {
+      t.addEventListener('click', function () {
+        activate(t.getAttribute('data-tab'), true);
+      });
+    });
+
+    document.addEventListener('click', function (e) {
+      var jump = e.target && e.target.closest && e.target.closest('[data-jump-tab]');
+      if (!jump) return;
+      e.preventDefault();
+      var name = jump.getAttribute('data-jump-tab');
+      var anchor = jump.getAttribute('data-anchor');
+      activate(name, false);
+      [].forEach.call(document.querySelectorAll('.note-pop.open'), function (p) {
+        p.classList.remove('open');
+      });
+      [].forEach.call(document.querySelectorAll('.note-term.active'), function (t) {
+        t.classList.remove('active');
+        t.setAttribute('aria-expanded', 'false');
+      });
+      if (anchor) {
+        var el = document.getElementById(anchor);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+      }
+      jumpTo(0);
+    }, true);
+
+    var hashPane = {
+      '#cases': 'cases', '#deep': 'cases',
+      '#selfimprove': 'selfimprove', '#si': 'selfimprove',
+      '#mechanics': 'mechanics', '#mech': 'mechanics',
+      '#practice': 'practice', '#pain': 'practice',
+      '#evolution': 'evolution', '#evo': 'evolution'
+    };
+    if (storageOK) {
+      try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
+    }
+    if (hashPane[location.hash]) {
+      activate(hashPane[location.hash], false);
+    } else {
+      activate(active, true);
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 主循环：一个不肯结束的生成器 · Claude Code 源码拆解</title>
+<meta name="description" content="query.ts 里不到 1,500 行的 queryLoop，是整份代码里最值钱的部分。它要同时处理流式输出、并行工具、用户打断、上下文压缩、API 报错和「什么时候该停」。这一章把它拆成五段来看。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" aria-current="page" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 03 章 · 一次会话的发动机</p>
+  <h1>主循环：一个不肯结束的生成器</h1>
+  <p class="lead"><code>query.ts</code> 里不到 1,500 行的 <code>queryLoop</code>，是整份代码里最值钱的部分。它要同时处理流式输出、并行工具、用户打断、上下文压缩、API 报错和「什么时候该停」。这一章把它拆成五段来看。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>循环是 <code>async function*</code>：边跑边 <code>yield</code> 消息，界面才能实时渲染、用户才能随时打断。</li><li>它的返回值只有十来个「终止原因」，每一个都对应产品上一种收场方式（完成、超轮次、被打断、上下文爆了、hook 拦下）。</li><li>一轮里的步骤顺序是硬约束：先算工具结果预算 → snip → microcompact → collapse → autocompact → 发请求。顺序换了就会多花一次全量请求。</li><li>工具并发不是「全并行」：标记为并发安全的可以并行，不安全的必须独占，而且会堵住后面的队列。</li><li>报错不是异常退出：输出被截断会先升到 64k 重试，再不行注入「接着写」的恢复消息，最多 3 次。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>为什么是 async generator</h2>
+  
+  <p>普通函数只能「跑完返回」。而 Agent 的一轮里，模型是流式的、工具是渐进的、用户随时可能按 Esc。用生成器把状态挂在函数栈上，就能做到：产出即渲染、随时 <code>return</code> 收场、调用方 <code>break</code> 也能立刻停。</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>219-231 · 返回类型 Terminal，产出类型是五类消息</span></header>
+  <pre>export async function* query(
+  params: QueryParams,
+): AsyncGenerator&lt;
+  | StreamEvent
+  | RequestStartEvent
+  | Message
+  | TombstoneMessage
+  | ToolUseSummaryMessage,
+  Terminal
+&gt; {
+  const consumedCommandUuids: string[] = []
+  const terminal = yield* queryLoop(params, consumedCommandUuids)</pre>
+</div>
+  <p>注意第二个类型参数 <code>Terminal</code>：生成器的「返回值」不是消息，而是一个终止原因对象。调用方既能消费过程，也能拿到结局。</p>
+  <div class="analogy"><i aria-hidden="true">≈</i><div>像看直播而不是等录播：主播（模型）边说，你边看，还能中途发弹幕打断；导演（循环）最后给你一张「本场结束原因」的单子。</div></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>状态机：7 个转移点，一套状态</h2>
+  
+  <p>循环体不是靠嵌套 if 推进的，而是「每轮开头解构一份 State，需要重来时整体换一份新 State 再 continue」。这样所有恢复路径长得一样，测试也好写。</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>203-218</span></header>
+  <pre>type State = {
+  messages: Message[]
+  toolUseContext: ToolUseContext
+  autoCompactTracking: AutoCompactTrackingState | undefined
+  maxOutputTokensRecoveryCount: number
+  hasAttemptedReactiveCompact: boolean
+  maxOutputTokensOverride: number | undefined
+  pendingToolUseSummary: Promise&lt;ToolUseSummaryMessage | null&gt; | undefined
+  stopHookActive: boolean | undefined
+  turnCount: number
+  transition: Continue | undefined
+}</pre>
+</div>
+  <p><code>transition</code> 字段记录了「上一轮为什么继续」，只给测试与埋点用，但它是理解这套状态机的钥匙。全库只有 7 个转移点：6 处显式 <code>continue</code>，加上循环末尾落空重入的普通下一轮。</p>
+  <div class="tw"><table>
+      <thead><tr><th>继续原因</th><th>触发场景</th><th>产品含义</th></tr></thead>
+      <tbody>
+      <tr><td><code>next_turn</code></td><td>本轮有工具调用，结果已回灌</td><td>正常干活（落空重入，无显式 continue）</td></tr>
+      <tr><td><code>collapse_drain_retry</code></td><td>服务端报 413，先排空 collapse 队列</td><td>先撞墙再补票</td></tr>
+      <tr><td><code>reactive_compact_retry</code></td><td>排空后仍超限，触发被动压缩</td><td>最后一次补救</td></tr>
+      <tr><td><code>max_output_tokens_escalate</code></td><td>输出被 8k 上限截断</td><td>同一请求升到 64k 重发</td></tr>
+      <tr><td><code>max_output_tokens_recovery</code></td><td>升档后仍被截断</td><td>注入「接着写」消息，最多 3 次</td></tr>
+      <tr><td><code>token_budget_continuation</code></td><td>预算续跑</td><td>长任务的燃料补给</td></tr>
+      <tr><td><code>stop_hook_blocking</code></td><td>Stop hook 判定「还没干完」</td><td>外部脚本可以否决「结束」</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>一轮的五段：顺序是硬约束</h2>
+  
+  <p>每轮开头到发请求之间，有一段固定的流水线。注释里写明了为什么必须这个顺序：<b>先做便宜的、无损的，再做贵的、有损的</b>。</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>412-444</span></header>
+  <pre>// Apply microcompact before autocompact
+queryCheckpoint('query_microcompact_start')
+const microcompactResult = await deps.microcompact(
+  messagesForQuery,
+  toolUseContext,
+  querySource,
+)
+...
+// Project the collapsed context view and maybe commit more collapses.
+// Runs BEFORE autocompact so that if collapse gets us under the
+// autocompact threshold, autocompact is a no-op and we keep granular
+// context instead of a single summary.</pre>
+</div>
+  <ul><li><b>工具结果预算</b>：按字符/ token 上限替换超大结果（落盘 + 引用），不动对话结构；</li><li><b>snip</b>：剪掉最早的历史片段（有损但便宜）；</li><li><b>microcompact</b>：只清「可重取」的工具结果（读文件、跑命令的输出），保留结构；</li><li><b>context collapse</b>：把中间一段折叠成摘要，但保留原始历史用于回放；</li><li><b>autocompact</b>：真正的「把整段历史压成一份摘要」，最贵、信息损失最大，所以放最后。</li></ul>
+  <div class="note good"><b>这条顺序为什么值钱：</b>很多 Agent 一超限就直接总结，结果把「刚才读过的文件内容」也总结没了。Claude Code 的做法是先用「可重取的结果」腾地方 —— 文件还能再读，摘要就回不来了。</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>工具并发：三种状态，一条规则</h2>
+  
+  <p>模型一次可以吐出多个 <code>tool_use</code>。执行器把它们排进队列，用一条规则决定谁能跑：</p>
+  
+<div class="ev">
+  <header><span class="path">services/tools/StreamingToolExecutor.ts</span><span>124-131</span></header>
+  <pre>private canExecuteTool(isConcurrencySafe: boolean): boolean {
+  const executingTools = this.tools.filter(t =&gt; t.status === 'executing')
+  return (
+    executingTools.length === 0 ||
+    (isConcurrencySafe &amp;&amp; executingTools.every(t =&gt; t.isConcurrencySafe))
+  )
+}</pre>
+</div>
+  <p>翻译成人话：<b>没有人在跑 → 谁都能跑；有人在跑 → 只有「并发安全」的能插队，且正在跑的全部也得是并发安全的</b>。一旦遇到不安全的工具（比如写文件、跑命令），队列后面的全部等着 —— 因为顺序本身就是语义。</p>
+  <p>非流式路径（关闭流式执行时）走另一套编排：先把连续的安全调用合并成批，批内并发（默认上限 <b>10</b>），批与批之间串行。判定失败一律按「不安全」处理 —— <b>fail-closed</b>。</p>
+  
+<div class="ev">
+  <header><span class="path">services/tools/StreamingToolExecutor.ts</span><span>44-48</span></header>
+  <pre>* Executes tools as they stream in with concurrency control.
+ * - Concurrent-safe tools can execute in parallel with other concurrent-safe tools
+ * - Non-concurrent tools must execute alone (exclusive access)
+ * - Results are buffered and emitted in the order tools were received</pre>
+</div>
+  <div class="tradeoff"><div><b>换来什么</b>读文件、搜索这类操作可以几个一起跑，等模型说完时结果已经回来了，感知延迟接近「并行」。</div><div><b>付出什么</b>写操作必须独占，长任务里会出现「一个慢命令堵住后面所有工具」；所以它把 Bash 放进后台任务来绕开（见第 07 章）。</div></div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>被打断时怎么收场</h2>
+  
+  <p>用户按 Esc 时，<code>abortController</code> 触发。麻烦在于：模型可能已经吐出 3 个 <code>tool_use</code>，但一个 <code>tool_result</code> 都还没回。如果直接退出，下一轮请求会因为「tool_use 没有配对的 tool_result」被 API 拒绝。</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>1015-1026</span></header>
+  <pre>if (toolUseContext.abortController.signal.aborted) {
+  if (streamingToolExecutor) {
+    // Consume remaining results - executor generates synthetic tool_results for
+    // aborted tools since it checks the abort signal in executeTool()
+    for await (const update of streamingToolExecutor.getRemainingResults()) {
+      if (update.message) {
+        yield update.message
+      }
+    }
+  } else {
+    yield* yieldMissingToolResultBlocks(assistantMessages, 'Interrupted by user')
+  }</pre>
+</div>
+  <p>做法是<b>补齐</b>：给每个没跑完的工具造一条错误结果（<code>user_interrupted</code> / <code>sibling_error</code> / <code>streaming_fallback</code> 三种理由），保证消息序列永远合法。还有一个细节：工具可以声明自己被中断时的行为是 <code>cancel</code> 还是 <code>block</code> —— 后者允许「先让我把这个命令跑完」。</p>
+  <div class="tw"><table>
+      <thead><tr><th>中断来源</th><th>谁触发的</th><th>工具结果的写法</th><th>用户看到什么</th></tr></thead>
+      <tbody>
+      <tr><td><code>user_interrupted</code></td><td>用户 Esc / 新消息抢占</td><td><code>REJECT_MESSAGE</code></td><td>「User rejected tool use」</td></tr>
+      <tr><td><code>sibling_error</code></td><td>同批某个工具报错</td><td>「Cancelled: parallel tool call X errored」</td><td>其余工具一起取消</td></tr>
+      <tr><td><code>streaming_fallback</code></td><td>流式失败切备用模型</td><td>「tool execution discarded」</td><td>这一批作废重来</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>报错恢复：三次机会与一次升档</h2>
+  
+  <p>输出被截断（<code>max_output_tokens</code>）是最常见的「假失败」。它的处理分两级：</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>1185-1205 · ESCALATED_MAX_TOKENS = 64_000（utils/context.ts:25）</span></header>
+  <pre>if (
+  capEnabled &amp;&amp;
+  maxOutputTokensOverride === undefined &amp;&amp;
+  !process.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS
+) {
+  logEvent('tengu_max_tokens_escalate', {
+    escalatedTo: ESCALATED_MAX_TOKENS,
+  })</pre>
+</div>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>1219-1227 · MAX_OUTPUT_TOKENS_RECOVERY_LIMIT = 3（query.ts:164）</span></header>
+  <pre>if (maxOutputTokensRecoveryCount &lt; MAX_OUTPUT_TOKENS_RECOVERY_LIMIT) {
+  const recoveryMessage = createUserMessage({
+    content:
+      `Output token limit hit. Resume directly — no apology, no recap of what you were doing. ` +
+      `Pick up mid-thought if that is where the cut happened. Break remaining work into smaller pieces.`,
+    isMeta: true,
+  })</pre>
+</div>
+  <p>这段恢复提示值得抄进任何长任务 Agent：<b>不要道歉、不要复述、从断点接上、把剩下的活切小</b>。它解决的是模型被截断后常见的「礼貌性重述」浪费。</p>
+  <div class="grid g4"><div class="stat"><b>3</b><span>输出截断后的恢复次数上限</span><em>query.ts:164</em></div><div class="stat"><b>64,000</b><span>升档后的输出上限</span><em>utils/context.ts:25</em></div><div class="stat"><b>3</b><span>连续压缩失败熔断阈值</span><em>autoCompact.ts:70</em></div><div class="stat"><b>10</b><span>工具批的并发上限</span><em>toolOrchestration.ts</em></div></div>
+
+</section>
+
+
+<section id="s07">
+  <h2><span class="num">07</span>十种收场方式</h2>
+  
+  <p><code>Terminal</code> 的取值就是产品行为的清单。把它列全，你会发现「结束」远不止一种：</p>
+  <div class="tw"><table>
+      <thead><tr><th>reason</th><th>含义</th><th>谁会看到</th></tr></thead>
+      <tbody>
+      <tr><td><code>completed</code></td><td>正常完成（模型不再调用工具）</td><td>所有人</td></tr>
+      <tr><td><code>max_turns</code></td><td>达到轮次上限</td><td>脚本 / SDK 调用方</td></tr>
+      <tr><td><code>aborted_streaming</code></td><td>流式阶段被打断</td><td>按 Esc 的用户</td></tr>
+      <tr><td><code>aborted_tools</code></td><td>工具执行阶段被打断</td><td>同上</td></tr>
+      <tr><td><code>hook_stopped</code></td><td>hook 主动终止</td><td>配置了 hook 的团队</td></tr>
+      <tr><td><code>stop_hook_prevented</code></td><td>Stop hook 不允许结束</td><td>同上</td></tr>
+      <tr><td><code>prompt_too_long</code></td><td>压缩后仍然超限</td><td>所有人（罕见）</td></tr>
+      <tr><td><code>model_error</code></td><td>API 错误重试耗尽</td><td>所有人</td></tr>
+      <tr><td><code>blocking_limit</code></td><td>上下文到硬上限</td><td>所有人</td></tr>
+      <tr><td><code>image_error</code></td><td>图片处理失败</td><td>贴图的用户</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note "><b>产品视角：</b>这份清单可以直接当「Agent 会话状态机」的需求文档用。大多数自研 Agent 只有「成功 / 报错」两态，所以一断线就只剩重开。</div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>query.ts（1,729 行） <span>· 主循环、压缩链、错误恢复</span></li><li>services/tools/StreamingToolExecutor.ts（530 行） <span>· 并发与中断</span></li><li>query/transitions.ts <span>· 副本缺失此文件，终止原因从 query.ts 的 return 语句归纳</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="02-map.html"><small>← 上一章</small><b>02 代码地图</b></a><a class="next" href="04-tools.html"><small>下一章 →</small><b>04 工具系统</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

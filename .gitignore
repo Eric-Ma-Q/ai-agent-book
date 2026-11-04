@@ -1,0 +1,20 @@
+# 公开仓库专用规则
+node_modules/
+dist/
+.astro/
+__pycache__/
+.venv/
+.pytest_cache/
+.coverage
+.DS_Store
+run-logs/
+*.log
+.env
+agent-lab/.env
+personal/lab/models.keys.json
+
+# 读者数据只在本地；只保留说明与忽略规则
+personal/*
+!personal/README.md
+!personal/.gitignore
+personal/update/
