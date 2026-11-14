@@ -1,0 +1,199 @@
+---
+import type { FlowView } from '../lib/chapter-flow';
+import FlowNode from './FlowNode.astro';
+import '../styles/chapter-three-flow.css';
+
+interface Props {
+  headings: { text: string; slug: string }[];
+  id: string;
+  prefix: string;
+  mark: string;
+  title: string;
+  subtitle: string;
+  views: FlowView[];
+}
+const { id, prefix, mark, title, subtitle, views } = Astro.props;
+const sections = new Map(
+  Astro.props.headings.map(({ text, slug }) => [text, slug]),
+);
+---
+
+<details class="chapter-flow" id={id} data-chapter-flow open>
+  <summary class="flow-heading">
+    <span class="flow-mark" aria-hidden="true">{mark} / MAP</span>
+    <span
+      ><strong>{title}</strong><span class="flow-subtitle">{subtitle}</span
+      ></span
+    >
+    <span class="flow-fold" aria-hidden="true"></span>
+  </summary>
+  <div class="flow-body">
+    <nav class="flow-tabs" aria-label="流程视图" data-flow-tabs>
+      {
+        views.map((view) => (
+          <a
+            id={`${prefix}-tab-${view.id}`}
+            href={`#${prefix}-panel-${view.id}`}
+            data-flow-tab={view.id}
+          >
+            {view.label}
+          </a>
+        ))
+      }
+    </nav>
+    <div class="flow-tools" hidden data-flow-tools>
+      <span>沿箭头阅读，点节点看说明</span>
+      <button type="button" data-flow-expand>展开全部节点</button>
+    </div>
+    {
+      views.map((view) => (
+        <section
+          id={`${prefix}-panel-${view.id}`}
+          class="flow-panel"
+          data-flow-panel={view.id}
+          aria-labelledby={`${prefix}-title-${view.id}`}
+        >
+          <header class="flow-intro">
+            <h2 id={`${prefix}-title-${view.id}`}>{view.title}</h2>
+            <p>{view.intro}</p>
+          </header>
+          <div
+            class:list={[
+              'flow-lanes',
+              { 'flow-lanes-single': view.lanes.length === 1 },
+            ]}
+          >
+            {view.lanes.map((lane, index) => (
+              <div class="flow-lane" data-lane={index}>
+                <div class="flow-lane-heading">
+                  <h3>{lane.title}</h3>
+                  <p>{lane.caption}</p>
+                </div>
+                <ol class="flow-chain">
+                  {lane.nodes.map((node, i) => (
+                    <li>
+                      <FlowNode
+                        node={node}
+                        number={i + 1}
+                        sections={sections}
+                        prefix={prefix}
+                      />
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ))}
+          </div>
+          <p class="flow-bridge">
+            <span aria-hidden="true">↳</span>
+            {view.bridge}
+          </p>
+          {view.shared.length > 0 && (
+            <div class="flow-shared">
+              <ol class="flow-chain">
+                {view.shared.map((node, i) => (
+                  <li>
+                    <FlowNode
+                      node={node}
+                      number={i + 1}
+                      sections={sections}
+                      prefix={prefix}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          {view.outcomes && (
+            <div class="flow-outcomes" aria-label="分支与去向">
+              {view.outcomes.map((outcome) => (
+                <div>
+                  <strong>{outcome.title}</strong>
+                  <p>{outcome.text}</p>
+                  {outcome.nodes && (
+                    <ol class="flow-chain flow-branch-chain">
+                      {outcome.nodes.map((node, i) => (
+                        <li>
+                          <FlowNode
+                            node={node}
+                            number={i + 1}
+                            sections={sections}
+                            prefix={prefix}
+                          />
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  {outcome.links && (
+                    <div class="flow-links">
+                      {outcome.links.map((link) => (
+                        <a href={`#${prefix}-node-${link.nodeId}`}>
+                          {link.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {view.after && (
+            <div class="flow-shared flow-merge">
+              <p class="flow-bridge">
+                <span aria-hidden="true">↳</span>{view.mergeLabel ?? '两路汇合 → 继续生成'}
+              </p>
+              <ol class="flow-chain">
+                {view.after.map((node, i) => (
+                  <li>
+                    <FlowNode
+                      node={node}
+                      number={i + 1}
+                      sections={sections}
+                      prefix={prefix}
+                    />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+          <div class="flow-feedback">
+            <>
+              <span aria-hidden="true">↺</span>
+              <div>
+                <>
+                  <strong>反馈回路</strong>
+                  <p>{view.feedback}</p>
+                  {view.feedbackLinks && (
+                    <div class="flow-links">
+                      {view.feedbackLinks.map((link) => (
+                        <a href={`#${prefix}-node-${link.nodeId}`}>
+                          {link.label}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </>
+              </div>
+            </>
+          </div>
+          <a
+            class="flow-read"
+            href={`#${sections.get(view.section ?? view.lanes[0]?.nodes[0]?.section)}`}
+          >
+            进入对应正文 <span aria-hidden="true">↓</span>
+          </a>
+        </section>
+      ))
+    }
+    <p class="flow-note">
+      本章内容的流程导览；可选技术按任务组合，具体实现与取舍见对应正文。
+    </p>
+  </div>
+</details>
+
+<script>
+  import { initChapterFlow } from '../scripts/chapter-three-flow';
+  document
+    .querySelectorAll<HTMLElement>('[data-chapter-flow]')
+    .forEach(initChapterFlow);
+</script>

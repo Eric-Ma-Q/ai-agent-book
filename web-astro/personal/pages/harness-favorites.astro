@@ -1,0 +1,379 @@
+---
+// Requirement 007 / 010: one reading list for the archived and book banks. The
+// favorite file only stores exam + id; question text comes from the archive at
+// request time, so the page cannot drift from the banks.
+import { fileURLToPath } from 'node:url';
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import { readerBookHref } from '../exams/reader-links.mjs';
+import { BOOK_EXAM_PATH, HARNESS_PATH, HARNESS_SITE_PATH, INTERVIEW_PATH } from '../routes.mjs';
+import { EXAMS } from '../harness/exams.mjs';
+import { readExamFavorites } from '../harness/favorites-store.mjs';
+import { readExamQuestions } from '../harness/questions.mjs';
+import { personalRoot } from '../paths.mjs';
+import '../client/harness/harness.css';
+import '../client/harness/favorites.css';
+
+const ARCHIVE = fileURLToPath(new URL('../harness/archive/', import.meta.url));
+const EXAMS_ROOT = fileURLToPath(new URL('../exams/', import.meta.url));
+const LEVEL_ORDER = [
+  'remember',
+  'understand',
+  'apply',
+  'analyze',
+  'evaluate',
+  'create',
+];
+const formatDate = (iso: string) => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+};
+
+let favorites: { items: { exam: string; id: string; addedAt: string }[] } = {
+  items: [],
+};
+let loadError = '';
+try {
+  favorites = readExamFavorites(personalRoot());
+} catch (error) {
+  loadError = error instanceof Error ? error.message : String(error);
+}
+
+let questions: ReturnType<typeof readExamQuestions> = [];
+let questionError = '';
+try {
+  questions = readExamQuestions(ARCHIVE, { bookRoot: EXAMS_ROOT });
+} catch (error) {
+  questionError = error instanceof Error ? error.message : String(error);
+}
+
+const questionByKey = new Map(
+  questions.map((question) => [`${question.exam}:${question.id}`, question]),
+);
+const examById = new Map(EXAMS.map((exam) => [exam.id, exam]));
+const cards = favorites.items
+  .map((item) => {
+    const question = questionByKey.get(`${item.exam}:${item.id}`) ?? null;
+    const exam = examById.get(item.exam) ?? null;
+    const addedLabel = formatDate(item.addedAt);
+    return {
+      examId: item.exam,
+      examTitle: exam?.title ?? item.exam,
+      examHref: exam?.href ?? '',
+      id: item.id,
+      addedAt: item.addedAt,
+      addedLabel,
+      exam,
+      question,
+      search: [exam?.title, item.id, question?.search, addedLabel]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase(),
+    };
+  })
+  .sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+
+const examFilters = EXAMS.filter((exam) =>
+  cards.some((card) => card.examId === exam.id),
+);
+const countByExam = new Map(
+  EXAMS.map((exam) => [
+    exam.id,
+    cards.filter((card) => card.examId === exam.id).length,
+  ]),
+);
+const topicOptions = [
+  ...new Map(
+    cards
+      .filter((card) => card.question)
+      .map(
+        (card) => [card.question!.topic, card.question!.topicLabel] as const,
+      ),
+  ).entries(),
+]
+  .map(([key, label]) => ({ key, label }))
+  .sort((a, b) => a.label.localeCompare(b.label, 'zh-CN'));
+const levelOptions = LEVEL_ORDER.map((level) => {
+  const match = cards.find((card) => card.question?.level === level)?.question;
+  return match ? { key: level, label: match.levelLabel } : null;
+}).filter((item): item is { key: string; label: string } => Boolean(item));
+const total = cards.length;
+const query = Astro.url.searchParams.get('q') ?? '';
+---
+
+<Layout locale="zh-CN" title="我的收藏 · 题库">
+  <Header locale="zh-CN" />
+  <main
+    id="main-content"
+    class="harness-page page-width fav-page"
+    data-fav-load-error={loadError ? '1' : undefined}
+  >
+    <header class="harness-head">
+      <p class="eyebrow">题库收藏</p>
+      <h1>我的收藏</h1>
+      <p class="harness-lead">
+        做对但值得回头再看的题留在这里。收藏只记题号，题干、答案、解析与出处都从各题库读取；
+        换手机或电脑打开本页，看到的是同一份收藏。Harness 两套题库与书稿 A/B 卷共用这一页。
+      </p>
+      <p class="harness-quick">
+        <a class="harness-button" href={withBase(HARNESS_PATH)}
+          >← Harness 目录</a
+        >
+        <a class="harness-link" href={withBase(EXAMS[0].href)}
+          >Harness 结业考试</a
+        >
+        <a class="harness-link" href={withBase(EXAMS[1].href)}
+          >AI 产品经理系列</a
+        >
+        <a class="harness-link" href={withBase(INTERVIEW_PATH)}>模拟面试</a>
+        <a class="harness-link" href={withBase(BOOK_EXAM_PATH)}
+          >书稿结业考试 A/B 卷</a
+        >
+      </p>
+    </header>
+
+    {
+      loadError && (
+        <p class="fav-alert" role="alert">
+          收藏文件读不出来：{loadError}。修复或删除{' '}
+          <code>personal/harness/favorites.json</code> 后刷新本页。
+        </p>
+      )
+    }
+    {
+      questionError && (
+        <p class="fav-alert" role="alert">
+          题库解析失败：{questionError}
+        </p>
+      )
+    }
+
+    <section class="fav-toolbar" aria-label="筛选收藏">
+      <label class="harness-search">
+        <span class="harness-search-label">搜索题干、解析、专题或题号</span>
+        <input
+          type="search"
+          data-fav-search
+          value={query}
+          placeholder="例如：缓存、C14、安全"
+          autocomplete="off"
+        />
+      </label>
+      <div class="harness-filters" role="group" aria-label="按题库筛选">
+        <button type="button" data-exam-filter="all" aria-pressed="true">
+          全部<span data-exam-count="all">（{total}）</span>
+        </button>
+        {
+          examFilters.map((exam) => (
+            <button
+              type="button"
+              data-exam-filter={exam.id}
+              aria-pressed="false"
+            >
+              {exam.title}
+              <span data-exam-count={exam.id}>
+                （{countByExam.get(exam.id)}）
+              </span>
+            </button>
+          ))
+        }
+      </div>
+      <div class="fav-selects">
+        <label>
+          <span>专题</span>
+          <select data-topic-filter aria-label="按专题筛选">
+            <option value="all">全部专题</option>
+            {
+              topicOptions.map((topic) => (
+                <option value={topic.key}>{topic.label}</option>
+              ))
+            }
+          </select>
+        </label>
+        <label>
+          <span>层级</span>
+          <select data-level-filter aria-label="按认知层级筛选">
+            <option value="all">全部层级</option>
+            {
+              levelOptions.map((level) => (
+                <option value={level.key}>{level.label}</option>
+              ))
+            }
+          </select>
+        </label>
+      </div>
+      <p class="harness-count" data-fav-count aria-live="polite">
+        显示 {total} / {total}
+      </p>
+      <p
+        class="fav-status"
+        data-fav-status
+        role="status"
+        aria-live="polite"
+        hidden
+      >
+      </p>
+    </section>
+
+    <p
+      class="harness-empty fav-empty-note"
+      data-fav-empty
+      hidden={total > 0 || Boolean(loadError)}
+    >
+      {
+        `还没有收藏。打开两个题库，在任意题目上点「♡ 收藏」；做对、做错或还没做都可以收藏。`
+      }
+    </p>
+
+    <div class="fav-list" data-fav-list>
+      {
+        cards.map((card) => (
+          <article
+            class="fav-card"
+            data-fav-card
+            data-exam={card.examId}
+            data-topic={card.question?.topic ?? ''}
+            data-level={card.question?.level ?? ''}
+            data-search={card.search}
+          >
+            <header class="fav-card-head">
+              <div class="fav-meta">
+                <span class="fav-exam">{card.examTitle}</span>
+                <span class="fav-id">{card.id}</span>
+                {card.question && <span>{card.question.partName}</span>}
+                {card.question && <span>{card.question.typeLabel}</span>}
+                {card.question && <span>{card.question.topicLabel}</span>}
+                {card.question && <span>{card.question.levelLabel}</span>}
+                {card.question && <span>{card.question.pts} 分</span>}
+                <span>收藏于 {card.addedLabel}</span>
+              </div>
+              <div class="fav-actions">
+                {card.examHref && (
+                  <a class="fav-open" href={withBase(card.examHref)}>
+                    打开题库
+                  </a>
+                )}
+                <button
+                  class="fav-remove"
+                  type="button"
+                  data-fav-remove={`${card.examId}:${card.id}`}
+                  aria-label={`取消收藏 ${card.id}`}
+                >
+                  取消收藏
+                </button>
+              </div>
+            </header>
+
+            {card.question ? (
+              <>
+                {card.question.scenario && (
+                  <div class="fav-scenario" set:html={card.question.scenario} />
+                )}
+                <div class="fav-stem" set:html={card.question.stemHtml} />
+                {card.question.options.length > 0 && (
+                  <ul class="fav-opts">
+                    {card.question.options.map((option) => (
+                      <li
+                        class:list={[
+                          'fav-opt',
+                          { 'is-correct': option.correct },
+                        ]}
+                      >
+                        <span class="fav-key">{option.key}</span>
+                        <span class="fav-opt-text" set:html={option.textHtml} />
+                        {option.correct && (
+                          <span class="fav-correct">正确</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {card.question.code.length > 0 && (
+                  <pre class="fav-code">{card.question.code.join('\n')}</pre>
+                )}
+                {card.question.answerHtml && (
+                  <div class="fav-answer">
+                    <b>正确答案</b>
+                    <span set:html={card.question.answerHtml} />
+                  </div>
+                )}
+                {card.question.rubric.length > 0 && (
+                  <div class="fav-rubric">
+                    <b>评分细则</b>
+                    <ul>
+                      {card.question.rubric.map((item) => (
+                        <li>
+                          <span set:html={item.textHtml} />
+                          <span class="fav-points">{item.points} 分</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {card.question.referenceHtml && (
+                  <div class="fav-reference">
+                    <b>参考思路</b>
+                    <span set:html={card.question.referenceHtml} />
+                  </div>
+                )}
+                {card.question.explainHtml && (
+                  <div class="fav-explain">
+                    <b>解析</b>
+                    <span set:html={card.question.explainHtml} />
+                  </div>
+                )}
+                {card.question.noteHtml && (
+                  <div class="fav-note-inline">
+                    <b>注意</b>
+                    <span set:html={card.question.noteHtml} />
+                  </div>
+                )}
+                {card.question.sources.length > 0 && (
+                  <p class="fav-src">
+                    出处：
+                    {card.question.sources.map((source, index) => (
+                      <span>
+                        {index > 0 ? ' · ' : ''}
+                        <a
+                          href={/^https?:\/\//.test(source.href)
+                            ? readerBookHref(source.href)
+                            : withBase(`${HARNESS_SITE_PATH}${source.href}`)}
+                        >
+                          {source.label}
+                        </a>
+                      </span>
+                    ))}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p class="fav-missing">
+                {`题目已不在题库中（题号 ${card.id}）；可能已下线或改号。可以直接取消收藏。`}
+              </p>
+            )}
+          </article>
+        ))
+      }
+    </div>
+
+    <footer class="harness-foot">
+      <p>
+        收藏只存题号，题目内容来自归档题库；收藏文件在 <code
+          >personal/harness/favorites.json</code
+        >。
+      </p>
+      <p class="harness-foot-links">
+        <a href={withBase(HARNESS_PATH)}>Harness 目录</a>
+        <a href={withBase('/')}>回到阅读器</a>
+      </p>
+    </footer>
+  </main>
+  <script>
+    import '../client/harness/favorites.ts';
+  </script>
+</Layout>

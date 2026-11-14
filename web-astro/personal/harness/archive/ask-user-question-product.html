@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ask_user_question 产品设计：把「猜」变成「选」</title>
+<style>
+  :root {
+    --ink: #26241f;
+    --ink-soft: #5c574c;
+    --paper: #faf8f4;
+    --card: #ffffff;
+    --accent: #b45309;
+    --accent-deep: #8a3e06;
+    --accent-soft: #fdf1e3;
+    --line: #e6e0d4;
+    --code-bg: #2b2822;
+    --code-ink: #e8e2d5;
+    --bad-soft: #f9ece7;
+    --bad-line: #d8a08e;
+    --bad-ink: #a63a2a;
+    --ok-soft: #eef3e8;
+    --ok-line: #c2d1b4;
+    --ok-ink: #4a6b34;
+    --cool-soft: #eef1f5;
+    --cool-line: #c3ccd8;
+    --cool-ink: #3f5673;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    font-size: 17px;
+    line-height: 1.95;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #f3d9b8; }
+  main { max-width: 880px; margin: 0 auto; padding: 56px 24px 96px; }
+  h1, h2, h3, h4 { font-family: "Noto Serif SC", "Songti SC", "STSong", serif; line-height: 1.5; }
+  h1 { font-size: 34px; font-weight: 900; margin: 8px 0 8px; letter-spacing: 0.5px; }
+  h2 {
+    font-size: 25px; font-weight: 700; margin: 70px 0 18px;
+    padding-top: 26px; border-top: 1px solid var(--line);
+  }
+  h2 .sec-no {
+    display: block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px; font-weight: 600; letter-spacing: 3px;
+    color: var(--accent); margin-bottom: 6px;
+  }
+  h3 { font-size: 20px; margin: 38px 0 12px; }
+  h4 { font-size: 16.5px; margin: 24px 0 8px; }
+  p { margin: 0 0 16px; }
+  strong { color: var(--accent-deep); }
+  em { font-style: normal; background: linear-gradient(transparent 62%, #f6e3c8 62%); }
+  a { color: var(--accent-deep); text-decoration: none; border-bottom: 1px solid #e3c9a8; }
+  a:hover { border-bottom-color: var(--accent-deep); }
+  code {
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 0.85em; background: #f1ece1; border-radius: 5px; padding: 1px 6px;
+    overflow-wrap: anywhere;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 12px; padding: 18px 20px; overflow-x: auto;
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13.5px; line-height: 1.7; margin: 16px 0 22px;
+  }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  pre .c { color: #8f8877; }
+
+  /* ---------- 头部 ---------- */
+  .kicker {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase;
+  }
+  .subtitle { font-size: 18px; color: var(--ink-soft); margin: 12px 0 26px; line-height: 1.8; }
+  .meta {
+    font-size: 13.5px; color: var(--ink-soft); display: flex; flex-wrap: wrap;
+    gap: 6px 20px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  }
+  .meta b { font-weight: 600; color: var(--ink); }
+
+  nav.toc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 22px 14px; margin: 30px 0 8px;
+  }
+  nav.toc h2 {
+    border: none; padding: 0; margin: 0 0 10px; font-size: 13px; letter-spacing: 2px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; color: var(--ink-soft);
+  }
+  nav.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 30px; font-size: 14.5px; }
+  nav.toc li { margin-bottom: 4px; break-inside: avoid; }
+  nav.toc a { border: none; color: var(--ink); }
+  nav.toc a:hover { color: var(--accent-deep); }
+
+  /* ---------- 块 ---------- */
+  .concl {
+    background: var(--accent-soft); border: 1px solid #f0dcc0; border-radius: 12px;
+    padding: 14px 20px; margin: 18px 0 22px; font-size: 16.5px; line-height: 1.85;
+  }
+  .concl b { color: var(--accent-deep); }
+  .axiom {
+    background: var(--card); border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0;
+    padding: 12px 18px; margin: 12px 0; font-size: 15.5px;
+  }
+  .axiom b { color: var(--accent-deep); }
+  .imp {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 20px 10px; margin: 26px 0;
+  }
+  .imp h4 {
+    margin: 0 0 8px; font-size: 14px; letter-spacing: 2px; color: var(--accent-deep);
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+  .imp ul { margin: 0; padding-left: 20px; }
+  .imp li { margin-bottom: 7px; font-size: 15.5px; }
+  .cite { font-size: 12.5px; color: var(--ink-soft); font-family: "SF Mono", ui-monospace, Menlo, monospace; }
+  .cite a { border: none; color: var(--ink-soft); text-decoration: underline dotted; }
+  .formula {
+    background: var(--card); border: 1px dashed var(--line); border-radius: 12px;
+    padding: 16px 20px; margin: 18px 0; text-align: center;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 15px; line-height: 2;
+  }
+  .formula .var { color: var(--accent-deep); font-weight: 600; }
+
+  /* ---------- 表格 ---------- */
+  .tblwrap { overflow-x: auto; margin: 18px 0 24px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; background: var(--card); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; line-height: 1.7; }
+  th { background: #f3efe6; font-weight: 700; font-size: 13px; letter-spacing: 1px; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td.k { white-space: nowrap; font-weight: 600; }
+  table.fm td:nth-child(2) { white-space: nowrap; }
+  table.fm td:first-child { color: var(--ink-soft); font-family: "SF Mono", monospace; }
+  table.compact { font-size: 13.5px; }
+  table.compact th, table.compact td { padding: 7px 10px; }
+
+  /* ---------- 状态机 ---------- */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 20px 0 8px; }
+  .node {
+    border: 1.5px solid var(--line); background: var(--card); border-radius: 10px;
+    padding: 8px 14px; font-size: 14px; font-weight: 600;
+  }
+  .node.a { border-color: var(--accent); color: var(--accent-deep); background: var(--accent-soft); }
+  .node.b { border-color: var(--ok-line); color: var(--ok-ink); background: var(--ok-soft); }
+  .node.c { border-color: var(--bad-line); color: var(--bad-ink); background: var(--bad-soft); }
+  .arrow { color: var(--ink-soft); font-family: monospace; }
+  .flowlabel {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12px; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ---------- 界面稿 ---------- */
+  .mock {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px 16px; margin: 20px 0; box-shadow: 0 1px 0 rgba(0,0,0,.02);
+  }
+  .mock .mhead {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11.5px;
+    letter-spacing: 2px; color: var(--ink-soft); margin-bottom: 10px;
+  }
+  .mock .q { font-size: 15.5px; font-weight: 600; margin-bottom: 2px; }
+  .mock .why { font-size: 13px; color: var(--ink-soft); margin-bottom: 12px; }
+  .opt {
+    display: flex; gap: 10px; align-items: flex-start;
+    border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+    font-size: 14px; line-height: 1.6;
+  }
+  .opt.rec { border-color: var(--accent); background: var(--accent-soft); }
+  .opt .radio {
+    flex: 0 0 auto; width: 15px; height: 15px; margin-top: 4px;
+    border: 1.5px solid #b9b0a0; border-radius: 50%;
+  }
+  .opt.rec .radio { border-color: var(--accent); box-shadow: inset 0 0 0 3px var(--accent-soft), inset 0 0 0 8px var(--accent); }
+  .opt .lbl { font-weight: 600; }
+  .opt .desc { color: var(--ink-soft); font-size: 13px; }
+  .badge {
+    display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-size: 11px; font-weight: 600;
+    letter-spacing: .5px; vertical-align: 1px;
+  }
+  .badge.ghost { background: transparent; color: var(--accent-deep); border: 1px solid var(--accent); }
+  .opt.other { border-style: dashed; color: var(--ink-soft); }
+  .mock .foot { font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+
+  /* ---------- 指标条 ---------- */
+  .band { margin: 18px 0 26px; }
+  .band .track {
+    position: relative; height: 26px; border-radius: 999px;
+    background: linear-gradient(90deg,#f3efe6 0,#f3efe6 100%);
+    border: 1px solid var(--line);
+  }
+  .band .zone { position: absolute; top: 0; bottom: 0; background: var(--ok-soft); border-left: 1px dashed var(--ok-line); border-right: 1px dashed var(--ok-line); }
+  .band .zone span { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 11px; color: var(--ok-ink); font-weight: 600; white-space: nowrap; }
+  .band .danger { position: absolute; top: 0; bottom: 0; background: var(--bad-soft); }
+  .band .danger span { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 11px; color: var(--bad-ink); font-weight: 600; white-space: nowrap; }
+  .band .scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; font-family: "SF Mono", monospace; }
+
+  .refs { font-size: 13.5px; line-height: 1.8; }
+  .refs li { margin-bottom: 8px; }
+  .refs .t { color: var(--ink); }
+
+  footer { margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+
+  #themeFab {
+    position: fixed; right: 20px; bottom: 22px; z-index: 80; width: 40px; height: 40px;
+    border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,.14);
+  }
+  #themeFab svg { width: 18px; height: 18px; }
+  #themeFab .i-sun { display: none; }
+  html.dark #themeFab .i-sun { display: block; }
+  html.dark #themeFab .i-moon { display: none; }
+  html.dark { color-scheme: dark;
+    --ink:#e9e4d7; --ink-soft:#a8a193; --paper:#171512; --card:#211f19;
+    --accent:#e29b52; --accent-deep:#f0b670; --accent-soft:rgba(226,155,82,.14);
+    --line:#3a362b; --code-bg:#0f0d0a; --code-ink:#d9d3c3;
+    --bad-soft:rgba(179,64,42,.14); --bad-line:rgba(224,138,114,.45); --bad-ink:#e08a72;
+    --ok-soft:rgba(122,167,80,.13); --ok-line:rgba(154,197,110,.4); --ok-ink:#a9c88f;
+    --cool-soft:rgba(90,130,180,.15); --cool-line:rgba(120,160,210,.4); --cool-ink:#9fb6d4;
+  }
+  html.dark ::selection { background: rgba(226,155,82,.35); }
+  html.dark em { background: linear-gradient(transparent 60%, rgba(226,155,82,.3) 60%); }
+  html.dark th { background: #2b2820; }
+  html.dark code { background: #2b2820; }
+  html.dark .opt .radio { border-color: #5a5346; }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    main { padding: 36px 16px 72px; }
+    h1 { font-size: 27px; }
+    h2 { font-size: 21px; }
+    nav.toc ol { columns: 1; }
+    .flow { gap: 6px; }
+    .node { font-size: 12.5px; padding: 6px 10px; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <div class="kicker">Product Design · Harness Interaction Layer</div>
+  <h1>ask_user_question：把「猜」变成「选」</h1>
+  <p class="subtitle">一个把模型的不确定性，翻译成一次低成本、可恢复、可学习的人机协商的产品设计。它不是「让模型礼貌地问一句」，而是一份<strong>决策权转移协议</strong>。</p>
+  <div class="meta">
+    <span><b>版本</b> v1.0</span>
+    <span><b>日期</b> 2026-10</span>
+    <span><b>定位</b> harness 交互契约层</span>
+    <span><b>关联</b> 08 横评 · 09 工具 · 12 编排</span>
+  </div>
+
+  <nav class="toc">
+    <h2>CONTENTS</h2>
+    <ol>
+      <li><a href="#s0">一句话与三条公理</a></li>
+      <li><a href="#s1">产品定义：它到底在卖什么</a></li>
+      <li><a href="#s2">四方用户，四种失败体验</a></li>
+      <li><a href="#s3">该不该问：VoI 门控</a></li>
+      <li><a href="#s4">设计空间：六个自由度</a></li>
+      <li><a href="#s5">对象模型与工具契约</a></li>
+      <li><a href="#s6">推荐的四种语义（核心）</a></li>
+      <li><a href="#s7">状态机与闭环</a></li>
+      <li><a href="#s8">界面规格</a></li>
+      <li><a href="#s9">失败模式目录</a></li>
+      <li><a href="#s10">度量：什么才算好</a></li>
+      <li><a href="#s11">评测方法</a></li>
+      <li><a href="#s12">边界：什么时候不该做</a></li>
+      <li><a href="#s13">分层落地与路线图</a></li>
+      <li><a href="#s14">开放问题</a></li>
+    </ol>
+  </nav>
+
+  <!-- ============ §0 ============ -->
+  <section id="s0">
+    <h2><span class="sec-no">SECTION 00</span>一句话与三条公理</h2>
+
+    <div class="concl">
+      <b>一句话结论：</b>这个产品的成功不取决于「问得多好」，取决于两件事——<b>该不该问</b>（门控）与<b>问完有没有用</b>（闭环）。中间那层「怎么问」，是这两件事的附属品；行业目前大部分精力花在中间层，而多数失败发生在这两端。
+    </div>
+
+    <p>把它当成一个独立产品，是因为它有三个别的组件没有的性质：<b>它消耗的是人的注意力</b>（不可缓存、不可重试）、<b>它的失败是隐性的</b>（用户点了推荐，然后带着一个错误决定走了）、<b>它会训练用户</b>（被问多了会烦躁，被猜错了会不信任，两种学习都不可逆）。</p>
+
+    <div class="axiom"><b>公理 A1 · 问了不用，比不问更伤。</b>用户选了 B、模型照 A 做，造成的不是一次错误，是一次「我在这个系统里说的话不算数」的认知。它比沉默的失败更贵。</div>
+    <div class="axiom"><b>公理 A2 · 推荐只是押注，不是指令。</b>推荐的价值在于「模型先下注，人只做否决」，一旦推荐变成默认路径，人就不再否决——产品退化成确认按钮。</div>
+    <div class="axiom"><b>公理 A3 · 能查到的不要问人。</b>事实型缺口用工具补，偏好型缺口才问人。把检索失败转嫁给用户，是最常见的提问失礼。</div>
+  </section>
+
+  <!-- ============ §1 ============ -->
+  <section id="s1">
+    <h2><span class="sec-no">SECTION 01</span>产品定义：它到底在卖什么</h2>
+
+    <h3 id="s1-1">1.1 卖的是「返工前置」，不是「礼貌」</h3>
+    <p>模型面对欠定请求只有两条路：<b>猜</b>（然后可能返工）或<b>问</b>（然后可能打扰）。这个产品卖的是第三条：<b>把返工提前到动手之前，用一次几秒钟的确认换掉一次几分钟的重做</b>。所以它的价值锚点不是「体验更友好」，而是「返工率下降」——所有设计决策最终都要回到这个数上。</p>
+
+    <p>问题是这个交换<em>天然不对称</em>：提问的成本是<em>即时的、确定的、可见的</em>（打断、等待、选择困难），收益是<em>延迟的、概率的、不可见的</em>（避免了一次你永远不会知道的返工）。人被要求在两个这样的选项中做选择时，系统性地低估后者。<span class="cite">[理论]（Tversky &amp; Kahneman, 1974；Johnson &amp; Goldstein, 2003 的默认效应同源）</span></p>
+
+    <p>由此得到一条反直觉但正确的产品结论：<b>默认策略必须偏保守——少问，直到有证据说该问。</b>把「提问」设计成廉价、随手可得的动作，会让模型陷入问题轰炸；而问题轰炸的代价不是那几秒，是用户从此开始无视所有提问。</p>
+
+    <h3 id="s1-2">1.2 一次提问的完整成本结构</h3>
+    <p>产品化的第一步是把「问一次」拆成可以被削减的分项，而不是笼统的「用户体验」：</p>
+    <div class="tblwrap"><table class="compact">
+      <thead><tr><th>成本项</th><th>具体表现</th><th>产品手段</th></tr></thead>
+      <tbody>
+        <tr><td class="k">打断</td><td>思路被打断，重新进入状态要几十秒</td><td>非阻塞提问；攒批；不在流式输出中插问</td></tr>
+        <tr><td class="k">决策负担</td><td>用户被迫做他本不想做、或没能力做的判断</td><td>门控：只问「偏好型」，不转嫁「专业型」判断</td></tr>
+        <tr><td class="k">阅读</td><td>读题干 + 读 3 个选项 + 读描述</td><td>选项描述写后果不写定义；单行可扫</td></tr>
+        <tr><td class="k">后悔</td><td>选完发现选错，要回退重来</td><td>可撤销；preview 预告后果</td></tr>
+        <tr><td class="k">信任折旧</td><td>每问一次低质量问题，信任扣一点，可累积</td><td>问题质量回归集；重复提问去重</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s1-3">1.3 判据：一个不等式</h3>
+    <p>提问值不值得，可以写成一个期望收益不等式。它的作用不是精确计算，而是把「感觉该问」变成三个可以分别优化、也可以分别测量的人：</p>
+
+    <div class="formula">
+      E[<span class="var">ask</span>] = <span class="var">P</span><sub>歧义</sub> × <span class="var">P</span><sub>问对</sub> × <span class="var">C</span><sub>返工</sub> − <span class="var">C</span><sub>打断</sub> &nbsp;&gt;&nbsp; 0
+    </div>
+
+    <p>四项各自对应一个可优化的组件：</p>
+    <ul>
+      <li><b>P<sub>歧义</sub></b>——模型自己的不确定性估计。可从「自评置信」「schema 校验失败」「工具返回多解」「历史返工信号」四处取。</li>
+      <li><b>P<sub>问对</sub></b>——问出来的问题是否真的能消解分歧。这是最容易被忽略、也最容易归零的一项：问了一个不相关的问题，前两项的乘积直接变成负数。</li>
+      <li><b>C<sub>返工</sub></b>——猜错的代价。可逆操作接近 0，不可逆操作（删数据、发邮件、改生产配置）极高。</li>
+      <li><b>C<sub>打断</sub></b>——人的注意力成本。与用户当前状态强相关：闲置时接近 0，正在输入时极高。</li>
+    </ul>
+
+    <p>学术界已经把这套东西形式化为 <b>Value of Information（VoI）</b>：只有当「问一个问题带来的期望效用增益」大于「施加给用户的认知成本」时才开口。近年的工作把它做成了无需调参的推理时方法，并在 20 Questions、医疗诊断、订票、电商四类场景里稳定超过手工阈值。<span class="cite">[论文]（2026-01，<a href="https://arxiv.org/abs/2601.06407">arXiv:2601.06407</a>）</span> 更激进的一条线是把 VoI <em>摊销</em>进单次前向：模型一次输出同时给出决策分布与「每个缺失槽位值多少钱」，从而决定问哪个槽。<span class="cite">[论文]（2026-09，<a href="https://arxiv.org/abs/2609.30706">arXiv:2609.30706</a>）</span></p>
+  </section>
+
+  <!-- ============ §2 ============ -->
+  <section id="s2">
+    <h2><span class="sec-no">SECTION 02</span>四方用户，四种失败体验</h2>
+
+    <p>这个产品最特殊的地方是：<b>它的「用户」不是一个人</b>。写这个工具的人、调这个工具的人、被这个工具问的人、以及事后看数据的人，四种角色对「好」的定义完全不同。设计时的取舍必须显式说明「这一条是照顾谁的」。</p>
+
+    <div class="tblwrap"><table>
+      <thead><tr><th>角色</th><th>它是谁</th><th>它要什么（JTBD）</th><th>它最恨什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">第一调用者</td>
+          <td>模型自己</td>
+          <td>用最少的 token 表达最大的不确定性；问完能拿到可直接用的结构化答案</td>
+          <td>被迫用自由文本描述选项；答案回来是一段口语，还要自己解析</td>
+        </tr>
+        <tr>
+          <td class="k">决策者</td>
+          <td>人类用户</td>
+          <td>在不该由他操心的地方不要被打扰；在该由他拍板的地方给他清晰可比的选项</td>
+          <td>被问「你想用哪个库」这种本该模型决定的事；点了推荐却发现被带偏</td>
+        </tr>
+        <tr>
+          <td class="k">集成方</td>
+          <td>harness 开发者 / 产品经理</td>
+          <td>能控制提问频率；能定制渲染；能拿到可解释的数据</td>
+          <td>schema 不可校验、行为不可预测、埋点拿不到</td>
+        </tr>
+        <tr>
+          <td class="k">评测运营</td>
+          <td>做质量与回归的人</td>
+          <td>问题质量可离线打分；提问策略可 A/B；失败可归因</td>
+          <td>只拿到一段自由文本，无法回放、无法聚类</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <div class="imp">
+      <h4>一个由此推出的设计原则</h4>
+      <ul>
+        <li><b>对模型：给它枚举，不给它散文。</b>选项的类型系统（单选/多选/数字/日期）比让模型自由拼一句话更能保证下游可用。</li>
+        <li><b>对人：给后果，不给定义。</b>「会跳过测试直接部署」比「--no-verify 参数」有用得多。</li>
+        <li><b>对集成方：把策略暴露成配置，而不是写死在提示词里。</b>能配的东西才是产品，写死的是习惯。</li>
+        <li><b>对评测：每一次提问都必须落成结构化事件。</b>自由文本的「模型问了一句、用户回了一句」在离线分析里几乎不可用。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ §3 ============ -->
+  <section id="s3">
+    <h2><span class="sec-no">SECTION 03</span>该不该问：VoI 门控</h2>
+
+    <h3 id="s3-1">3.1 模型「知道自己不知道」，但不会主动说</h3>
+    <p>这是整个产品的存在理由。2026 年的一项系统评测给了一个很干净的结论：模型在<em>被明确要求判断歧义时</em>往往能识别出歧义，但在正常问答场景里<em>绝大多数情况仍然直接作答</em>——识别与行为之间有一条稳定的鸿沟。检索到的上下文还会进一步扩大这条鸿沟——它让问题变得更「可答」，同时让模型更不倾向于问。<span class="cite">[论文]（2026-05，<a href="https://arxiv.org/abs/2605.25284">arXiv:2605.25284</a>）</span></p>
+
+    <p>这解释了为什么不能把「该不该问」写进系统提示词了事。提示词说「遇到歧义请提问」，模型仍然会答；只有当成<em>可被强制调用的动作</em>、并且有<em>外部信号</em>触发时，行为才会变。同理，已有工作证明「什么时候问」本身是可以训练的：用后续对话轮次的期望结果来给偏好打标，模型才学得会「先问再答」。<span class="cite">[论文]（2024-10，<a href="https://arxiv.org/abs/2410.13788">arXiv:2410.13788</a>）</span></p>
+
+    <h3 id="s3-2">3.2 三档门控，而不是一个开关</h3>
+    <p>把「问不问」做成二值开关是错的，因为它没有表达「该问但可以先做」这个中间态。三档才对应真实决策：</p>
+
+    <div class="tblwrap"><table>
+      <thead><tr><th>档位</th><th>条件</th><th>行为</th><th>典型场景</th></tr></thead>
+      <tbody>
+        <tr><td class="k">强制问<br><span class="cite">must</span></td><td>C<sub>返工</sub> 极高（不可逆、有外部副作用）且存在真实分叉</td><td>停下，阻塞，等答案；不允许带假设继续</td><td>删除/发布/转账/对外发送；跨库迁移方案</td></tr>
+        <tr><td class="k">允许问<br><span class="cite">may</span></td><td>分叉真实存在，但猜错可回退</td><td>非阻塞地问，同时按推荐值先做；答案到达后校正</td><td>技术选型、文案语气、文件组织方式</td></tr>
+        <tr><td class="k">禁止问<br><span class="cite">never</span></td><td>可查、可推断、或属于模型的专业判断</td><td>自己解决；把假设写进输出，让人事后否决</td><td>「这个库的 API 怎么用」「你想用哪个框架」</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>注意第三档的措辞：<b>不是「不许问」，而是「用假设 + 明示」替代提问</b>。即模型自己决定，但把「我假设你指的是 X，如果不是请纠正」写进正文。这比弹窗便宜得多，而且给了用户否决权。大量本应属于这一档的问题被错误地升级成了弹窗，是当前体验变差的主因。</p>
+
+    <h3 id="s3-3">3.3 触发信号从哪来</h3>
+    <p>门控不能靠模型「感觉」，要给可计算的信号。四个来源按可靠性排序：</p>
+    <div class="tblwrap"><table class="compact">
+      <thead><tr><th>信号</th><th>怎么取</th><th>可靠性</th></tr></thead>
+      <tbody>
+        <tr><td class="k">操作不可逆性</td><td>工具的 destructive / readOnly 元数据</td><td>高（机器可判）</td></tr>
+        <tr><td class="k">参数校验冲突</td><td>schema 枚举冲突、必填缺失、多个合法解</td><td>高（机器可判）</td></tr>
+        <tr><td class="k">历史返工</td><td>同类任务近期被用户改口的频率</td><td>中（需统计）</td></tr>
+        <tr><td class="k">自评置信</td><td>模型对自身答案的显式打分</td><td>低（易过自信，且不可校准）</td></tr>
+      </tbody>
+    </table></div>
+    <p>把低可靠信号当主判据，是「问题轰炸」的第二大来源（第一是提示词催促）。正确做法是<b>用高可靠信号兜底（must 档），用低可靠信号只做「may 档」的候选生成</b>，再由模型自己决定是否调用。</p>
+  </section>
+
+  <!-- ============ §4 ============ -->
+  <section id="s4">
+    <h2><span class="sec-no">SECTION 04</span>设计空间：六个自由度</h2>
+
+    <p>把「选项 + 推荐」当成一个整体来设计是粗糙的。它其实是六个独立可调的维度，每个维度都有明确的推荐值和不推荐的极端：</p>
+
+    <div class="tblwrap"><table>
+      <thead><tr><th>自由度</th><th>可选范围</th><th>推荐值</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">① 触发</td>
+          <td>从「从不问」到「每步都问」</td>
+          <td><b>三档门控</b>（§3）</td>
+          <td>二值开关无法表达「先做后校正」</td>
+        </tr>
+        <tr>
+          <td class="k">② 选项数</td>
+          <td>2 – 7</td>
+          <td><b>3</b>（硬上限 4）</td>
+          <td>选择过载：6 种果酱的购买率约为 24 种的 10 倍<span class="cite">[经典]</span>；超过 4 个说明问题没收敛，应先问「哪一类」</td>
+        </tr>
+        <tr>
+          <td class="k">③ 结构</td>
+          <td>单选 / 多选 / 自由文本 / 混合</td>
+          <td><b>单选为默认</b>，多选需显式声明，永远保留逃逸阀</td>
+          <td>多选会把「决策」退化成「收集」，用户倾向全选</td>
+        </tr>
+        <tr>
+          <td class="k">④ 呈现</td>
+          <td>纯列表 / 带描述 / 带预览 / 带推荐语义</td>
+          <td><b>标签 + 一行后果 + 一个推荐 + 可展开预览</b></td>
+          <td>信息量与扫读速度的平衡点；预览折叠，不占默认视线</td>
+        </tr>
+        <tr>
+          <td class="k">⑤ 时序</td>
+          <td>阻塞 / 非阻塞 / 定时过期</td>
+          <td><b>默认非阻塞</b>，仅 must 档阻塞</td>
+          <td>阻塞把「问」变成「停」，代价从秒级升到分钟级</td>
+        </tr>
+        <tr>
+          <td class="k">⑥ 闭环</td>
+          <td>答案仅入上下文 / 入上下文并校验 / 沉淀为偏好</td>
+          <td><b>入上下文 + 提交前校验</b>；沉淀偏好需显式授权</td>
+          <td>公理 A1；偏好沉淀容易变成「一次误点终身生效」</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s4-1">4.1 为什么选项数要卡在 3</h3>
+    <p>选项数不只是界面问题，它同时是三个约束的交点：</p>
+    <ul>
+      <li><b>认知</b>：选项越多，「扫一遍做比较」的成本超线性上升，而决策质量并不上升。经典果酱实验里，展示 24 种时只有 3% 的人购买，展示 6 种时是 30%。<span class="cite">[经典]（Iyengar &amp; Lepper, 2000, JPSP 79(6):995–1006）</span></li>
+      <li><b>生成</b>：模型生成第 4、第 5 个选项时，往往开始制造「凑数的差异」——这正是伪选项的来源（§9）。</li>
+      <li><b>空间</b>：移动端一屏放得下的上限是 4 个带描述的选项，再多就要滚动，滚动会让最后一个选项（通常是「都不是」）被系统性忽略。</li>
+    </ul>
+    <p>所以「超过 4 个」不是渲染问题，是<b>信号</b>：它说明模型还没想清楚要问什么。正确反应是让模型先问一个更上层的问题（「你想解决的是 A 类还是 B 类问题？」），而不是把 7 个选项塞进一张卡片。</p>
+  </section>
+
+  <!-- ============ §5 ============ -->
+  <section id="s5">
+    <h2><span class="sec-no">SECTION 05</span>对象模型与工具契约</h2>
+
+    <p>契约层是这个产品的地基。下面是一份主张版本——和现在主流的「label + description 数组」相比，它多了三样东西：<b>推荐的语义</b>、<b>逃逸阀</b>、<b>时序控制</b>。</p>
+
+<pre><code>{
+  "name": "ask_user_question",
+  "description": "Ask the user to choose between concrete options, ONLY when a real fork exists AND the cost of guessing wrong exceeds the cost of interrupting. Never use it for facts you can look up, or for decisions you are authorized to make.",
+  "inputSchema": {
+    "type": "object",
+    "required": ["header", "question", "options"],
+    "properties": {
+      "header":   { "type": "string", "maxLength": 12,
+                    "description": "主题词，折叠态与通知里用" },
+      "question": { "type": "string",
+                    "description": "一句话说清要定什么，不复述背景" },
+      "why":      { "type": "string", "maxLength": 80,
+                    "description": "为什么要问——界面上作副标题" },
+      "options": {
+        "type": "array", "minItems": 2, "maxItems": 4,
+        "items": {
+          "type": "object",
+          "required": ["label", "description"],
+          "properties": {
+            "label":       { "type": "string", "maxLength": 24 },
+            "description": { "type": "string", "maxLength": 60,
+                             "description": "选它会发生什么，不是它是什么" },
+            "recommended": { "type": "boolean" },
+            "reason":      { "enum": ["most_likely", "safest",
+                                      "cheapest", "status_quo"] },
+            "preview":     { "type": "string", "maxLength": 120 }
+          }
+        }
+      },
+      "multiSelect":  { "type": "boolean", "default": false },
+      "allowOther":   { "type": "boolean", "default": true },
+      "blocking":     { "type": "boolean", "default": false },
+      "expiresInSec": { "type": "integer", "default": 0 }
+    }
+  }
+}</code></pre>
+
+    <p>三个关键字段的理由：</p>
+    <ul>
+      <li><b><code>reason</code></b>：把「推荐」从一个形容词变成一个枚举。理由见 §6，这是本文档最重要的一条主张。</li>
+      <li><b><code>allowOther</code></b>：默认开。没有逃逸阀的多选题，本质是在三个坏选项里选一个最不坏的，用户会感到被操纵。</li>
+      <li><b><code>blocking</code></b>：默认关。默认阻塞是把「询问」做成了「中断」，一个默认值就能让体感从「商量」变成「盘问」。</li>
+    </ul>
+
+    <div class="imp">
+      <h4>契约层的验收标准</h4>
+      <ul>
+        <li>任何一条渲染路径（桌面卡片、命令行、语音）都能只凭这个 JSON 还原出完整界面，不需要额外上下文。</li>
+        <li><code>recommended</code> 最多一个；多于一个应当是 schema 校验错误，而不是「模型的问题」。</li>
+        <li>答案回传的 schema 与选项一一对应，且带 <code>option_id</code>——不能靠 label 字符串匹配（改一个字就断）。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ §6 ============ -->
+  <section id="s6">
+    <h2><span class="sec-no">SECTION 06</span>推荐的四种语义（核心）</h2>
+
+    <div class="concl">
+      <b>这一节的产品主张：</b>「Recommended」这个词现在同时承担着四种互相冲突的语义。用户无法从中学到任何稳定的东西，于是它退化成装饰。<b>把语义拆成四个枚举值，是这个产品从「好看」走向「可信」的分水岭。</b>
+    </div>
+
+    <h3 id="s6-1">6.1 同一个标签，四种意思</h3>
+    <p>当模型给某个选项打上「推荐」时，它实际想说的是下面四件事之一。这四件事在大多数情况下<em>指向不同的选项</em>，而界面上它们长得一模一样：</p>
+
+    <div class="tblwrap"><table>
+      <thead><tr><th>语义</th><th>它回答的问题</th><th>什么时候用</th><th>误用后的后果</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">most_likely<br><span class="cite">最可能</span></td>
+          <td>「我猜你想要哪个」</td>
+          <td>用户有明确偏好但没说出口，模型有把握推断</td>
+          <td>把用户的偏好塑造成模型的先验——以为是预测，其实是引导</td>
+        </tr>
+        <tr>
+          <td class="k">safest<br><span class="cite">最安全</span></td>
+          <td>「选错代价最小的那个」</td>
+          <td>不可逆操作、对外副作用、有合规敞口</td>
+          <td>过度保守：功能永远停在最小改动，产品变成废纸</td>
+        </tr>
+        <tr>
+          <td class="k">cheapest<br><span class="cite">最省</span></td>
+          <td>「最省时间/最少 token/最少改动」</td>
+          <td>探索阶段、试错成本低的场景</td>
+          <td>省出了错误——省下的时间在返工时加倍偿还</td>
+        </tr>
+        <tr>
+          <td class="k">status_quo<br><span class="cite">维持现状</span></td>
+          <td>「什么都不改」</td>
+          <td>渐进式改造、有历史包袱的系统</td>
+          <td>现状偏见固化烂设计：每一次都「保持现状」，系统永远不演进</td>
+        </tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s6-2">6.2 为什么必须拆开</h3>
+    <p>三个理由，从弱到强：</p>
+    <ol>
+      <li><b>可学性。</b>用户要能建立稳定的预期，才谈得上信任。「推荐」如果能同时表示「最可能」和「最安全」，用户只能靠猜它这次是哪一种——猜错几次之后，就不再看它了。</li>
+      <li><b>可校准。</b>「最可能」的推荐可以被事后验证（采纳后是否返工），「最安全」的推荐不能（你无法观测到没发生的事故）。混在一起，两类推荐的质量就无法分别度量。</li>
+      <li><b>可追责。</b>当用户因为跟随推荐而出错时，需要能回答「模型当时以什么理由推荐它」。没有 <code>reason</code> 字段，这个复盘做不了。</li>
+    </ol>
+
+    <h3 id="s6-3">6.3 视觉权重怎么配</h3>
+    <p>语义拆开之后，视觉上也要分级——不是所有推荐都该用同一个高亮：</p>
+    <div class="tblwrap"><table class="compact">
+      <thead><tr><th>reason</th><th>视觉处理</th><th>是否默认选中</th></tr></thead>
+      <tbody>
+        <tr><td class="k">safest</td><td>强高亮 + 「最安全」字样</td><td>是（安全兜底值得默认）</td></tr>
+        <tr><td class="k">most_likely</td><td>强高亮 + 「推荐」字样</td><td>否（默认选中会制造锚定）</td></tr>
+        <tr><td class="k">cheapest</td><td>中性标记</td><td>否</td></tr>
+        <tr><td class="k">status_quo</td><td>不加标记，仅排序靠前</td><td>否</td></tr>
+      </tbody>
+    </table></div>
+    <p>「most_likely 不默认选中」这一条值得单独说：<b>视觉高亮 + 默认选中 + 排在第一</b>是三重锚定，会把「推荐」变成事实上的唯一选项。锚定效应在数值判断上的效应量早已被反复验证<span class="cite">[经典]（Tversky &amp; Kahneman, 1974, Science 185:1124–1131）</span>，而在「三选一」这种低信息量场景里，它的强度只会更大。保留高亮、放弃默认选中，是性价比最高的一次取舍。</p>
+  </section>
+
+  <!-- ============ §7 ============ -->
+  <section id="s7">
+    <h2><span class="sec-no">SECTION 07</span>状态机与闭环</h2>
+
+    <p>大多数人只画了「问 → 答」两个状态。真实系统里至少有七个，漏掉的那几个正是体验崩坏的地方。</p>
+
+    <div class="flow">
+      <span class="node">gated</span><span class="arrow">→</span>
+      <span class="node a">presented</span><span class="arrow">→</span>
+      <span class="node b">answered</span><span class="arrow">→</span>
+      <span class="node">applied</span>
+    </div>
+    <div class="flow" style="margin-top:6px">
+      <span class="flowlabel">presented 的其余出口：</span>
+      <span class="node">skipped</span>
+      <span class="node">expired</span>
+      <span class="node c">superseded</span>
+      <span class="node c">ignored ⚠</span>
+    </div>
+
+    <div class="tblwrap"><table class="compact">
+      <thead><tr><th>状态</th><th>含义</th><th>产品处理</th></tr></thead>
+      <tbody>
+        <tr><td class="k">gated</td><td>通过了门控，但还没呈现</td><td>可批量攒（攒 2–3 个一次问，减少打断次数）</td></tr>
+        <tr><td class="k">presented</td><td>已呈现，等待</td><td>非阻塞时模型继续工作，UI 常驻不抢焦点</td></tr>
+        <tr><td class="k">answered</td><td>用户已答</td><td>写入会话状态，生成一条结构化事件</td></tr>
+        <tr><td class="k">applied</td><td>答案真的影响了后续动作</td><td><b>必须有这个状态</b>；没有它就无法验证公理 A1</td></tr>
+        <tr><td class="k">skipped</td><td>用户主动跳过</td><td>按 <code>reason</code> 降级执行（safest 或 status_quo），并明示「已按 X 继续」</td></tr>
+        <tr><td class="k">expired</td><td>超时</td><td>同 skipped，但需在正文里说明「你没回，我先按 X 做了」</td></tr>
+        <tr><td class="k">superseded</td><td>模型在等待期间自己解决了</td><td><b>主动撤回问题</b>，置灰并标注「已不需要」——让用户答一个过期问题是设计事故</td></tr>
+        <tr><td class="k">ignored ⚠</td><td>用户答了，但后续动作没变</td><td>这是 bug 不是状态，必须监控；它是 A1 的唯一可观测形式</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s7-1">7.1 答案怎么进入下一步</h3>
+    <p>「答案写入上下文」是不够的，因为上下文是建议性的，模型可以无视。要做成硬约束，需要三件事：</p>
+    <ol>
+      <li><b>注入成结构化事实</b>，不是复述：「用户已选择 <code>option_id=2</code>（pytest 而非 unittest）」，而不是「用户好像倾向 pytest」。</li>
+      <li><b>提交前校验</b>：在产生副作用的动作（写文件、发请求、执行命令）之前，检查该动作是否与已选答案冲突；冲突则拦下并回到 <code>presented</code>。</li>
+      <li><b>冲突可见</b>：确实需要违背用户选择时（比如技术上不可行），必须显式说明理由，而不是悄悄改。</li>
+    </ol>
+
+    <h3 id="s7-2">7.2 非阻塞到底怎么工作</h3>
+    <p>非阻塞不等于「问完不管」。它有一个明确的协议：</p>
+    <ul>
+      <li>模型带上<b>默认假设</b>继续执行，并在输出里注明「我先按 X 做，你随时可以改」。</li>
+      <li>答案到达时，如果该步骤尚未提交 → 直接替换；已提交 → 进入<b>修正轮</b>，只重做受影响的部分。</li>
+      <li>修正轮的代价必须可控：这要求模型把工作切成「可局部重做」的单元，这本身是编排层的设计约束。</li>
+    </ul>
+    <p>这也是为什么非阻塞不能无脑开：它把成本从「用户等待」转移到了「系统支持局部重做」。没有这个能力的 harness，只能老老实实阻塞。</p>
+  </section>
+
+  <!-- ============ §8 ============ -->
+  <section id="s8">
+    <h2><span class="sec-no">SECTION 08</span>界面规格</h2>
+
+    <p>一张卡片要同时回答四个问题：<b>在定什么</b>（header）、<b>为什么问我</b>（why）、<b>每条路的后果</b>（description）、<b>你押哪边</b>（recommended + reason）。少一个，用户就要额外付出一次认知动作。</p>
+
+    <div class="mock">
+      <div class="mhead">MOCK · 桌面端选项卡</div>
+      <div class="q">数据库迁移用哪种方式？</div>
+      <div class="why">两种方案都可行，但影响线上停机时间，需要你拍板。</div>
+
+      <div class="opt rec">
+        <span class="radio"></span>
+        <div>
+          <div><span class="lbl">在线双写迁移</span><span class="badge">推荐</span><span class="badge ghost">最安全</span></div>
+          <div class="desc">不停机，耗时约 40 分钟，需要额外 2 倍存储</div>
+        </div>
+      </div>
+
+      <div class="opt">
+        <span class="radio"></span>
+        <div>
+          <div class="lbl">停机窗口迁移</div>
+          <div class="desc">停服约 8 分钟，实现简单，回滚需要备份</div>
+        </div>
+      </div>
+
+      <div class="opt">
+        <span class="radio"></span>
+        <div>
+          <div class="lbl">先只迁读流量</div>
+          <div class="desc">风险最小，但要维护双读逻辑约两周</div>
+        </div>
+      </div>
+
+      <div class="opt other">
+        <span class="radio"></span>
+        <div><span class="lbl">都不是，我补充说明…</span></div>
+      </div>
+
+      <div class="foot">三个选项都可行；推荐只是「模型先押注」，不改变你的决定权。</div>
+    </div>
+
+    <h3 id="s8-1">8.1 逐条规则</h3>
+    <div class="tblwrap"><table class="compact">
+      <thead><tr><th>元素</th><th>规则</th><th>反例</th></tr></thead>
+      <tbody>
+        <tr><td class="k">header</td><td>≤12 字，名词短语，用于折叠态与通知标题</td><td>「关于我们接下来要进行的数据库迁移方案的选择」</td></tr>
+        <tr><td class="k">question</td><td>一句话，含「要定什么」，不含背景</td><td>先说三段现状，最后才问「所以用哪个」</td></tr>
+        <tr><td class="k">why</td><td>一句话解释「为什么这事要你定」——这是用户判断「该不该认真读」的唯一依据</td><td>省略，让用户猜</td></tr>
+        <tr><td class="k">description</td><td>写<b>后果</b>（停机多久、花多少钱、能不能回滚），不写<b>定义</b></td><td>「在线双写是一种常见的迁移策略」</td></tr>
+        <tr><td class="k">recommended</td><td>最多一个；必须带 reason；不默认选中</td><td>三个选项里两个标推荐</td></tr>
+        <tr><td class="k">other</td><td>永远在最后，样式弱化但可点</td><td>只给三个选项，关闭自由输入</td></tr>
+        <tr><td class="k">footer</td><td>一句话说明「推荐不改变你的决定权」——看似客套，实际是免责与信任建设</td><td>无</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>命令行场景下这张卡片的降级形态是「编号列表 + 一行说明 + 一个默认编号」，规则不变：<b>默认编号要显式打印出来</b>，让用户知道直接回车会发生什么。</p>
+  </section>
+
+  <!-- ============ §9 ============ -->
+  <section id="s9">
+    <h2><span class="sec-no">SECTION 09</span>失败模式目录</h2>
+
+    <p>这个产品的失败很少是「崩了」，几乎全部是「看起来正常但有害」。下面十条按危害排序，每一条都给可观测的症状——因为它们大多没有报错。</p>
+
+    <div class="tblwrap"><table class="fm">
+      <thead><tr><th>#</th><th>失败模式</th><th>症状</th><th>机制</th><th>修法</th></tr></thead>
+      <tbody>
+        <tr><td class="k">1</td><td><b>答而不用</b></td><td>用户选了 B，产物是 A</td><td>答案只进上下文，模型未采纳</td><td>结构化注入 + 提交前冲突校验 + <code>applied</code> 状态埋点</td></tr>
+        <tr><td class="k">2</td><td><b>全推荐</b></td><td>多数问题里推荐比例 &gt; 60%</td><td>模型把「推荐」当礼貌用语</td><td>schema 限一个；离线统计推荐率并设阈值告警</td></tr>
+        <tr><td class="k">3</td><td><b>伪选项</b></td><td>选项措辞不同但后果相同</td><td>模型为凑数制造差异</td><td>生成后自检「任两项的后果是否可区分」；不可区分则合并</td></tr>
+        <tr><td class="k">4</td><td><b>三重锚定</b></td><td>采纳率长期 &gt; 95%</td><td>高亮 + 默认选中 + 排序第一叠加</td><td>去掉默认选中；采纳率进健康区间监控</td></tr>
+        <tr><td class="k">5</td><td><b>无逃逸阀</b></td><td>用户反复重问同一件事</td><td>三个选项都不对，用户只能放弃界面</td><td><code>allowOther</code> 默认开</td></tr>
+        <tr><td class="k">6</td><td><b>问而不等</b></td><td>用户正在输入时弹窗</td><td>阻塞式打断发生在错误时机</td><td>非阻塞 + 输入态抑制 + 攒批</td></tr>
+        <tr><td class="k">7</td><td><b>重复提问</b></td><td>同一决策被问两次</td><td>会话里没有去重</td><td>question fingerprint 去重；已答决策进只读区</td></tr>
+        <tr><td class="k">8</td><td><b>责任转移</b></td><td>大量「你想用哪个库」</td><td>把模型的专业判断外包给用户</td><td>门控：偏好型才问；事实/专业型走 never 档</td></tr>
+        <tr><td class="k">9</td><td><b>过期问题</b></td><td>用户答完发现已不需要</td><td>等待期间模型自己解决了</td><td>实现 <code>superseded</code> 撤回</td></tr>
+        <tr><td class="k">10</td><td><b>选项污染</b></td><td>单次提问消耗上千 token</td><td>描述写成长段落</td><td>字段长度硬约束 + 渲染截断 + 单次提问 token 预算</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="imp">
+      <h4>三条从失败模式里长出来的硬规则</h4>
+      <ul>
+        <li><b>推荐率</b>与<b>采纳率</b>必须同时监控。前者防「全推荐」，后者防「三重锚定」，只盯一个都会失衡。</li>
+        <li><b>「答而不用」是唯一需要 P0 告警的失败。</b>它不出错、不报错、用户也不一定当场发现，但它直接摧毁公理 A1。</li>
+        <li><b>选项的描述写「后果」，不写「定义」</b>——这一条同时解决了阅读成本、伪选项和信息量三个问题。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ §10 ============ -->
+  <section id="s10">
+    <h2><span class="sec-no">SECTION 10</span>度量：什么才算好</h2>
+
+    <h3 id="s10-1">10.1 主指标只有一个</h3>
+    <p><b>首次答案后的返工率</b>。它直接对应产品定义（把返工前置），且不受「问得多不多」这种策略偏好的干扰。其余指标都是它的分解或护栏。</p>
+
+    <div class="tblwrap"><table>
+      <thead><tr><th>指标</th><th>定义</th><th>方向</th><th>备注</th></tr></thead>
+      <tbody>
+        <tr><td class="k">返工率 <span class="cite">主</span></td><td>首答后需要用户实质性纠正的比例</td><td>↓</td><td>产品存在的理由</td></tr>
+        <tr><td class="k">提问率</td><td>每任务平均提问次数</td><td>观察</td><td>不是越低越好，取决于任务不确定性</td></tr>
+        <tr><td class="k">推荐采纳率</td><td>点推荐项 / 总回答</td><td>60–80%</td><td><b>100% 是警报</b>，见下</td></tr>
+        <tr><td class="k">偏离率</td><td>选非推荐项的比例</td><td>20–40%</td><td>太低=没读，太高=推荐不准</td></tr>
+        <tr><td class="k">推荐后悔率</td><td>采纳推荐后又撤销/改口</td><td>↓</td><td>衡量推荐质量的<b>真</b>指标</td></tr>
+        <tr><td class="k">跳过率</td><td>未作答直接跳过的比例</td><td>观察</td><td>高跳过 = 问题不相关</td></tr>
+        <tr><td class="k">决策耗时</td><td>呈现到回答的中位时长</td><td>↓</td><td>含阅读成本</td></tr>
+        <tr><td class="k">问题质量分</td><td>离线 judge 打 1–5 分</td><td>↑</td><td>可参考 CrowdLLM 式多模型评审</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s10-2">10.2 采纳率不是越高越好</h3>
+    <p>这是最容易被做错的一个指标。推荐采纳率 100%，通常不是「推荐很准」，而是「用户已经不读了」——系统退化成一键确认，推荐携带的信息量归零。健康区间大致是 60–80%：多数时候跟着推荐走（它确实准），但稳定有一部分人在做独立判断。</p>
+
+    <div class="band">
+      <div class="track">
+        <div class="danger" style="left:0;width:60%"><span>偏低 · 用户没在读</span></div>
+        <div class="zone" style="left:60%;width:20%"><span>健康 60–80%</span></div>
+        <div class="danger" style="left:80%;width:20%"><span>偏高 · 盲从失效</span></div>
+      </div>
+      <div class="scale"><span>0%</span><span>50%</span><span>100%</span></div>
+    </div>
+
+    <p>同理，<b>偏离率</b>过低也是坏信号：它意味着没有人否决过模型，而模型的判断不可能永远正确。偏离率与后悔率要一起看——偏离多、后悔少，说明推荐确实不准；偏离少、后悔多，说明用户被带偏了。</p>
+  </section>
+
+  <!-- ============ §11 ============ -->
+  <section id="s11">
+    <h2><span class="sec-no">SECTION 11</span>评测方法</h2>
+
+    <p>这个产品没法只靠线上指标调优，因为线上看不到「没问的那个问题」的代价。三层评测缺一不可：</p>
+
+    <h3 id="s11-1">11.1 离线：歧义集 + 问题质量评分</h3>
+    <p>构造三类样本——真歧义、假歧义（看着模糊其实有唯一解）、完全不歧义——分别检查：该问的有没有问（召回）、不该问的有没有问（精确率）、问的问题能不能消解分歧（有效性）。后者可以交给多模型评审，学术界已有把众包判断用多个 LLM 实例模拟的做法，在 ClariQ 上验证过可行性。<span class="cite">[论文]（2024-10，<a href="https://arxiv.org/abs/2410.19692">arXiv:2410.19692</a>）</span></p>
+    <p>更进一步，问题质量是可以被「训练」出来的：STaR-GATE 用 25,500 条 persona–task 合成对话，让模型通过自我改进学会问「能提升后续回答质量」的问题。<span class="cite">[论文]（2024-03，<a href="https://arxiv.org/abs/2403.19154">arXiv:2403.19154</a>）</span> TO-GATE 则指出自教式推理找不准提问轨迹，会用「澄清解析器 + 总结器」做轨迹优化，避免问出与任务无关的问题。<span class="cite">[论文]（2025-06，<a href="https://arxiv.org/abs/2506.02827">arXiv:2506.02827</a>）</span> 对产品的启示：<b>「别问无关问题」不是提示词能解决的，它需要专门的评测集和优化目标。</b></p>
+
+    <h3 id="s11-2">11.2 在线：A/B 提问策略，而不是文案</h3>
+    <p>可实验的变量按杠杆大小排序：门控档位 &gt; 阻塞/非阻塞 &gt; 推荐语义 &gt; 视觉权重 &gt; 文案。前两个直接改变任务完成路径，后三个只改变点击分布。大多数团队从文案开始 A/B，是因为文案最容易改——这正是它们调不动的原因。</p>
+
+    <h3 id="s11-3">11.3 反事实：强制不问 vs 强制问</h3>
+    <p>把同一批任务跑两条轨迹：一条禁止提问，一条强制提问，比较返工率与总耗时。这个实验很贵（要跑两倍），但它是唯一能回答「这个产品到底值不值得存在」的方法。它同时给出 §1.3 不等式里 <code>C<sub>返工</sub></code> 与 <code>C<sub>打断</sub></code> 的经验值——这两个数一旦测出来，门控阈值就不用再拍脑袋了。</p>
+  </section>
+
+  <!-- ============ §12 ============ -->
+  <section id="s12">
+    <h2><span class="sec-no">SECTION 12</span>边界：什么时候不该做</h2>
+
+    <p>好产品的一半是「明确不做」。以下五种情况，正确的动作是<b>不出现这个界面</b>：</p>
+
+    <div class="tblwrap"><table>
+      <thead><tr><th>情况</th><th>为什么不该问</th><th>正确动作</th></tr></thead>
+      <tbody>
+        <tr><td class="k">模型把握很高</td><td>提问是纯噪音，且每次噪音都在消耗信任额度</td><td>直接做，把假设写进输出</td></tr>
+        <tr><td class="k">操作可逆且便宜</td><td>先做再改比先问再做快一个数量级</td><td>做，提供一键撤销</td></tr>
+        <tr><td class="k">用户已授权自主</td><td>反复确认是对授权的不尊重</td><td>只在 must 档（不可逆）破例</td></tr>
+        <tr><td class="k">答案能查</td><td>把检索失败转嫁给用户（公理 A3）</td><td>调工具；查不到再说「我查不到」</td></tr>
+        <tr><td class="k">时间敏感 / 流式中</td><td>打断的代价高于猜错的代价</td><td>延后，或攒到下一个自然停顿</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>还有一类更隐蔽的：「问题本身是对的，但用户没有能力回答」。比如让非技术用户选「用 RSA 还是 Ed25519」。这类问题的正确形态不是选项，而是<b>把技术选择翻译成后果选择</b>——「更安全但需要换证书」vs「兼容性好但安全性一般」。如果翻译不出来，说明这个问题本就不该问人。</p>
+  </section>
+
+  <!-- ============ §13 ============ -->
+  <section id="s13">
+    <h2><span class="sec-no">SECTION 13</span>分层落地与路线图</h2>
+
+    <h3 id="s13-1">13.1 四层各自的交付物与验收</h3>
+    <div class="tblwrap"><table>
+      <thead><tr><th>层</th><th>交付物</th><th>验收标准</th></tr></thead>
+      <tbody>
+        <tr><td class="k">契约层</td><td>JSON Schema（§5）+ 答案回传 schema</td><td>任何渲染端只凭 JSON 可还原界面；<code>recommended</code> 多于一个应校验失败</td></tr>
+        <tr><td class="k">策略层</td><td>三档门控 + 触发信号 + 提问预算（每任务上限）</td><td>同一任务重复提问为 0；<code>never</code> 档误触发率可测</td></tr>
+        <tr><td class="k">渲染层</td><td>桌面卡片 / 终端降级 / 语音播报三套</td><td>移动端一屏放下 4 个选项；键盘可完成全流程</td></tr>
+        <tr><td class="k">状态层</td><td>七状态机（§7）+ 撤回 + 修正轮</td><td><code>ignored</code> 率可监控；<code>superseded</code> 能撤回</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3 id="s13-2">13.2 路线图</h3>
+    <div class="tblwrap"><table class="compact">
+      <thead><tr><th>版本</th><th>主题</th><th>内容</th><th>成功判据</th></tr></thead>
+      <tbody>
+        <tr><td class="k">v0</td><td>把契约立住</td><td>recommended 布尔（限一个）+ <code>allowOther</code> + 结构化埋点 + <code>applied</code> 校验</td><td>能统计采纳率与「答而不用」次数</td></tr>
+        <tr><td class="k">v1</td><td>把语义拆开</td><td><code>reason</code> 四值 + 非阻塞 + <code>superseded</code> + preview</td><td>不同 reason 的采纳率与后悔率可分开看</td></tr>
+        <tr><td class="k">v2</td><td>把门控做对</td><td>VoI 阈值 + 三档策略 + 问题质量回归集（≥200 条歧义样本）</td><td>误问率下降，返工率下降，二者不同时恶化</td></tr>
+        <tr><td class="k">v3</td><td>把人摸清</td><td>按用户画像调「问/猜」倾向；跨会话偏好记忆（需显式授权）</td><td>不同用户群体的跳过率收敛</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>v0 只做四件事，但每一件都对应一条公理：<code>recommended</code> 限一个（A2）、<code>allowOther</code>（防止无逃逸阀）、埋点（让 A1 可观测）、<code>applied</code> 校验（让 A1 可阻止）。<b>不要先做视觉。</b>视觉是最容易改、也最不影响结果的层。</p>
+  </section>
+
+  <!-- ============ §14 ============ -->
+  <section id="s14">
+    <h2><span class="sec-no">SECTION 14</span>开放问题</h2>
+
+    <p>这些问题没有标准答案，但它们决定了这个产品最终长成什么样。列出来是因为：写下问题本身，比假装有答案更接近产品设计。</p>
+
+    <ol>
+      <li><b>推荐该由模型给，还是由策略层给？</b>策略层能用「这类问题用户 80% 选 X」的历史统计覆盖模型判断，但它看不到当前上下文；模型看得到上下文，但没有统计先验。也许正确形态是两者各自出价，取并集。</li>
+      <li><b>打断成本是线性的还是超线性的？</b>如果 3 次提问的成本等于 1 次的 3 倍，就攒批；如果超过 2 次就急剧恶化，就该「只问最重要的一个」。这个函数形状决定了整个交互节奏。</li>
+      <li><b>用户跳过后，按推荐做还是按最安全做？</b>推荐是「我猜你想要」，最安全是「我不让你出事」。跳过意味着用户放弃了表达偏好，但不等于授权冒险。</li>
+      <li><b>这次的选择要不要沉淀成长期偏好？</b>沉淀能减少后续提问，但会制造「一次误点，终身生效」——尤其当用户当时是在赶时间随手点的。</li>
+      <li><b>多人共用同一个 agent 时，推荐代表谁？</b>团队场景里「用户」是复数，推荐可能代表提交者的偏好，也可能是模型的平均值，这两者不该长得一样。</li>
+      <li><b>中文本地化会不会改变采纳率？</b>「推荐」两个字的语义强度、以及它在中文界面里的社交含义（像不像「我给你做主」），可能显著不同于「Recommended」。这是一个可以直接做实验的问题。</li>
+    </ol>
+  </section>
+
+  <!-- ============ 参考 ============ -->
+  <section id="refs">
+    <h2><span class="sec-no">REFERENCES</span>参考与出处</h2>
+    <p class="cite">论文检索经 arXiv API 完成（2026-10 检索）；经典社会心理学与 HCI 文献按通行版本引用。</p>
+    <ol class="refs">
+      <li><span class="t">Value of Information: A Framework for Human-Agent Communication.</span> arXiv:2601.06407, 2026-01. <a href="https://arxiv.org/abs/2601.06407">arxiv.org/abs/2601.06407</a> — 提问的决策论框架，VoI 与用户认知成本的权衡。</li>
+      <li><span class="t">LAVOIR: Teaching a Single-Pass Decision Encoder When and What to Ask with Amortized Value of Information.</span> arXiv:2609.30706, 2026-09. <a href="https://arxiv.org/abs/2609.30706">arxiv.org/abs/2609.30706</a> — 把 VoI 摊销进单次前向，逐槽位估计「问它值多少」。</li>
+      <li><span class="t">Knowing but Not Showing: LLMs Recognize Ambiguity but Rarely Ask Clarifying Questions.</span> arXiv:2605.25284, 2026-05. <a href="https://arxiv.org/abs/2605.25284">arxiv.org/abs/2605.25284</a> — 识别歧义与采取行动之间的鸿沟，本产品的存在理由。</li>
+      <li><span class="t">Modeling Future Conversation Turns to Teach LLMs to Ask Clarifying Questions.</span> arXiv:2410.13788, 2024-10. <a href="https://arxiv.org/abs/2410.13788">arxiv.org/abs/2410.13788</a> — 用未来轮次的期望结果给偏好打标，训练「先问再答」。</li>
+      <li><span class="t">STaR-GATE: Teaching Language Models to Ask Clarifying Questions.</span> arXiv:2403.19154, 2024-03. <a href="https://arxiv.org/abs/2403.19154">arxiv.org/abs/2403.19154</a> — 问题质量可通过自我改进训练。</li>
+      <li><span class="t">TO-GATE: Clarifying Questions and Summarizing Responses with Trajectory Optimization for Eliciting Human Preference.</span> arXiv:2506.02827, 2025-06. <a href="https://arxiv.org/abs/2506.02827">arxiv.org/abs/2506.02827</a> — 提问轨迹优化，避免无关问题。</li>
+      <li><span class="t">AGENT-CQ: Automatic Generation and Evaluation of Clarifying Questions for Conversational Search with LLMs.</span> arXiv:2410.19692, 2024-10. <a href="https://arxiv.org/abs/2410.19692">arxiv.org/abs/2410.19692</a> — CrowdLLM：用多模型评审模拟众包质检。</li>
+      <li><span class="t">Deciding Whether to Ask Clarifying Questions in Large-Scale Spoken Language Understanding.</span> arXiv:2109.12451, 2021-09. <a href="https://arxiv.org/abs/2109.12451">arxiv.org/abs/2109.12451</a> — 为所有歧义提问会毁掉体验，需要门控。</li>
+      <li><span class="t">Should I Follow AI-based Advice? Measuring Appropriate Reliance in Human-AI Decision-Making.</span> arXiv:2204.06916, 2022-04. <a href="https://arxiv.org/abs/2204.06916">arxiv.org/abs/2204.06916</a> — 过度依赖与依赖不足的度量，推荐的采纳率区间由此而来。</li>
+      <li><span class="t">Iyengar, S. S., &amp; Lepper, M. R. (2000). When choice is demotivating: Can one desire too much of a good thing?</span> JPSP 79(6), 995–1006. — 24 种 vs 6 种果酱：购买率 3% vs 30%。</li>
+      <li><span class="t">Johnson, E. J., &amp; Goldstein, D. (2003). Do defaults save lives?</span> Science 302(5649), 1338–1339. — 默认选项对选择的支配性影响。</li>
+      <li><span class="t">Tversky, A., &amp; Kahneman, D. (1974). Judgment under uncertainty: Heuristics and biases.</span> Science 185(4157), 1124–1131. — 锚定与可得性偏误。</li>
+      <li><span class="t">Horvitz, E. (1999). Principles of mixed-initiative user interfaces.</span> CHI '99. — 何时主动、何时询问的效用/代价框架，VoI 在 HCI 的源头。</li>
+      <li><span class="t">Amershi, S., et al. (2019). Guidelines for Human-AI Interaction.</span> CHI 2019. — 18 条人机交互准则，含「支持高效纠错」「解释系统行为」。</li>
+      <li><span class="t">Parasuraman, R., &amp; Riley, V. (1997). Humans and automation: Use, misuse, disuse, abuse.</span> Human Factors 39(2), 230–253. — 自动化偏误与依赖行为。</li>
+    </ol>
+  </section>
+
+  <footer>
+    ask_user_question 产品设计 · v1.0 · 2026-10 · 定位：harness 交互契约层
+  </footer>
+
+</main>
+
+<button id="themeFab" type="button" aria-label="切换深浅色">
+  <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l1.41 1.41"/></svg>
+</button>
+<script>
+(function(){
+  var KEY='harness-theme', root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){root.classList.toggle('dark',t==='dark')}
+  apply(cur());
+  document.getElementById('themeFab').addEventListener('click',function(){
+    var t=root.classList.contains('dark')?'light':'dark';
+    try{localStorage.setItem(KEY,t)}catch(e){}
+    apply(t);
+  });
+  try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});}catch(e){}
+})();
+</script>
+</body>
+</html>

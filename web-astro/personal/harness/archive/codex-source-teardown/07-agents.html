@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 多 Agent：角色、并发上限、消息板与受限 review · Codex 源码拆解</title>
+<meta name="description" content="多 Agent 最容易写成「模型可以再叫一个模型」。真正难的是：子 Agent 用什么角色、最多开几个、怎么等、怎么传消息、什么时候回收。Codex 把这些问题拆成 role、spawn / wait / send / close / resume、并发上限与 message board；V1 与 ">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" aria-current="page" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="07-agents">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 07 章 · spawn 不是难点，协调才是</p>
+  <h1>多 Agent：角色、并发上限、消息板与受限 review</h1>
+  <p class="lead">多 Agent 最容易写成「模型可以再叫一个模型」。真正难的是：子 Agent 用什么角色、最多开几个、怎么等、怎么传消息、什么时候回收。Codex 把这些问题拆成 role、spawn / wait / send / close / resume、并发上限与 message board；V1 与 V2 的上限还不是同一个数。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>V1 默认 6 线程、嵌套深度 1；V2 默认 4 个并发线程（含 root，spawn 槽位按代码折算为 3），且 V2 feature 默认关闭。</li><li>spawn 只是入口；wait / send / close / resume 才是把子 Agent 变成可管理任务的部分。</li><li>message board 提供频道 / 帖子 / 订阅；review 是受限子 Agent，禁 web search、禁 collab、approval=Never。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>什么时候该开子 Agent，开了之后怎么不让它失控？</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C17-C18">
+  <b>实现差异</b><p>多 Agent 的产品难点不在 spawn，而在角色、并发上限、消息与回收；Codex 把这些做成一组工具与一个消息板。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>先分清 V1 与 V2 的上限</h2>
+
+  <p>两个默认值经常被合并成一个「6 线程」。实际代码里，V1 的 <code>agent_max_threads</code> 默认是 6；V2 的 <code>max_concurrent_threads_per_session</code> 默认是 4，且在折算 spawn 槽位时减 1（把 root 算进并发）。V2 feature 默认关闭。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/config/mod.rs" data-lines="270-280" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/config/mod.rs#L270-L280">
+  <header><span class="path">codex-rs/core/src/config/mod.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/config/mod.rs#L270-L280">270-280</a> · V1 6 + 深度 1；V2 4</header>
+  <pre>pub(crate) const DEFAULT_AGENT_MAX_THREADS: Option&lt;usize&gt; = Some(6);
+pub(crate) const DEFAULT_MULTI_AGENT_V2_MAX_CONCURRENT_THREADS_PER_SESSION: usize = 4;
+pub(crate) const DEFAULT_MULTI_AGENT_V2_MIN_WAIT_TIMEOUT_MS: i64 = 10_000;
+pub(crate) const DEFAULT_MULTI_AGENT_V2_MAX_WAIT_TIMEOUT_MS: i64 = 3600 * 1000;
+pub(crate) const DEFAULT_MULTI_AGENT_V2_DEFAULT_WAIT_TIMEOUT_MS: i64 = 30_000;
+const DEFAULT_MULTI_AGENT_V2_TOOL_NAMESPACE: &amp;str = "collaboration";
+
+pub(crate) const HARD_MIN_MULTI_AGENT_V2_TIMEOUT_MS: i64 = 0;
+pub(crate) const HARD_MAX_MULTI_AGENT_V2_TIMEOUT_MS: i64 =
+    DEFAULT_MULTI_AGENT_V2_MAX_WAIT_TIMEOUT_MS;
+pub(crate) const DEFAULT_AGENT_MAX_DEPTH: i32 = 1;</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/config/mod.rs" data-lines="1763-1772" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/config/mod.rs#L1763-L1772">
+  <header><span class="path">codex-rs/core/src/config/mod.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/config/mod.rs#L1763-L1772">1763-1772</a> · V2 把 root 从并发里扣掉</header>
+  <pre>match multi_agent_version {
+            MultiAgentVersion::V2 =&gt; Some(
+                self.multi_agent_v2
+                    .max_concurrent_threads_per_session
+                    .saturating_sub(1),
+            ),
+            MultiAgentVersion::Disabled | MultiAgentVersion::V1 =&gt; {
+                self.agent_max_threads.or(DEFAULT_AGENT_MAX_THREADS)
+            }
+        }</pre>
+</div>
+  <div class="tw"><table>
+      <thead><tr><th>版本</th><th>默认上限</th><th>深度</th><th>默认开关</th><th>适用</th></tr></thead>
+      <tbody>
+      <tr><td>V1</td><td>6 线程</td><td><code>agent_max_depth=1</code></td><td><code>multi_agent</code> deprecated 但默认开</td><td>旧版协作工具</td></tr>
+      <tr><td>V2</td><td>4 个并发线程（含 root，spawn 槽 3）</td><td>以并发上限为主</td><td><code>multi_agent_v2</code> 默认关</td><td>新协作命名空间</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>depth 检查：超过就拒绝</h2>
+
+  <p>V1 的 spawn 会算 child depth，超过 <code>agent_max_depth</code> 直接拒绝。这个检查是「防止无限套娃」的硬边界，不是 UI 提示。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/agent/registry.rs" data-lines="92-97" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agent/registry.rs#L92-L97">
+  <header><span class="path">codex-rs/core/src/agent/registry.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agent/registry.rs#L92-L97">92-97</a> · depth +1 后与上限比较</header>
+  <pre>pub(crate) fn next_thread_spawn_depth(session_source: &amp;SessionSource) -&gt; i32 {
+    session_depth(session_source).saturating_add(1)
+}
+
+pub(crate) fn exceeds_thread_spawn_depth_limit(depth: i32, max_depth: i32) -&gt; bool {
+    depth &gt; max_depth</pre>
+</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>消息板：协作不只有 spawn</h2>
+
+  <p>spawn 之后，子 Agent 需要收消息、发进度、被回收。message board 把频道、帖子、订阅与通知做成共享设施，支持本地、内存、远端三种后端；它不是「再开一个模型」，而是协作状态层。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/agent-message-board-host/src/lib.rs" data-lines="1-6" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/agent-message-board-host/src/lib.rs#L1-L6">
+  <header><span class="path">codex-rs/agent-message-board-host/src/lib.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/agent-message-board-host/src/lib.rs#L1-L6">1-6</a> · 消息板是 host 能力，不是 prompt 技巧</header>
+  <pre>//! Supplies board host capabilities through the public Core runtime interfaces.
+//!
+//! The extension owns backend construction, storage and tool registration. This adapter
+//! selects configuration and supplies host capabilities. It never starts or restores
+//! recipients during lookup. Notifications use ordinary agent-message scheduling.
+//! Permanent board deletion uses the thread store's existing host cleanup callback.</pre>
+</div>
+  <div class="note info">消息板是否启用、用本地还是远端后端，取决于 feature 与配置；代码里有能力，不等于某个账号默认开启。</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>review：一个受限子 Agent</h2>
+
+  <p>review 不是「再问主 Agent 一遍」。它启动一个子会话，禁 web search、禁 collab、禁 V2，把 approval 固定为 Never，再套 review rubric。这样 review 只能读代码、给结论，不能自己再开 Agent 或联网。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/tasks/review.rs" data-lines="108-120" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tasks/review.rs#L108-L120">
+  <header><span class="path">codex-rs/core/src/tasks/review.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tasks/review.rs#L108-L120">108-120</a> · review 子 Agent 的能力被收窄</header>
+  <pre>if let Err(err) = sub_agent_config
+    .web_search_mode
+    .set(WebSearchMode::Disabled)
+{
+    panic!("by construction Constrained&lt;WebSearchMode&gt; must always support Disabled: {err}");
+}
+let _ = sub_agent_config.features.disable(Feature::Collab);
+let _ = sub_agent_config.features.disable(Feature::MultiAgentV2);
+
+// Set explicit review rubric for the sub-agent
+sub_agent_config.base_instructions = Some(crate::REVIEW_PROMPT.to_string());
+sub_agent_config.base_instructions_provenance = Some(BaseInstructionsProvenance::Custom);
+sub_agent_config.permissions.approval_policy = Constrained::allow_only(AskForApproval::Never);</pre>
+</div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>取舍：并行收益，协调成本</h2>
+
+  <p>多 Agent 能把「查资料、改代码、跑测试」并行；代价是 token 成本翻倍、消息顺序难保证、子 Agent 可能互相踩文件，还要处理超时、回收与权限继承。V1 与 V2 的默认值不同，也说明这不是一个已经稳定的产品面。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>任务可并行、review 可隔离、长任务可拆给不同角色。</div><div><b>付出什么</b>并发与成本上升；消息与文件冲突需要额外协调；V1/V2 两套语义增加理解成本。</div></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/config/mod.rs#L270-L280">config/mod.rs:270-280</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/config/mod.rs#L1763-L1772">config/mod.rs:1759-1772</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agent/registry.rs#L92-L97">agent/registry.rs:92-97</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/agent-message-board-host/src/lib.rs#L1-L6">agent-message-board-host/lib.rs:1-6</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tasks/review.rs#L108-L120">tasks/review.rs:106-120</a></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="06-permission.html"><small>← 上一章</small><b>06 权限与沙箱</b></a><a class="next" href="08-surface.html"><small>下一章 →</small><b>08 产品表面</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

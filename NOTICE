@@ -1,0 +1,23 @@
+AI Agent 阅读器扩展版（非官方分支）
+ai-agent-book
+Copyright 2026 Eric-Ma-Q（见仓库提交历史）
+
+本仓库包含来自以下上游项目的材料，按 Apache License 2.0 再分发：
+
+  ai-agent-book
+  https://github.com/bojieli/ai-agent-book
+  Copyright 2025 Bojie Li
+  Licensed under the Apache License, Version 2.0
+
+本分支对应的上游快照为 commit dbc046eb896ac4e39aa19c7774c8bf49583b89a6。
+上游书稿与 Astro 阅读器（book/、book-*/、web-astro/src/、web-astro/public/、
+web-astro/scripts/ 等）由 Bojie Li 创作，本分支未改变其内容与含义。
+
+本分支新增部分（web-astro/personal/、agent-lab/、scripts/start.sh、
+scripts/update.sh、docs/、README.md、AGENTS.md、ATTRIBUTION.md）由Eric-Ma-Q编写，
+同样以 Apache License 2.0 发布，不附带任何担保。
+
+本仓库不是上游官方仓库，上游作者未参与本分支的开发与维护。与上游有关的
+问题请提交到上游仓库；本分支的问题请提交到本仓库。
+
+完整许可原文见 LICENSE；逐目录归属与修改过的上游文件见 ATTRIBUTION.md。

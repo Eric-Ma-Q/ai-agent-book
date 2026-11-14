@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>09 遥测与远程控制：产品在你机器上的另一半 · Claude Code 源码拆解</title>
+<meta name="description" content="一个装在本地的 CLI，为什么能远程改行为？因为它在启动时拉配置、在运行中传事件、在紧急时接受开关。这一章把「遥测发了什么、能关吗、服务端能改什么」讲清楚 —— 顺便纠正一个流传很广的说法。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" aria-current="page" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 09 章 · 看不见的那一半产品</p>
+  <h1>遥测与远程控制：产品在你机器上的另一半</h1>
+  <p class="lead">一个装在本地的 CLI，为什么能远程改行为？因为它在启动时拉配置、在运行中传事件、在紧急时接受开关。这一章把「遥测发了什么、能关吗、服务端能改什么」讲清楚 —— 顺便纠正一个流传很广的说法。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>代码里有 659 个不同的 <code>logEvent(&#39;tengu_…&#39;)</code> 事件名（以 <code>tengu_</code> 开头的字符串共 903 个，多出来的是灰度开关名），路由到 Datadog 与一方事件服务，是否发送还受采样与开关控制。</li><li>遥测<b>可以关</b>：<code>DISABLE_TELEMETRY</code> 关分析，<code>CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC</code> 关掉全部非必要流量（含自动更新）。二手文章说「无法退出」不准确。</li><li>服务端下发两类东西：<b>策略</b>（能不能用某功能）与<b>托管设置</b>（默认配置），后者支持会话中热更新。</li><li>远程开关能做到：禁用绕过权限模式、强制最低版本、在事故期间封顶版本、暂停某条遥测管道。</li><li>订阅限额在代码里是四个窗口：5 小时、7 天、7 天 Opus、7 天 Sonnet。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>遥测：发了什么，能不能关</h2>
+  
+  <p>事件统一走 <code>logEvent(name, metadata)</code>，元数据只允许布尔/数字/字符串，而且类型上做了个「防呆标记」：凡是字符串字段必须显式标注「我确认这不是代码或文件路径」。这是用类型系统防隐私事故的少见做法。</p>
+  
+<div class="ev">
+  <header><span class="path">services/analytics/index.ts</span><span>133-140 · 把「不要记录代码」写进类型系统，而不是写进规范文档</span></header>
+  <pre>export function logEvent(
+  eventName: string,
+  // intentionally no strings unless AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
+  // to avoid accidentally logging code/filepaths
+  metadata: LogEventMetadata,
+): void {</pre>
+</div>
+  <p>隐私等级是三档叠加，取最严格的那个：</p>
+  <div class="tw"><table>
+      <thead><tr><th>等级</th><th>怎么触发</th><th>关掉什么</th></tr></thead>
+      <tbody>
+      <tr><td>default</td><td>无设置</td><td>什么都不关</td></tr>
+      <tr><td>no-telemetry</td><td><code>DISABLE_TELEMETRY=1</code></td><td>分析、一方事件、反馈问卷</td></tr>
+      <tr><td>essential-traffic</td><td><code>CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1</code></td><td>遥测 + 自动更新 + 版本说明 + 模型能力表等全部非必要请求</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">utils/privacyLevel.ts</span><span>1-13</span></header>
+  <pre>* Privacy level controls how much nonessential network traffic and telemetry
+ * Claude Code generates.
+ * Levels are ordered by restrictiveness:
+ *   default &lt; no-telemetry &lt; essential-traffic</pre>
+</div>
+  <div class="note good"><b>纠错：</b>泄露后不少分析说「遥测无法关闭」。代码里明确有两条退出路径，而且最严格那档连自动更新都会停。真正的问题不是「不能关」，而是「默认开、且分散在多个开关里」。</div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>两类开关：编译期与运行期</h2>
+  
+  <p>理解这套系统要分清两层。混淆这两层，就会得出「代码里有 = 线上开着」的错误结论。</p>
+  <div class="tw"><table>
+      <thead><tr><th>层</th><th>机制</th><th>谁决定</th><th>例子</th></tr></thead>
+      <tbody>
+      <tr><td>编译期</td><td><code>feature()</code> 常量折叠</td><td>构建配置</td><td>KAIROS、BUDDY 整段裁掉</td></tr>
+      <tr><td>运行期</td><td>GrowthBook 灰度 / 动态配置</td><td>服务端</td><td>工具搜索阈值、压缩策略、采样率</td></tr>
+      <tr><td>策略</td><td><code>isPolicyAllowed(key)</code></td><td>企业管理员</td><td>禁用远端会话</td></tr>
+      <tr><td>设置</td><td>托管 settings 文件</td><td>企业 / 服务端</td><td>默认权限模式、环境变量</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">services/analytics/sink.ts</span><span>12-24 · 连「往哪发」都可以被远程关掉（sink killswitch）</span></header>
+  <pre>// It routes events to Datadog and 1P event logging.
+const DATADOG_GATE_NAME = 'tengu_log_datadog_events'
+...
+function shouldTrackDatadog(): boolean {
+  if (isSinkKilled('datadog')) return false</pre>
+</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>服务端能改什么：四个真实开关</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>开关</th><th>代码位置</th><th>效果</th><th>用户感知</th></tr></thead>
+      <tbody>
+      <tr><td>禁用绕过权限</td><td><code>bypassPermissionsKillswitch.ts</code></td><td>启动时拉 gate，命中就把 bypassPermissions 从可选模式里移除</td><td>某个模式突然不见了</td></tr>
+      <tr><td>强制最低版本</td><td><code>assertMinVersion()</code></td><td>低于 <code>tengu_version_config.minVersion</code> 直接退出并提示更新</td><td>不更新就不能用</td></tr>
+      <tr><td>封顶版本</td><td><code>getMaxVersion()</code></td><td>事故期间暂停自动更新到更高版本</td><td>更新按钮变灰</td></tr>
+      <tr><td>遥测管道</td><td><code>sinkKillswitch.ts</code></td><td>单条管道（如 Datadog）被关</td><td>无感</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">utils/autoUpdater.ts</span><span>70-80 · 硬性版本闸门：低于服务端要求就退出</span></header>
+  <pre>const versionConfig = await getDynamicConfig_BLOCKS_ON_INIT&lt;{
+  minVersion: string
+}&gt;('tengu_version_config', { minVersion: '0.0.0' })
+
+if (versionConfig.minVersion &amp;&amp; lt(MACRO.VERSION, versionConfig.minVersion)) {
+  console.error(`It looks like your version of Claude Code (${MACRO.VERSION}) needs an update.`)
+  gracefulShutdownSync(1)</pre>
+</div>
+  <div class="tradeoff"><div><b>换来什么</b>出事故时能分钟级止损，不用等用户升级；企业能统一策略。</div><div><b>付出什么</b>「本地工具」的自主性被削弱：某天早上打开发现功能没了、或必须先升级，代码里没有申诉入口。</div></div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>托管设置：缓存优先、后台轮询、热更新</h2>
+  
+  <p>企业配置不是「启动读一次文件」，而是「先用磁盘缓存，再拉远端，拉到就热更新」。这样启动不会被网络拖慢，运行中又能接受变更。</p>
+  
+<div class="ev">
+  <header><span class="path">services/remoteManagedSettings/index.ts</span><span>527-537 · 连 77ms 的等待都要省掉 —— 启动性能是产品指标</span></header>
+  <pre>// Cache-first: if we have cached settings on disk, apply them and unblock
+// waiters immediately. The fetch still runs below; notifyChange fires once,
+// after the fetch, as before. Saves the ~77ms fetch-wait on print-mode startup.
+if (getRemoteManagedSettingsSyncFromCache() &amp;&amp; loadingCompleteResolve) {
+  loadingCompleteResolve()
+}</pre>
+</div>
+  <p>拉到新设置后，会触发 <code>settingsChangeDetector.notifyChange('policySettings')</code>，让环境变量、遥测、权限在下次读取时生效；拉取失败则 fail-open，继续用本地配置。</p>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>商业模式的代码痕迹</h2>
+  
+  <p>订阅限额不是一句「你超了」，而是四个窗口分别计数：</p>
+  
+<div class="ev">
+  <header><span class="path">services/claudeAiLimits.ts</span><span>29-33 · 5 小时 + 7 天，且按模型分档</span></header>
+  <pre>| 'five_hour'
+  | 'seven_day'
+  | 'seven_day_opus'
+  | 'seven_day_sonnet'</pre>
+</div>
+  <ul><li><b>成本追踪</b>：<code>cost-tracker.ts</code> 按会话累计 token 与美元，支持恢复会话时接续；</li><li><b>认证</b>：OAuth token 存系统钥匙串（macOS）或文件，支持刷新与过期判断；API key 作为另一条路径；</li><li><b>分发</b>：npm 包 + 原生安装器 + 自动更新，更新有锁文件避免并发写坏。</li></ul>
+  <div class="grid g4"><div class="stat"><b>4</b><span>限额窗口</span><em>5h / 7d / 7d opus / 7d sonnet</em></div><div class="stat"><b>659</b><span>遥测事件名</span><em>另有 903 个 tengu_ 字符串</em></div><div class="stat"><b>3</b><span>隐私等级</span><em>default / no-telemetry / essential</em></div><div class="stat"><b>77ms</b><span>省掉的启动等待</span><em>缓存优先</em></div></div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>这套设计的两面</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>看到的</th><th>好的解释</th><th>坏的解释</th></tr></thead>
+      <tbody>
+      <tr><td>默认开遥测</td><td>改进产品需要真实使用数据，且有明确退出开关</td><td>默认值即立场，多数用户不会去读文档</td></tr>
+      <tr><td>远程改行为</td><td>事故止损、企业合规、灰度实验</td><td>本地工具的确定性被牺牲</td></tr>
+      <tr><td>版本闸门</td><td>避免旧版本产生错误数据或安全漏洞</td><td>用户失去「先不升级」的权利</td></tr>
+      <tr><td>模型代号保密</td><td>未发布型号属于商业机密</td><td>「隐身模式」让 AI 参与不可见（见第 08 章）</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note "><b>给产品经理的一句话：</b>只要你做一个「装在使用者机器上」的 Agent，就一定会面对同一组取舍：默认遥测、远程配置、版本闸门。提前把「用户能不能关、关了之后功能降级到什么程度」写进 PRD，比事后解释便宜得多。</div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>services/analytics/（index.ts、sink.ts、growthbook.ts） <span>· 遥测路由与采样</span></li><li>utils/privacyLevel.ts <span>· 隐私三档</span></li><li>services/remoteManagedSettings/、services/policyLimits/ <span>· 托管设置与策略</span></li><li>utils/autoUpdater.ts、services/claudeAiLimits.ts <span>· 版本闸门与限额</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="08-unreleased.html"><small>← 上一章</small><b>08 未发布功能</b></a><a class="next" href="10-lessons.html"><small>下一章 →</small><b>10 结论与自测</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

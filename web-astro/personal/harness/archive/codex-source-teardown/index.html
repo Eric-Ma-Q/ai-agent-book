@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codex 源码拆解 · 本地 Agent 的运行时、工具与权限分层</title>
+<meta name="description" content="基于 openai/codex 固定提交 8703d32b：五条产品判断切入，十章拆运行时与 App Server、工具可编程层、权限组合、条件后台压缩、角色与协作生命周期，每条断言带文件行号与固定 SHA 链接。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body data-teardown-index>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span></nav>
+  <div class="hero">
+    <p class="kicker">产品功能拆解 · 源码级</p>
+    <h1>一个本地 Agent，怎样把运行时、工具与权限拆成产品层</h1>
+    <p class="lede">Codex 的源码价值不在功能数量，而在五个产品选择：<b>运行时与 App Server 分层、工具可编程、权限组合、条件后台压缩、角色与协作生命周期</b>。这份拆解按「用户问题 → 选择 → 用户价值 → 代价」逐条展开，再给可复核的代码行；仓库外的 App、Cloud 与模型服务只标边界，不补内部实现。</p>
+  </div>
+
+<section id="s01">
+  <h2><span class="num">01</span>五条产品判断</h2>
+  <p>Codex 的源码价值不在功能数量，而在五个产品选择。每条都按「用户问题 → 选择 → 用户价值 → 代价」写，相关章节可直接跳转。它们不是行业独有，而是这份固定提交里的实现判断；第 09 章再与 039 的 Claude Code 逐条对照。</p>
+  <div class="tw"><table>
+      <thead><tr><th>产品判断</th><th>用户问题</th><th>Codex 的选择</th><th>用户价值</th><th>代价</th><th>相关章</th></tr></thead>
+      <tbody>
+      <tr><td>运行时与 App Server 分层</td><td>一个 CLI 怎么同时服务 TUI、exec、桌面、移动与 SDK？</td><td><code>core</code> 管运行时，<code>app-server</code> 管 thread / turn 协议；TUI / exec 用 in-process 客户端，桌面 / 移动用 daemon。</td><td>同一套会话语义复用多端，新增表面不必重写 core 集成。</td><td>协议兼容、experimental 方法与 daemon 生命周期成为新成本。</td><td><a href="02-map.html">02</a> · <a href="08-surface.html">08</a></td></tr>
+      <tr><td>工具可编程层</td><td>工具很多时，模型该直接调用，还是写代码组合？</td><td>direct / deferred / code mode / hidden 暴露矩阵；code mode 让模型写 JavaScript 调用嵌套工具。</td><td>工具面可按上下文裁剪，组合调用不必拆成很多轮。</td><td>宿主依赖、工具发现与授权面变大；code mode 不可用时要回退。</td><td><a href="04-tools.html">04</a></td></tr>
+      <tr><td>权限组合</td><td>怎样让 Agent 能干活，又不越过文件、命令与网络边界？</td><td>approval + sandbox policy + execpolicy + network proxy + reviewer 组合。</td><td>文件、命令、网络、审批分层治理，规则可审计。</td><td>组合多、平台后端不一致；用户很难从一句「已允许」推断实际边界。</td><td><a href="06-permission.html">06</a></td></tr>
+      <tr><td>条件后台压缩</td><td>长任务怎样不爆上下文，又不让用户干等？</td><td>90% 派生上限 + 65% 条件异步预跑 + 20k 摘要上限；65% 只在特定开关与 provider 能力下成立。</td><td>压缩可以提前准备，长任务更少被打断。</td><td>摘要损失不可逆；后台请求有成本；条件不满足时仍走前台压缩。</td><td><a href="05-context.html">05</a></td></tr>
+      <tr><td>角色与协作生命周期</td><td>多 Agent 怎么从「再叫一个模型」变成可管理任务？</td><td>role + spawn / wait / send / close / resume + message board；V1 默认 6 线程，V2 默认 4 个并发线程（含 root）。</td><td>并行分工、review 隔离、子 Agent 可等待与回收。</td><td>成本与协调复杂度上升；V1 / V2 两套上限增加理解成本。</td><td><a href="07-agents.html">07</a> · <a href="09-difference.html">09</a></td></tr>
+      </tbody>
+    </table></div>
+</section>
+
+<section id="s02">
+  <h2><span class="num">02</span>五条判断怎样互相支撑</h2>
+  <p>分层让多端复用；工具矩阵让运行时按场景裁剪能力；权限组合给工具与执行设边界；条件压缩让长任务持续；角色与消息板把并行任务变成可管理对象。五条叠在一起，才是「本地 Agent 产品」，而不是「模型 + 命令行」。</p>
+  <div class="source-stats"><div class="stat"><b>10,168</b><span>文件</span><em>os.walk 排除 .git</em></div><div class="stat"><b>5,927</b><span>Rust 文件</span><em>codex-rs</em></div><div class="stat"><b>2,314,917</b><span>Rust 行</span><em>逐文件 splitlines 累加</em></div><div class="stat"><b>651 / 276,232</b><span>core 文件 / 行</span><em>codex-rs/core/src</em></div><div class="stat"><b>168</b><span>workspace 条目</span><em>含测试支持目录</em></div><div class="stat"><b>186 / 74</b><span>RPC / experimental</span><em>client_request_definitions!</em></div></div>
+</section>
+
+<section id="s03">
+  <h2><span class="num">03</span>证据与边界</h2>
+  <p>统计用逐文件 <code>splitlines()</code> 累加，固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>，读取日期 2026-11-09。证据分四级：A 级能指到源码 <code>path:line</code>；B 级是仓库内文档；C 级是从调用链推断；D 级是不在仓库或材料不足。</p>
+  <div class="tw"><table>
+      <thead><tr><th>等级</th><th>含义</th><th>页面写法</th></tr></thead>
+      <tbody>
+      <tr><td>A</td><td>固定 SHA 的源码可直接指到 <code>path:line</code></td><td>代码块 + 行号 + GitHub permalink</td></tr>
+      <tr><td>B</td><td>仓库内官方 README、文档或配置注释</td><td>文档链接 + 原文摘要</td></tr>
+      <tr><td>C</td><td>从调用链推断，代码没有直接断言</td><td>标「推断」，给推断依据</td></tr>
+      <tr><td>D</td><td>不在本仓库或材料不足</td><td>标「不可验证」，不补细节</td></tr>
+      </tbody>
+    </table></div>
+  <div class="tw"><table>
+      <thead><tr><th>层</th><th>是否在本仓库</th><th>能证明什么</th><th>不能证明什么</th></tr></thead>
+      <tbody>
+      <tr><td>CLI / TUI / exec</td><td>是，完整 Rust 源码</td><td>本地 Agent 的循环、工具、权限、压缩、记忆</td><td>线上账号实际启用哪些 feature</td></tr>
+      <tr><td>app-server / daemon</td><td>是，完整 Rust 源码</td><td>JSON-RPC 协议、thread / turn 模型、远程控制生命周期</td><td>桌面 / 移动客户端内部实现</td></tr>
+      <tr><td>桌面 App</td><td>否，只有安装器与下载地址</td><td>CLI 如何拉起 / 安装 App、URL scheme 形态</td><td>App 内部 UI、状态管理、权限交互</td></tr>
+      <tr><td>Codex Web / Cloud</td><td>否，只有客户端</td><td>客户端如何认证、提交任务、读取 diff</td><td>调度器、执行器、存储、隔离方式</td></tr>
+      <tr><td>IDE 扩展</td><td>否，README 只给外链</td><td>存在 IDE 入口</td><td>扩展实现与协议细节</td></tr>
+      <tr><td>模型服务</td><td>否，只有 API 客户端</td><td>请求格式、工具声明、流式事件</td><td>模型行为、真实上下文窗口、线上阈值</td></tr>
+      </tbody>
+    </table></div>
+</section>
+
+  <section><h2><span class="num">§</span>十章阅读地图</h2>
+    <p>先读五条判断，再按机制跳读；每章末尾都有取舍与自测。</p>
+    <ol class="chap-list"><li><a href="01-scope.html"><span class="no">01</span><span class="t">取证边界<small>开源仓库能证明什么、不能证明什么，以及为什么「不在仓库」不等于「源码状态已确认」。</small></span><span class="arrow">→</span></a></li><li><a href="02-map.html"><span class="no">02</span><span class="t">产品地图<small>TUI、exec、桌面、移动与 SDK 为什么能共用一套运行时。</small></span><span class="arrow">→</span></a></li><li><a href="03-loop.html"><span class="no">03</span><span class="t">主循环<small>任务抽象、turn 循环、工具循环与 steering 输入如何拼成一条时间线。</small></span><span class="arrow">→</span></a></li><li><a href="04-tools.html"><span class="no">04</span><span class="t">工具系统<small>工具暴露矩阵、code mode、unified exec 与 apply_patch 的分工。</small></span><span class="arrow">→</span></a></li><li><a href="05-context.html"><span class="no">05</span><span class="t">上下文与记忆<small>AGENTS.md 的发现与排列、90% / 65% 的真实条件、两阶段记忆的默认状态。</small></span><span class="arrow">→</span></a></li><li><a href="06-permission.html"><span class="no">06</span><span class="t">权限与沙箱<small>四种 approval、四种 sandbox policy、五种后端、规则与网络代理如何叠加。</small></span><span class="arrow">→</span></a></li><li><a href="07-agents.html"><span class="no">07</span><span class="t">多 Agent<small>V1 默认 6 线程、V2 默认 4 个并发线程（含 root），以及 role、消息板与 review 的边界。</small></span><span class="arrow">→</span></a></li><li><a href="08-surface.html"><span class="no">08</span><span class="t">产品表面<small>186 个请求、thread / turn 模型、daemon 与 in-process 客户端的分工。</small></span><span class="arrow">→</span></a></li><li><a href="09-difference.html"><span class="no">09</span><span class="t">差异判断<small>11 行差异表：共有机制、实现差异、本副本新增面与不可验证。</small></span><span class="arrow">→</span></a></li><li><a href="10-lessons.html"><span class="no">10</span><span class="t">结论与自测<small>10 条可迁移结论、5 条搬不走、6 条风险与 8 道自测。</small></span><span class="arrow">→</span></a></li></ol>
+  </section>
+  <section><h2><span class="num">§</span>三种读法</h2>
+    <div class="grid g3">
+      <div class="card"><h3>产品经理</h3><p>先读 01、02、03、06、09、10。抓住「运行时与表面分开」「权限是组合」「哪些差异只是实现不同」。</p></div><div class="card"><h3>工程师</h3><p>先读 02、03、04、05、08。循环、工具暴露、上下文预算、协议层，决定 Agent 能不能跑长任务。</p></div><div class="card"><h3>安全 / 合规</h3><p>先读 01、06、07、09。看 approval、sandbox、execpolicy、网络代理与不可验证边界。</p></div>
+    </div>
+  </section>
+  <section><h2><span class="num">§</span>证据怎么读</h2>
+    <div class="grid g4">
+      <div class="card"><h3>A</h3><p>固定 SHA 的源码可直接指到 <code>path:line</code>，给代码块、行号与链接。</p></div>
+      <div class="card"><h3>B</h3><p>仓库内官方 README、文档或配置注释；给链接与原文摘要。</p></div>
+      <div class="card"><h3>C</h3><p>从调用链推断，代码没有直接断言；标「推断」并给依据。</p></div>
+      <div class="card"><h3>D</h3><p>不在本仓库或材料不足；标「不可验证」，不补细节。</p></div>
+    </div>
+    <p class="fine">固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>，读取日期 2026-11-09，提交时间 2026-11-09T03:58:05Z。数字只描述这个提交，不代表线上默认值。</p>
+  </section>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证。</p>
+  <p>生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

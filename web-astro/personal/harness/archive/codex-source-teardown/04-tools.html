@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04 工具系统：直接调用、延迟发现，还是让模型写代码 · Codex 源码拆解</title>
+<meta name="description" content="工具不是「注册得越多越好」。Codex 先把每个工具放进 direct / deferred / code mode / hidden 四个象限，再让模型按模式选择；同时把 shell 做成可复用的 PTY 会话，把编辑做成 apply_patch。产品判断是：工具面要可发现、可预算、可授权，而不是">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" aria-current="page" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="04-tools">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 04 章 · 把工具暴露做成矩阵</p>
+  <h1>工具系统：直接调用、延迟发现，还是让模型写代码</h1>
+  <p class="lead">工具不是「注册得越多越好」。Codex 先把每个工具放进 direct / deferred / code mode / hidden 四个象限，再让模型按模式选择；同时把 shell 做成可复用的 PTY 会话，把编辑做成 apply_patch。产品判断是：工具面要可发现、可预算、可授权，而不是一张越拉越长的函数表。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>同一个工具可以只给直接调用、只给 code mode、延迟发现或完全隐藏，由三个暴露轴组合。</li><li>code mode 让模型写 JavaScript 调用嵌套工具；宿主不可用时回退 direct，不是静默失败。</li><li>unified exec 把 shell 做成可复用 PTY：64 个进程、1 MiB 输出、10k token 默认预算。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>工具应该直接摊给模型，还是让模型写一段代码来调用？</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C07-C08">
+  <b>实现差异</b><p>Codex 把「工具暴露」当成一个可计算的矩阵，而不是固定函数表；code mode 是矩阵里的一列，不是替代所有工具。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>四个象限：工具不是只有「有 / 无」</h2>
+
+  <p>工具注册之后还要决定暴露方式。代码用 direct、deferred、code-mode 三个布尔轴组合出六种状态，其中三种是常见产品形态：直接给模型、延迟发现、只在 code mode 里可见。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/tools/spec_plan.rs" data-lines="307-318" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/spec_plan.rs#L307-L318">
+  <header><span class="path">codex-rs/core/src/tools/spec_plan.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/spec_plan.rs#L307-L318">307-318</a> · 三个布尔轴组合出暴露状态</header>
+  <pre>tool.exposure = match (
+            exposures.contains(ToolExposures::DIRECT),
+            exposures.contains(ToolExposures::DEFERRED),
+            exposures.contains(ToolExposures::CODE_MODE),
+        ) {
+            (false, false, false) =&gt; ToolExposure::Hidden,
+            (false, false, true) =&gt; ToolExposure::CodeModeOnly,
+            (true, false, false) =&gt; ToolExposure::DirectModelOnly,
+            (true, false, true) =&gt; ToolExposure::Direct,
+            (false, true, false) =&gt; ToolExposure::DeferredModelOnly,
+            (false, true, true) =&gt; ToolExposure::Deferred,
+            (true, true, _) =&gt; unreachable!("direct and deferred exposure are mutually exclusive"),</pre>
+</div>
+  <div class="tw"><table>
+      <thead><tr><th>暴露</th><th>模型看到什么</th><th>适合什么</th></tr></thead>
+      <tbody>
+      <tr><td>Direct</td><td>工具声明直接进请求</td><td>高频、参数简单、需要模型立刻用</td></tr>
+      <tr><td>Deferred</td><td>先只给工具搜索，按需加载</td><td>工具很多、上下文预算紧</td></tr>
+      <tr><td>Code mode only</td><td>只出现在代码执行的嵌套工具里</td><td>组合调用多、单次调用少</td></tr>
+      <tr><td>Hidden</td><td>模型看不到</td><td>被策略禁用或当前环境不适用</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>code mode：把调用写成一段 JavaScript</h2>
+
+  <p>code mode 的工具声明不是 JSON schema，而是 freeform + Lark grammar；模型输出一段 JavaScript，运行时再把它拆成嵌套工具调用。这样可以把「先查、再改、再跑」写成一个 cell，而不是多轮函数调用。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/tools/code_mode/execute_spec.rs" data-lines="16-25" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/code_mode/execute_spec.rs#L16-L25">
+  <header><span class="path">codex-rs/core/src/tools/code_mode/execute_spec.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/code_mode/execute_spec.rs#L16-L25">16-25</a> · code mode 是 freeform 工具，不是普通函数</header>
+  <pre>ToolSpec::Freeform(FreeformTool {
+    name: codex_code_mode::PUBLIC_TOOL_NAME.to_string(),
+    description,
+    defer_loading: None,
+    format: FreeformToolFormat {
+        r#type: "grammar".to_string(),
+        syntax: "lark".to_string(),
+        definition: CODE_MODE_FREEFORM_GRAMMAR.to_string(),
+    },
+})</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/tools/mod.rs" data-lines="78-88" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/mod.rs#L78-L88">
+  <header><span class="path">codex-rs/core/src/tools/mod.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/mod.rs#L78-L88">78-88</a> · code mode 不可用时回退 direct</header>
+  <pre>pub(crate) fn effective_tool_mode(turn_context: &amp;TurnContext, model_info: &amp;ModelInfo) -&gt; ToolMode {
+    let requested_tool_mode = requested_tool_mode(turn_context, model_info);
+    if !turn_context.code_mode_available
+        &amp;&amp; requested_tool_mode == ToolMode::CodeMode
+        &amp;&amp; !turn_context.config.code_mode.disable_in_process_fallback
+    {
+        ToolMode::Direct
+    } else {
+        requested_tool_mode
+    }
+}</pre>
+</div>
+  <div class="note info">不要把 code mode 写成「默认开启」。<code>features.code_mode</code> 默认关闭；宿主能力在，工具模式仍要由模型元数据或配置选择。</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>unified exec：shell 是一个可复用会话</h2>
+
+  <p>Codex 的 shell 工具不是「每次起一个进程、收完输出就结束」。它支持 PTY、yield 时间、超时、最大输出和后续 <code>write_stdin</code>；进程可以复用，且有明确上限。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/tools/handlers/unified_exec.rs" data-lines="67-80" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/handlers/unified_exec.rs#L67-L80">
+  <header><span class="path">codex-rs/core/src/tools/handlers/unified_exec.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/handlers/unified_exec.rs#L67-L80">67-80</a> · exec 参数包含 tty / yield / timeout / 输出预算</header>
+  <pre>pub(crate) struct ExecCommandArgs {
+    pub(crate) cmd: String,
+    #[serde(default)]
+    shell: Option&lt;String&gt;,
+    #[serde(default)]
+    login: Option&lt;bool&gt;,
+    #[serde(default = "default_tty")]
+    tty: bool,
+    #[serde(default = "default_exec_yield_time_ms")]
+    yield_time_ms: u64,
+    #[serde(default)]
+    timeout_ms: Option&lt;u64&gt;,
+    #[serde(default)]
+    max_output_tokens: Option&lt;usize&gt;,</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/unified_exec/mod.rs" data-lines="74-77" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/unified_exec/mod.rs#L74-L77">
+  <header><span class="path">codex-rs/core/src/unified_exec/mod.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/unified_exec/mod.rs#L74-L77">74-77</a> · 输出与进程都有硬上限</header>
+  <pre>pub(crate) const DEFAULT_MAX_OUTPUT_TOKENS: usize = 10_000;
+pub(crate) const UNIFIED_EXEC_OUTPUT_MAX_BYTES: usize = 1024 * 1024; // 1 MiB
+pub(crate) const UNIFIED_EXEC_OUTPUT_MAX_TOKENS: usize = UNIFIED_EXEC_OUTPUT_MAX_BYTES / 4;
+pub(crate) const MAX_UNIFIED_EXEC_PROCESSES: usize = 64;</pre>
+</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>编辑与发现：apply_patch、tool search</h2>
+
+  <p>文件编辑走结构化 patch，而不是让模型自由写文件；工具很多时走 tool search，先发现再加载。两者都在解决同一个问题：把「模型能做什么」限制在可审计的动作里。</p>
+  <div class="tw"><table>
+      <thead><tr><th>能力</th><th>机制</th><th>产品含义</th></tr></thead>
+      <tbody>
+      <tr><td>文件编辑</td><td><code>apply_patch</code> 工具 + 变更追踪</td><td>可审查、可回滚，不鼓励直接覆盖</td></tr>
+      <tr><td>工具发现</td><td>tool search + deferred exposure</td><td>工具面可以很大，但不必全进上下文</td></tr>
+      <tr><td>进程复用</td><td>unified exec + <code>write_stdin</code></td><td>长命令、交互式命令不必反复起进程</td></tr>
+      <tr><td>输出预算</td><td>单工具 10k token / 1 MiB 上限</td><td>防止一次命令吃光上下文</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note warn">这些机制在 039 里也有同类问题（工具池、结果预算、工具搜索）。不要把「Codex 有 code mode」写成「只有 Codex 有」，只能写「本副本把暴露矩阵与 code mode 做得更显式」。</div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>取舍：灵活的工具面，更复杂的发现与授权</h2>
+
+  <p>暴露矩阵让同一个工具可以按模型、场景、预算切换形态；code mode 让模型写组合逻辑；unified exec 让长命令可交互。代价是工具发现、权限判断、输出截断和回退路径都变多，调试时要同时看「工具是否存在」「是否可见」「是否被策略允许」。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>工具面可裁剪、可延迟加载；长命令与组合调用不必拆成很多轮。</div><div><b>付出什么</b>模型可能不知道工具存在；code mode 有宿主依赖；PTY 会话带来进程与输出管理成本。</div></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/spec_plan.rs#L307-L318">tools/spec_plan.rs:307-318</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/code_mode/execute_spec.rs#L16-L25">tools/code_mode/execute_spec.rs:16-25</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/mod.rs#L78-L88">tools/mod.rs:78-88</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/tools/handlers/unified_exec.rs#L67-L80">handlers/unified_exec.rs:67-80</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/unified_exec/mod.rs#L74-L77">unified_exec/mod.rs:74-77</a></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="03-loop.html"><small>← 上一章</small><b>03 主循环</b></a><a class="next" href="05-context.html"><small>下一章 →</small><b>05 上下文与记忆</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

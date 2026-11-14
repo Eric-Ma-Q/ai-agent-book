@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="540" viewBox="0 0 880 540">
+  <title>Hình 6-5: Tương thích giao diện đồng bộ và bất đồng bộ nguyên bản của mô hình</title>
+  <desc>Trong phương án tương thích trước đó, runtime sắp xếp thứ tự nhận sự kiện để mô hình có giao diện đồng bộ tham gia tác vụ bất đồng bộ. Hướng khác là để mô hình trực tiếp hiểu nhịp tương tác này: làm việc khác khi công cụ đang chạy, và điều chỉnh công việc tiếp theo khi người dùng bổ sung yêu cầu. GPT-6 Astra đã hỗ trợ gọi công cụ bất đồng bộ (Async tool calling) và điều chỉnh chỉ dẫn giữa lượt (Mid-turn steering), thể hiện thay đổi này (Hình 6-5).</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="#555" /></marker>
+    <style>
+      text{font-family:Arial,'PingFang SC','Microsoft YaHei',sans-serif;fill:#333}
+      .title{font-size:20px;font-weight:700}
+      .label{font-size:17px;font-weight:600}
+      .small{font-size:15px}
+      .box{fill:#f4f4f4;stroke:#555;stroke-width:1.5}
+      .arrow{fill:none;stroke:#555;stroke-width:1.5;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="880" height="540" fill="#fff" />
+  <rect x="20" y="20" width="840" height="145" rx="8" fill="#fff" stroke="#777" stroke-dasharray="7 4" />
+  <text x="40" y="53" class="title">Tương thích: runtime sắp xếp công việc bất đồng bộ</text>
+  <rect x="40" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="155" y="100" text-anchor="middle" class="label">Tác vụ chạy nền</text>
+  <text x="155" y="122" text-anchor="middle" class="small">Ghi rõ: chưa hoàn tất</text>
+  <path d="M270 105 H313" class="arrow" />
+  <rect x="320" y="75" width="240" height="60" rx="5" class="box" />
+  <text x="440" y="100" text-anchor="middle" class="label" style="font-size:16.59px">Runtime nhận sự kiện mới</text>
+  <text x="440" y="122" text-anchor="middle" class="small" style="font-size:14.87px">Xếp hàng, ngắt hoặc song song</text>
+  <path d="M560 105 H603" class="arrow" />
+  <rect x="610" y="75" width="230" height="60" rx="5" class="box" />
+  <text x="725" y="100" text-anchor="middle" class="label">Mô hình tiếp tục tác vụ</text>
+  <text x="725" y="122" text-anchor="middle" class="small">Đầu vào vẫn theo lượt đồng bộ</text>
+
+  <rect x="20" y="185" width="840" height="250" rx="8" fill="#fff" stroke="#444" stroke-width="2" />
+  <text x="40" y="218" class="title">Bất đồng bộ nguyên bản: hiểu việc chờ và thay đổi giữa chừng</text>
+  <rect x="40" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="267" text-anchor="middle" class="label">Bắt đầu truy vấn chậm</text>
+  <text x="155" y="290" text-anchor="middle" class="small">Tìm địa điểm họp</text>
+  <path d="M270 272 H313" class="arrow" />
+  <rect x="320" y="240" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="267" text-anchor="middle" class="label">Làm việc trong lúc chờ</text>
+  <text x="440" y="290" text-anchor="middle" class="small" style="font-size:13.17px">Soạn chương trình và mục chuẩn bị</text>
+  <path d="M560 272 H603" class="arrow" />
+  <rect x="610" y="240" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="267" text-anchor="middle" class="label">Quyết định khi có kết quả</text>
+  <text x="725" y="290" text-anchor="middle" class="small" style="font-size:13.54px">So sánh địa điểm bằng dữ liệu thật</text>
+
+  <rect x="40" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="155" y="367" text-anchor="middle" class="label" style="font-size:16.89px">Người dùng thêm yêu cầu</text>
+  <text x="155" y="390" text-anchor="middle" class="small">Đổi ngân sách hoặc số người</text>
+  <path d="M270 372 H313" class="arrow" />
+  <rect x="320" y="340" width="240" height="65" rx="5" class="box" />
+  <text x="440" y="367" text-anchor="middle" class="label">Giữ việc đã hoàn tất</text>
+  <text x="440" y="390" text-anchor="middle" class="small">Đưa yêu cầu mới vào tác vụ</text>
+  <path d="M560 372 H603" class="arrow" />
+  <rect x="610" y="340" width="230" height="65" rx="5" class="box" />
+  <text x="725" y="367" text-anchor="middle" class="label" style="font-size:16.80px">Điều chỉnh hành động sau</text>
+  <text x="725" y="390" text-anchor="middle" class="small" style="font-size:14.76px">Kết hợp dữ liệu và mọi cập nhật</text>
+
+  <rect x="20" y="455" width="840" height="65" rx="6" fill="#e9e9e9" />
+  <text x="440" y="482" text-anchor="middle" class="label">Mô hình hiểu thay đổi và sửa kế hoạch; runtime quản lý công cụ, trạng thái và nguồn sự kiện.</text>
+  <text x="440" y="506" text-anchor="middle" class="small">Nhận thông điệp còn cần tiếp tục tác vụ và kiểm soát hành động đúng cách.</text>
+</svg>

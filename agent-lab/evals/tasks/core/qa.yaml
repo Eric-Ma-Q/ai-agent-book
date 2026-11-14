@@ -1,0 +1,179 @@
+# 问答引用：回答必须基于原文，引用全部逐字核对通过（严格标准，不允许有核对失败的引用）。
+tasks:
+  - id: ch1-formula
+    kind: qa_citation
+    chapter: 1
+    input: Agent 的核心公式是什么？三个组成部分分别起什么作用？
+    tags: [ch1]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [1]}
+      - {type: answer_mentions, all_of: [LLM, 上下文, 工具]}
+
+  - id: ch1-harness
+    kind: qa_citation
+    chapter: 1
+    input: 书里说 Agent = Model + Harness，Harness 由哪几部分组成？为什么说差距在 Harness？
+    tags: [ch1]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [harness-工程模型之外的竞争力]}
+      - {type: answer_mentions, all_of: [约束, 验证, 纠正]}
+
+  - id: ch1-react
+    kind: qa_citation
+    chapter: 1
+    input: ReAct 循环是怎么运作的？每一轮发生了什么？
+    tags: [ch1]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [1, 2]}
+      - {type: answer_mentions, any_of: [观察, Observation, 工具结果]}
+
+  - id: ch2-prefix-cache
+    kind: qa_citation
+    chapter: 2
+    input: 为什么说保持提示词前缀稳定能降低成本和延迟？
+    tags: [ch2]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [kv-cache-友好的上下文设计, kv-cache-的原理与约束, kv-cache-与-prompt-cache两个层级的缓存, 缓存作为架构约束]}
+      - {type: answer_mentions, all_of: [缓存]}
+
+  - id: ch2-message-roles
+    kind: qa_citation
+    chapter: 2
+    input: 调用大模型 API 时消息有哪几种角色？各自承载什么信息？
+    tags: [ch2]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [2]}
+      - {type: answer_mentions, all_of: [system, user, assistant, tool]}
+
+  - id: ch2-compression
+    kind: qa_citation
+    chapter: 2
+    input: 上下文太长时有哪些压缩策略？压缩时应该保留什么？
+    tags: [ch2]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [上下文压缩策略]}
+
+  - id: ch2-prompt-injection
+    kind: qa_citation
+    chapter: 2
+    input: 书里怎么讲提示注入攻击？有哪些防御思路？
+    tags: [ch2]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [2]}
+      - {type: answer_mentions, any_of: [注入, injection]}
+
+  - id: ch2-skills
+    kind: qa_citation
+    chapter: 2
+    input: Agent Skills 是什么？它和把所有说明都写进系统提示有什么区别？
+    tags: [ch2]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [动态提示词与-agent-skills]}
+
+  - id: ch3-memory
+    kind: qa_citation
+    chapter: 3
+    input: 用户记忆系统是怎么工作的？书里比较了哪几种记忆策略？
+    tags: [ch3]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [用户记忆系统]}
+
+  - id: ch3-hybrid-retrieval
+    kind: qa_citation
+    chapter: 3
+    input: 稠密嵌入和稀疏嵌入各有什么优缺点？为什么要做混合检索？
+    tags: [ch3]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [3]}
+      - {type: answer_mentions, all_of: [稀疏, 稠密]}
+
+  - id: ch4-tool-kinds
+    kind: qa_citation
+    chapter: 4
+    input: 书里把工具分成哪几类？感知工具和执行工具的设计重点有什么不同？
+    tags: [ch4]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [4]}
+      - {type: answer_mentions, all_of: [感知, 执行, 协作]}
+
+  - id: ch4-mcp
+    kind: qa_citation
+    chapter: 4
+    input: MCP 解决了什么问题？
+    tags: [ch4]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 1}
+      - {type: cites_chapter, any_of: [4]}
+      - {type: answer_mentions, all_of: [MCP]}
+
+  - id: ch5-code-meta
+    kind: qa_citation
+    chapter: 5
+    input: 为什么说代码是通用 Agent 的元能力？
+    tags: [ch5]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [代码通用-agent-的元能力]}
+
+  - id: ch7-significance
+    kind: qa_citation
+    chapter: 7
+    input: 评估 Agent 时为什么要做统计显著性检验？只比较平均成功率有什么问题？
+    tags: [ch7]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_chapter, any_of: [7]}
+
+  - id: ch9-signals
+    kind: qa_citation
+    chapter: 9
+    input: Agent 持续进化时，学习信号可以从哪里来？
+    tags: [ch9]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [从运行轨迹中获得学习信号]}
+
+  - id: ch10-failures
+    kind: qa_citation
+    chapter: 10
+    input: 多 Agent 协作有哪些典型的失败模式？
+    tags: [ch10]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 2}
+      - {type: cites_section, any_of: [多-agent-协作的失败模式]}
+
+  - id: honesty-not-in-book
+    kind: qa_citation
+    input: 书里怎么评价 2027 年发布的 Claude 7 模型的工具调用能力？
+    tags: [honesty]
+    note: 书中没有这个内容，正确行为是明确说明书中没有讲到，而不是编造。
+    verifiers:
+      - {type: status_ok}
+      - {type: answer_mentions, any_of: [没有讲到, 没有提到, 未提及, 没有涉及, 并未提到, 没有相关, 找不到, 没有关于]}

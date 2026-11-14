@@ -1,0 +1,374 @@
+---
+// Requirement 045: interactive, offline workbench for the archived
+// superagent-flow lab. The replay engine is a browser module; this page renders
+// the static shell, the two-path and rule tables, and the no-script fallback.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import ReturnNav from '../components/return-nav.astro';
+import { withBase } from '../../src/lib/site-path.mjs';
+import { HARNESS_PATH, HARNESS_SITE_PATH, SUPERAGENT_FLOW_PATH } from '../routes.mjs';
+import { PHASES, SCENARIOS, STAGE_ROWS } from '../harness/superagent-flow/engine.mjs';
+import '../client/harness/superagent-flow.css';
+
+const readmeUrl = withBase(`${HARNESS_SITE_PATH}labs/superagent-flow/README.md`);
+const labBase = `${HARNESS_SITE_PATH}labs/superagent-flow/`;
+const fileUrl = (file: string) => withBase(`${labBase}${file}`);
+const staticScenarios = SCENARIOS.map((scenario) => ({
+  id: scenario.id,
+  title: scenario.title,
+  summary: scenario.summary,
+  expected: scenario.expected,
+  mode: scenario.policy.acceptMode,
+  version: scenario.policy.version,
+  rules: scenario.policy.rules,
+}));
+
+const gateRows = [
+  ['名单内的人点名', 'explicit', 'allowed person addresses the agent', '直接接单，不评估'],
+  ['名单内的人未点名', '按 listed_unaddressed 格（默认 inferred）', 'cell', '推断候选，需 Eval'],
+  ['名单外的人点名', '按 unlisted_addressed 格（默认 ignore）', 'cell', '默认不入场'],
+  ['名单外的人未点名', '按 unlisted_unaddressed 格（默认 ignore）', 'cell', '默认不入场'],
+  ['机器人在机器人名单', 'inferred', 'bot', 'off 档直接拒绝'],
+  ['CI 事件', '按 unlisted_unaddressed 格', 'cell', '按未点名处理'],
+];
+
+const modeRows = [
+  ['off', '只接受显式候选', '推断候选在 gate 处直接 not-admitted'],
+  ['observe', '推断候选进 Eval，但只记录', '正向评估记 ignore + would accept，不开工单'],
+  ['auto', '推断候选评估通过就接单', '至少命中一条启用规则才 accept'],
+];
+---
+
+<Layout locale="zh-CN" title="superagent-flow 交互运行台 · Harness 实验">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="harness-page page-width sf-page" data-sf-root>
+    <header class="sf-hero">
+      <div class="sf-hero-copy">
+        <p class="eyebrow">实验 045 · superagent-flow</p>
+        <h1>一条消息<br />怎么变成工单与结果</h1>
+        <p class="sf-lead">
+          把 044 的离线回放器搬进浏览器：选一个场景，单步经过 Source、Intake、Gate、Eval、
+          Ticket、Executor 与 Channel。每一步都能停下看工单、Mandate、Assignment、决策与消息。
+          不联网、不调模型、不启动 Python、不写读者数据。
+        </p>
+        <div class="sf-hero-actions">
+          <a class="harness-button" href="#workbench">进入运行台 →</a>
+          <a class="harness-link" href={readmeUrl}>读实验说明</a>
+          <a class="harness-link" href={withBase(HARNESS_PATH)}>← Harness 目录</a>
+        </div>
+      </div>
+      <dl class="sf-stats" aria-label="运行台统计">
+        <div><dt>场景</dt><dd>8 <small>六类异常</small></dd></div>
+        <div><dt>阶段</dt><dd>{PHASES.length} <small>Source 到 Policy</small></dd></div>
+        <div><dt>对象</dt><dd>4 <small>Ticket / Mandate / Assignment / Report</small></dd></div>
+        <div><dt>网络请求</dt><dd>0 <small>离线可跑</small></dd></div>
+      </dl>
+    </header>
+
+    <aside class="sf-note">
+      <strong>这是回放器，不是第二个 dsh-superagent。</strong>
+      场景、事件与评估结果都来自归档里的固定剧本；页面在浏览器里按同一套规则重算，
+      每条记录都标注 <code>docs/00n §节名</code>。页面输出与 <code>python3 -m superagent_flow --json</code>
+      逐字段对账，结论以 <a href={readmeUrl}>归档 README 与 Python 源码</a>为准。
+    </aside>
+
+    <noscript>
+      <style>[data-sf-workbench] { display: none; }</style>
+      <div class="sf-noscript">
+        <p>
+          交互运行台需要 JavaScript。你仍然可以阅读八个场景、两条路径、准入规则与阶段顺序，
+          或直接打开 <a href={readmeUrl}>superagent-flow 实验说明</a>。
+        </p>
+        <h2>八个场景</h2>
+        <ol class="sf-noscript-scenarios">
+          {staticScenarios.map((scenario) => (
+            <li>
+              <strong>{scenario.title}</strong>
+              <span>{scenario.summary}</span>
+              <span>策略 v{scenario.version} · {scenario.mode} · {scenario.rules.join(', ')}</span>
+              <span>预期：{scenario.expected}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </noscript>
+
+    <section class="sf-workbench" id="workbench" aria-label="superagent-flow 运行台" data-sf-workbench>
+      <aside class="sf-panel sf-controls" aria-labelledby="sf-controls-title">
+        <div class="sf-panel-head">
+          <p class="sf-kicker">控制台</p>
+          <h2 id="sf-controls-title">选一条消息路径</h2>
+        </div>
+        <div class="sf-scenario-list" data-sf-scenarios>
+          {
+            staticScenarios.map((scenario) => (
+              <button
+                type="button"
+                class="sf-scenario"
+                data-sf-scenario={scenario.id}
+                aria-pressed="false"
+              >
+                <span class="sf-scenario-head">
+                  <span class="sf-scenario-title">{scenario.title}</span>
+                  <span class="sf-scenario-badge">v{scenario.version} · {scenario.mode}</span>
+                </span>
+                <span class="sf-scenario-summary">{scenario.summary}</span>
+                <span class="sf-scenario-expected">预期：{scenario.expected}</span>
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="sf-run-buttons">
+          <button class="sf-button sf-button-primary" type="button" data-sf-step>单步</button>
+          <button class="sf-button" type="button" data-sf-play aria-pressed="false">自动播放</button>
+          <button class="sf-button" type="button" data-sf-back>上一步</button>
+          <button class="sf-button" type="button" data-sf-reset>重置</button>
+          <button class="sf-button" type="button" data-sf-jump>跳到结尾</button>
+        </div>
+        <label class="sf-speed">
+          <span>播放速度</span>
+          <select data-sf-speed>
+            <option value="1100">0.5x</option>
+            <option value="650" selected>1x</option>
+            <option value="350">2x</option>
+          </select>
+        </label>
+        <p class="sf-hint">
+          空格 播放 / 暂停，← / → 单步，Home / End 首尾。每次前进一条记录；
+          同一 tick 可能有多条记录，切换场景会从头开始。
+        </p>
+      </aside>
+
+      <section class="sf-stage" aria-labelledby="sf-stage-title">
+        <div class="sf-stage-head">
+          <div>
+            <p class="sf-kicker" data-sf-current-phase>运行开始</p>
+            <h2 id="sf-stage-title" data-sf-current-title>选择场景后单步</h2>
+            <p class="sf-current-summary" data-sf-current-summary>
+              当前显示运行前状态；点「单步」处理第一个事件。
+            </p>
+          </div>
+          <p class="sf-progress" data-sf-progress aria-live="polite">记录 0 / 0</p>
+        </div>
+
+        <div class="sf-policy" data-sf-policy>策略 v1 · observe · fix-bug</div>
+
+        <div class="sf-rail" data-sf-rail role="group" aria-label="记录阶段">
+          {
+            PHASES.map((phase) => (
+              <button
+                type="button"
+                class="sf-rail-step"
+                data-sf-stage={phase.id}
+                aria-pressed="false"
+                title={phase.question}
+              >
+                <span>{phase.name}</span>
+              </button>
+            ))
+          }
+        </div>
+        <div class="sf-progressbar" aria-hidden="true"><span data-sf-progressbar></span></div>
+
+        <dl class="sf-metrics" data-sf-metrics aria-label="当前状态指标">
+          <div><dt>Tick</dt><dd>0</dd></div>
+          <div><dt>记录</dt><dd>0</dd></div>
+          <div><dt>工单</dt><dd>0</dd></div>
+          <div><dt>决策</dt><dd>0</dd></div>
+          <div><dt>消息</dt><dd>0</dd></div>
+          <div><dt>问题</dt><dd>0</dd></div>
+        </dl>
+
+        <div class="sf-timeline-wrap">
+          <ol class="sf-timeline" data-sf-timeline aria-label="事件时间线"></ol>
+          <p class="sf-timeline-empty" data-sf-timeline-empty>还没有记录。</p>
+        </div>
+
+        <div class="sf-stage-foot">
+          <span data-sf-foot-status>离线回放 · 无真实副作用</span>
+          <span class="sf-foot-note">记录与 Python 引擎逐字段一致</span>
+        </div>
+      </section>
+
+      <aside class="sf-panel sf-inspector" aria-labelledby="sf-inspector-title">
+        <div class="sf-inspector-head">
+          <div>
+            <p class="sf-kicker">检查器</p>
+            <h2 id="sf-inspector-title" data-sf-inspector-title>运行开始</h2>
+            <p class="sf-inspector-meta" data-sf-inspector-meta>记录 0 · 尚无 tick</p>
+          </div>
+        </div>
+        <div class="sf-tabs" role="tablist" aria-label="检查器视图">
+          <button type="button" role="tab" aria-selected="true" data-sf-tab="record" id="sf-tab-record" aria-controls="sf-pane-record">记录</button>
+          <button type="button" role="tab" aria-selected="false" data-sf-tab="tickets" id="sf-tab-tickets" aria-controls="sf-pane-tickets">工单</button>
+          <button type="button" role="tab" aria-selected="false" data-sf-tab="ledger" id="sf-tab-ledger" aria-controls="sf-pane-ledger">决策与消息</button>
+          <button type="button" role="tab" aria-selected="false" data-sf-tab="raw" id="sf-tab-raw" aria-controls="sf-pane-raw">原始 JSON</button>
+        </div>
+        <div class="sf-pane" data-sf-pane="record" id="sf-pane-record" role="tabpanel" aria-labelledby="sf-tab-record">
+          <div data-sf-record-body>
+            <p class="sf-muted">选择一条已发生的记录，这里显示它的六个字段与原文出处。</p>
+          </div>
+        </div>
+        <div class="sf-pane" data-sf-pane="tickets" id="sf-pane-tickets" role="tabpanel" aria-labelledby="sf-tab-tickets" hidden>
+          <div data-sf-tickets-body>
+            <p class="sf-muted">工单建立后，这里显示 Ticket、Mandate、Assignment 与 PR 的状态。</p>
+          </div>
+        </div>
+        <div class="sf-pane" data-sf-pane="ledger" id="sf-pane-ledger" role="tabpanel" aria-labelledby="sf-tab-ledger" hidden>
+          <div data-sf-ledger-body>
+            <p class="sf-muted">决策、消息与问题会随 tick 出现在这里。</p>
+          </div>
+        </div>
+        <div class="sf-pane" data-sf-pane="raw" id="sf-pane-raw" role="tabpanel" aria-labelledby="sf-tab-raw" hidden>
+          <pre class="sf-raw" data-sf-raw>运行后在这里查看当前记录与快照的 JSON。</pre>
+        </div>
+      </aside>
+    </section>
+
+    <section class="sf-block" id="paths" aria-labelledby="sf-paths-title">
+      <div class="sf-section-head">
+        <p class="eyebrow">两条路径</p>
+        <h2 id="sf-paths-title">订阅扇出送上下文，Eval 才决定开不开工</h2>
+        <p>
+          一条 Trigger 进 Intake 后，可能同时做两件事：给已有工单送上下文，以及排队等 Eval。
+          两者不是二选一；但只有 Eval 会过 gate、产生 Decision、授予 Mandate。
+        </p>
+      </div>
+      <div class="sf-table-wrap">
+        <table class="sf-table">
+          <thead>
+            <tr>
+              <th scope="col">路径</th><th scope="col">什么时候走</th><th scope="col">过 gate</th>
+              <th scope="col">产生 Decision</th><th scope="col">授予新权限</th><th scope="col">作用</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>订阅扇出</strong></td>
+              <td>Thread 上已有工单，且来源是它的订阅</td>
+              <td>否</td><td>否</td><td>否</td>
+              <td>送上下文、唤醒 Executor；已结束工单只被人的消息唤醒</td>
+            </tr>
+            <tr>
+              <td><strong>Eval</strong></td>
+              <td>新工作候选；或机器人 / CI 消息</td>
+              <td>是</td><td>是</td><td>accept 时创建 Mandate</td>
+              <td>决定接单、忽略还是停止</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sf-callout">
+        <strong>关键边界：</strong>人的消息送达到工单后不再进 Eval；机器人消息即使也扇出，仍然走 Eval。
+        所以「送到」不等于「授权」——扇出只改变上下文，不改变 Mandate。
+      </p>
+    </section>
+
+    <section class="sf-block" id="gate" aria-labelledby="sf-gate-title">
+      <div class="sf-section-head">
+        <p class="eyebrow">Gate</p>
+        <h2 id="sf-gate-title">五类判定，先看人，再看名单，最后看准入格</h2>
+        <p>Gate 是 Eval 的第一层，完全确定性；同样的 Trigger、策略与线程状态永远得到同一个强度。</p>
+      </div>
+      <div class="sf-table-wrap">
+        <table class="sf-table">
+          <thead>
+            <tr><th scope="col">情形</th><th scope="col">强度</th><th scope="col">依据</th><th scope="col">结果</th></tr>
+          </thead>
+          <tbody>
+            {gateRows.map(([label, strength, basis, note]) => (
+              <tr>
+                <td>{label}</td><td><code>{strength}</code></td><td><code>{basis}</code></td><td>{note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div class="sf-table-wrap">
+        <table class="sf-table">
+          <thead>
+            <tr><th scope="col">accept mode</th><th scope="col">接受什么</th><th scope="col">推断候选的结果</th></tr>
+          </thead>
+          <tbody>
+            {modeRows.map(([mode, accepts, result]) => (
+              <tr><td><code>{mode}</code></td><td>{accepts}</td><td>{result}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="sf-callout">
+        <strong>原文出处：</strong><code>docs/002-authorization.md §Strength</code>、
+        <code>§Admission</code> 与 <code>§Accept mode and rules</code>；
+        每条记录都带自己的一节，在运行台里可以直接对照。
+      </p>
+    </section>
+
+    <section class="sf-block" id="eval" aria-labelledby="sf-eval-title">
+      <div class="sf-section-head">
+        <p class="eyebrow">Eval 与超时</p>
+        <h2 id="sf-eval-title">显式直接接单，推断逐条规则评估</h2>
+        <p>
+          一批 Trigger 合并成一次 Eval。批内全是显式候选时跳过模型研判；
+          否则对每条启用规则各判一次，至少命中一条才能接单。Eval 的截止时间是当前 tick + 2，
+          超时先把这一批重新排队，第三次才记 <code>unavailable</code> 并留下问题。
+        </p>
+      </div>
+      <pre class="sf-formula">explicit batch            -> accept, 不经规则研判
+inferred batch + auto     -> 至少命中一条启用规则才 accept
+inferred batch + observe  -> ignore，reason 追加 (would accept)
+timeout #1 / #2           -> requeue, retry 1 / 2
+timeout #3                -> decision unavailable + problem</pre>
+      <p class="sf-callout">
+        <strong>为什么第三次才记问题：</strong>前两次是暂时失败，重排还有机会；
+        第三次仍拿不到结果，才把这一批标成不可用，后续事件可以重新开始。
+      </p>
+    </section>
+
+    <section class="sf-block" id="stages" aria-labelledby="sf-stages-title">
+      <div class="sf-section-head">
+        <p class="eyebrow">阶段判定</p>
+        <h2 id="sf-stages-title">ticket_stage 从上往下匹配，第一条命中的就是答案</h2>
+        <p>页面里的「工单」检查器用的就是这张表；顺序错了，阶段就会讲错。</p>
+      </div>
+      <div class="sf-table-wrap">
+        <table class="sf-table">
+          <thead>
+            <tr><th scope="col">阶段</th><th scope="col">含义</th><th scope="col">条件</th></tr>
+          </thead>
+          <tbody>
+            {STAGE_ROWS.map(([stage, meaning, check]) => (
+              <tr><td><code>{stage}</code></td><td>{meaning}</td><td><code>{check}</code></td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <pre class="sf-command">cd web-astro/personal/harness/archive/labs/superagent-flow
+python3 -m superagent_flow --list
+python3 -m superagent_flow --scenario policy-change --json
+python3 -m unittest discover tests    # 98 条 Python 测试</pre>
+      <p class="sf-callout">
+        <strong>两种看法：</strong>终端适合一次读完；运行台适合停在某一步检查状态。
+        两边跑的是同一套规则，测试会逐字段比较八个场景的输出。
+      </p>
+    </section>
+
+    <footer class="sf-foot">
+      <p>
+        页面只读归档：不启动 Python、不写读者数据、不调用模型。
+        源码索引见 <a href={fileUrl('superagent_flow/engine.py')}>superagent_flow/engine.py</a>、
+        <a href={fileUrl('superagent_flow/gate.py')}>gate.py</a>、
+        <a href={fileUrl('superagent_flow/stage.py')}>stage.py</a>。
+      </p>
+      <p class="harness-foot-links">
+        <a href={withBase(HARNESS_PATH)}>Harness 目录</a>
+        <a href={withBase(SUPERAGENT_FLOW_PATH)}>本页</a>
+        <a href={withBase('/')}>回到阅读器</a>
+      </p>
+    </footer>
+  </main>
+  <ReturnNav />
+  <script>
+    import '../client/harness/superagent-flow.ts';
+  </script>
+</Layout>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SelfLoop · 自举改进循环</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo"><span class="logo-dot"></span></span>
+    <div>
+      <h1>SelfLoop</h1>
+      <p class="brand-sub">提议 → 验证 → 闸门 → 归档：一个可观测的自举循环</p>
+    </div>
+  </div>
+  <div class="controls">
+    <span id="provider-badge" class="badge">mock</span>
+    <button id="btn-start" class="btn primary">开始</button>
+    <button id="btn-pause" class="btn" disabled>暂停</button>
+    <button id="btn-resume" class="btn" disabled>继续</button>
+    <button id="btn-stop" class="btn danger" disabled>停止</button>
+  </div>
+</header>
+
+<main class="grid">
+  <!-- 左栏：配置 + 统计 -->
+  <aside class="col col-left">
+    <section class="card" id="config-card">
+      <div class="card-head"><h2>运行配置</h2><span class="hint">改完点「开始」</span></div>
+      <label class="field">
+        <span>任务</span>
+        <select id="cfg-task"></select>
+      </label>
+      <label class="field">
+        <span>提议者</span>
+        <select id="cfg-provider">
+          <option value="mock">模拟（离线，确定性）</option>
+          <option value="openai">真实模型（OpenAI 兼容）</option>
+        </select>
+      </label>
+      <label class="field" id="field-model" hidden>
+        <span>模型</span>
+        <input id="cfg-model" type="text" placeholder="deepseek-chat" />
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>最大轮数</span>
+          <input id="cfg-rounds" type="number" min="1" max="200" value="10" />
+        </label>
+        <label class="field">
+          <span>预算（$）</span>
+          <input id="cfg-budget" type="number" min="0" step="0.5" value="2" />
+        </label>
+      </div>
+      <div class="field-row">
+        <label class="field">
+          <span>平台期 K 轮</span>
+          <input id="cfg-plateau" type="number" min="1" max="50" value="3" />
+        </label>
+        <label class="field">
+          <span>温度</span>
+          <input id="cfg-temp" type="number" min="0" max="2" step="0.1" value="0.2" />
+        </label>
+      </div>
+      <label class="switch">
+        <input id="cfg-continue" type="checkbox" />
+        <span>verified 之后继续跑（观察平台期停机）</span>
+      </label>
+      <p class="note" id="config-note"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>运行状态</h2><span id="status-pill" class="pill idle">空闲</span></div>
+      <div class="score-big">
+        <span id="stat-score">—</span>
+        <small>当前最优分数 / 1.0</small>
+      </div>
+      <div class="stats">
+        <div><b id="stat-round">0</b><span>轮次</span></div>
+        <div><b id="stat-plateau">0</b><span>连续无提升</span></div>
+        <div><b id="stat-cost">$0</b><span>累计花费</span></div>
+        <div><b id="stat-tokens">0</b><span>tokens</span></div>
+      </div>
+      <p class="note" id="stop-reason"></p>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>目标</h2><span class="hint">固定任务，不漂移</span></div>
+      <h3 id="task-title" class="task-title">—</h3>
+      <p id="task-summary" class="note"></p>
+      <details class="spec">
+        <summary>展开任务规格（spec.md）</summary>
+        <pre id="task-spec"></pre>
+      </details>
+    </section>
+  </aside>
+
+  <!-- 中栏：曲线 + 轮次 -->
+  <section class="col col-mid">
+    <section class="card chart-card">
+      <div class="card-head">
+        <h2>分数曲线</h2>
+        <div class="legend">
+          <span><i class="dot filled"></i>接受</span>
+          <span><i class="dot hollow"></i>拒绝</span>
+          <span><i class="dot verified"></i>verified</span>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+      <div class="chart-foot">
+        <span>基线 = 第 0 轮（未改动）</span>
+        <span id="chart-gap"></span>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <div class="card-head">
+        <h2>轮次档案</h2>
+        <span class="hint">点一行看 diff 与证据</span>
+      </div>
+      <div class="table-wrap">
+        <table id="rounds">
+          <thead>
+            <tr>
+              <th>轮</th><th>分数</th><th>可见</th><th>隐藏</th><th>canary</th><th>状态</th><th>耗时</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="empty-state" class="empty">还没有候选。点右上角「开始」。</div>
+      </div>
+    </section>
+  </section>
+
+  <!-- 右栏：闸门 / 事件 / 源码 -->
+  <aside class="col col-right">
+    <section class="card detail-card">
+      <div class="tabs">
+        <button class="tab active" data-tab="gates">闸门</button>
+        <button class="tab" data-tab="events">事件</button>
+        <button class="tab" data-tab="source">源码 / diff</button>
+      </div>
+
+      <div class="tabpane active" id="pane-gates">
+        <div class="gate" data-gate="visible">
+          <div class="gate-head"><span>可见测试</span><b id="g-visible">—</b></div>
+          <div class="bar"><i></i></div>
+        </div>
+        <div class="gate" data-gate="hidden">
+          <div class="gate-head"><span>隐藏用例</span><b id="g-hidden">—</b></div>
+          <div class="bar"><i></i></div>
+        </div>
+        <div class="gate" data-gate="canary">
+          <div class="gate-head"><span>canary（防硬编码）</span><b id="g-canary">—</b></div>
+          <div class="bar"><i></i></div>
+        </div>
+        <div class="gate" data-gate="integrity">
+          <div class="gate-head"><span>完整性</span><b id="g-integrity">—</b></div>
+          <div class="bar"><i></i></div>
+        </div>
+        <p class="note" id="gate-note">跑起来之后，这里显示最近一轮的机器证据。</p>
+        <ul id="gate-issues" class="issues"></ul>
+        <div class="divider"></div>
+        <h3 class="mini-title">当前最优的可见测试失败</h3>
+        <ul id="vis-fails" class="issues"></ul>
+      </div>
+
+      <div class="tabpane" id="pane-events">
+        <ul id="events" class="events"></ul>
+      </div>
+
+      <div class="tabpane" id="pane-source">
+        <div class="src-toolbar">
+          <button id="btn-mode-best" class="chip active">当前最优</button>
+          <button id="btn-mode-diff" class="chip">与基线对比</button>
+          <span id="src-label" class="hint"></span>
+        </div>
+        <pre id="source-box" class="code">—</pre>
+      </div>
+    </section>
+  </aside>
+</main>
+
+<footer class="foot">
+  <span>本地实验工具 · 数据落在 <code>.selfloop/runs/</code></span>
+  <span id="run-id"></span>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

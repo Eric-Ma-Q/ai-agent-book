@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 上下文：一台会自己整理行李的机器 · Claude Code 源码拆解</title>
+<meta name="description" content="上下文窗口是 Agent 最贵的资源。Claude Code 没有「超了就总结」这一招，而是排了一条五段流水线，从最便宜、最无损的处理开始，一级一级往下退。这一章讲清这条流水线的顺序、阈值和代价。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Claude Code 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-event.html" title="事件与证据">01 事件与证据</a><a href="02-map.html" title="代码地图">02 代码地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" aria-current="page" title="上下文">05 上下文</a><a href="06-permission.html" title="权限">06 权限</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-unreleased.html" title="未发布功能">08 未发布功能</a><a href="09-business.html" title="遥测与远程">09 遥测与远程</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main>
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Claude Code 源码拆解</a></nav>
+  <p class="kicker">第 05 章 · 记忆、压缩与预算</p>
+  <h1>上下文：一台会自己整理行李的机器</h1>
+  <p class="lead">上下文窗口是 Agent 最贵的资源。Claude Code 没有「超了就总结」这一招，而是排了一条五段流水线，从最便宜、最无损的处理开始，一级一级往下退。这一章讲清这条流水线的顺序、阈值和代价。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>压缩按代价排序：工具结果预算 → snip → microcompact → context collapse → autocompact。能重取的就清，不能重取的才摘要。</li><li>autocompact 的阈值不是百分比，是绝对 token：<code>窗口 − 2 万（摘要预留）− 1.3 万（缓冲）</code>。200k 的模型约在 167k 触发（≈93%）。</li><li>microcompact 有两种触发：空闲 60 分钟后的「旧结果清空」，以及只改服务端缓存、不动本地消息的 cache editing。</li><li>摘要 prompt 固定九段，其中「所有用户消息」必须完整保留 —— 用户的每次纠正都是后续行为的约束。</li><li>压缩可能失败：连续 3 次失败就熔断，本会话不再尝试，避免「压缩 → 仍然超长 → 再压缩」的死循环。</li></ol></div>
+  
+
+<section id="s01">
+  <h2><span class="num">01</span>先看整体：五段流水线</h2>
+  
+  <p>每轮发请求前，消息数组会被这条流水线依次处理。注释里写得很清楚：<b>能叠加，不互斥</b>。</p>
+  
+<div class="ev">
+  <header><span class="path">query.ts</span><span>379-467 · 五个调用点，顺序硬编码</span></header>
+  <pre>messagesForQuery = await applyToolResultBudget(...)   // 1 结果预算
+...snipCompactIfNeeded(messagesForQuery)                 // 2 剪历史
+...deps.microcompact(messagesForQuery, ...)              // 3 清旧工具结果
+...contextCollapse.applyCollapsesIfNeeded(...)            // 4 折叠成摘要
+...deps.autocompact(messagesForQuery, ...)                // 5 整段摘要</pre>
+</div>
+  <div class="tw"><table>
+      <thead><tr><th>闸门</th><th>触发</th><th>保留什么</th><th>丢掉什么</th><th>代价</th></tr></thead>
+      <tbody>
+      <tr><td>结果预算</td><td>单条消息的结果总量超 20 万字符</td><td>结构、路径、预览</td><td>超大正文（落盘）</td><td>几乎为零</td></tr>
+      <tr><td>snip</td><td>历史累积到阈值（flag 控制）</td><td>受保护尾部 + 可引用消息</td><td>最早的历史片段</td><td>低（可再生）</td></tr>
+      <tr><td>microcompact</td><td>空闲 60 分钟 / 缓存编辑阈值</td><td>最近 5 条结果 + 结构</td><td>旧工具结果正文</td><td>中（要重读）</td></tr>
+      <tr><td>context collapse</td><td>有效窗口 90% 提交 / 95% 阻塞（仅注释可见）</td><td>细粒度消息 + 阶段摘要</td><td>中间一段原文</td><td>中高</td></tr>
+      <tr><td>autocompact</td><td>有效窗口 − 1.3 万</td><td>摘要 + 最近若干条</td><td>其余全部</td><td>最高（不可逆）</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note "><b>数据来源说明：</b>collapse 的 90% / 95% 只出现在 <code>autoCompact.ts</code> 的注释里 —— 它的实现模块不在本副本中，这两个百分比未经代码验证；其余四道闸门的阈值都能在实现里读到。</div>
+  <div class="analogy"><i aria-hidden="true">≈</i><div>像出差打包：先扔掉酒店一次性的东西（可重取的工具结果），再压缩衣服（折叠摘要），最后才考虑只带一套换洗（整段摘要）。顺序反了，就会把还要用的东西先扔了。</div></div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>顺序为什么不能换</h2>
+  
+  <ul><li><b>预算必须在 microcompact 之前</b>：缓存编辑按 <code>tool_use_id</code> 记账，内容先被清空的话，「这条结果是否已经发过」的判断就和实际字节对不上。</li><li><b>snip 必须在 autocompact 之前，而且要把「省下多少」传下去</b>：token 计数读的是尾部那条消息的 usage，snip 之后它没变，计数看不见节省；先压缩就会按虚高的数字触发，把刚剪完的会话又整体摘要一次。</li><li><b>collapse 必须在 autocompact 之前</b>：collapse 若能压回阈值以下，autocompact 就成了空操作，于是保留了细粒度上下文而不是一条大摘要。</li><li><b>autocompact 在 collapse 开启时被主动禁用</b>：两者都在 93% 附近抢触发，autocompact 会赢，然后把 collapse 正要保住的细节「核平」。</li></ul>
+  <div class="note good"><b>可迁移结论：</b>压缩不是单一策略，而是一组<b>有序的、代价递增的</b>策略。先问「这份信息能不能重新拿到」，再问「能不能摘要」。</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>autocompact 的阈值可以手算</h2>
+  
+  
+<div class="ev">
+  <header><span class="path">services/compact/autoCompact.ts</span><span>33-49、72-75</span></header>
+  <pre>const reservedTokensForSummary = Math.min(
+  getMaxOutputTokensForModel(model),
+  MAX_OUTPUT_TOKENS_FOR_SUMMARY,   // 20_000
+)
+let contextWindow = getContextWindowForModel(model, getSdkBetas())
+...
+return contextWindow - reservedTokensForSummary
+
+// 阈值
+const autocompactThreshold = effectiveContextWindow - AUTOCOMPACT_BUFFER_TOKENS  // 13_000</pre>
+</div>
+  <p>以 200k 窗口、输出上限 ≥20k 的模型为例：</p>
+  <div class="grid g4"><div class="stat"><b>200,000</b><span>上下文窗口</span><em>默认值</em></div><div class="stat"><b>−20,000</b><span>给摘要预留的输出</span><em>p99.99 实测 17,387</em></div><div class="stat"><b>=180,000</b><span>有效窗口</span><em>压缩请求能用的量</em></div><div class="stat"><b>−13,000</b><span>安全缓冲</span><em>留给系统提示与工具</em></div><div class="stat"><b>=167,000</b><span>触发线（≈93%）</span><em>到这儿就开始摘要</em></div></div>
+  <p>另外两条线：预警线 = 阈值 − 2 万；阻塞线 = 有效窗口 − 3 千（到这条线就直接报错，给用户留出手动 <code>/compact</code> 的余地）。</p>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>microcompact：两种「清旧账」</h2>
+  
+  <p>这是最容易被误解的一环。本版本里它<b>没有</b>「按 token 阈值清空旧结果」的旧路径（源码直接写着 legacy 路径已删除），只剩两种：</p>
+  <div class="tw"><table>
+      <thead><tr><th>模式</th><th>什么时候</th><th>改什么</th><th>为什么省</th></tr></thead>
+      <tbody>
+      <tr><td>时间触发</td><td>距上一条回复 ≥ 60 分钟，且存在可清结果</td><td>本地把旧结果正文换成 <code>[Old tool result content cleared]</code></td><td>缓存已过期，反正要重传，先把体积压小</td></tr>
+      <tr><td>cache editing</td><td>工具调用数达阈值（flag 配置）</td><td><b>不动本地消息</b>，只发「删除这些缓存片段」的指令</td><td>前缀字节不变，KV 缓存仍然命中</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">services/compact/microCompact.ts</span><span>261-270</span></header>
+  <pre>// 时间模式命中时短路返回，跳过 cached MC：
+// editing assumes the cache is hot, and we just established it is cold.</pre>
+</div>
+  <div class="tradeoff"><div><b>换来什么</b>长会话里工具输出占大头，清掉它们能撑很久，而且模型需要时可以重新读文件。</div><div><b>付出什么</b>模型会看到一堆「已清空」的占位符，必须靠系统提示里那段说明才知道要重新读；清空时机判断错了（缓存还热）就白花一次全量重传。</div></div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>摘要 prompt：为什么固定九段</h2>
+  
+  <p>整段压缩不是「帮我总结一下」，而是一份带编号的结构化模板。九段固定，其中第 6 段要求<b>列出所有用户消息</b>。</p>
+  
+<div class="ev">
+  <header><span class="path">services/compact/prompt.ts</span><span>68-76</span></header>
+  <pre>1. Primary Request and Intent: Capture all of the user's explicit requests and intents in detail
+2. Key Technical Concepts: List all important technical concepts, technologies, and frameworks discussed.
+3. Files and Code Sections: Enumerate specific files and code sections examined, modified, or created...
+4. Errors and fixes: ...
+5. Problem Solving: ...
+6. All user messages: List ALL user messages that are not tool results...
+7. Pending Tasks: ...
+8. Current Work: ...
+9. Optional Next Step: ...</pre>
+</div>
+  <p>先让模型写一段 <code>&lt;analysis&gt;</code> 草稿，再把草稿丢掉、只留 <code>&lt;summary&gt;</code>。这个「先想后写」的结构在压缩里同样有效：草稿提高了摘要的召回，但不占最终上下文。</p>
+  <div class="note "><b>为什么保留全部用户消息：</b>用户在第三轮说过「不要用 emoji」，如果压缩时丢了，后面就会重犯。工具结果可以重取，<b>用户的原话不能</b>。</div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>记忆：三层文件 + 三个后台代理</h2>
+  
+  <p>CLAUDE.md 按「离代码越近越优先」加载，共四层：企业托管 → 用户 → 项目（含 <code>.claude/rules/*.md</code>）→ 本地（<code>CLAUDE.local.md</code>）。<code>@include</code> 支持嵌套，但有深度上限与防环集合。</p>
+  <div class="tw"><table>
+      <thead><tr><th>机制</th><th>谁在写</th><th>什么时候跑</th><th>产出</th></tr></thead>
+      <tbody>
+      <tr><td>SessionMemory</td><td>forked 子代理</td><td>每 1 万 token 初始化，之后每 5 千 token 且工具调用 ≥3 次</td><td>会话级 markdown，压缩时优先用它代替整段摘要</td></tr>
+      <tr><td>extractMemories</td><td>forked 子代理</td><td>一轮正常结束后，按会话节流</td><td>把值得记的偏好写进记忆目录</td></tr>
+      <tr><td>autoDream</td><td>forked 子代理</td><td>距上次 ≥24 小时且新增 ≥5 个会话</td><td>把散落记忆蒸馏回主题文件与 MEMORY.md</td></tr>
+      </tbody>
+    </table></div>
+  <p>三个代理都只在主线程收尾时触发，且都被排除在「自动压缩」的适用对象之外 —— 否则它们压缩自己，会形成自锁。</p>
+  <div class="grid g4"><div class="stat"><b>4 层</b><span>CLAUDE.md 优先级</span><em>企业/用户/项目/本地</em></div><div class="stat"><b>200 行 / 25KB</b><span>MEMORY.md 硬上限</span><em>memdir.ts:35-38</em></div><div class="stat"><b>5 个</b><span>单轮最多注入的相关记忆</span><em>findRelevantMemories.ts:20</em></div><div class="stat"><b>1 秒</b><span>附件收集总超时</span><em>attachments.ts:767</em></div></div>
+
+</section>
+
+
+<section id="s07">
+  <h2><span class="num">07</span>附件：把「可能要用的」推迟到用的时候</h2>
+  
+  <p>每轮会并发收集一批「附件」：@ 提到的文件、IDE 里选中的代码、变更过的文件、诊断信息、待办提醒、技能列表……全部包在 <code>maybe(label, fn)</code> 里，单个失败不影响其他，整体 1 秒超时。</p>
+  <ul><li><b>去重</b>：记忆文件用「已加载路径集合」判重，而不是靠 100 条 LRU 的文件读取缓存 —— 注释点名后者在忙会话里会掉条目，导致同一份 CLAUDE.md 被反复注入。</li><li><b>预算</b>：单个记忆文件最多 200 行 / 4KB（注释给算式：5 × 4KB ≈ 20KB/轮）；相关记忆全会话累计 60KB 就停止预取。</li><li><b>延迟</b>：相关记忆与技能发现改成「预取」，在模型流式输出时并行跑，等工具结束时再取结果 —— 不阻塞首字。</li></ul>
+  <div class="note good"><b>可迁移结论：</b>上下文成本要按「每轮固定开销」算。一个 4KB 的 CLAUDE.md 看着不大，乘上 50 轮就是 200KB。</div>
+
+</section>
+
+
+<section id="s08">
+  <h2><span class="num">08</span>失败模式：压缩本身也会翻车</h2>
+  
+  <div class="tw"><table>
+      <thead><tr><th>失败</th><th>代码里的防护</th><th>数字</th></tr></thead>
+      <tbody>
+      <tr><td>压缩后仍超限，反复压缩</td><td>连续失败计数，达阈值熔断</td><td>3 次（注释：1,279 个会话曾连续失败 50+ 次，每天浪费约 25 万次调用）</td></tr>
+      <tr><td>压缩请求自身过长（PTL）</td><td>按报错的 token 缺口砍掉最旧的整轮，最多重试</td><td>3 次</td></tr>
+      <tr><td>压缩流式中断</td><td>有限重试，避免无限等待</td><td>2 次</td></tr>
+      <tr><td>压缩把细节抹掉</td><td>摘要写 <code>transcriptPath</code>，提示去读完整记录；保留段原样附在后面</td><td>—</td></tr>
+      <tr><td>缓存失效被误报</td><td>压缩后显式重置缓存检测基线</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+  
+<div class="ev">
+  <header><span class="path">services/compact/autoCompact.ts</span><span>67-70 · 这条注释是「为什么要熔断」的最好说明</span></header>
+  <pre>// Stop trying autocompact after this many consecutive failures.
+// BQ 2026-03-10: 1,279 sessions had 50+ consecutive failures (up to 3,272)
+// in a single session, wasting ~250K API calls/day globally.
+const MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES = 3</pre>
+</div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li>services/compact/（autoCompact、microCompact、compact、prompt） <span>· 阈值、模板、失败处理</span></li><li>query.ts 压缩链调用点 <span>· 顺序与行号</span></li><li>utils/claudemd.ts、memdir/、utils/attachments.ts <span>· 记忆层级与附件预算</span></li></ul>
+  <p class="fine">代码引用均来自本地副本 <code>claude-code v2.1.88</code>；行号以该副本为准，其他镜像可能因文件截断而偏移。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="04-tools.html"><small>← 上一章</small><b>04 工具系统</b></a><a class="next" href="06-permission.html"><small>下一章 →</small><b>06 权限</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于泄露源码副本的研究笔记，不是 Anthropic 官方文档。源码为闭源软件，引用仅用于评论与分析，不构成再分发。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown/</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

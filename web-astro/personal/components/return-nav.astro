@@ -1,0 +1,104 @@
+---
+// Requirement 034 follow-up: the bottom-left return pill shared by standalone
+// personal pages. The archived Harness HTML pages get the same two links from
+// harness/nav.js at runtime; Astro pages use this component so a standalone
+// page always has a way back to the directory and the reader.
+import { withBase } from '../../src/lib/site-path.mjs';
+
+interface Props {
+  homeHref?: string;
+  homeLabel?: string;
+  homeShort?: string;
+  readerLabel?: string;
+}
+
+const {
+  homeHref = '/harness/',
+  homeLabel = 'Harness 目录',
+  homeShort = '目录',
+  readerLabel = '阅读器',
+} = Astro.props;
+---
+
+<nav class="return-nav" aria-label="页面导航">
+  <a class="return-nav-link" href={withBase(homeHref)} aria-label={homeLabel} title={homeLabel}>
+    <span class="return-nav-icon" aria-hidden="true">▤</span>
+    <span class="return-nav-long">{homeLabel}</span>
+    <span class="return-nav-short">{homeShort}</span>
+  </a>
+  <a class="return-nav-link" href={withBase('/')} aria-label={readerLabel} title={readerLabel}>
+    <span class="return-nav-icon" aria-hidden="true">←</span>
+    <span>{readerLabel}</span>
+  </a>
+</nav>
+
+<style>
+  .return-nav {
+    position: fixed;
+    left: 20px;
+    bottom: 22px;
+    z-index: 75;
+    display: flex;
+    gap: 8px;
+    font: 500 13px/1.2 var(--sans, system-ui, -apple-system, 'PingFang SC', sans-serif);
+  }
+
+  .return-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 13px;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--ink, var(--text, #222));
+    background: var(--card, var(--surface, #fff));
+    border: 1px solid var(--line, var(--border, #ddd));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .return-nav-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .return-nav-link:focus-visible {
+    outline: 2px solid var(--interactive, #2f6feb);
+    outline-offset: 2px;
+  }
+
+  .return-nav-icon {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  @media (max-width: 400px) {
+    .return-nav-link {
+      padding: 8px 11px;
+    }
+
+    .return-nav-long {
+      display: none;
+    }
+  }
+
+  @media (min-width: 401px) {
+    .return-nav-short {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .return-nav-link {
+      transition: none;
+    }
+  }
+
+  @media print {
+    .return-nav {
+      display: none;
+    }
+  }
+</style>

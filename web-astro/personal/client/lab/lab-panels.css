@@ -1,0 +1,168 @@
+/* Agent lab: actions, rules, compare and evaluation panels, mobile layout. */
+/* Actions and rules */
+.lab-action,
+.lab-rule,
+.lab-arm {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--lab-radius);
+  background: var(--surface);
+}
+.lab-action--pending,
+.lab-rule--active {
+  border-color: var(--accent);
+}
+.lab-action-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.lab-action-meta {
+  margin: 4px 0;
+  font-size: 0.85rem;
+}
+.lab-action-preview {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--bg);
+}
+.lab-action-buttons {
+  display: flex;
+  gap: 8px;
+}
+.lab-rule-list {
+  margin: 6px 0;
+  padding-left: 20px;
+  font-size: 0.9rem;
+}
+
+/* Compare */
+.lab-compare-forms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+.lab-compare-runs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+.lab-compare-run {
+  min-width: 0;
+}
+.lab-diff-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.86rem;
+}
+.lab-compare-table {
+  max-width: 560px;
+}
+.lab-run--compact .lab-turn {
+  padding: 10px;
+}
+
+/* Evals */
+.lab-eval-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-bottom: 10px;
+}
+.lab-progress {
+  width: 90px;
+  vertical-align: middle;
+}
+.lab-arms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+.lab-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: var(--lab-radius);
+  border: 1px solid var(--line);
+}
+.lab-verdict--better {
+  border-color: var(--lab-ok);
+}
+.lab-verdict--worse {
+  border-color: var(--lab-bad);
+}
+.lab-dots {
+  white-space: nowrap;
+}
+.lab-dot {
+  display: inline-block;
+  width: 20px;
+  margin-right: 2px;
+  text-align: center;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 700;
+}
+.lab-dot--pass {
+  color: var(--lab-ok);
+}
+.lab-dot--fail {
+  color: var(--lab-bad);
+}
+.lab-task-id {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+.lab-trend {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+}
+.lab-trend-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.lab-trend-tick {
+  fill: var(--muted);
+  font-size: 10px;
+}
+.lab-trend-band {
+  fill: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.lab-trend-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.lab-trend-dot {
+  fill: var(--accent);
+}
+.lab-back {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+}
+.lab-history-q a {
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .lab-compare-forms,
+  .lab-compare-runs {
+    grid-template-columns: 1fr;
+  }
+  .lab-turn {
+    padding: 10px;
+  }
+  .lab-input--num {
+    width: 6em;
+  }
+}

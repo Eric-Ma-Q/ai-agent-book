@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>迁移之夜 · 33 个 Claude Code Hook 的一次完整值班</title>
+<style>
+:root {
+  --bg: #070b11;
+  --panel: #0b131c;
+  --card: #0d1620;
+  --line: #1a2a3a;
+  --line-soft: #14212e;
+  --text: #e7f1fa;
+  --body: #a7bacb;
+  --muted: #6a8098;
+  --dim: #4a6076;
+  --cyan: #35c4dd;
+  --violet: #a78bfa;
+  --rose: #f07178;
+  --emerald: #3ddc97;
+  --amber: #f4c15d;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(53, 196, 221, 0.13), transparent 62%),
+    radial-gradient(760px 480px at 88% 2%, rgba(167, 139, 250, 0.12), transparent 60%),
+    radial-gradient(700px 700px at 50% 110%, rgba(61, 220, 151, 0.05), transparent 60%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 20%, transparent 78%);
+}
+
+.wrap { width: min(1360px, 100%); margin: 0 auto; padding: 0 40px; }
+
+/* ---------- hero ---------- */
+.hero { padding: 92px 0 30px; }
+
+.eyebrow {
+  font: 600 11.5px/1 var(--mono);
+  letter-spacing: 0.22em;
+  color: var(--cyan);
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: "";
+  width: 26px; height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+}
+
+h1 {
+  margin: 22px 0 0;
+  font-size: clamp(34px, 3.6vw, 52px);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  font-weight: 750;
+}
+
+.grad {
+  background: linear-gradient(100deg, #35c4dd 0%, #7cc7ff 40%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lead {
+  margin: 22px 0 0;
+  max-width: 940px;
+  font-size: 15px;
+  line-height: 1.95;
+  color: var(--body);
+}
+.lead code {
+  font: 12.5px var(--mono);
+  color: #cfe6f6;
+  background: #101c28;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+.stats {
+  margin: 38px 0 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.stat {
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(18, 30, 42, 0.9), rgba(10, 17, 25, 0.9));
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.stat b {
+  display: block;
+  font: 700 30px/1.1 var(--mono);
+  letter-spacing: -0.03em;
+}
+.stat span { display: block; margin-top: 7px; font-size: 12px; color: var(--muted); }
+.stat:nth-child(1) b { color: var(--cyan); }
+.stat:nth-child(2) b { color: var(--violet); }
+.stat:nth-child(3) b { color: var(--rose); }
+.stat:nth-child(4) b { color: var(--emerald); }
+
+.jump { margin: 30px 0 0; display: flex; flex-wrap: wrap; gap: 9px; }
+.jump a {
+  font-size: 12.5px;
+  color: var(--body);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  background: #0b141d;
+  padding: 7px 13px;
+  border-radius: 999px;
+  transition: 0.16s ease;
+}
+.jump a:hover { color: #fff; border-color: #2f4c66; background: #10202e; transform: translateY(-1px); }
+
+/* ---------- sections ---------- */
+section { margin-top: 84px; }
+
+h2 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: -0.015em;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+h2 .n {
+  font: 600 12px var(--mono);
+  color: var(--cyan);
+  border: 1px solid rgba(53, 196, 221, 0.35);
+  background: rgba(53, 196, 221, 0.08);
+  border-radius: 999px;
+  padding: 3px 10px;
+  letter-spacing: 0.08em;
+}
+.sub { margin: 14px 0 0; max-width: 960px; color: var(--muted); font-size: 14px; line-height: 1.9; }
+.sub code { font: 12px var(--mono); color: #b6d3e6; }
+
+/* ---------- flow ---------- */
+.panel {
+  margin-top: 26px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #0a1219, #080f16);
+  padding: 18px;
+  overflow-x: auto;
+}
+.panel svg { display: block; width: 100%; min-width: 1080px; height: auto; }
+
+.legend { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 20px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; vertical-align: middle; }
+
+.principles {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.principle {
+  border: 1px solid var(--line-soft);
+  border-left: 2px solid #2c4a63;
+  background: rgba(12, 20, 29, 0.7);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--body);
+}
+.principle b { display: block; color: var(--text); font-size: 13px; margin-bottom: 5px; }
+
+/* ---------- phase sections ---------- */
+.phase { margin-top: 54px; }
+.phase-head { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 20px; }
+.phase-no {
+  font: 800 40px/1 var(--mono);
+  color: transparent;
+  -webkit-text-stroke: 1px #24435a;
+  letter-spacing: -0.04em;
+  padding-top: 2px;
+}
+.phase-head h3 { margin: 0; font-size: 19px; font-weight: 700; }
+.phase-head h3 em {
+  font: 400 12px var(--mono);
+  font-style: normal;
+  color: var(--dim);
+  margin-left: 10px;
+  letter-spacing: 0.04em;
+}
+.phase-head p { margin: 7px 0 0; font-size: 13px; color: var(--muted); max-width: 900px; line-height: 1.8; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+@media (max-width: 1180px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- cards ---------- */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  background: linear-gradient(180deg, #0e1822, #0b141d);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 17px 18px 16px 20px;
+  transition: 0.18s ease;
+  overflow: hidden;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent, #2a4358);
+}
+.card.cap-control { --accent: var(--rose); }
+.card.cap-inject { --accent: var(--cyan); }
+.card.cap-observe { --accent: #7188a0; }
+.card:hover { transform: translateY(-2px); border-color: #28455c; box-shadow: 0 18px 40px -26px rgba(0, 0, 0, 0.9); }
+
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ev { font: 600 14px var(--mono); color: #eaf5ff; letter-spacing: -0.01em; }
+
+.badge {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.badge.cap-control { color: #f59096; background: rgba(240, 113, 120, 0.09); border-color: rgba(240, 113, 120, 0.32); }
+.badge.cap-inject { color: #5fd3e6; background: rgba(53, 196, 221, 0.08); border-color: rgba(53, 196, 221, 0.3); }
+.badge.cap-observe { color: #93a7bb; background: rgba(147, 167, 187, 0.07); border-color: rgba(147, 167, 187, 0.25); }
+
+.meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 11px; }
+.kv { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.kv i { font-style: normal; color: var(--dim); letter-spacing: 0.05em; text-transform: uppercase; font-size: 10px; }
+.kv b { font: 500 11px var(--mono); color: #8fa9bf; white-space: nowrap; }
+
+.role { margin: 0; font-size: 12.8px; line-height: 1.85; color: var(--body); flex: 1 1 auto; }
+
+.code {
+  margin: 0;
+  font: 10.8px/1.65 var(--mono);
+  color: #86a9c2;
+  background: #060c12;
+  border: 1px solid #142230;
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.code::-webkit-scrollbar { height: 6px; }
+.code::-webkit-scrollbar-thumb { background: #1d3144; border-radius: 3px; }
+
+.detail {
+  margin: 0;
+  padding-top: 9px;
+  border-top: 1px dashed #17242f;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #6c86a0;
+}
+
+/* ---------- filters ---------- */
+.filters { margin: 20px 0 4px; display: flex; gap: 8px; flex-wrap: wrap; }
+.filters button {
+  font: 500 12px var(--mono);
+  color: var(--muted);
+  background: #0b141d;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 13px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.filters button:hover { color: var(--text); border-color: #2b4a63; }
+.filters button.on { color: #06121a; background: var(--cyan); border-color: var(--cyan); font-weight: 700; }
+.card.hide { display: none; }
+
+/* ---------- tables ---------- */
+.block { margin-top: 26px; }
+.block h4 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.block h4 span { font: 400 11px var(--mono); color: var(--dim); }
+
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+th {
+  text-align: left;
+  font: 600 10.5px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5e7891;
+  padding: 9px 12px;
+  border-bottom: 1px solid #1e3244;
+  background: #0a1219;
+  white-space: nowrap;
+}
+td { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); color: var(--body); vertical-align: top; }
+tr:hover td { background: #0a131b; }
+td code, td .mono-sm { font: 11.5px var(--mono); color: #a9c8de; }
+td .mono-sm { font-size: 11px; }
+.dim { color: var(--dim); font-size: 11px; }
+.num { font: 700 15px var(--mono); color: var(--cyan); }
+.ok { color: var(--emerald); font-size: 12px; white-space: nowrap; }
+.bad { color: #f59096; }
+
+.checks { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+.checks li {
+  position: relative;
+  padding: 11px 14px 11px 40px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: rgba(11, 19, 27, 0.7);
+  font-size: 12.5px;
+  color: var(--body);
+}
+.checks li::before {
+  content: "✓";
+  position: absolute;
+  left: 14px; top: 10px;
+  color: var(--emerald);
+  font-weight: 800;
+}
+.checks code { font: 11.5px var(--mono); color: #b9d6e9; }
+
+/* ---------- details ---------- */
+details {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #0a1219;
+  overflow: hidden;
+}
+summary {
+  cursor: pointer;
+  padding: 15px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #cfe3f2;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+summary::-webkit-details-marker { display: none; }
+summary::before {
+  content: "▸";
+  color: var(--cyan);
+  font-size: 11px;
+  transition: 0.2s;
+}
+details[open] summary::before { transform: rotate(90deg); }
+summary span { font: 400 11.5px var(--mono); color: var(--dim); margin-left: auto; }
+details pre {
+  margin: 0;
+  padding: 18px;
+  border-top: 1px solid var(--line-soft);
+  max-height: 560px;
+  overflow: auto;
+  font: 11px/1.7 var(--mono);
+  color: #8fb3ca;
+  background: #060c12;
+}
+
+/* ---------- footer ---------- */
+footer {
+  margin: 90px 0 0;
+  padding: 30px 0 60px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1.9;
+}
+footer b { color: var(--muted); font-weight: 600; }
+
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .principles { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; }
+  .wrap { padding: 0 22px; }
+}
+
+
+/* fine-tuning */
+.phase { scroll-margin-top: 24px; }
+footer { margin-top: 64px; }
+
+/* ---------- note tiles ---------- */
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px dashed #23384a;
+  border-radius: 14px;
+  background: rgba(10, 18, 26, 0.55);
+  padding: 18px 20px;
+  min-height: 160px;
+  justify-content: flex-start;
+}
+.note-tag {
+  font: 600 9.5px var(--mono);
+  letter-spacing: 0.22em;
+  color: #3f5b73;
+}
+.note b { font-size: 13.5px; color: #b9cddd; font-weight: 650; margin-top: 6px; }
+.note p { margin: 0; font-size: 12px; line-height: 1.85; color: #667f96; }
+
+/* ---------- flow interactivity ---------- */
+.flow-hint {
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.flow-hint b { color: #bcd7e9; font-weight: 600; }
+
+.chip { cursor: pointer; }
+.chip:focus { outline: none; }
+.chip-bg { transition: fill 0.15s ease, stroke 0.15s ease; }
+.chip:hover .chip-bg { fill: #162837; stroke: #33536f; }
+.chip:focus-visible .chip-bg { stroke: var(--cyan); stroke-width: 1.6; }
+.chip.active .chip-bg { fill: #122a3c; stroke: var(--cyan); }
+
+.card.flash { animation: flash 1.8s ease; }
+@keyframes flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(53, 196, 221, 0); }
+  25% { box-shadow: 0 0 0 2px rgba(53, 196, 221, 0.85), 0 0 46px -8px rgba(53, 196, 221, 0.55); }
+}
+
+/* ---------- drawer ---------- */
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(3, 7, 11, 0.52);
+  backdrop-filter: blur(1.5px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease;
+}
+.drawer-scrim.on { opacity: 1; pointer-events: auto; }
+
+.drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  z-index: 70;
+  width: min(524px, 94vw);
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #0d1a26, #0a1219);
+  border-left: 1px solid #1f3a4f;
+  box-shadow: -40px 0 90px -40px rgba(0, 0, 0, 0.95);
+  transform: translateX(103%);
+  transition: transform 0.3s cubic-bezier(0.22, 0.7, 0.2, 1);
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-head {
+  position: relative;
+  padding: 26px 26px 18px;
+  border-bottom: 1px solid #16283a;
+  background: linear-gradient(180deg, rgba(53, 196, 221, 0.05), transparent);
+}
+.d-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 10px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #4f6b84;
+}
+.d-captop {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+.d-captop.cap-control { color: #f59096; border-color: rgba(240, 113, 120, 0.4); background: rgba(240, 113, 120, 0.1); }
+.d-captop.cap-inject { color: #5fd3e6; border-color: rgba(53, 196, 221, 0.4); background: rgba(53, 196, 221, 0.1); }
+.d-captop.cap-observe { color: #9fb3c6; border-color: rgba(159, 179, 198, 0.3); background: rgba(159, 179, 198, 0.08); }
+
+.d-name { margin: 12px 0 8px; font-size: 23px; letter-spacing: -0.01em; font-weight: 700; }
+.d-event { font: 12px var(--mono); color: var(--cyan); letter-spacing: 0.01em; }
+
+.d-close {
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid #23384a;
+  background: #0c1722;
+  color: #8fa8bd;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.d-close:hover { color: #fff; border-color: #3a5d7a; background: #12232f; }
+
+.drawer-body { padding: 22px 26px 44px; overflow-y: auto; }
+.drawer-body::-webkit-scrollbar { width: 8px; }
+.drawer-body::-webkit-scrollbar-thumb { background: #1c3144; border-radius: 4px; }
+
+.d-when-box {
+  border: 1px solid #17293a;
+  border-left: 2px solid var(--cyan);
+  border-radius: 10px;
+  background: #0a1622;
+  padding: 12px 15px;
+}
+.d-when-box span {
+  font: 600 9.5px var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #4f728b;
+}
+.d-when-box p { margin: 7px 0 0; font-size: 13px; line-height: 1.8; color: #c4d9e8; }
+
+.d-facts {
+  margin: 18px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+}
+.d-facts div { border-top: 1px solid #16283a; padding-top: 8px; }
+.d-facts div:last-child { grid-column: 1 / -1; }
+.d-facts dt {
+  font: 600 9.5px var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #42607a;
+}
+.d-facts dd { margin: 5px 0 0; font-size: 12px; color: #a9c2d6; line-height: 1.6; }
+.d-facts code { font: 11.5px var(--mono); color: #8fb6cf; }
+
+.drawer-body h4 {
+  margin: 26px 0 9px;
+  font: 600 10px var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #46647c;
+}
+.d-text { margin: 0; font-size: 13px; line-height: 1.95; color: #a9bccd; }
+.d-code {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #142230;
+  border-radius: 9px;
+  background: #060c12;
+  font: 10.4px/1.7 var(--mono);
+  color: #8fb3ca;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.d-bound { margin: 0; font-size: 12px; line-height: 1.85; color: #7b93aa; }
+
+.d-locate {
+  margin-top: 28px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1px solid #24405a;
+  background: #0e1c29;
+  color: #bfe0f2;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.d-locate:hover { background: #12283a; border-color: var(--cyan); color: #fff; }
+
+@media (max-width: 700px) {
+  .drawer { width: 100%; }
+  .d-facts { grid-template-columns: 1fr; }
+}
+
+.d-idx { margin-left: auto; color: #3d5a73; letter-spacing: 0.06em; }
+.d-nav {
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.d-nav button {
+  flex: 1;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid #1e3447;
+  background: #0b1824;
+  color: #9db8cd;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.d-nav button:hover { border-color: #2f5570; color: #fff; background: #10212f; }
+.d-nav span { font: 11px var(--mono); color: #46647c; white-space: nowrap; }
+
+
+/* ---------- back link ---------- */
+.back-link {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 28px;
+  padding: 5px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: 0.15s ease;
+}
+.back-link:hover { color: #e7f1fa; border-color: #2f4c66; background: #0b141d; }
+
+
+/* ---------- narrow screens: let wide tables scroll instead of pushing the page ---------- */
+.tw { overflow-x: auto; }
+.tw table { min-width: 640px; }
+@media (max-width: 700px) {
+  .wrap { padding: 0 16px; }
+  .panel { padding: 10px; }
+}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <a class="back-link" href="index.html">← 页面总览</a>
+    <div class="eyebrow">Claude Code · Hooks · Full Coverage</div>
+    <h1>迁移之夜：<span class="grad">33 个 Hook</span><br>的一次完整值班</h1>
+    <p class="lead">
+      把 <code>acme/web-platform</code> 从 JavaScript 迁到 TypeScript strict：凌晨 2 点由 CI 拉起，
+      worktree 隔离，子代理按包并行，agent team 复核；中途上下文告急、模型限流降级、还有人试图改配置关掉监控。
+      33 个 hook 事件全部真实触发，一个不多、一个不少，且每个事件只使用它被允许的能力。
+    </p>
+
+    <div class="stats">
+      <div class="stat"><b>33</b><span>hook 事件，全量覆盖</span></div>
+      <div class="stat"><b>5</b><span>类执行器：command / http / mcp_tool / prompt / agent</span></div>
+      <div class="stat"><b>20</b><span>可干预的事件（阻止 / 改写 / 反馈 / 代替决策）</span></div>
+      <div class="stat"><b>6</b><span>个阶段，从 02:00 到 05:00</span></div>
+    </div>
+
+    <nav class="jump">
+      <a href="#flow">值班流程</a>
+      <a href="#hooks">33 个事件</a>
+      <a href="#audit">正确性自检</a>
+      <a href="#config">完整配置</a>
+    </nav>
+  </header>
+
+  <section id="flow">
+    <h2><span class="n">01</span>值班流程</h2>
+    <p class="sub">
+      横轴是时间，纵轴是同一阶段内的触发频率。颜色只表达一件事：<b>这个事件能不能改变 Claude Code 的走向</b>。
+      灰色的 9 个事件同样会执行脚本，只是它们的话没人听——这恰好是审计和告警最需要的性质。
+    </p>
+
+    <div class="panel">
+<svg viewBox="0 0 1316 594" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="33 个 hook 事件的执行流程，每个事件可点击查看详情">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3b4d66"/></marker><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#3f6f8f"/></marker></defs>
+<rect x="20" y="10" width="196" height="520" rx="14" fill="#0c141d" stroke="#1a2836"/>
+<text x="118.0" y="38" text-anchor="middle" fill="#e8f2fb" font-size="14" font-weight="700">1. 冷启动</text>
+<text x="118.0" y="58" text-anchor="middle" fill="#6b8299" font-size="11" font-family="ui-monospace,Menlo,monospace">02:00</text>
+<text x="118.0" y="76" text-anchor="middle" fill="#3f566d" font-size="10">2 events</text>
+<path d="M219,82 h12" stroke="#3b4d66" stroke-width="1.4" marker-end="url(#ar)"/>
+<g class="chip" data-event="Setup" tabindex="0" role="button" aria-label="Setup（初始化设置），点击查看详情">
+<title>初始化设置 · 点击查看</title>
+<rect class="chip-bg" x="28" y="96" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="28" y="103" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="38" y="120" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Setup</text>
+<circle cx="198" cy="115.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="SessionStart" tabindex="0" role="button" aria-label="SessionStart（会话开始），点击查看详情">
+<title>会话开始 · 点击查看</title>
+<rect class="chip-bg" x="28" y="143" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="28" y="150" width="3" height="24" rx="1.5" fill="#35c4dd" opacity="0.95"/>
+<text x="38" y="167" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">SessionStart</text>
+<circle cx="198" cy="162.0" r="3" fill="#35c4dd" opacity="0.9"/>
+</g>
+<rect x="236" y="10" width="196" height="520" rx="14" fill="#0c141d" stroke="#1a2836"/>
+<text x="334.0" y="38" text-anchor="middle" fill="#e8f2fb" font-size="14" font-weight="700">2. 入场</text>
+<text x="334.0" y="58" text-anchor="middle" fill="#6b8299" font-size="11" font-family="ui-monospace,Menlo,monospace">02:01</text>
+<text x="334.0" y="76" text-anchor="middle" fill="#3f566d" font-size="10">3 events</text>
+<path d="M435,82 h12" stroke="#3b4d66" stroke-width="1.4" marker-end="url(#ar)"/>
+<g class="chip" data-event="UserPromptSubmit" tabindex="0" role="button" aria-label="UserPromptSubmit（提交提示词），点击查看详情">
+<title>提交提示词 · 点击查看</title>
+<rect class="chip-bg" x="244" y="96" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="244" y="103" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="254" y="120" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">UserPromptSubmit</text>
+<circle cx="414" cy="115.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="UserPromptExpansion" tabindex="0" role="button" aria-label="UserPromptExpansion（命令展开），点击查看详情">
+<title>命令展开 · 点击查看</title>
+<rect class="chip-bg" x="244" y="143" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="244" y="150" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="254" y="167" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">UserPromptExpansion</text>
+<circle cx="414" cy="162.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="MessageDisplay" tabindex="0" role="button" aria-label="MessageDisplay（消息显示），点击查看详情">
+<title>消息显示 · 点击查看</title>
+<rect class="chip-bg" x="244" y="190" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="244" y="197" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="254" y="214" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">MessageDisplay</text>
+<circle cx="414" cy="209.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<rect x="452" y="10" width="196" height="520" rx="14" fill="#0c141d" stroke="#1a2836"/>
+<text x="550.0" y="38" text-anchor="middle" fill="#e8f2fb" font-size="14" font-weight="700">3. 工具循环</text>
+<text x="550.0" y="58" text-anchor="middle" fill="#6b8299" font-size="11" font-family="ui-monospace,Menlo,monospace">02:02</text>
+<text x="550.0" y="76" text-anchor="middle" fill="#3f566d" font-size="10">6 events</text>
+<path d="M651,82 h12" stroke="#3b4d66" stroke-width="1.4" marker-end="url(#ar)"/>
+<g class="chip" data-event="PreToolUse" tabindex="0" role="button" aria-label="PreToolUse（工具调用前），点击查看详情">
+<title>工具调用前 · 点击查看</title>
+<rect class="chip-bg" x="460" y="96" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="460" y="103" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="470" y="120" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PreToolUse</text>
+<circle cx="630" cy="115.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PermissionRequest" tabindex="0" role="button" aria-label="PermissionRequest（权限请求），点击查看详情">
+<title>权限请求 · 点击查看</title>
+<rect class="chip-bg" x="460" y="143" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="460" y="150" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="470" y="167" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PermissionRequest</text>
+<circle cx="630" cy="162.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PermissionDenied" tabindex="0" role="button" aria-label="PermissionDenied（权限被拒），点击查看详情">
+<title>权限被拒 · 点击查看</title>
+<rect class="chip-bg" x="460" y="190" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="460" y="197" width="3" height="24" rx="1.5" fill="#35c4dd" opacity="0.95"/>
+<text x="470" y="214" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PermissionDenied</text>
+<circle cx="630" cy="209.0" r="3" fill="#35c4dd" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PostToolUse" tabindex="0" role="button" aria-label="PostToolUse（工具调用后），点击查看详情">
+<title>工具调用后 · 点击查看</title>
+<rect class="chip-bg" x="460" y="237" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="460" y="244" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="470" y="261" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PostToolUse</text>
+<circle cx="630" cy="256.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PostToolUseFailure" tabindex="0" role="button" aria-label="PostToolUseFailure（工具失败后），点击查看详情">
+<title>工具失败后 · 点击查看</title>
+<rect class="chip-bg" x="460" y="284" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="460" y="291" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="470" y="308" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PostToolUseFailure</text>
+<circle cx="630" cy="303.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PostToolBatch" tabindex="0" role="button" aria-label="PostToolBatch（批次完成后），点击查看详情">
+<title>批次完成后 · 点击查看</title>
+<rect class="chip-bg" x="460" y="331" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="460" y="338" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="470" y="355" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PostToolBatch</text>
+<circle cx="630" cy="350.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<rect x="668" y="10" width="196" height="520" rx="14" fill="#0c141d" stroke="#1a2836"/>
+<text x="766.0" y="38" text-anchor="middle" fill="#e8f2fb" font-size="14" font-weight="700">4. 并发面</text>
+<text x="766.0" y="58" text-anchor="middle" fill="#6b8299" font-size="11" font-family="ui-monospace,Menlo,monospace">02:05</text>
+<text x="766.0" y="76" text-anchor="middle" fill="#3f566d" font-size="10">9 events</text>
+<path d="M867,82 h12" stroke="#3b4d66" stroke-width="1.4" marker-end="url(#ar)"/>
+<g class="chip" data-event="SubagentStart" tabindex="0" role="button" aria-label="SubagentStart（子代理启动），点击查看详情">
+<title>子代理启动 · 点击查看</title>
+<rect class="chip-bg" x="676" y="96" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="103" width="3" height="24" rx="1.5" fill="#35c4dd" opacity="0.95"/>
+<text x="686" y="120" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">SubagentStart</text>
+<circle cx="846" cy="115.0" r="3" fill="#35c4dd" opacity="0.9"/>
+</g>
+<g class="chip" data-event="SubagentStop" tabindex="0" role="button" aria-label="SubagentStop（子代理结束），点击查看详情">
+<title>子代理结束 · 点击查看</title>
+<rect class="chip-bg" x="676" y="143" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="150" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="167" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">SubagentStop</text>
+<circle cx="846" cy="162.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="TaskCreated" tabindex="0" role="button" aria-label="TaskCreated（任务创建），点击查看详情">
+<title>任务创建 · 点击查看</title>
+<rect class="chip-bg" x="676" y="190" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="197" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="214" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">TaskCreated</text>
+<circle cx="846" cy="209.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="TaskCompleted" tabindex="0" role="button" aria-label="TaskCompleted（任务完成），点击查看详情">
+<title>任务完成 · 点击查看</title>
+<rect class="chip-bg" x="676" y="237" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="244" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="261" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">TaskCompleted</text>
+<circle cx="846" cy="256.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="TeammateIdle" tabindex="0" role="button" aria-label="TeammateIdle（队友空闲），点击查看详情">
+<title>队友空闲 · 点击查看</title>
+<rect class="chip-bg" x="676" y="284" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="291" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="308" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">TeammateIdle</text>
+<circle cx="846" cy="303.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="WorktreeCreate" tabindex="0" role="button" aria-label="WorktreeCreate（工作树创建），点击查看详情">
+<title>工作树创建 · 点击查看</title>
+<rect class="chip-bg" x="676" y="331" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="338" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="355" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">WorktreeCreate</text>
+<circle cx="846" cy="350.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="WorktreeRemove" tabindex="0" role="button" aria-label="WorktreeRemove（工作树移除），点击查看详情">
+<title>工作树移除 · 点击查看</title>
+<rect class="chip-bg" x="676" y="378" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="385" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="402" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">WorktreeRemove</text>
+<circle cx="846" cy="397.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="Elicitation" tabindex="0" role="button" aria-label="Elicitation（MCP 表单请求），点击查看详情">
+<title>MCP 表单请求 · 点击查看</title>
+<rect class="chip-bg" x="676" y="425" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="432" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="449" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Elicitation</text>
+<circle cx="846" cy="444.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="ElicitationResult" tabindex="0" role="button" aria-label="ElicitationResult（表单应答），点击查看详情">
+<title>表单应答 · 点击查看</title>
+<rect class="chip-bg" x="676" y="472" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="676" y="479" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="686" y="496" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">ElicitationResult</text>
+<circle cx="846" cy="491.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<rect x="884" y="10" width="196" height="520" rx="14" fill="#0c141d" stroke="#1a2836"/>
+<text x="982.0" y="38" text-anchor="middle" fill="#e8f2fb" font-size="14" font-weight="700">5. 收口</text>
+<text x="982.0" y="58" text-anchor="middle" fill="#6b8299" font-size="11" font-family="ui-monospace,Menlo,monospace">04:30</text>
+<text x="982.0" y="76" text-anchor="middle" fill="#3f566d" font-size="10">6 events</text>
+<path d="M1083,82 h12" stroke="#3b4d66" stroke-width="1.4" marker-end="url(#ar)"/>
+<g class="chip" data-event="Stop" tabindex="0" role="button" aria-label="Stop（回合结束），点击查看详情">
+<title>回合结束 · 点击查看</title>
+<rect class="chip-bg" x="892" y="96" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="892" y="103" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="902" y="120" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Stop</text>
+<circle cx="1062" cy="115.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="StopFailure" tabindex="0" role="button" aria-label="StopFailure（回合异常结束），点击查看详情">
+<title>回合异常结束 · 点击查看</title>
+<rect class="chip-bg" x="892" y="143" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="892" y="150" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="902" y="167" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">StopFailure</text>
+<circle cx="1062" cy="162.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PreCompact" tabindex="0" role="button" aria-label="PreCompact（压缩前），点击查看详情">
+<title>压缩前 · 点击查看</title>
+<rect class="chip-bg" x="892" y="190" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="892" y="197" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="902" y="214" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PreCompact</text>
+<circle cx="1062" cy="209.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PostCompact" tabindex="0" role="button" aria-label="PostCompact（压缩后），点击查看详情">
+<title>压缩后 · 点击查看</title>
+<rect class="chip-bg" x="892" y="237" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="892" y="244" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="902" y="261" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PostCompact</text>
+<circle cx="1062" cy="256.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PreModelSwitch" tabindex="0" role="button" aria-label="PreModelSwitch（模型切换前），点击查看详情">
+<title>模型切换前 · 点击查看</title>
+<rect class="chip-bg" x="892" y="284" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="892" y="291" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="902" y="308" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PreModelSwitch</text>
+<circle cx="1062" cy="303.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="PostModelSwitch" tabindex="0" role="button" aria-label="PostModelSwitch（模型切换后），点击查看详情">
+<title>模型切换后 · 点击查看</title>
+<rect class="chip-bg" x="892" y="331" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="892" y="338" width="3" height="24" rx="1.5" fill="#35c4dd" opacity="0.95"/>
+<text x="902" y="355" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">PostModelSwitch</text>
+<circle cx="1062" cy="350.0" r="3" fill="#35c4dd" opacity="0.9"/>
+</g>
+<rect x="1100" y="10" width="196" height="520" rx="14" fill="#0c141d" stroke="#1a2836"/>
+<text x="1198.0" y="38" text-anchor="middle" fill="#e8f2fb" font-size="14" font-weight="700">6. 退场</text>
+<text x="1198.0" y="58" text-anchor="middle" fill="#6b8299" font-size="11" font-family="ui-monospace,Menlo,monospace">05:00</text>
+<text x="1198.0" y="76" text-anchor="middle" fill="#3f566d" font-size="10">7 events</text>
+<g class="chip" data-event="Notification" tabindex="0" role="button" aria-label="Notification（系统通知），点击查看详情">
+<title>系统通知 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="96" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="103" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="1118" y="120" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Notification</text>
+<circle cx="1278" cy="115.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="ConfigChange" tabindex="0" role="button" aria-label="ConfigChange（配置变更），点击查看详情">
+<title>配置变更 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="143" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="150" width="3" height="24" rx="1.5" fill="#f07178" opacity="0.95"/>
+<text x="1118" y="167" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">ConfigChange</text>
+<circle cx="1278" cy="162.0" r="3" fill="#f07178" opacity="0.9"/>
+</g>
+<g class="chip" data-event="InstructionsLoaded" tabindex="0" role="button" aria-label="InstructionsLoaded（指令载入），点击查看详情">
+<title>指令载入 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="190" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="197" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="1118" y="214" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">InstructionsLoaded</text>
+<circle cx="1278" cy="209.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="CwdChanged" tabindex="0" role="button" aria-label="CwdChanged（目录切换），点击查看详情">
+<title>目录切换 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="237" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="244" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="1118" y="261" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">CwdChanged</text>
+<circle cx="1278" cy="256.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="DirectoryAdded" tabindex="0" role="button" aria-label="DirectoryAdded（目录加入），点击查看详情">
+<title>目录加入 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="284" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="291" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="1118" y="308" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">DirectoryAdded</text>
+<circle cx="1278" cy="303.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="FileChanged" tabindex="0" role="button" aria-label="FileChanged（文件变化），点击查看详情">
+<title>文件变化 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="331" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="338" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="1118" y="355" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">FileChanged</text>
+<circle cx="1278" cy="350.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<g class="chip" data-event="SessionEnd" tabindex="0" role="button" aria-label="SessionEnd（会话结束），点击查看详情">
+<title>会话结束 · 点击查看</title>
+<rect class="chip-bg" x="1108" y="378" width="180" height="38" rx="8" fill="#101b26" stroke="#1e3143"/>
+<rect x="1108" y="385" width="3" height="24" rx="1.5" fill="#7e91a8" opacity="0.95"/>
+<text x="1118" y="402" fill="#d7e7f4" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">SessionEnd</text>
+<circle cx="1278" cy="397.0" r="3" fill="#7e91a8" opacity="0.9"/>
+</g>
+<path d="M982.0,528 V546 H334.0 V538" fill="none" stroke="#3f6f8f" stroke-width="1.4" stroke-dasharray="5 5" marker-end="url(#ar2)"/>
+<text x="658.0" y="572" text-anchor="middle" fill="#5f8aa8" font-size="11">每个 turn 回到输入侧，直到 Stop 放行</text>
+</svg>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#f07178"></i>可干预（阻止 / 改写 / 反馈 / 代替决策）— 20 个</span>
+      <span><i style="background:#35c4dd"></i>仅注入或提示（不能阻止）— 4 个</span>
+      <span><i style="background:#7e91a8"></i>仅观测（只能产生副作用）— 9 个</span>
+    </div>
+
+    <p class="flow-hint"><b>点击流程图上任意事件</b>，右侧抽屉会展开它的中文名、触发时机、执行器类型和实际配置片段。打开后可用「上一个 / 下一个」沿生命周期连续翻看全部 33 个；支持 Tab 聚焦 + 回车打开，Esc 关闭，也可跳到下方对应卡片。</p>
+
+    <div class="principles">
+      <div class="principle">
+        <b>能不能拦，由事件决定，不由脚本决定</b>
+        在 Notification 里写 <code>decision: "block"</code> 不会报错，只会被静默丢弃。选错事件比写错逻辑更常见。
+      </div>
+      <div class="principle">
+        <b>事后事件天生没有「拦截」这回事</b>
+        FileChanged 触发时文件已经改完，DirectoryAdded 触发时目录已经加好。它们不是被削弱，是本来就没有可阻止的对象。
+      </div>
+      <div class="principle">
+        <b>启动阶段一律用 command</b>
+        SessionStart / Setup 触发时 MCP client 尚未就绪，mcp_tool 类型的 hook 会被直接跳过，只留一条 debug log。
+      </div>
+    </div>
+  </section>
+
+  <section id="hooks">
+    <h2><span class="n">02</span>33 个事件逐个落地</h2>
+    <p class="sub">
+      每张卡片都是同一套结构：事件名、matcher、执行器类型、这一晚它具体干什么、真实可用的配置片段，
+      以及最容易踩的那条边界。卡片左侧的色条与流程图一致。
+    </p>
+
+    <div class="filters">
+      <button class="on" data-cap="all">全部 33</button>
+      <button data-cap="control">可干预 20</button>
+      <button data-cap="inject">仅注入 4</button>
+      <button data-cap="observe">仅观测 9</button>
+    </div>
+
+
+  <section class="phase" id="phase1">
+    <header class="phase-head">
+      <span class="phase-no">01</span>
+      <div>
+        <h3>冷启动 <em>02:00</em></h3>
+        <p>CI 拉起任务，把工具链和上次进度准备好。两个事件都发生在「Claude 还没开始思考」之前。</p>
+      </div>
+    </header>
+    <div class="grid">
+
+      <article class="card cap-observe" data-cap="observe" data-event="Setup">
+        <div class="card-top">
+          <code class="ev">Setup</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>init</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">02:00，CI 用 claude -p --init 拉起任务。这个 hook 装 jscodeshift / ts-morph、预热 pnpm store，并往 CLAUDE_ENV_FILE 写 MIGRATION_RUN_ID。它不能阻断启动，任何退出码都会继续，所以脚本必须自己幂等。</p>
+        <pre class="code">{"matcher": "init", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/setup.mjs",
+  "timeout": 300
+}]}</pre>
+        <p class="detail">无决策权 · 退出码被忽略 · 只能 command（mcp_tool 在 Setup 恒被跳过）</p>
+      </article>
+
+      <article class="card cap-inject" data-cap="inject" data-event="SessionStart">
+        <div class="card-top">
+          <code class="ev">SessionStart</code>
+          <span class="badge cap-inject">仅注入</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>startup|resume</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">resume 上一次中断的迁移：把「还剩 5 个包 / 上次失败在 packages/api」注入上下文，并用 watchPaths 注册 .envrc，让后续 FileChanged 有东西可看。只能加信息，不能改启动流程。</p>
+        <pre class="code">{"matcher": "startup|resume", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/resume.mjs"
+}]}</pre>
+        <p class="detail">仅 additionalContext · 不支持 http/prompt/agent；启动时 MCP 未就绪，故不用 mcp_tool</p>
+      </article>
+
+      <aside class="note">
+        <span class="note-tag">NOTE</span>
+        <b>为什么这里只有两个事件</b>
+        <p>在「Claude 读到第一句话」之前能干预的只有 Setup 和 SessionStart。InstructionsLoaded 其实也在会话启动时触发，但它只做异步审计、还会随懒加载反复出现，所以归到了退场阶段。</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="phase" id="phase2">
+    <header class="phase-head">
+      <span class="phase-no">02</span>
+      <div>
+        <h3>入场 <em>02:01</em></h3>
+        <p>一次性输入面：prompt 校验、斜杠命令展开、流式输出脱敏。</p>
+      </div>
+    </header>
+    <div class="grid">
+
+      <article class="card cap-control" data-cap="control" data-event="UserPromptSubmit">
+        <div class="card-top">
+          <code class="ev">UserPromptSubmit</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">CI 送进来的 prompt 必须带 SPEC- 编号和分支名，否则 exit 2 打回，避免半夜跑错分支。通过后顺手注入当天的 git status 摘要。注意它只能追加上下文，不能替换用户原文。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/require-spec.mjs"
+}]}</pre>
+        <p class="detail">decision:"block" + hookSpecificOutput.additionalContext · 无 matcher</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="UserPromptExpansion">
+        <div class="card-top">
+          <code class="ev">UserPromptExpansion</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>migrate|release</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">有人手打 /migrate 时展开成完整任务书并追加团队 checklist；手打 /release 则要求存在 approval 文件，否则拦下。这条专门补 PreToolUse 管不到的「直接敲斜杠命令」路径。</p>
+        <pre class="code">{"matcher": "migrate|release", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/expand-guard.mjs"
+}]}</pre>
+        <p class="detail">按 command_name 匹配 · 可 block 展开 + 注入上下文</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="MessageDisplay">
+        <div class="card-top">
+          <code class="ev">MessageDisplay</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">迁移日志里混进内部域名和临时 token，流式渲染时逐批打码成 [REDACTED]。只改屏幕显示，transcript 和模型看到的仍是原文——所以它不能当脱敏的唯一防线。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/redact-display.mjs",
+  "timeout": 2
+}]}</pre>
+        <p class="detail">仅 displayContent · 无 matcher · 默认超时 10s，这里压到 2s 免得卡住渲染</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="phase" id="phase3">
+    <header class="phase-head">
+      <span class="phase-no">03</span>
+      <div>
+        <h3>工具循环 <em>02:02</em></h3>
+        <p>整晚最热的一段，每个工具调用都会经过。硬闸门、权限代理、失败反馈、批量检查都在这里。</p>
+      </div>
+    </header>
+    <div class="grid">
+
+      <article class="card cap-control" data-cap="control" data-event="PreToolUse">
+        <div class="card-top">
+          <code class="ev">PreToolUse</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>Bash|Edit|Write</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">两个 handler：guard.mjs 拦 rm -rf、git push、改 package-lock.json；normalize-path.mjs 用 updatedInput 把相对路径补成绝对路径再放行。这是整晚最关键的硬闸门（PermissionRequest 也能拒，但管的是权限层）。</p>
+        <pre class="code">{"matcher": "Bash|Edit|Write", "hooks": [
+  {"type": "command",
+   "command": "node .claude/hooks/guard.mjs"},
+  {"type": "command",
+   "command": "node .claude/hooks/normalize-path.mjs",
+   "if": "Edit(**/*.ts)"}
+]}</pre>
+        <p class="detail">hookSpecificOutput.permissionDecision allow|deny|ask|defer + updatedInput · if 只在工具事件生效</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="PermissionRequest">
+        <div class="card-top">
+          <code class="ev">PermissionRequest</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>Bash</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">夜里没人点确认。这个 hook 代替人决策：只读白名单（git status、ls、cat 日志）直接 allow，git push / npm publish 一律 deny 并写明原因。</p>
+        <pre class="code">{"matcher": "Bash", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/ci-permissions.mjs"
+}]}</pre>
+        <p class="detail">hookSpecificOutput.decision.behavior allow|deny（可带 updatedInput）· 不支持 agent 类型</p>
+      </article>
+
+      <article class="card cap-inject" data-cap="inject" data-event="PermissionDenied">
+        <div class="card-top">
+          <code class="ev">PermissionDenied</code>
+          <span class="badge cap-inject">仅注入</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>Read|Glob|Grep</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">auto 模式偶尔把只读命令也拒了。这个 hook 回 retry: true，告诉模型「这个你可以重试」，省掉一轮人工干预。它不能撤销拒绝，只是给个提示。</p>
+        <pre class="code">{"matcher": "Read|Glob|Grep", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/retry-readonly.mjs"
+}]}</pre>
+        <p class="detail">仅 hookSpecificOutput.retry · 只在 auto 模式触发 · classifier 无 verdict 时 retry 被忽略</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="PostToolUse">
+        <div class="card-top">
+          <code class="ev">PostToolUse</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>Edit|Write</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">每次改完 .ts 文件立刻跑 tsc --noEmit 单文件检查，报错就 block——工具已经跑完拦不住，这个 block 只是把编译错误作为 reason 附在结果旁给 Claude 看。同时用 updatedToolOutput 裁掉输出里的绝对路径。</p>
+        <pre class="code">{"matcher": "Edit|Write", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/tsc-check.mjs"
+}]}</pre>
+        <p class="detail">decision:"block" 只附 reason，不阻止已执行的工具 · hookSpecificOutput.updatedToolOutput · 失败走 PostToolUseFailure</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="PostToolUseFailure">
+        <div class="card-top">
+          <code class="ev">PostToolUseFailure</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>Bash|Edit</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">工具抛错（OOM、超时、MCP error）时记录到 failures.jsonl，并给出纠正提示。注意权限拒绝和参数校验失败不会走到这里，别指望它兜底。</p>
+        <pre class="code">{"matcher": "Bash|Edit", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/on-failure.mjs"
+}]}</pre>
+        <p class="detail">decision:"block" 只附反馈（工具已失败） · hookSpecificOutput.additionalContext · 不覆盖权限拒绝与校验失败</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="PostToolBatch">
+        <div class="card-top">
+          <code class="ev">PostToolBatch</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">并行改了 12 个文件后只触发一次：统一跑 eslint --fix，把「这批改了哪些文件、还剩几个错」汇总注入。用 PostToolUse 会触发 12 次，既慢又互相打架。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/batch-eslint.mjs",
+  "timeout": 120
+}]}</pre>
+        <p class="detail">无 matcher · 输入带 tool_calls 数组 · 可 decision:block 中断下一步</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="phase" id="phase4">
+    <header class="phase-head">
+      <span class="phase-no">04</span>
+      <div>
+        <h3>并发面 <em>02:05</em></h3>
+        <p>子代理、agent team、任务、worktree、MCP 表单——33 个里最容易被忽略的一层。</p>
+      </div>
+    </header>
+    <div class="grid">
+
+      <article class="card cap-inject" data-cap="inject" data-event="SubagentStart">
+        <div class="card-top">
+          <code class="ev">SubagentStart</code>
+          <span class="badge cap-inject">仅注入</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>migrator</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">每个包派一个 migrator 子代理，注入该包的规范、依赖边界、以及「不许改 __snapshots__」。不能阻止子代理被创建，只能影响它一开始看到什么。</p>
+        <pre class="code">{"matcher": "migrator", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/subagent-brief.mjs"
+}]}</pre>
+        <p class="detail">不能 block · 仅 additionalContext · 按 agent type 匹配</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="SubagentStop">
+        <div class="card-top">
+          <code class="ev">SubagentStop</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>migrator</b></span>
+          <span class="kv"><i>type</i><b>agent</b></span>
+        </div>
+        <p class="role">子代理说「迁移完成」时，起一个核查 agent 去读 diff 和测试报告：没跑单测就打回让它继续，迁移不完整也打回。决策格式与 Stop 相同。</p>
+        <pre class="code">{"matcher": "migrator", "hooks": [{
+  "type": "agent",
+  "prompt": "核对本次迁移：是否覆盖全部导出、单测是否通过、有无遗留 .js。$ARGUMENTS",
+  "timeout": 120
+}]}</pre>
+        <p class="detail">可 block 让子代理继续 · 支持 agent 类型 · 输入含 last_assistant_message</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="TaskCreated">
+        <div class="card-top">
+          <code class="ev">TaskCreated</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">任务标题必须形如 migrate/<pkg>，否则直接取消建任务并返回原因，避免半夜冒出一堆叫「fix stuff」的条目。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/task-naming.mjs"
+}]}</pre>
+        <p class="detail">exit 2 或 decision:block 取消任务 · 无 matcher · continue:false 被忽略</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="TaskCompleted">
+        <div class="card-top">
+          <code class="ev">TaskCompleted</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>prompt</b></span>
+        </div>
+        <p class="role">标记完成前用一次模型判断：单测过了吗？CHANGELOG 加了吗？没满足就 block，任务回到进行中。用 prompt 而不是脚本，是因为「是否完成」需要读上下文判断。</p>
+        <pre class="code">{"hooks": [{
+  "type": "prompt",
+  "prompt": "只有单测通过且 CHANGELOG 有对应条目时才允许完成。$ARGUMENTS"
+}]}</pre>
+        <p class="detail">可 block 完成 · 支持 prompt 类型 · TaskUpdate 触发时 continue:false 会被忽略</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="TeammateIdle">
+        <div class="card-top">
+          <code class="ev">TeammateIdle</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">reviewer 队友想收工？先看 review.md 在不在、结论填没填。没有就 exit 2 把人留住，防止「团队里没人真正看代码」。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/reviewer-gate.mjs"
+}]}</pre>
+        <p class="detail">exit 2 阻止 idle · 无 matcher · continue:false 可让队友彻底停下</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="WorktreeCreate">
+        <div class="card-top">
+          <code class="ev">WorktreeCreate</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">每个包一个隔离 worktree：从模板 clone、pnpm install --offline、拷一份 .env.local，最后把路径打到 stdout。打印什么路径就用什么，等于接管了默认 git 行为。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/wt-create.mjs",
+  "timeout": 180
+}]}</pre>
+        <p class="detail">stdout 输出路径（或 hookSpecificOutput.worktreePath）· 非零退出即创建失败</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="WorktreeRemove">
+        <div class="card-top">
+          <code class="ev">WorktreeRemove</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">收尾删 worktree 前检查有没有未提交改动：有就 exit 1 拒绝删除，把现场留给早上的同事。JSON 输出在这里会被丢弃，只有退出码算数。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/wt-keep.mjs"
+}]}</pre>
+        <p class="detail">非零退出否决删除 · 无 matcher · JSON 输出被丢弃</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="Elicitation">
+        <div class="card-top">
+          <code class="ev">Elicitation</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>design-review</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">MCP 的 design-review server 弹出「确认删除旧 .js」表单。夜里没人填，这个 hook 按 dry-run 结果自动 accept——出现风险项则 decline，整个弹窗被跳过。</p>
+        <pre class="code">{"matcher": "design-review", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/form-answer.mjs",
+  "timeout": 5
+}]}</pre>
+        <p class="detail">action accept|decline|cancel + content · 按 MCP server 名匹配 · 仅 exit 0 时生效</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="ElicitationResult">
+        <div class="card-top">
+          <code class="ev">ElicitationResult</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>design-review</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">白天有人手动跑时才会走到：校验他填的表单，发现 drop table / 删备份目录之类的选项就 block——把这次回答改成 decline 回给 server，而不是让它生效。注意——hook 自动回答的那条路径不会触发本事件。</p>
+        <pre class="code">{"matcher": "design-review", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/form-check.mjs"
+}]}</pre>
+        <p class="detail">可观察/改写/block 回答 · 按 MCP server 名匹配 · 自动回答路径不经过这里</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="phase" id="phase5">
+    <header class="phase-head">
+      <span class="phase-no">05</span>
+      <div>
+        <h3>收口 <em>04:30</em></h3>
+        <p>决定「能不能停」和「用哪个模型收尾」，以及上下文压缩前后的两个切入点。</p>
+      </div>
+    </header>
+    <div class="grid">
+
+      <article class="card cap-control" data-cap="control" data-event="Stop">
+        <div class="card-top">
+          <code class="ev">Stop</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">主代理想下班：检查 12 个包的迁移状态和测试结果，还有红的就 block 继续干，并用 additionalContext 给一条「非错误」的提示（比如「剩最后一个包，优先修类型」）。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/stop-gate.mjs",
+  "timeout": 60
+}]}</pre>
+        <p class="detail">decision:"block" + hookSpecificOutput.additionalContext · 无 matcher · 用户中断不触发</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="StopFailure">
+        <div class="card-top">
+          <code class="ev">StopFailure</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>rate_limit|overloaded</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">凌晨 opus 限流，这一轮直接结束。hook 只做两件事：打告警、写下「下轮降级」标记。它没有决策权，改不了错误，也救不回这一轮。</p>
+        <pre class="code">{"matcher": "rate_limit|overloaded", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/on-api-error.mjs"
+}]}</pre>
+        <p class="detail">无决策权 · 除 terminalSequence 外 JSON 全被丢弃 · 按 error 类型匹配</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="PreCompact">
+        <div class="card-top">
+          <code class="ev">PreCompact</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>auto</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">上下文快满了。先把已完成清单、未决问题、worktree 映射写成 checkpoint 落到磁盘，然后 exit 0——故意不 block，夜里压缩失败会把整晚任务卡死。</p>
+        <pre class="code">{"matcher": "auto", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/checkpoint.mjs"
+}]}</pre>
+        <p class="detail">本可 decision:"block" 阻止压缩，此处刻意不用 · 按 manual|auto 匹配</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="PostCompact">
+        <div class="card-top">
+          <code class="ev">PostCompact</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>auto</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">压缩完成后把摘要写进 metrics.jsonl 和值班 dashboard，方便早上复盘「模型记住了什么」。无决策权，改不了压缩结果。</p>
+        <pre class="code">{"matcher": "auto", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/compact-metrics.mjs"
+}]}</pre>
+        <p class="detail">无决策权 · systemMessage 与 continue 被丢弃 · 只能做事后处理</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="PreModelSwitch">
+        <div class="card-top">
+          <code class="ev">PreModelSwitch</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>claude-sonnet.*</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">预算紧张，客户端请求切到 sonnet。策略：剩余包数 ≤3 时 allow，否则 deny 保住 opus 的迁移质量。这是少数能直接否决模型切换的地方。</p>
+        <pre class="code">{"matcher": "claude-sonnet.*", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/model-budget.mjs"
+}]}</pre>
+        <p class="detail">permissionDecision allow|deny|ask 或 decision:block · 按目标模型名匹配</p>
+      </article>
+
+      <article class="card cap-inject" data-cap="inject" data-event="PostModelSwitch">
+        <div class="card-top">
+          <code class="ev">PostModelSwitch</code>
+          <span class="badge cap-inject">仅注入</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>claude-sonnet.*</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">真切到 sonnet 之后注入「省钱模式」提示：先跑 codemod，再逐段人工复核。已经换完了，拦不住，只能补充指令。</p>
+        <pre class="code">{"matcher": "claude-sonnet.*", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/model-notes.mjs"
+}]}</pre>
+        <p class="detail">仅 additionalContext（stdout 纯文本也会作为上下文）· 无法回滚</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="phase" id="phase6">
+    <header class="phase-head">
+      <span class="phase-no">06</span>
+      <div>
+        <h3>退场 <em>05:00</em></h3>
+        <p>环境变化、配置审计、通知与归档。大多数只观测，但 CwdChanged 能改变后续环境。</p>
+      </div>
+    </header>
+    <div class="grid">
+
+      <article class="card cap-observe" data-cap="observe" data-event="Notification">
+        <div class="card-top">
+          <code class="ev">Notification</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>permission_prompt|idle_prompt</b></span>
+          <span class="kv"><i>type</i><b>http</b></span>
+        </div>
+        <p class="role">权限弹窗晾了 6 秒没人管，或以 idle 60 秒：POST 到飞书机器人提醒值班同学。它不能改通知内容、也不能让通知别弹，就是纯转发。</p>
+        <pre class="code">{"matcher": "permission_prompt|idle_prompt", "hooks": [{
+  "type": "http",
+  "url": "https://ops.internal/hooks/notify",
+  "timeout": 5
+}]}</pre>
+        <p class="detail">无决策权 · systemMessage/continue 被丢弃 · terminalSequence 仍有效</p>
+      </article>
+
+      <article class="card cap-control" data-cap="control" data-event="ConfigChange">
+        <div class="card-top">
+          <code class="ev">ConfigChange</code>
+          <span class="badge cap-control">可干预</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>project_settings|local_settings|skills</b></span>
+          <span class="kv"><i>type</i><b>http</b></span>
+        </div>
+        <p class="role">有人（或模型自己）想改 .claude/settings.json 关掉 hooks。这个 hook 把变更 POST 给策略服务，未审批就 block。这是防止「AI 把监控关掉」的关键一环。</p>
+        <pre class="code">{"matcher": "project_settings|local_settings|skills", "hooks": [{
+  "type": "http",
+  "url": "https://policy.internal/hooks/config-change",
+  "timeout": 10
+}]}</pre>
+        <p class="detail">可 decision:"block" · 按配置来源匹配 · 不支持 prompt/agent</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="InstructionsLoaded">
+        <div class="card-top">
+          <code class="ev">InstructionsLoaded</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>session_start|nested_traversal</b></span>
+          <span class="kv"><i>type</i><b>mcp_tool</b></span>
+        </div>
+        <p class="role">审计用：哪条 CLAUDE.md、哪条 rules 进了上下文，调内部 audit server 的 log_instruction 记一笔。异步执行，不阻塞加载，也改不了加载结果。</p>
+        <pre class="code">{"matcher": "session_start|nested_traversal",
+ "hooks": [{"type": "mcp_tool", "server": "audit",
+  "tool": "log_instruction",
+  "input": {"reason": "${load_reason}"}}]}</pre>
+        <p class="detail">无决策权 · 异步 · 支持 mcp_tool（此事件允许 command/http/mcp_tool）</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="CwdChanged">
+        <div class="card-top">
+          <code class="ev">CwdChanged</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>—（不支持）</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">cd packages/api 时把包级变量（PKG_NAME、DATABASE_URL）写进 CLAUDE_ENV_FILE，后续 Bash 自动带上。它拦不住目录切换，但能改变切换之后的环境。</p>
+        <pre class="code">{"hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/reload-pkg-env.mjs"
+}]}</pre>
+        <p class="detail">无 matcher · 无决策权 · 写入 CLAUDE_ENV_FILE 的变量持续到下次 CwdChanged</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="DirectoryAdded">
+        <div class="card-top">
+          <code class="ev">DirectoryAdded</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>slash_command</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">迁移中发现一个没登记的包 packages/legacy-billing，/add-dir 之后这个 hook 自动跑 pnpm install 并生成包级 CLAUDE.md。目录已经加进去了，拦不了。</p>
+        <pre class="code">{"matcher": "slash_command", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/new-repo.mjs",
+  "timeout": 180
+}]}</pre>
+        <p class="detail">无决策权（已在 hook 前完成）· 按 slash_command|register_repo_root 匹配</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="FileChanged">
+        <div class="card-top">
+          <code class="ev">FileChanged</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>.envrc|package.json</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">文件系统监听，不管是谁改的（Claude、Bash、还是外部进程）。.envrc 变了就重载 direnv，package.json 变了就重装依赖。matcher 同时是监视名单。</p>
+        <pre class="code">{"matcher": ".envrc|package.json", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/watch-reload.mjs"
+}]}</pre>
+        <p class="detail">matcher 按 | 切成字面文件名做监视列表 · 无决策权 · 拦不住改动本身</p>
+      </article>
+
+      <article class="card cap-observe" data-cap="observe" data-event="SessionEnd">
+        <div class="card-top">
+          <code class="ev">SessionEnd</code>
+          <span class="badge cap-observe">仅观测</span>
+        </div>
+        <div class="meta">
+          <span class="kv"><i>matcher</i><b>logout|prompt_input_exit|other</b></span>
+          <span class="kv"><i>type</i><b>command</b></span>
+        </div>
+        <p class="role">05:00 收工：归档 transcript、上传指标、清理临时目录、给值班群发一条总结。只有 1.5 秒预算，所以真正的上传是丢后台的。</p>
+        <pre class="code">{"matcher": "logout|prompt_input_exit|other", "hooks": [{
+  "type": "command",
+  "command": "node .claude/hooks/archive-session.mjs"
+}]}</pre>
+        <p class="detail">无决策权 · 默认 1.5s 共享预算（可放宽至 60s）· 按结束原因匹配</p>
+      </article>
+
+      <aside class="note">
+        <span class="note-tag">NOTE</span>
+        <b>退场阶段几乎全是观测点</b>
+        <p>7 个里 6 个没有决策权。不是设计偷懒：文件已经改完、目录已经加好，此时能做的本来就只有记录、告警和补救。</p>
+      </aside>
+
+      <aside class="note">
+        <span class="note-tag">NOTE</span>
+        <b>但 CwdChanged 是个例外</b>
+        <p>它拦不住 cd，却能通过 CLAUDE_ENV_FILE 改写之后所有 Bash 命令的环境变量——观测类事件里唯一具备「延迟生效」能力的一个。</p>
+      </aside>
+    </div>
+  </section>
+  </section>
+
+  <section id="audit">
+    <h2><span class="n">03</span>自检：为什么这 33 条没有用错</h2>
+    <p class="sub">
+      这一页不是手写的。事件清单、能力标注、执行器类型全部在构建时对照文档的约束表做断言，
+      任何一条越界都会让构建失败而不是渲染出一页好看的错误。
+    </p>
+
+    <ul class="checks">
+      <li>33 个事件恰好各出现一次，无重复、无遗漏、无拼写偏差</li>
+      <li>10 个不支持 matcher 的事件，配置里全部没有出现 matcher 字段</li>
+      <li>执行器类型全部落在白名单内：12 个事件支持 5 种，<code>PermissionRequest</code> 不支持 agent，18 个事件只支持 command/http/mcp_tool，<code>SessionStart</code>/<code>Setup</code> 只支持 command/mcp_tool</li>
+      <li><code>if</code> 字段只出现在 5 个工具事件上——其他事件写了 <code>if</code> 将永远不会运行</li>
+      <li>9 个「无决策权」事件绝不输出决策字段；20 个可干预事件的决策字段与该事件文档逐条对应</li>
+    </ul>
+
+    <div class="block">
+      <h4>不支持 matcher 的 10 个事件 <span>写了 matcher 不会报错，但语义是错的</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:200px">事件</th><th style="width:170px">本页配置</th><th>正确的过滤方式</th></tr></thead>
+        <tbody>
+<tr><td><code>UserPromptSubmit</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度，每个 turn 都跑；条件写进脚本</td></tr>
+<tr><td><code>MessageDisplay</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度；用 index / final 跟踪同一条消息</td></tr>
+<tr><td><code>PostToolBatch</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度；在脚本里读 tool_calls 自行筛选</td></tr>
+<tr><td><code>TaskCreated</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度；在脚本里检查 task_subject</td></tr>
+<tr><td><code>TaskCompleted</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度；在脚本里检查 task_id 与测试结果</td></tr>
+<tr><td><code>TeammateIdle</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度；在脚本里检查 teammate_name</td></tr>
+<tr><td><code>WorktreeCreate</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度，每次创建都触发</td></tr>
+<tr><td><code>WorktreeRemove</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度，每次删除都触发</td></tr>
+<tr><td><code>Stop</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度，每轮结束都触发</td></tr>
+<tr><td><code>CwdChanged</code></td><td class="ok">未配置 matcher ✓</td><td>没有过滤维度，每次 cd 都触发</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h4>20 个可干预事件及其决策字段 <span>字段名写错同样会被静默忽略</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:190px">事件</th><th style="width:410px">可用的决策字段</th><th>边界</th></tr></thead>
+        <tbody>
+<tr><td><code>UserPromptSubmit</code></td><td class="mono-sm">decision:"block" + additionalContext</td><td>只能追加，不能替换用户原文</td></tr>
+<tr><td><code>UserPromptExpansion</code></td><td class="mono-sm">decision:"block" + additionalContext</td><td>只覆盖手打斜杠命令，工具调用走 PreToolUse</td></tr>
+<tr><td><code>MessageDisplay</code></td><td class="mono-sm">hookSpecificOutput.displayContent</td><td>只改屏幕；transcript 与模型看到的仍是原文</td></tr>
+<tr><td><code>PreToolUse</code></td><td class="mono-sm">hookSpecificOutput.permissionDecision allow|deny|ask|defer + updatedInput</td><td>@ 引用的文件不产生工具调用，不会触发</td></tr>
+<tr><td><code>PermissionRequest</code></td><td class="mono-sm">hookSpecificOutput.decision.behavior allow|deny（可带 updatedInput）</td><td>无交互环境下没有决策就默认拒绝；exit 2 不会被当作拒绝</td></tr>
+<tr><td><code>PostToolUse</code></td><td class="mono-sm">decision:"block"（仅反馈）+ hookSpecificOutput.updatedToolOutput</td><td>工具已经执行，block 只是附原因给 Claude 看；失败走 PostToolUseFailure</td></tr>
+<tr><td><code>PostToolUseFailure</code></td><td class="mono-sm">decision:"block"（仅反馈）+ additionalContext</td><td>权限拒绝、schema 校验失败不触发；工具已失败，block 只附反馈</td></tr>
+<tr><td><code>PostToolBatch</code></td><td class="mono-sm">decision:"block" + hookSpecificOutput.additionalContext</td><td>每批只触发一次，没有 matcher</td></tr>
+<tr><td><code>SubagentStop</code></td><td class="mono-sm">decision:"block" + hookSpecificOutput.additionalContext</td><td>Claude Code 内部子代理结束时也会触发</td></tr>
+<tr><td><code>TaskCreated</code></td><td class="mono-sm">exit 2 / decision:block（取消任务）</td><td>continue:false 在此事件被忽略</td></tr>
+<tr><td><code>TaskCompleted</code></td><td class="mono-sm">exit 2 / continue:false</td><td>TaskUpdate 触发时 continue:false 被忽略</td></tr>
+<tr><td><code>TeammateIdle</code></td><td class="mono-sm">exit 2 / continue:false</td><td>无 matcher，每次 idle 都触发</td></tr>
+<tr><td><code>WorktreeCreate</code></td><td class="mono-sm">stdout 路径 / worktreePath</td><td>非零退出即判定创建失败</td></tr>
+<tr><td><code>WorktreeRemove</code></td><td class="mono-sm">非零退出否决删除</td><td>只认退出码，JSON 输出被丢弃</td></tr>
+<tr><td><code>Elicitation</code></td><td class="mono-sm">hookSpecificOutput.action accept|decline|cancel + content</td><td>只有 exit 0 时 hookSpecificOutput 才生效</td></tr>
+<tr><td><code>ElicitationResult</code></td><td class="mono-sm">action/content 改写 + decision:block</td><td>Elicitation 自动回答的路径不触发</td></tr>
+<tr><td><code>Stop</code></td><td class="mono-sm">decision:"block" + hookSpecificOutput.additionalContext</td><td>用户主动中断不触发</td></tr>
+<tr><td><code>PreCompact</code></td><td class="mono-sm">decision:"block"</td><td>压缩前唯一的拦截点</td></tr>
+<tr><td><code>PreModelSwitch</code></td><td class="mono-sm">hookSpecificOutput.permissionDecision allow|deny|ask / decision:block</td><td>需 v2.1.251+；超时未响应会阻止切换</td></tr>
+<tr><td><code>ConfigChange</code></td><td class="mono-sm">decision:"block"</td><td>policy_settings 来源的变更拦不住；托管设置同步也不经过此事件</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h4>执行器类型不是随便挑的 <span>配了不支持的类型 = 静默跳过</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:260px">支持范围</th><th style="width:70px">事件数</th><th>事件</th></tr></thead>
+        <tbody>
+
+<tr><td><b>全部 5 种</b><br><span class="dim">command / http / mcp_tool / prompt / agent</span></td>
+    <td class="num">12</td>
+    <td><code>PermissionDenied</code>、<code>PostToolBatch</code>、<code>PostToolUse</code>、<code>PostToolUseFailure</code>、<code>PreToolUse</code>、<code>Stop</code>、<code>SubagentStop</code>、<code>TaskCompleted</code>、<code>TaskCreated</code>、<code>TeammateIdle</code>、<code>UserPromptExpansion</code>、<code>UserPromptSubmit</code></td></tr>
+<tr><td><b>4 种</b><br><span class="dim">没有 agent</span></td>
+    <td class="num">1</td>
+    <td><code>PermissionRequest</code>（配 agent 会被跳过，权限流程照常走）</td></tr>
+<tr><td><b>3 种</b><br><span class="dim">command / http / mcp_tool</span></td>
+    <td class="num">18</td>
+    <td><code>ConfigChange</code>、<code>CwdChanged</code>、<code>DirectoryAdded</code>、<code>Elicitation</code>、<code>ElicitationResult</code>、<code>FileChanged</code>、<code>InstructionsLoaded</code>、<code>MessageDisplay</code>、<code>Notification</code>、<code>PostCompact</code>、<code>PostModelSwitch</code>、<code>PreCompact</code>、<code>PreModelSwitch</code>、<code>SessionEnd</code>、<code>StopFailure</code>、<code>SubagentStart</code>、<code>WorktreeCreate</code>、<code>WorktreeRemove</code></td></tr>
+<tr><td><b>2 种</b><br><span class="dim">command / mcp_tool</span></td>
+    <td class="num">2</td>
+    <td><code>SessionStart</code>、<code>Setup</code>（Setup 的 mcp_tool 恒被跳过；SessionStart 在启动时 MCP 未就绪也会跳过。本案例一律用 command）</td></tr>
+
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h4>七种典型误用 <span>以及它们真实的后果</span></h4>
+      <div class="tw"><table>
+        <thead><tr><th style="width:36%">错误写法</th><th style="width:34%">实际后果</th><th>正确做法</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>在 <code>Notification</code> 里返回 <code>decision:"block"</code>，想拦下通知</td>
+            <td class="bad">字段被丢弃，通知照发，也拿不到任何反馈</td>
+            <td>只做转发；要改终端提示用 <code>terminalSequence</code></td>
+          </tr>
+          <tr>
+            <td>在 <code>SessionEnd</code> 里 <code>exit 2</code>，想阻止会话退出</td>
+            <td class="bad">无效。会话此时已结束，stderr 只会显示给你看，不会改变退出</td>
+            <td>只做归档；耗时操作丢后台（共享 1.5s 预算）</td>
+          </tr>
+          <tr>
+            <td>给 <code>PostToolBatch</code> 配 <code>"matcher": "Edit"</code></td>
+            <td class="bad">该事件无 matcher，配置不报错但按全量触发，过滤逻辑失效</td>
+            <td>删掉 matcher，在脚本里读 <code>tool_calls</code> 自行筛选</td>
+          </tr>
+          <tr>
+            <td>在 <code>PreToolUse</code> 里返回 <code>updatedToolOutput</code>，想改工具结果</td>
+            <td class="bad">该字段属于 PostToolUse，此时还没有结果可改</td>
+            <td>改结果放 <code>PostToolUse</code>；改参数才用 <code>updatedInput</code></td>
+          </tr>
+          <tr>
+            <td>指望 <code>ElicitationResult</code> 再校验一次 <code>Elicitation</code> 的自动回答</td>
+            <td class="bad">自动回答路径直接回给 server，不触发 ElicitationResult</td>
+            <td>校验必须写在 <code>Elicitation</code> 内部</td>
+          </tr>
+          <tr>
+            <td>在 <code>Stop</code> 上写 <code>"if": "Bash(*)"</code></td>
+            <td class="bad">非工具事件，<code>if</code> 永不匹配，hook 永远不跑</td>
+            <td><code>if</code> 只用于 PreToolUse / PostToolUse / PostToolUseFailure / PermissionRequest / PermissionDenied</td>
+          </tr>
+          <tr>
+            <td>在 <code>SessionStart</code> 上挂 <code>type:"mcp_tool"</code> 想启动时打点</td>
+            <td class="bad">启动时 MCP client 未就绪，hook 被跳过，只留一条 debug log</td>
+            <td>改用 <code>type:"command"</code>，或把打点挪到 <code>InstructionsLoaded</code></td>
+          </tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="config">
+    <h2><span class="n">04</span>完整配置</h2>
+    <p class="sub">
+      由同一份数据生成，与上面的卡片一一对应。脚本路径是示意，实际使用请换成你自己的实现。
+    </p>
+
+    <details>
+      <summary>展开 settings.json（33 个事件 · 一个都不少）<span>403 行</span></summary>
+      <pre>{
+  "hooks": {
+    "Setup": [
+      {
+        "matcher": "init",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/setup.mjs",
+            "timeout": 300,
+            "statusMessage": "安装迁移工具链"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/resume.mjs",
+            "timeout": 15,
+            "statusMessage": "恢复迁移进度"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/require-spec.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptExpansion": [
+      {
+        "matcher": "migrate|release",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/expand-guard.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "MessageDisplay": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/redact-display.mjs",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/guard.mjs",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/normalize-path.mjs",
+            "if": "Edit(**/*.ts)",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/ci-permissions.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionDenied": [
+      {
+        "matcher": "Read|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/retry-readonly.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/tsc-check.mjs",
+            "timeout": 60,
+            "statusMessage": "类型检查"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-failure.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/batch-eslint.mjs",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "migrator",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/subagent-brief.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "migrator",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "核对本次迁移：是否覆盖全部导出、单测是否通过、有无遗留 .js。$ARGUMENTS",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/task-naming.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "只有单测通过且 CHANGELOG 有对应条目时才允许完成。$ARGUMENTS",
+            "timeout": 25
+          }
+        ]
+      }
+    ],
+    "TeammateIdle": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/reviewer-gate.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "WorktreeCreate": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/wt-create.mjs",
+            "timeout": 180
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/wt-keep.mjs",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Elicitation": [
+      {
+        "matcher": "design-review",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/form-answer.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "ElicitationResult": [
+      {
+        "matcher": "design-review",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/form-check.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/stop-gate.mjs",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "matcher": "rate_limit|overloaded",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/on-api-error.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/checkpoint.mjs",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/compact-metrics.mjs",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreModelSwitch": [
+      {
+        "matcher": "claude-sonnet.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/model-budget.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostModelSwitch": [
+      {
+        "matcher": "claude-sonnet.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/model-notes.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "permission_prompt|idle_prompt",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "https://ops.internal/hooks/notify",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "ConfigChange": [
+      {
+        "matcher": "project_settings|local_settings|skills",
+        "hooks": [
+          {
+            "type": "http",
+            "url": "https://policy.internal/hooks/config-change",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "InstructionsLoaded": [
+      {
+        "matcher": "session_start|nested_traversal",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "audit",
+            "tool": "log_instruction",
+            "input": {
+              "path": "${file_path}",
+              "reason": "${load_reason}"
+            }
+          }
+        ]
+      }
+    ],
+    "CwdChanged": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/reload-pkg-env.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "DirectoryAdded": [
+      {
+        "matcher": "slash_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/new-repo.mjs",
+            "timeout": 180
+          }
+        ]
+      }
+    ],
+    "FileChanged": [
+      {
+        "matcher": ".envrc|package.json",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/watch-reload.mjs",
+            "timeout": 120
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "logout|prompt_input_exit|other",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/archive-session.mjs",
+            "timeout": 1
+          }
+        ]
+      }
+    ]
+  }
+}</pre>
+    </details>
+  </section>
+
+  <footer>
+    <b>案例设定</b>：acme/web-platform 是虚构仓库，所有脚本路径仅作示意，不保证可直接运行。<br>
+    <b>事实来源</b>：Claude Code Hooks reference（code.claude.com/docs/en/hooks），覆盖至 v2.1.295；PreModelSwitch / PostModelSwitch 需要 v2.1.251+。<br>
+    <b>正确性</b>：事件清单、matcher 支持、决策字段、执行器白名单均在构建时断言，违反即构建失败。
+  </footer>
+
+</div>
+
+<div class="drawer-scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="d-name">
+  <header class="drawer-head">
+    <div class="d-kicker"><span id="d-phase"></span><span id="d-cap" class="d-captop"></span></div>
+    <h3 id="d-name"></h3>
+    <code id="d-event" class="d-event"></code>
+    <button class="d-close" id="d-close" aria-label="关闭详情">×</button>
+  </header>
+  <div class="drawer-body">
+    <div class="d-when-box">
+      <span>触发时机</span>
+      <p id="d-when"></p>
+    </div>
+    <dl class="d-facts">
+      <div><dt>matcher</dt><dd><code id="d-matcher"></code></dd></div>
+      <div><dt>type</dt><dd><code id="d-type"></code></dd></div>
+      <div><dt>能力</dt><dd id="d-cap2"></dd></div>
+    </dl>
+    <h4>这一晚它做什么</h4>
+    <p id="d-role" class="d-text"></p>
+    <h4>实际配置</h4>
+    <pre class="d-code" id="d-code"></pre>
+    <h4>边界</h4>
+    <p id="d-detail" class="d-bound"></p>
+    <div class="d-nav">
+      <button id="d-prev">← 上一个</button>
+      <span id="d-count"></span>
+      <button id="d-next">下一个 →</button>
+    </div>
+    <button class="d-locate" id="d-locate">在下方卡片中定位 →</button>
+  </div>
+</aside>
+
+<script>window.HOOK_DATA = {"Setup": {"name": "初始化设置", "when": "只在 --init-only，或 -p 模式下的 --init / --maintenance 启动时", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "init", "type": "command", "role": "02:00，CI 用 claude -p --init 拉起任务。这个 hook 装 jscodeshift / ts-morph、预热 pnpm store，并往 CLAUDE_ENV_FILE 写 MIGRATION_RUN_ID。它不能阻断启动，任何退出码都会继续，所以脚本必须自己幂等。", "detail": "无决策权 · 退出码被忽略 · 只能 command（mcp_tool 在 Setup 恒被跳过）", "snippet": "{\"matcher\": \"init\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/setup.mjs\",\n  \"timeout\": 300\n}]}", "phase": "冷启动", "phaseNo": "01"}, "SessionStart": {"name": "会话开始", "when": "新建会话、resume、/clear 或压缩之后", "cap": "inject", "capLabel": "仅注入", "capNote": "只能补充上下文，不能阻断启动", "matcher": "startup|resume", "type": "command", "role": "resume 上一次中断的迁移：把「还剩 5 个包 / 上次失败在 packages/api」注入上下文，并用 watchPaths 注册 .envrc，让后续 FileChanged 有东西可看。只能加信息，不能改启动流程。", "detail": "仅 additionalContext · 不支持 http/prompt/agent；启动时 MCP 未就绪，故不用 mcp_tool", "snippet": "{\"matcher\": \"startup|resume\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/resume.mjs\"\n}]}", "phase": "冷启动", "phaseNo": "01"}, "UserPromptSubmit": {"name": "提交提示词", "when": "prompt 提交后、Claude 开始处理之前（定时任务也会触发）", "cap": "control", "capLabel": "可干预", "capNote": "可拦下这条 prompt，但不能替换原文", "matcher": "", "type": "command", "role": "CI 送进来的 prompt 必须带 SPEC- 编号和分支名，否则 exit 2 打回，避免半夜跑错分支。通过后顺手注入当天的 git status 摘要。注意它只能追加上下文，不能替换用户原文。", "detail": "decision:\"block\" + hookSpecificOutput.additionalContext · 无 matcher", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/require-spec.mjs\"\n}]}", "phase": "入场", "phaseNo": "02"}, "UserPromptExpansion": {"name": "命令展开", "when": "手打斜杠命令展开成 prompt 时", "cap": "control", "capLabel": "可干预", "capNote": "可拦下展开，也可追加 checklist", "matcher": "migrate|release", "type": "command", "role": "有人手打 /migrate 时展开成完整任务书并追加团队 checklist；手打 /release 则要求存在 approval 文件，否则拦下。这条专门补 PreToolUse 管不到的「直接敲斜杠命令」路径。", "detail": "按 command_name 匹配 · 可 block 展开 + 注入上下文", "snippet": "{\"matcher\": \"migrate|release\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/expand-guard.mjs\"\n}]}", "phase": "入场", "phaseNo": "02"}, "MessageDisplay": {"name": "消息显示", "when": "助手消息流式渲染、每批新行就绪时", "cap": "control", "capLabel": "可干预", "capNote": "只能改写屏幕显示，不影响 transcript", "matcher": "", "type": "command", "role": "迁移日志里混进内部域名和临时 token，流式渲染时逐批打码成 [REDACTED]。只改屏幕显示，transcript 和模型看到的仍是原文——所以它不能当脱敏的唯一防线。", "detail": "仅 displayContent · 无 matcher · 默认超时 10s，这里压到 2s 免得卡住渲染", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/redact-display.mjs\",\n  \"timeout\": 2\n}]}", "phase": "入场", "phaseNo": "02"}, "PreToolUse": {"name": "工具调用前", "when": "工具参数已生成、工具真正执行之前", "cap": "control", "capLabel": "可干预", "capNote": "可放行 / 拒绝 / 追问，也能改参数", "matcher": "Bash|Edit|Write", "type": "command", "role": "两个 handler：guard.mjs 拦 rm -rf、git push、改 package-lock.json；normalize-path.mjs 用 updatedInput 把相对路径补成绝对路径再放行。这是整晚最关键的硬闸门（PermissionRequest 也能拒，但管的是权限层）。", "detail": "hookSpecificOutput.permissionDecision allow|deny|ask|defer + updatedInput · if 只在工具事件生效", "snippet": "{\"matcher\": \"Bash|Edit|Write\", \"hooks\": [\n  {\"type\": \"command\",\n   \"command\": \"node .claude/hooks/guard.mjs\"},\n  {\"type\": \"command\",\n   \"command\": \"node .claude/hooks/normalize-path.mjs\",\n   \"if\": \"Edit(**/*.ts)\"}\n]}", "phase": "工具循环", "phaseNo": "03"}, "PermissionRequest": {"name": "权限请求", "when": "Claude Code 即将弹出权限确认时", "cap": "control", "capLabel": "可干预", "capNote": "可代替用户放行或拒绝", "matcher": "Bash", "type": "command", "role": "夜里没人点确认。这个 hook 代替人决策：只读白名单（git status、ls、cat 日志）直接 allow，git push / npm publish 一律 deny 并写明原因。", "detail": "hookSpecificOutput.decision.behavior allow|deny（可带 updatedInput）· 不支持 agent 类型", "snippet": "{\"matcher\": \"Bash\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/ci-permissions.mjs\"\n}]}", "phase": "工具循环", "phaseNo": "03"}, "PermissionDenied": {"name": "权限被拒", "when": "auto 模式拒绝了一次工具调用之后", "cap": "inject", "capLabel": "仅注入", "capNote": "只能提示模型可重试，撤销不了拒绝", "matcher": "Read|Glob|Grep", "type": "command", "role": "auto 模式偶尔把只读命令也拒了。这个 hook 回 retry: true，告诉模型「这个你可以重试」，省掉一轮人工干预。它不能撤销拒绝，只是给个提示。", "detail": "仅 hookSpecificOutput.retry · 只在 auto 模式触发 · classifier 无 verdict 时 retry 被忽略", "snippet": "{\"matcher\": \"Read|Glob|Grep\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/retry-readonly.mjs\"\n}]}", "phase": "工具循环", "phaseNo": "03"}, "PostToolUse": {"name": "工具调用后", "when": "工具成功返回之后", "cap": "control", "capLabel": "可干预", "capNote": "拦不住已执行的工具，只改 Claude 看到的", "matcher": "Edit|Write", "type": "command", "role": "每次改完 .ts 文件立刻跑 tsc --noEmit 单文件检查，报错就 block——工具已经跑完拦不住，这个 block 只是把编译错误作为 reason 附在结果旁给 Claude 看。同时用 updatedToolOutput 裁掉输出里的绝对路径。", "detail": "decision:\"block\" 只附 reason，不阻止已执行的工具 · hookSpecificOutput.updatedToolOutput · 失败走 PostToolUseFailure", "snippet": "{\"matcher\": \"Edit|Write\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/tsc-check.mjs\"\n}]}", "phase": "工具循环", "phaseNo": "03"}, "PostToolUseFailure": {"name": "工具失败后", "when": "工具抛错或 MCP 返回 error 之后", "cap": "control", "capLabel": "可干预", "capNote": "撤销不了失败，只能补充反馈", "matcher": "Bash|Edit", "type": "command", "role": "工具抛错（OOM、超时、MCP error）时记录到 failures.jsonl，并给出纠正提示。注意权限拒绝和参数校验失败不会走到这里，别指望它兜底。", "detail": "decision:\"block\" 只附反馈（工具已失败） · hookSpecificOutput.additionalContext · 不覆盖权限拒绝与校验失败", "snippet": "{\"matcher\": \"Bash|Edit\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/on-failure.mjs\"\n}]}", "phase": "工具循环", "phaseNo": "03"}, "PostToolBatch": {"name": "批次完成后", "when": "一批并行工具全部结束、下次请求模型之前", "cap": "control", "capLabel": "可干预", "capNote": "可中断下一步，也能注入批次上下文", "matcher": "", "type": "command", "role": "并行改了 12 个文件后只触发一次：统一跑 eslint --fix，把「这批改了哪些文件、还剩几个错」汇总注入。用 PostToolUse 会触发 12 次，既慢又互相打架。", "detail": "无 matcher · 输入带 tool_calls 数组 · 可 decision:block 中断下一步", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/batch-eslint.mjs\",\n  \"timeout\": 120\n}]}", "phase": "工具循环", "phaseNo": "03"}, "SubagentStart": {"name": "子代理启动", "when": "派生子代理、恢复子代理、队友接新消息时", "cap": "inject", "capLabel": "仅注入", "capNote": "只能补充上下文，不能阻止创建", "matcher": "migrator", "type": "command", "role": "每个包派一个 migrator 子代理，注入该包的规范、依赖边界、以及「不许改 __snapshots__」。不能阻止子代理被创建，只能影响它一开始看到什么。", "detail": "不能 block · 仅 additionalContext · 按 agent type 匹配", "snippet": "{\"matcher\": \"migrator\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/subagent-brief.mjs\"\n}]}", "phase": "并发面", "phaseNo": "04"}, "SubagentStop": {"name": "子代理结束", "when": "子代理结束响应时", "cap": "control", "capLabel": "可干预", "capNote": "可让子代理继续干活", "matcher": "migrator", "type": "agent", "role": "子代理说「迁移完成」时，起一个核查 agent 去读 diff 和测试报告：没跑单测就打回让它继续，迁移不完整也打回。决策格式与 Stop 相同。", "detail": "可 block 让子代理继续 · 支持 agent 类型 · 输入含 last_assistant_message", "snippet": "{\"matcher\": \"migrator\", \"hooks\": [{\n  \"type\": \"agent\",\n  \"prompt\": \"核对本次迁移：是否覆盖全部导出、单测是否通过、有无遗留 .js。$ARGUMENTS\",\n  \"timeout\": 120\n}]}", "phase": "并发面", "phaseNo": "04"}, "TaskCreated": {"name": "任务创建", "when": "通过 TaskCreate 建任务时", "cap": "control", "capLabel": "可干预", "capNote": "可直接取消这次建任务", "matcher": "", "type": "command", "role": "任务标题必须形如 migrate/<pkg>，否则直接取消建任务并返回原因，避免半夜冒出一堆叫「fix stuff」的条目。", "detail": "exit 2 或 decision:block 取消任务 · 无 matcher · continue:false 被忽略", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/task-naming.mjs\"\n}]}", "phase": "并发面", "phaseNo": "04"}, "TaskCompleted": {"name": "任务完成", "when": "任务被标记完成，或队友带着进行中任务结束回合时", "cap": "control", "capLabel": "可干预", "capNote": "可驳回完成，任务回到进行中", "matcher": "", "type": "prompt", "role": "标记完成前用一次模型判断：单测过了吗？CHANGELOG 加了吗？没满足就 block，任务回到进行中。用 prompt 而不是脚本，是因为「是否完成」需要读上下文判断。", "detail": "可 block 完成 · 支持 prompt 类型 · TaskUpdate 触发时 continue:false 会被忽略", "snippet": "{\"hooks\": [{\n  \"type\": \"prompt\",\n  \"prompt\": \"只有单测通过且 CHANGELOG 有对应条目时才允许完成。$ARGUMENTS\"\n}]}", "phase": "并发面", "phaseNo": "04"}, "TeammateIdle": {"name": "队友空闲", "when": "agent team 队友即将进入空闲时", "cap": "control", "capLabel": "可干预", "capNote": "可把队友留在工作状态", "matcher": "", "type": "command", "role": "reviewer 队友想收工？先看 review.md 在不在、结论填没填。没有就 exit 2 把人留住，防止「团队里没人真正看代码」。", "detail": "exit 2 阻止 idle · 无 matcher · continue:false 可让队友彻底停下", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/reviewer-gate.mjs\"\n}]}", "phase": "并发面", "phaseNo": "04"}, "WorktreeCreate": {"name": "工作树创建", "when": "--worktree、isolation、后台会话等创建 worktree 时", "cap": "control", "capLabel": "可干预", "capNote": "可决定 worktree 路径，失败即中止", "matcher": "", "type": "command", "role": "每个包一个隔离 worktree：从模板 clone、pnpm install --offline、拷一份 .env.local，最后把路径打到 stdout。打印什么路径就用什么，等于接管了默认 git 行为。", "detail": "stdout 输出路径（或 hookSpecificOutput.worktreePath）· 非零退出即创建失败", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/wt-create.mjs\",\n  \"timeout\": 180\n}]}", "phase": "并发面", "phaseNo": "04"}, "WorktreeRemove": {"name": "工作树移除", "when": "清理 WorktreeCreate 创建的 worktree 时", "cap": "control", "capLabel": "可干预", "capNote": "可拒绝删除，保留现场", "matcher": "", "type": "command", "role": "收尾删 worktree 前检查有没有未提交改动：有就 exit 1 拒绝删除，把现场留给早上的同事。JSON 输出在这里会被丢弃，只有退出码算数。", "detail": "非零退出否决删除 · 无 matcher · JSON 输出被丢弃", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/wt-keep.mjs\"\n}]}", "phase": "并发面", "phaseNo": "04"}, "Elicitation": {"name": "MCP 表单请求", "when": "MCP server 在工具调用中请求用户输入时", "cap": "control", "capLabel": "可干预", "capNote": "可代替用户填表，跳过弹窗", "matcher": "design-review", "type": "command", "role": "MCP 的 design-review server 弹出「确认删除旧 .js」表单。夜里没人填，这个 hook 按 dry-run 结果自动 accept——出现风险项则 decline，整个弹窗被跳过。", "detail": "action accept|decline|cancel + content · 按 MCP server 名匹配 · 仅 exit 0 时生效", "snippet": "{\"matcher\": \"design-review\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/form-answer.mjs\",\n  \"timeout\": 5\n}]}", "phase": "并发面", "phaseNo": "04"}, "ElicitationResult": {"name": "表单应答", "when": "用户填完表单、答案回传 server 之前", "cap": "control", "capLabel": "可干预", "capNote": "可改写或驳回用户的答案", "matcher": "design-review", "type": "command", "role": "白天有人手动跑时才会走到：校验他填的表单，发现 drop table / 删备份目录之类的选项就 block——把这次回答改成 decline 回给 server，而不是让它生效。注意——hook 自动回答的那条路径不会触发本事件。", "detail": "可观察/改写/block 回答 · 按 MCP server 名匹配 · 自动回答路径不经过这里", "snippet": "{\"matcher\": \"design-review\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/form-check.mjs\"\n}]}", "phase": "并发面", "phaseNo": "04"}, "Stop": {"name": "回合结束", "when": "主代理完成一次响应时（用户中断不算）", "cap": "control", "capLabel": "可干预", "capNote": "可让 Claude 继续，不许收工", "matcher": "", "type": "command", "role": "主代理想下班：检查 12 个包的迁移状态和测试结果，还有红的就 block 继续干，并用 additionalContext 给一条「非错误」的提示（比如「剩最后一个包，优先修类型」）。", "detail": "decision:\"block\" + hookSpecificOutput.additionalContext · 无 matcher · 用户中断不触发", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/stop-gate.mjs\",\n  \"timeout\": 60\n}]}", "phase": "收口", "phaseNo": "05"}, "StopFailure": {"name": "回合异常结束", "when": "本轮因 API 错误结束时", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "rate_limit|overloaded", "type": "command", "role": "凌晨 opus 限流，这一轮直接结束。hook 只做两件事：打告警、写下「下轮降级」标记。它没有决策权，改不了错误，也救不回这一轮。", "detail": "无决策权 · 除 terminalSequence 外 JSON 全被丢弃 · 按 error 类型匹配", "snippet": "{\"matcher\": \"rate_limit|overloaded\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/on-api-error.mjs\"\n}]}", "phase": "收口", "phaseNo": "05"}, "PreCompact": {"name": "压缩前", "when": "压缩上下文之前（manual / auto）", "cap": "control", "capLabel": "可干预", "capNote": "可阻止压缩", "matcher": "auto", "type": "command", "role": "上下文快满了。先把已完成清单、未决问题、worktree 映射写成 checkpoint 落到磁盘，然后 exit 0——故意不 block，夜里压缩失败会把整晚任务卡死。", "detail": "本可 decision:\"block\" 阻止压缩，此处刻意不用 · 按 manual|auto 匹配", "snippet": "{\"matcher\": \"auto\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/checkpoint.mjs\"\n}]}", "phase": "收口", "phaseNo": "05"}, "PostCompact": {"name": "压缩后", "when": "压缩完成之后", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "auto", "type": "command", "role": "压缩完成后把摘要写进 metrics.jsonl 和值班 dashboard，方便早上复盘「模型记住了什么」。无决策权，改不了压缩结果。", "detail": "无决策权 · systemMessage 与 continue 被丢弃 · 只能做事后处理", "snippet": "{\"matcher\": \"auto\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/compact-metrics.mjs\"\n}]}", "phase": "收口", "phaseNo": "05"}, "PreModelSwitch": {"name": "模型切换前", "when": "应用 /model、set_model 等切换请求之前", "cap": "control", "capLabel": "可干预", "capNote": "可否决这次模型切换", "matcher": "claude-sonnet.*", "type": "command", "role": "预算紧张，客户端请求切到 sonnet。策略：剩余包数 ≤3 时 allow，否则 deny 保住 opus 的迁移质量。这是少数能直接否决模型切换的地方。", "detail": "permissionDecision allow|deny|ask 或 decision:block · 按目标模型名匹配", "snippet": "{\"matcher\": \"claude-sonnet.*\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/model-budget.mjs\"\n}]}", "phase": "收口", "phaseNo": "05"}, "PostModelSwitch": {"name": "模型切换后", "when": "会话模型真正变更之后", "cap": "inject", "capLabel": "仅注入", "capNote": "只能追加指令，无法回滚", "matcher": "claude-sonnet.*", "type": "command", "role": "真切到 sonnet 之后注入「省钱模式」提示：先跑 codemod，再逐段人工复核。已经换完了，拦不住，只能补充指令。", "detail": "仅 additionalContext（stdout 纯文本也会作为上下文）· 无法回滚", "snippet": "{\"matcher\": \"claude-sonnet.*\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/model-notes.mjs\"\n}]}", "phase": "收口", "phaseNo": "05"}, "Notification": {"name": "系统通知", "when": "Claude Code 发出通知时（权限等待 6s、空闲 60s 等）", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "permission_prompt|idle_prompt", "type": "http", "role": "权限弹窗晾了 6 秒没人管，或以 idle 60 秒：POST 到飞书机器人提醒值班同学。它不能改通知内容、也不能让通知别弹，就是纯转发。", "detail": "无决策权 · systemMessage/continue 被丢弃 · terminalSequence 仍有效", "snippet": "{\"matcher\": \"permission_prompt|idle_prompt\", \"hooks\": [{\n  \"type\": \"http\",\n  \"url\": \"https://ops.internal/hooks/notify\",\n  \"timeout\": 5\n}]}", "phase": "退场", "phaseNo": "06"}, "ConfigChange": {"name": "配置变更", "when": "会话中设置文件、策略文件或技能文件变化时", "cap": "control", "capLabel": "可干预", "capNote": "只能产生副作用，改不了走向", "matcher": "project_settings|local_settings|skills", "type": "http", "role": "有人（或模型自己）想改 .claude/settings.json 关掉 hooks。这个 hook 把变更 POST 给策略服务，未审批就 block。这是防止「AI 把监控关掉」的关键一环。", "detail": "可 decision:\"block\" · 按配置来源匹配 · 不支持 prompt/agent", "snippet": "{\"matcher\": \"project_settings|local_settings|skills\", \"hooks\": [{\n  \"type\": \"http\",\n  \"url\": \"https://policy.internal/hooks/config-change\",\n  \"timeout\": 10\n}]}", "phase": "退场", "phaseNo": "06"}, "InstructionsLoaded": {"name": "指令载入", "when": "CLAUDE.md 或 .claude/rules 载入上下文时", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "session_start|nested_traversal", "type": "mcp_tool", "role": "审计用：哪条 CLAUDE.md、哪条 rules 进了上下文，调内部 audit server 的 log_instruction 记一笔。异步执行，不阻塞加载，也改不了加载结果。", "detail": "无决策权 · 异步 · 支持 mcp_tool（此事件允许 command/http/mcp_tool）", "snippet": "{\"matcher\": \"session_start|nested_traversal\",\n \"hooks\": [{\"type\": \"mcp_tool\", \"server\": \"audit\",\n  \"tool\": \"log_instruction\",\n  \"input\": {\"reason\": \"${load_reason}\"}}]}", "phase": "退场", "phaseNo": "06"}, "CwdChanged": {"name": "目录切换", "when": "主对话里的 shell 命令改变工作目录时", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "", "type": "command", "role": "cd packages/api 时把包级变量（PKG_NAME、DATABASE_URL）写进 CLAUDE_ENV_FILE，后续 Bash 自动带上。它拦不住目录切换，但能改变切换之后的环境。", "detail": "无 matcher · 无决策权 · 写入 CLAUDE_ENV_FILE 的变量持续到下次 CwdChanged", "snippet": "{\"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/reload-pkg-env.mjs\"\n}]}", "phase": "退场", "phaseNo": "06"}, "DirectoryAdded": {"name": "目录加入", "when": "/add-dir 或 SDK register_repo_root 之后", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "slash_command", "type": "command", "role": "迁移中发现一个没登记的包 packages/legacy-billing，/add-dir 之后这个 hook 自动跑 pnpm install 并生成包级 CLAUDE.md。目录已经加进去了，拦不了。", "detail": "无决策权（已在 hook 前完成）· 按 slash_command|register_repo_root 匹配", "snippet": "{\"matcher\": \"slash_command\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/new-repo.mjs\",\n  \"timeout\": 180\n}]}", "phase": "退场", "phaseNo": "06"}, "FileChanged": {"name": "文件变化", "when": "被监视的文件在磁盘上发生变化时", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": ".envrc|package.json", "type": "command", "role": "文件系统监听，不管是谁改的（Claude、Bash、还是外部进程）。.envrc 变了就重载 direnv，package.json 变了就重装依赖。matcher 同时是监视名单。", "detail": "matcher 按 | 切成字面文件名做监视列表 · 无决策权 · 拦不住改动本身", "snippet": "{\"matcher\": \".envrc|package.json\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/watch-reload.mjs\"\n}]}", "phase": "退场", "phaseNo": "06"}, "SessionEnd": {"name": "会话结束", "when": "会话终止时", "cap": "observe", "capLabel": "仅观测", "capNote": "只能产生副作用，改不了走向", "matcher": "logout|prompt_input_exit|other", "type": "command", "role": "05:00 收工：归档 transcript、上传指标、清理临时目录、给值班群发一条总结。只有 1.5 秒预算，所以真正的上传是丢后台的。", "detail": "无决策权 · 默认 1.5s 共享预算（可放宽至 60s）· 按结束原因匹配", "snippet": "{\"matcher\": \"logout|prompt_input_exit|other\", \"hooks\": [{\n  \"type\": \"command\",\n  \"command\": \"node .claude/hooks/archive-session.mjs\"\n}]}", "phase": "退场", "phaseNo": "06"}};</script>
+
+<script>
+  const btns = document.querySelectorAll('.filters button');
+  const cards = document.querySelectorAll('.card');
+  btns.forEach(btn => btn.addEventListener('click', () => {
+    btns.forEach(b => b.classList.toggle('on', b === btn));
+    const cap = btn.dataset.cap;
+    cards.forEach(c => c.classList.toggle('hide', cap !== 'all' && c.dataset.cap !== cap));
+    document.querySelectorAll('.note').forEach(n => n.style.display = cap === 'all' ? '' : 'none');
+  }));
+
+  // ---- hook drawer ----
+  const DATA = window.HOOK_DATA || {};
+  const drawer = document.getElementById('drawer');
+  const scrim = document.getElementById('scrim');
+  const CAP_TEXT = { control: '阻止 / 改写 / 反馈 / 代替决策', inject: '只能注入或提示', observe: '只能产生副作用' };
+  const ORDER = Object.keys(DATA);
+  let currentEv = null, lastChip = null;
+
+  function openHook(ev, chip) {
+    const d = DATA[ev];
+    if (!d) return;
+    currentEv = ev;
+    lastChip = chip || null;
+    document.getElementById('d-phase').textContent = d.phaseNo + ' · ' + d.phase;
+    const cap = document.getElementById('d-cap');
+    cap.textContent = d.capLabel;
+    cap.className = 'd-captop cap-' + d.cap;
+    document.getElementById('d-name').textContent = d.name;
+    document.getElementById('d-event').textContent = ev;
+    const idx = ORDER.indexOf(ev);
+    document.getElementById('d-count').textContent = (idx + 1) + ' / ' + ORDER.length;
+    document.getElementById('d-when').textContent = d.when;
+    document.getElementById('d-matcher').textContent = d.matcher || '—（不支持 matcher）';
+    document.getElementById('d-type').textContent = d.type;
+    document.getElementById('d-cap2').textContent = d.capNote || (d.capLabel + ' · ' + CAP_TEXT[d.cap]);
+    document.getElementById('d-role').textContent = d.role;
+    document.getElementById('d-code').textContent = d.snippet;
+    document.getElementById('d-detail').textContent = d.detail;
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    scrim.classList.add('on');
+    document.querySelectorAll('g.chip').forEach(g => g.classList.toggle('active', g.dataset.event === ev));
+    document.getElementById('d-close').focus();
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    scrim.classList.remove('on');
+    document.querySelectorAll('g.chip').forEach(g => g.classList.remove('active'));
+    if (lastChip) lastChip.focus({ preventScroll: true });
+    currentEv = null;
+  }
+
+  const flowSvg = document.querySelector('#flow svg');
+  if (flowSvg) {
+    flowSvg.addEventListener('click', e => {
+      const g = e.target.closest('g.chip');
+      if (g) openHook(g.dataset.event, g);
+    });
+    flowSvg.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const g = e.target.closest('g.chip');
+      if (g) { e.preventDefault(); openHook(g.dataset.event, g); }
+    });
+  }
+  function step(delta) {
+    if (!currentEv) return;
+    const i = ORDER.indexOf(currentEv);
+    const next = ORDER[(i + delta + ORDER.length) % ORDER.length];
+    openHook(next, document.querySelector('g.chip[data-event="' + next + '"]'));
+  }
+  document.getElementById('d-prev').addEventListener('click', () => step(-1));
+  document.getElementById('d-next').addEventListener('click', () => step(1));
+  document.getElementById('d-close').addEventListener('click', closeDrawer);
+  scrim.addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer(); });
+
+  document.getElementById('d-locate').addEventListener('click', () => {
+    if (!currentEv) return;
+    const target = document.querySelector('.card[data-event="' + currentEv + '"]');
+    if (!target) return;
+    closeDrawer();
+    target.scrollIntoView({ block: 'center' });
+    target.classList.add('flash');
+    setTimeout(() => target.classList.remove('flash'), 1800);
+  });
+</script>
+</body>
+</html>

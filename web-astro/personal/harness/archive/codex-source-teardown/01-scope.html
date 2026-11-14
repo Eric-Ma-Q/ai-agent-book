@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 取证边界：官方仓库让哪些判断变硬，让哪些判断变软 · Codex 源码拆解</title>
+<meta name="description" content="Codex 不是泄露材料，而是官方 Apache-2.0 仓库。好处是客户端、协议和运行时能逐行复核；代价是桌面 App、云端服务与模型服务不在仓库里，很多「线上怎样」的问题只能标不可验证。这一章先把边界画出来，后面九章才不会越界。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" aria-current="page" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="01-scope">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 01 章 · 先划清能证明什么</p>
+  <h1>取证边界：官方仓库让哪些判断变硬，让哪些判断变软</h1>
+  <p class="lead">Codex 不是泄露材料，而是官方 Apache-2.0 仓库。好处是客户端、协议和运行时能逐行复核；代价是桌面 App、云端服务与模型服务不在仓库里，很多「线上怎样」的问题只能标不可验证。这一章先把边界画出来，后面九章才不会越界。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>能读到的是本地运行时与协议：CLI、TUI、exec、app-server、沙箱、工具、记忆、多 Agent。</li><li>读不到的是桌面 App、Codex Web / Cloud、模型服务与 IDE 扩展的内部实现；它们只能标 D 级。</li><li>「不在本仓库」不等于「源码状态已确认」或「没有」，更不等于「线上默认开启」；证据等级必须跟着材料走。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>这份公开仓库，究竟能支撑哪些产品判断？</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C01">
+  <b>实现差异</b><p>材料从「泄露副本」换成「官方仓库」，证据更硬，但覆盖面更窄：本地运行时与协议可证，服务端与 App 不可证。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>三种入口，不是三种实现</h2>
+
+  <p>README 把 Codex CLI、桌面 App、Codex Web 并列成三种入口。这个并列很容易被读成「同一套实现有三种壳」，但仓库实际只覆盖第一种：CLI 在本机跑，App 与 Web 是另外的入口。</p>
+
+<div class="ev" data-evidence data-path="README.md" data-lines="1-8" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L8">
+  <header><span class="path">README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L8">1-8</a> · 三种入口并列；仓库只覆盖 CLI</header>
+  <pre>&lt;p&gt;&lt;strong&gt;Codex CLI&lt;/strong&gt; is a coding agent from OpenAI that runs locally on your computer.&lt;/p&gt;
+...
+If you want the desktop app experience, run &lt;code&gt;codex app&lt;/code&gt; or visit the Codex App page.
+If you are looking for the cloud-based agent from OpenAI, Codex Web, go to chatgpt.com/codex.&lt;/p&gt;</pre>
+</div>
+  <p>所以「Codex 怎么工作」这个问题必须先限定对象：本专题讲的是仓库里的 CLI / 运行时 / app-server，不把 App 与 Web 的行为算进来。</p>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>仓库里真正能读到的四层</h2>
+
+  <p>把仓库按职责切开，能看到四层不同的东西：本地运行时、交互表面、协议层、平台能力。它们不是同一个「产品壳」的四种写法。</p>
+  <div class="tw"><table>
+      <thead><tr><th>层</th><th>代表目录</th><th>能回答的问题</th></tr></thead>
+      <tbody>
+      <tr><td>运行时</td><td><code>codex-rs/core</code></td><td>一轮怎么跑、工具怎么执行、上下文怎么压缩、权限怎么裁</td></tr>
+      <tr><td>表面</td><td><code>codex-rs/tui</code>、<code>exec</code>、<code>cli</code></td><td>用户从哪个入口进来、事件怎么显示</td></tr>
+      <tr><td>协议</td><td><code>app-server</code>、<code>app-server-protocol</code></td><td>多端如何共享 thread / turn / item</td></tr>
+      <tr><td>平台能力</td><td><code>sandboxing</code>、<code>network-proxy</code>、<code>memories</code></td><td>跨平台隔离、网络策略、记忆管线</td></tr>
+      </tbody>
+    </table></div>
+  <p>这四层都能在固定 SHA 里指到文件，因此可以写 A 级证据；但它们仍然只说明「代码这样组织」，不说明「某个账号一定开启」。</p>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>仓库外：只能看到客户端行为</h2>
+
+  <p>桌面 App 在仓库里只留下安装器与下载地址；Codex Web / Cloud 只有客户端；IDE 扩展只有外链；模型服务只有 API 客户端。对这些部分，页面只能写「客户端怎么调用」，不能写「服务端怎么实现」。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/cli/src/desktop_app/mac.rs" data-lines="10-12" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cli/src/desktop_app/mac.rs#L10-L12">
+  <header><span class="path">codex-rs/cli/src/desktop_app/mac.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cli/src/desktop_app/mac.rs#L10-L12">10-12</a> · 仓库只负责下载 / 安装 App，不含 App 源码</header>
+  <pre>const CODEX_DMG_URL_ARM64: &amp;str = "https://persistent.oaistatic.com/codex-app-prod/Codex.dmg";
+const CODEX_DMG_URL_X64: &amp;str =
+    "https://persistent.oaistatic.com/codex-app-prod/Codex-latest-x64.dmg";</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/cloud-client/README.md" data-lines="1-5" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cloud-client/README.md#L1-L5">
+  <header><span class="path">codex-rs/cloud-client/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cloud-client/README.md#L1-L5">1-5</a> · 只有客户端 crate；服务端不在仓库</header>
+  <pre># Codex cloud client
+Reusable Rust client for native ThreadService gRPC over HTTP/2, with no TUI,
+conventional app-server or private monorepo dependency. This slice supports
+`Resume` and live `Attach`.</pre>
+</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>取舍：更硬的证据，换更窄的覆盖面</h2>
+
+  <p>官方仓库让「代码怎么组织」变得可复核，也让「线上怎么表现」更难回答。页面如果为了完整而补服务端细节，就会把 A 级材料写成 D 级猜测；反过来，如果只写仓库里有什么，又会变成代码导读。折中办法是每章都先限定问题，再给判断。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>每条关键判断都能回到固定 SHA 的 <code>path:line</code>，读者可以自己复核。</div><div><b>付出什么</b>桌面 App、Cloud、模型服务的内部行为无法验证；跨产品差异只能比较两边都有材料的部分。</div></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L8">README.md:1-8</a> <span>· 三种入口</span></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/LICENSE#L1-L2">LICENSE:1-2</a> <span>· Apache-2.0</span></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cli/src/desktop_app/mac.rs#L10-L12">desktop_app/mac.rs:10-12</a> <span>· App 安装器</span></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cloud-client/README.md#L1-L5">cloud-client/README.md:1-5</a> <span>· 仅客户端</span></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="index.html"><small>← 返回</small><b>阅读地图</b></a><a class="next" href="02-map.html"><small>下一章 →</small><b>02 产品地图</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

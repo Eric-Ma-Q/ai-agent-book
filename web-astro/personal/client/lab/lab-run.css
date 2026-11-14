@@ -1,0 +1,436 @@
+/* Agent lab: the run timeline, turn cards and the result block. */
+/* Run view */
+.lab-run-head {
+  margin-bottom: 14px;
+}
+.lab-run-question {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.lab-run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 0.82rem;
+}
+.lab-run-knobs {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.lab-runlink {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+}
+.lab-turn {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--lab-radius);
+  background: var(--surface);
+}
+.lab-turn-title {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+.lab-call {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px dashed var(--line);
+}
+.lab-call--summary {
+  padding: 10px;
+  border: 1px dashed var(--lab-warn);
+  border-radius: 8px;
+}
+.lab-segbar {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--bg);
+}
+.lab-seg--system {
+  background: var(--lab-seg-system);
+}
+.lab-seg--tools {
+  background: var(--lab-seg-tools);
+}
+.lab-seg--user {
+  background: var(--lab-seg-user);
+}
+.lab-seg--assistant {
+  background: var(--lab-seg-assistant);
+}
+.lab-seg--tool {
+  background: var(--lab-seg-tool);
+}
+.lab-seglegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.lab-seglegend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.lab-seg-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.lab-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+.lab-thought {
+  margin: 6px 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.lab-details {
+  margin-top: 6px;
+}
+.lab-seg-toggle {
+  display: inline-flex;
+  margin: 8px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.lab-seg-toggle button {
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.lab-seg-toggle button.is-active {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
+}
+.lab-msg {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--line);
+  border-radius: 4px;
+  background: var(--bg);
+}
+.lab-msg--system {
+  border-left-color: var(--lab-seg-system);
+}
+.lab-msg--user {
+  border-left-color: var(--lab-seg-user);
+}
+.lab-msg--assistant {
+  border-left-color: var(--lab-seg-assistant);
+}
+.lab-msg--tool {
+  border-left-color: var(--lab-seg-tool);
+}
+.lab-msg--added,
+.lab-msg--changed {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.lab-msg-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.lab-role {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.lab-diff-tag {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--accent-ink, #fff);
+  font-size: 0.7rem;
+}
+.lab-diff-tag--changed {
+  background: var(--lab-warn);
+}
+.lab-diff-note {
+  margin: 6px 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.lab-pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+.lab-pre--small {
+  max-height: 340px;
+  overflow: auto;
+  padding: 8px;
+  border-radius: 6px;
+  background: var(--bg);
+}
+.lab-long > summary {
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  list-style: none;
+}
+.lab-long[open] > summary {
+  display: none;
+}
+.lab-long-more {
+  margin-left: 6px;
+  color: var(--accent);
+  font-family: var(--sans);
+  font-weight: 600;
+}
+.lab-tool {
+  margin: 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.lab-tool--error {
+  border-color: color-mix(in srgb, var(--lab-bad) 45%, var(--line));
+}
+.lab-tool-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.lab-tool-name {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.lab-tool-label {
+  margin: 4px 0 2px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.lab-seen {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--lab-warn) 14%, transparent);
+  font-size: 0.82rem;
+}
+.lab-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  margin: 6px 0 10px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 0.82rem;
+}
+.lab-info-items {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  padding-left: 18px;
+}
+.lab-pending::after {
+  content: ' ⋯';
+  animation: lab-blink 1.2s infinite;
+}
+@keyframes lab-blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Result */
+.lab-result {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--lab-radius);
+}
+.lab-result--ok {
+  border-color: color-mix(in srgb, var(--lab-ok) 45%, var(--line));
+}
+.lab-result-head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.lab-rich {
+  line-height: 1.75;
+  font-size: 0.95rem;
+}
+.lab-rich h3,
+.lab-rich h4,
+.lab-rich h5,
+.lab-rich h6 {
+  margin: 1em 0 0.4em;
+}
+.lab-rich pre {
+  overflow: auto;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 0.8rem;
+}
+.lab-rich code {
+  font-size: 0.85em;
+}
+.lab-rich blockquote {
+  margin: 0.6em 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--line);
+  color: var(--muted);
+}
+.lab-table table,
+.lab-table,
+.lab-table-compact {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+}
+.lab-table th,
+.lab-table td,
+.lab-table-compact th,
+.lab-table-compact td,
+.lab-table table th,
+.lab-table table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.lab-table-wrap,
+.lab-table {
+  overflow-x: auto;
+}
+.lab-cite {
+  display: inline;
+  padding: 0 3px;
+  border-radius: 4px;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-bottom: 1px dotted var(--muted);
+  font-size: 0.85em;
+}
+.lab-cite-ref {
+  margin-right: 4px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.lab-cite-quote {
+  color: var(--muted);
+}
+.lab-cite-badge {
+  margin-left: 2px;
+  font-weight: 700;
+}
+.lab-cite--verified .lab-cite-badge,
+.lab-cite-count.lab-cite--verified {
+  color: var(--lab-ok);
+}
+.lab-cite--wrong_section .lab-cite-badge,
+.lab-cite-count.lab-cite--wrong_section {
+  color: var(--lab-warn);
+}
+.lab-cite--not_found .lab-cite-badge,
+.lab-cite--too_short .lab-cite-badge,
+.lab-cite-count.lab-cite--not_found,
+.lab-cite-count.lab-cite--too_short {
+  color: var(--lab-bad);
+}
+.lab-cite-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  margin: 14px 0;
+  font-size: 0.85rem;
+}
+.lab-cite-bad {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.lab-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.lab-stat {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.lab-stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.lab-stat-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chapter 10: reviewer verdicts and per-agent usage */
+.lab-review {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--lab-ok);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 0.86rem;
+}
+.lab-review--revise {
+  border-left-color: var(--lab-warn);
+}
+.lab-review .lab-info-items {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+}
+.lab-call--review {
+  border-left: 3px solid var(--lab-warn);
+}
+.lab-by-agent-wrap {
+  margin-top: 12px;
+}
+.lab-subagent {
+  margin: 8px 0 4px;
+  padding-left: 10px;
+  border-left: 2px dashed var(--line);
+}
+.lab-subagent .lab-turn {
+  background: var(--bg);
+}
+.lab-info--subagent .lab-info-kind {
+  color: var(--accent);
+}

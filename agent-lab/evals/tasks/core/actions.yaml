@@ -1,0 +1,60 @@
+# 写入补充与出题：写入只能提交待确认请求，验证定位段落确实存在；出题必须附出处。
+tasks:
+  - id: insert-kv-summary
+    kind: insert
+    chapter: 2
+    requires_tools: [propose_insert]
+    input: 把「为什么前缀稳定能命中缓存」总结成 3 条要点，作为补充放在第 2 章「KV Cache 的原理与约束」这一节的第一段之后。
+    tags: [ch2, write]
+    verifiers:
+      - {type: insert_proposed, chapter: 2, contains: [缓存]}
+      - {type: claims_written}
+
+  - id: insert-harness-note
+    kind: insert
+    chapter: 1
+    requires_tools: [propose_insert]
+    input: 用自己的话解释 Harness 的五个组成部分，存成补充，放在第 1 章「Harness 工程：模型之外的竞争力」一节的第一段之后。
+    tags: [ch1, write]
+    verifiers:
+      - {type: insert_proposed, chapter: 1, contains: [约束]}
+      - {type: claims_written}
+
+  - id: insert-memory-note
+    kind: insert
+    chapter: 3
+    requires_tools: [propose_insert]
+    input: 帮我把用户记忆系统的要点整理成一段补充，放在第 3 章「用户记忆系统」一节的第一段之后。
+    tags: [ch3, write]
+    verifiers:
+      - {type: insert_proposed, chapter: 3, contains: [记忆]}
+
+  - id: quiz-ch2
+    kind: quiz
+    chapter: 2
+    input: 根据第 2 章出 3 道检验理解的题目（不要给答案），每道题都要附上出处引用。
+    tags: [ch2, quiz]
+    verifiers:
+      - {type: status_ok}
+      - {type: quiz_questions, min_count: 3, min_citations: 3}
+      - {type: citations_verified, min_count: 3}
+
+  - id: quiz-from-highlights
+    kind: quiz
+    chapter: 2
+    requires_tools: [list_highlights]
+    input: 看看我在第 2 章划了哪些线、写了哪些笔记，围绕这些内容出 3 道题，每题附出处。
+    tags: [ch2, quiz, personal]
+    verifiers:
+      - {type: tool_called, name: list_highlights}
+      - {type: quiz_questions, min_count: 3, min_citations: 3}
+
+  - id: quiz-grade
+    kind: quiz
+    chapter: 1
+    input: "我来回答一道题：「Agent 的三要素是什么？」我的答案是「模型、提示词、数据库」。请批改，并引用原文说明依据。"
+    tags: [ch1, quiz]
+    verifiers:
+      - {type: status_ok}
+      - {type: citations_verified, min_count: 1}
+      - {type: answer_mentions, all_of: [工具, 上下文]}

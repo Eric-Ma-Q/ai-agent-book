@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>06 权限与安全：approval、sandbox、execpolicy、network 的组合 · Codex 源码拆解</title>
+<meta name="description" content="「能不能跑这条命令」不是一个 yes/no。Codex 把它拆成四层：approval 决定谁批、sandbox 决定能碰什么、execpolicy 决定规则、network proxy 决定能连哪。再往上还有 Guardian 自动审查与「不可信上下文」处理。产品判断是：权限要可组合、可审计，而不">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" aria-current="page" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="06-permission">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 06 章 · 权限是一套组合，不是一个弹窗</p>
+  <h1>权限与安全：approval、sandbox、execpolicy、network 的组合</h1>
+  <p class="lead">「能不能跑这条命令」不是一个 yes/no。Codex 把它拆成四层：approval 决定谁批、sandbox 决定能碰什么、execpolicy 决定规则、network proxy 决定能连哪。再往上还有 Guardian 自动审查与「不可信上下文」处理。产品判断是：权限要可组合、可审计，而不是把风险都推给一个确认弹窗。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>approval 有 untrusted / on-request / granular / never 四种；granular 还能细分 sandbox、rules、skill、permissions、MCP。</li><li>sandbox policy 有 danger-full-access / read-only / external-sandbox / workspace-write；后端按平台选 Seatbelt、Seccomp、Windows 受限令牌或 MXC。</li><li>execpolicy 给出 allow / prompt / prompt-user / forbidden；网络另有本地代理；Guardian 只有显式选 auto_review 才接管。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>怎样让 Agent 能干活，又不越过文件、命令与网络边界？</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C10-C13">
+  <b>实现差异</b><p>Codex 把权限拆成 approval、sandbox、execpolicy、network 与 reviewer 五个可组合面；任何一层都不能单独代表「安全」。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>approval：谁来决定</h2>
+
+  <p>approval 不是「开 / 关」，而是四种策略。默认是 on-request，让模型在需要时请求；granular 把请求再拆成 sandbox 升级、规则、skill、request_permissions、MCP elicitation 五类，可以逐类允许或自动拒绝。</p>
+  <div class="tw"><table>
+      <thead><tr><th>模式</th><th>行为</th><th>产品含义</th></tr></thead>
+      <tbody>
+      <tr><td>untrusted</td><td>除非规则显式允许，否则要批</td><td>项目未受信；公开配置已不再支持该值</td></tr>
+      <tr><td>on-request</td><td>模型决定何时请求</td><td>默认策略</td></tr>
+      <tr><td>granular</td><td>按类别细控</td><td>适合托管 / 企业策略</td></tr>
+      <tr><td>never</td><td>从不询问，失败直接回模型</td><td>无人值守；风险最高</td></tr>
+      </tbody>
+    </table></div>
+
+<div class="ev" data-evidence data-path="codex-rs/protocol/src/protocol.rs" data-lines="1184-1189" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/protocol.rs#L1184-L1189">
+  <header><span class="path">codex-rs/protocol/src/protocol.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/protocol.rs#L1184-L1189">1184-1189</a> · granular 与 never 的语义</header>
+  <pre>#[strum(serialize = "granular")]
+Granular(GranularApprovalConfig),
+
+/// Never ask the user to approve commands. Failures are immediately returned
+/// to the model, and never escalated to the user for approval.
+Never,</pre>
+</div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>sandbox policy：能碰什么</h2>
+
+  <p>approval 决定「要不要问」，sandbox policy 决定「问了之后能做什么」。四种 policy 从完全放开到只读，再到只写 workspace；workspace-write 还会把 <code>.git</code>、<code>.codex</code> 等可提权的路径列为只读子路径。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/protocol/src/protocol.rs" data-lines="1254-1266" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/protocol.rs#L1254-L1266">
+  <header><span class="path">codex-rs/protocol/src/protocol.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/protocol.rs#L1254-L1266">1254-1266</a> · policy 从无限制到只读</header>
+  <pre>pub enum SandboxPolicy {
+    /// No restrictions whatsoever. Use with caution.
+    #[serde(rename = "danger-full-access")]
+    DangerFullAccess,
+
+    /// Read-only access configuration.
+    #[serde(rename = "read-only")]
+    ReadOnly {
+        /// When set to `true`, outbound network access is allowed. `false` by
+        /// default.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        network_access: bool,
+    },</pre>
+</div>
+  <p>同一份 <code>WritableRoot</code> 还带 <code>read_only_subpaths</code> 与 <code>protected_metadata_names</code>，用来防止 Agent 通过改 <code>.git/hooks</code> 或配置文件给自己提权。</p>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>后端：同一 policy，不同 OS 实现</h2>
+
+  <p>policy 是产品语言，后端是平台实现。macOS 用 Seatbelt，Linux 用 Seccomp / Landlock / bwrap 组合，Windows 用受限令牌或 MXC。没有对应后端时可能退化为 <code>None</code>，所以「有 sandbox policy」不等于「一定在沙箱里跑」。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/sandboxing/src/manager.rs" data-lines="49-62" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/sandboxing/src/manager.rs#L49-L62">
+  <header><span class="path">codex-rs/sandboxing/src/manager.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/sandboxing/src/manager.rs#L49-L62">49-62</a> · 平台到后端的映射</header>
+  <pre>if cfg!(target_os = "macos") {
+    Some(SandboxType::MacosSeatbelt)
+} else if cfg!(target_os = "linux") {
+    Some(SandboxType::LinuxSeccomp)
+} else if cfg!(target_os = "windows") {
+    if windows_sandbox_enabled {
+        Some(SandboxType::WindowsRestrictedToken)
+    } else {
+        None
+    }
+} else {
+    None
+}</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/protocol/src/sandbox.rs" data-lines="29-35" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/sandbox.rs#L29-L35">
+  <header><span class="path">codex-rs/protocol/src/sandbox.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/sandbox.rs#L29-L35">29-35</a> · 五种 type，含 None</header>
+  <pre>pub enum SandboxType {
+    None,
+    MacosSeatbelt,
+    LinuxSeccomp,
+    WindowsRestrictedToken,
+    WindowsMxc,
+}</pre>
+</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>execpolicy：规则先于弹窗</h2>
+
+  <p>规则文件把「哪些命令前缀可以跑」写成 allow / prompt / prompt-user / forbidden。它解决的是重复审批：同一类命令被允许后，不必每次再问；但 <code>prompt-user</code> 仍要求一次全新的人类决定，不能被自动审查或缓存替代。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/execpolicy/src/decision.rs" data-lines="9-21" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/execpolicy/src/decision.rs#L9-L21">
+  <header><span class="path">codex-rs/execpolicy/src/decision.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/execpolicy/src/decision.rs#L9-L21">9-21</a> · 规则四种决策</header>
+  <pre>pub enum Decision {
+    /// Command may run without further approval.
+    Allow,
+    /// Request approval from the configured reviewer; rejected with `approval_policy="never"`.
+    Prompt,
+    /// Requires a fresh human decision, independent of the configured reviewer.
+    #[serde(rename = "prompt-user")]
+    PromptUser,
+    /// Command is blocked without further consideration.
+    Forbidden,
+}</pre>
+</div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>network：本地代理也是一层权限</h2>
+
+  <p>网络访问不是「sandbox 开了就随便连」。Codex 有本地 HTTP / SOCKS5 代理，按 allow / deny 名单与 limited 模式工作；默认监听 127.0.0.1:3128 与 127.0.0.1:8081。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/network-proxy/README.md" data-lines="1-10" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/network-proxy/README.md#L1-L10">
+  <header><span class="path">codex-rs/network-proxy/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/network-proxy/README.md#L1-L10">1-10</a> · 代理与默认端口</header>
+  <pre># codex-network-proxy
+
+`codex-network-proxy` is Codex's local network policy enforcement proxy. It runs:
+
+- an HTTP proxy (default `127.0.0.1:3128`)
+- a SOCKS5 proxy (default `127.0.0.1:8081`, enabled by default)
+
+On Windows, managed HTTP listeners prefer ports `3128-3159`, and SOCKS5 listeners prefer ports
+`8081-8112`. An explicitly configured port is attempted first. If every preferred port is occupied,
+the proxy preserves its existing ephemeral loopback fallback.</pre>
+</div>
+
+</section>
+
+
+<section id="s06">
+  <h2><span class="num">06</span>Guardian：自动审查是 opt-in</h2>
+
+  <p>Guardian 不是默认接管所有审批。路由函数要求 policy 是 on-request 或 granular，并且 reviewer 是 <code>AutoReview</code>；reviewer 默认是 <code>user</code>。所以「代码里有 Guardian」不等于「线上默认自动审查」。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/ext/guardian-reviewer/src/routing.rs" data-lines="59-67" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/ext/guardian-reviewer/src/routing.rs#L59-L67">
+  <header><span class="path">codex-rs/ext/guardian-reviewer/src/routing.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/ext/guardian-reviewer/src/routing.rs#L59-L67">59-67</a> · 只有 auto_review 才路由</header>
+  <pre>pub fn routes_approval_policy_to_guardian(
+    policy: AskForApproval,
+    reviewer: ApprovalsReviewer,
+) -&gt; bool {
+    matches!(
+        policy,
+        AskForApproval::OnRequest | AskForApproval::Granular(_)
+    ) &amp;&amp; reviewer == ApprovalsReviewer::AutoReview
+}</pre>
+</div>
+  <div class="note info">Guardian 的 feature 默认开启，但 reviewer 默认 <code>user</code>；这两个默认值不矛盾，一个是能力，一个是路由选择。</div>
+
+</section>
+
+
+<section id="s07">
+  <h2><span class="num">07</span>不可信上下文：goal 只当数据</h2>
+
+  <p>用户目标也会进模型上下文，但 Codex 把它当不可信数据：超过 700 bytes 的目标整体省略，防止截断把「限制」变成「授权」；文本用 JSON 引号包起来，并放在内部上下文标记里。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/context/user_goal.rs" data-lines="96-104" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/context/user_goal.rs#L96-L104">
+  <header><span class="path">codex-rs/core/src/context/user_goal.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/context/user_goal.rs#L96-L104">96-104</a> · 超限整体省略，不做半截截断</header>
+  <pre>if let Some(objective) = objective {
+                    // Preserve the objective as data, including quotes and wrapper-like text.
+                    let objective = serde_json::json!(objective).to_string();
+                    // Even one token per byte leaves room for the wrapper and status below 1K.
+                    if objective.len() &lt;= MAX_OBJECTIVE_BYTES {
+                        text.push_str(&amp;format!("User set the goal: {objective}"));
+                    } else {
+                        text.push_str(
+                            "User set the goal: [objective omitted; exceeds the evidence limit].",</pre>
+</div>
+
+</section>
+
+
+<section id="s08">
+  <h2><span class="num">08</span>取舍：可组合，但配置与平台差异大</h2>
+
+  <p>五层组合能让企业做细粒度策略，也能让个人用户按项目放宽；代价是同一句「允许」在不同平台、不同 approval、不同 network 配置下含义不同。产品文档必须把「谁批、能碰什么、能连哪」分开写。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>权限可审计、可逐类收紧；规则能减少重复审批；网络与文件边界分开治理。</div><div><b>付出什么</b>组合多、默认值多；平台后端不一致；用户很难从一句「已允许」推断实际边界。</div></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/protocol.rs#L1184-L1189">protocol.rs:1184-1189</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/protocol.rs#L1254-L1266">protocol.rs:1254-1266</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/sandboxing/src/manager.rs#L49-L62">sandboxing/manager.rs:49-62</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/sandbox.rs#L29-L35">protocol/sandbox.rs:29-35</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/execpolicy/src/decision.rs#L9-L21">execpolicy/decision.rs:9-21</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/network-proxy/README.md#L1-L10">network-proxy/README.md:1-10</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/ext/guardian-reviewer/src/routing.rs#L59-L67">guardian-reviewer/routing.rs:59-67</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/context/user_goal.rs#L96-L104">context/user_goal.rs:96-104</a></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="05-context.html"><small>← 上一章</small><b>05 上下文与记忆</b></a><a class="next" href="07-agents.html"><small>下一章 →</small><b>07 多 Agent</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 上下文与记忆：90% 是派生上限，65% 是条件预跑 · Codex 源码拆解</title>
+<meta name="description" content="长任务最怕两件事：上下文突然爆掉，和压缩时用户干等。Codex 把压缩拆成几条路径：模型元数据给出 90% 的派生上限，配置可以更小；异步压缩在 65% 左右预跑，但只在特定开关与 provider 能力下成立。记忆则被放到会话外，做成两阶段离线管线，且默认关闭。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" aria-current="page" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="05-context">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 05 章 · 压缩是产品功能，不是补丁</p>
+  <h1>上下文与记忆：90% 是派生上限，65% 是条件预跑</h1>
+  <p class="lead">长任务最怕两件事：上下文突然爆掉，和压缩时用户干等。Codex 把压缩拆成几条路径：模型元数据给出 90% 的派生上限，配置可以更小；异步压缩在 65% 左右预跑，但只在特定开关与 provider 能力下成立。记忆则被放到会话外，做成两阶段离线管线，且默认关闭。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>AGENTS.md 发现时从 cwd 向上找项目根，最终排列是 user → thread → 项目根→cwd，不是「从根往下找」。</li><li>90% 是 <code>resolved_context_window</code> 的派生上限，实际取 <code>min(模型元数据的 auto_compact_token_limit, 90%)</code>；不是无条件硬阈值。</li><li>65% 的分母是完整 <code>resolved_context_window</code>，且要 AsyncCompaction、remote compaction V2、未开 TokenBudget 才预跑。</li><li>记忆是会话外两阶段管线，feature 默认关闭；读不到「某个账号已开启」的结论。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>长任务怎样不爆上下文，又怎样让压缩不打断用户？</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C15-C16">
+  <b>实现差异</b><p>压缩在 Codex 里是产品功能：有派生上限、有后台预跑、有摘要预算；记忆则被移到会话外，做成可关闭的离线管线。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>AGENTS.md：发现向上，排列向下</h2>
+
+  <p>模块注释把两件事写在一起，容易读混：<b>发现</b>是从 cwd 向上找项目根；<b>最终排列</b>是从项目根到 cwd。代码先向上收集目录，再 <code>reverse()</code>，所以并发探测不会打乱最终顺序。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/agents_md.rs" data-lines="10-18" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agents_md.rs#L10-L18">
+  <header><span class="path">codex-rs/core/src/agents_md.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agents_md.rs#L10-L18">10-18</a> · 发现向上、排列向下，两件事分开</header>
+  <pre>//! 1.  Determine the project root by walking upwards from the current working
+//!     directory until a configured `project_root_markers` entry is found.
+//!     When `project_root_markers` is unset, the default marker list is used
+//!     (`.git`). If no marker is found, only the current working directory is
+//!     considered. An empty marker list disables parent traversal.
+//! 2.  Collect every `AGENTS.md` found from the project root down to the
+//!     current working directory (inclusive) and concatenate their contents in
+//!     that order.
+//! 3.  We do **not** walk past the project root.</pre>
+</div>
+  <p>最终文本还包含 host 提供的 user 与 thread 指令：<code>legacy_text()</code> 先写 user、再写 thread、最后写项目 entries。因此页面上的「项目指令」只是最后一层，不是全部。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/agents_md.rs" data-lines="388-399" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agents_md.rs#L388-L399">
+  <header><span class="path">codex-rs/core/src/agents_md.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agents_md.rs#L388-L399">388-399</a> · user → thread → 项目 entries</header>
+  <pre>for instructions in self
+    .user_instructions
+    .iter()
+    .chain(self.thread_instructions.iter())
+{
+    if has_previous {
+        output.push_str("\n\n");
+    }
+    output.push_str(&amp;instructions.text);
+    has_previous = true;
+}
+for entry in &amp;self.entries {</pre>
+</div>
+  <p>预算默认 32 KiB（<code>AGENTS_MD_MAX_BYTES</code>），超过会截断并给出 warning；它是项目文档预算，不等于整个 system prompt 的预算。</p>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>90%：派生上限，不是通用硬阈值</h2>
+
+  <p><code>auto_compact_token_limit()</code> 先算 <code>resolved_context_window * 9 / 10</code>，再和模型元数据里的 <code>config_limit</code> 取 <code>min</code>。如果配置更小，配置优先；如果配置更大，被 90% 截住。它是一条派生上限，不是「所有模型到 90% 必然压缩」的硬阈值。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/protocol/src/openai_models.rs" data-lines="579-590" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/openai_models.rs#L579-L590">
+  <header><span class="path">codex-rs/protocol/src/openai_models.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/openai_models.rs#L579-L590">579-590</a> · 90% 与 config 取 min</header>
+  <pre>pub fn auto_compact_token_limit(&amp;self) -&gt; Option&lt;i64&gt; {
+    let context_limit = self
+        .resolved_context_window()
+        .map(|context_window| (context_window * 9) / 10);
+    let config_limit = self.auto_compact_token_limit;
+    if let Some(context_limit) = context_limit {
+        return Some(
+            config_limit.map_or(context_limit, |limit| std::cmp::min(limit, context_limit)),
+        );
+    }
+    config_limit
+}</pre>
+</div>
+  <p>另外还有独立的 full context 上限与 <code>model_auto_compact_token_limit_scope</code>（Total / BodyAfterPrefix），所以「90%」不能脱离 scope 与模型元数据单独引用。</p>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>65%：分母、开关与适用路径</h2>
+
+  <p>异步压缩的判定是 <code>active_context_tokens * 100 &lt; resolved_context_window * threshold</code>，分母是完整上下文窗口，不是 90% 上限。并且在进入这段之前，已经要求 AsyncCompaction 开启、provider 支持 remote compaction V2、未开 TokenBudget。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/core/src/session/async_compaction.rs" data-lines="70-83" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/session/async_compaction.rs#L70-L83">
+  <header><span class="path">codex-rs/core/src/session/async_compaction.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/session/async_compaction.rs#L70-L83">70-83</a> · 分母是 resolved_context_window</header>
+  <pre>|| (matches!(phase, CompactionPhase::PostTurn)
+    &amp;&amp; token_status.turn_end_compaction_threshold_reached)
+|| step_context
+    .settings
+    .model_info
+    .resolved_context_window()
+    .is_none_or(|limit| {
+        i128::from(token_status.active_context_tokens) * 100
+            &lt; i128::from(limit)
+                * i128::from(turn_context.config.async_compaction_threshold_percent)
+    })
+{
+    return;
+}</pre>
+</div>
+  <div class="tw"><table>
+      <thead><tr><th>条件</th><th>代码位置</th><th>不满足时</th></tr></thead>
+      <tbody>
+      <tr><td>AsyncCompaction 开启</td><td><code>enabled()</code></td><td>不预跑，走前台压缩</td></tr>
+      <tr><td>provider 支持 remote compaction V2</td><td><code>remote_compaction</code></td><td>不预跑</td></tr>
+      <tr><td>未开 TokenBudget</td><td><code>Feature::TokenBudget</code></td><td>不预跑</td></tr>
+      <tr><td>达到 65% 阈值</td><td><code>async_compaction_threshold_percent</code>，可配置</td><td>继续前台采样</td></tr>
+      </tbody>
+    </table></div>
+  <div class="note warn">不要写「65% 一定触发压缩」。它是异步预跑的起点，不是主循环的强制终止条件；分母与开关都要一起写。</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>记忆：会话外的两阶段管线</h2>
+
+  <p>记忆不在主对话里「顺手记一笔」。它由启动任务异步跑两个阶段：Phase 1 从 rollout 抽取结构化记忆，Phase 2 合并到文件工作区，再跑一个受限的 consolidation 子 Agent。feature 默认关闭。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/memories/README.md" data-lines="29-38" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/memories/README.md#L29-L38">
+  <header><span class="path">codex-rs/memories/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/memories/README.md#L29-L38">29-38</a> · 启动时异步跑两阶段</header>
+  <pre>## When it runs
+
+The pipeline is triggered when a root session starts, and only if:
+
+- the session is not ephemeral
+- the memory feature is enabled
+- the session is not a sub-agent session
+- the state DB is available
+
+It runs asynchronously in the background and executes two phases in order: Phase 1, then Phase 2.</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/features/src/lib.rs" data-lines="1446-1450" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/features/src/lib.rs#L1446-L1450">
+  <header><span class="path">codex-rs/features/src/lib.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/features/src/lib.rs#L1446-L1450">1446-1450</a> · memory feature 默认关闭</header>
+  <pre>id: Feature::MemoryTool,
+        key: "memories",
+        stage: Stage::Stable,
+        default_enabled: false,
+    },</pre>
+</div>
+  <p>读路径还有独立的上下文上限：<code>MemoryContextFragment</code> 把注入文本截到 8,900 bytes，避免记忆把当前请求撑爆。它是「读进来的记忆」的上限，不是记忆库的总大小。</p>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>取舍：更少中断，更多后台与摘要损失</h2>
+
+  <p>派生上限 + 异步预跑能把压缩从「用户等待」挪到「后台准备」，但摘要一定丢信息，后台请求也会花钱；记忆把上下文搬到会话外，能跨会话复用，却引入抽取质量、保留策略与隐私边界。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>长任务更少被上下文打断；压缩可以提前准备；记忆可跨会话复用。</div><div><b>付出什么</b>摘要损失不可逆；异步压缩有条件与成本；记忆默认关闭，开启后还要治理质量与保留。</div></div></div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agents_md.rs#L10-L18">agents_md.rs:10-18</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/agents_md.rs#L388-L399">agents_md.rs:388-399</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/protocol/src/openai_models.rs#L579-L590">openai_models.rs:579-590</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/session/async_compaction.rs#L70-L83">async_compaction.rs:70-83</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/memories/README.md#L29-L38">memories/README.md:29-38</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/features/src/lib.rs#L1446-L1450">features/src/lib.rs:1446-1450</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/context/memory.rs#L45-L45">context/memory.rs:45</a></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="04-tools.html"><small>← 上一章</small><b>04 工具系统</b></a><a class="next" href="06-permission.html"><small>下一章 →</small><b>06 权限与沙箱</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

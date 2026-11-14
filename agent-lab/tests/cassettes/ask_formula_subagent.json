@@ -1,0 +1,280 @@
+{
+ "version": 1,
+ "entries": {
+  "6de8b265428271cfd105": [
+   {
+    "message": {
+     "content": "\n\n",
+     "reasoning_content": "Theuser asksabout the core formula ofan Agent andtherolesof its three components. Thisis aquestion aboutthe book \"深入理解 AIAgent：设计原理与工程实践\". I needto delegatetotheassistant tolookup the book content.\n\nLetme first checkthe chapter list to understand thestructure, then delegate aspecific task.\n\nActually, Ishould delegate thetask directly sinceI can't readthe book myself. Let me make the taskspecific and self-contained.\n\nLetme first list chaptersto knowwhat'sinthe book, then delegate.Actually, I can do both- list chaptersand delegate inparallel.But the delegate taskneeds to be specific.Let me firstlist chapters to knowwherethe formulamight be,then delegate.\n\nActually, Ican delegatewith a self-contained task thatasksto find the core formula ofAgentand its three components. Letme do that. Icould also list chapters inparallel to helpme structuretheanswer.\n\nLet me doboth in parallel.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{}",
+        "name": "list_chapters"
+       },
+       "id": "call_0bab9cd645c845d8981b50d6",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"task\": \"请查阅《深入理解 AI Agent：设计原理与工程实践》一书，找出书中关于「Agent 的核心公式」的论述。需要回答：1) 书中给出的 Agent 核心公式是什么（例如形如 Agent = 大模型 + 规划 + 记忆 + 工具使用 之类的表述，请给出原文）；2) 这个公式由哪三个（或几个）组成部分构成，每个组成部分在公式中起什么作用（书中如何解释各部分的功能）；3) 请给出每个关键论断对应的原文引用，格式为 [[ch章号#小节id|原文片段]]，引用必须原样来自书中原文。请尽量找到公式出现的具体章节和小节。\"}",
+        "name": "delegate"
+       },
+       "id": "call_f8ce71854d2b455db92fab7f",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 940,
+     "cached_tokens": 768,
+     "completion_tokens": 401,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 10807,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "41dc6fa9f61ddbb6b38c": [
+   {
+    "message": {
+     "content": "I'll search the book for the core Agent formula.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent 核心公式\", \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_00_b4qmo4j26st3jmt55fpalnwk",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent = 大模型 + 规划 + 记忆 + 工具\", \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_01_3iytk3xv0qp7cjpfvl55vkx1",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1145,
+     "cached_tokens": 0,
+     "completion_tokens": 126,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 2029,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "5b9d30b1f6648cbb1fae": [
+   {
+    "message": {
+     "content": "Found the key section. Let me read it fully.",
+     "reasoning_content": "Letme read the section现代Agent =LLM + 上下文+ 工具 in chapter1.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"现代-agent--llm--上下文--工具\"}",
+        "name": "read_section"
+       },
+       "id": "call_00_0zpiwxl81uori9nqs1rdjrt5",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1}",
+        "name": "list_chapters"
+       },
+       "id": "call_01_wrvyypccw8btubcp7qoyiqm2",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 3665,
+     "cached_tokens": 1024,
+     "completion_tokens": 125,
+     "reasoning_tokens": 22
+    },
+    "latency_ms": 1860,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "3d5997e3ad8b4a5cb6a7": [
+   {
+    "message": {
+     "content": "Let me read the three component sub-sections and the chapter summary.",
+     "reasoning_content": "Letme also read the sub-sections \"llmagent-的大脑\", \"上下文agent-的眼睛\", \"工具agent-的手脚\" fordetailedexplanations.Also check本章小结 for formularestatement. And the harness sectionfor Agent =Model + Harness.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"llmagent-的大脑\"}",
+        "name": "read_section"
+       },
+       "id": "call_00_jw5efov3rwqg7ipsrfs0vpks",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"上下文agent-的眼睛\"}",
+        "name": "read_section"
+       },
+       "id": "call_01_2ibvpwemr6csrpu2y799zh42",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"工具agent-的手脚\"}",
+        "name": "read_section"
+       },
+       "id": "call_02_vi4zphgvro9t1pzkq57iyjvg",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"本章小结\"}",
+        "name": "read_section"
+       },
+       "id": "call_03_6fsazsavwi2p7g5hhiqh93mr",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 5103,
+     "cached_tokens": 3584,
+     "completion_tokens": 273,
+     "reasoning_tokens": 54
+    },
+    "latency_ms": 2761,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "0629003977576a101377": [
+   {
+    "message": {
+     "content": "Let me read the chapter opening and the Harness section for the expanded formula.",
+     "reasoning_content": "Letme also read the chapter intro(section_id\"\") for the formulamention, and the Harnesssection for theAgent =Model + Harness展开. Letme check the chapter 1introtext.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"\"}",
+        "name": "read_section"
+       },
+       "id": "call_00_z789was3o95dkebhwdgyjnln",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"section_id\": \"harness-工程模型之外的竞争力\"}",
+        "name": "read_section"
+       },
+       "id": "call_01_qrakf4hu0yt6pmekrwaddbau",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 9345,
+     "cached_tokens": 4992,
+     "completion_tokens": 162,
+     "reasoning_tokens": 41
+    },
+    "latency_ms": 2381,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "243570d180e3cf7162ad": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Ihave enough. Alsomaybe checkthe introduction chapter(引言) wherethe formula is used. Let me alsolist chaptersto see if there's an引言/后记. Let me check list_chapters without chapter.\n\nActually the task focuseson the formula. I have thekey sections. Let me alsoverify if there's a \"引言\" chapter with the formula, butthe list_chapters only listschapters 1-10.Let me quickly list allchapters to see.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{}",
+        "name": "list_chapters"
+       },
+       "id": "call_00_9lxdelvyko7qphepi4mgiqdl",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"Agent = LLM + 上下文 + 工具 加号 工程组件的组合\", \"top_k\": 5}",
+        "name": "search_book"
+       },
+       "id": "call_01_jb8ac5dhci0em1g3oczwohxk",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 11229,
+     "cached_tokens": 9344,
+     "completion_tokens": 182,
+     "reasoning_tokens": 97
+    },
+    "latency_ms": 2565,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "598747ed816653cce18a": [
+   {
+    "message": {
+     "content": "## 一、公式与出处\n\n公式出现在**第 1 章「AI Agent 入门」的二级小节「现代 Agent = LLM + 上下文 + 工具」**（section_id: `现代-agent--llm--上下文--工具`），并在第 1 章末节与「本章小结」中反复引用为该书的\"核心公式 / 全书结构骨架\"。\n\n- 公式原文：[[ch1#现代-agent--llm--上下文--工具|现代 Agent 的最小工程实现可以用一个简洁的公式来表达：Agent = LLM（大语言模型，Large Language Model）+ 上下文 + 工具]]\n- 加号的含义：[[ch1#现代-agent--llm--上下文--工具|这里的加号表示工程组件的组合，而不是强化学习中的形式化定义]]\n- 它是全书的概念地图：[[ch1#AI Agent 入门|它会快速引入 Agent 的核心公式、运行循环、工程框架和设计模式]]\n- 全书唯一骨架：[[ch1#harness-五要素与构建部分的对应|全书的结构骨架只有一个，就是引言和后记反复使用的 Agent = LLM + 上下文 + 工具]]\n\n**关于\"Agent = 大模型 + 规划 + 记忆 + 工具使用\"这类表述：书中没有找到。** 本书给出的核心公式是三项式的 `Agent = LLM + 上下文 + 工具`，其中并没有单独的\"规划\"或\"记忆\"项。\n\n## 二、三个组成部分及各自作用\n\n书中用\"大脑 / 眼睛 / 手脚\"的比喻解释三者功能：\n\n1. **LLM = Agent 的大脑（决策核心）**\n- [[ch1#现代-agent--llm--上下文--工具|LLM 是 Agent 的大脑：它不只是一组模型参数，而是 Agent 的整个决策内核——理解意图、思考规划、做出判断]]\n- [[ch1#llmagent-的大脑|大语言模型（Large Language Model, LLM）是 Agent 的决策核心]]\n- 智能体化对应学术概念\"策略\"：[[ch1#现代-agent--llm--上下文--工具|大脑 | LLM | 策略（Policy）| Agent 决定\"下一步做什么\"的决策逻辑]]\n\n2. **上下文 = Agent 的眼睛（决定它能看到什么）**\n- [[ch1#现代-agent--llm--上下文--工具|上下文是 Agent 的眼睛：它不只是输入给模型的那段文本，而是 Agent 在每个决策点收到并保留的信息表示]]\n- [[ch1#上下文agent-的眼睛|上下文是 Agent 在每个决策点能看到的全部信息]]\n- 学术概念对应观察与历史：[[ch1#现代-agent--llm--上下文--工具|眼睛 | 上下文构造 | 观察与历史 | 将环境返回的观察与已有历史组织成当前决策所需的信息]]\n\n3. **工具 = Agent 的手脚（决定它能做什么）**\n- [[ch1#现代-agent--llm--上下文--工具|工具是 Agent 的手脚：这里的\"工具\"指 Agent 用来感知或改变外部世界的接口，包括工具定义、调用协议和适配器]]\n- [[ch1#工具agent-的手脚|工具是 Agent 与外部世界交互的桥梁：感知类工具承载环境到 Agent 的观察，执行类工具承载 Agent 到环境的行动]]\n- 学术概念对应观察/行动接口：[[ch1#现代-agent--llm--上下文--工具|手脚 | 工具与适配器 | 观察/行动接口 | 规定 Agent 可以读取哪些观察、发出哪些行动]]\n\n三者的整体关系：\n- [[ch1#现代-agent--llm--上下文--工具|换一种更直观的说法：Agent = 大脑 + 眼睛 + 手脚。大脑负责思考和决策，眼睛接收环境提供的观察，手脚将决策转化为作用于环境的行动]]\n- [[ch1#本章小结|Agent = 大脑 + 眼睛 + 手脚：LLM 是大脑（决策核心），上下文是眼睛（决定它能看到什么），工具是手脚（决定它能做什么）。三者缺一不可]]\n\n## 三、公式的边界与\"生产形态\"展开\n\n- 公式只覆盖 Agent 边界之内：[[ch1#现代-agent--llm--上下文--工具|这个公式只描述 Agent 边界之内的实现，不包含 Agent 与之交互的 Environment（环境）]]\n- 生产形态下展开为两项式：[[ch1#harness-工程模型之外的竞争力|Agent = Model + Harness]]\n- Harness 的五项职责：[[ch1#harness-工程模型之外的竞争力|Harness = 上下文管理 + 工具接口 + 约束 + 验证 + 纠正]]\n- 两个公式是同一骨架的不同抽象层次：[[ch1#harness-五要素与构建部分的对应|Agent = Model + Harness 不是与它并列的另一套划分，而是同一事物在生产形态下的展开]]\n- 五要素的作用闭环：[[ch1#harness-工程模型之外的竞争力|上下文与工具让 Agent \"能做事\"——理解任务并采取行动；约束预防错误，验证发现偏差，纠正使闭环得以形成]]\n- 公式对应的循环：[[ch1#harness-工程模型之外的竞争力|observation = Environment.observe()]]\n\n补一句组件与 RL 概念的关系：[[ch1#现代-agent--llm--上下文--工具|这三个工程组件可以映射到 RL（强化学习，详见第八章）的策略与交互接口，但不是严格的一一等同关系]]",
+     "reasoning_content": "Ihave allthe material. Nowcompose the answer.\n\n要点列表:\n\n1. 公式出处：第1章第2节「现代 Agent= LLM + 上下文+ 工具」。\n2. 公式原文本身。\n3. 三个组成部分：LLM/大脑、上下文/眼睛、工具/手脚。\n4. 各部分功能。\n5. 生产形态展开的公式Agent= Model + Harness。\n6. 本章小结的三者缺一不可。\n\n引用格式[[ch1#现代-agent--llm--上下文--工具|原文片段]]。\n\nNote thetask mentioned\"Agent =大模型 + 规划 +记忆 + 工具使用\" — the bookdoes NOT givethat; Ishould note书中没有找到sucha formulation. Yes, should state.\n\nLet me write the answer.",
+     "role": "assistant"
+    },
+    "usage": {
+     "prompt_tokens": 12575,
+     "cached_tokens": 11136,
+     "completion_tokens": 1334,
+     "reasoning_tokens": 169
+    },
+    "latency_ms": 8785,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "stop"
+   }
+  ],
+  "f15856ca6b73b75483ea": [
+   {
+    "message": {
+     "content": "## 结论\n\n书中给出的 Agent 核心公式是 **Agent = LLM + 上下文 + 工具**（第 1 章「现代 Agent = LLM + 上下文 + 工具」一节）。书中没有「大模型 + 规划 + 记忆 + 工具」这类四要素公式。三个组成部分分别对应「大脑、眼睛、手脚」：LLM 负责决策，上下文决定 Agent 能看到什么，工具决定它能做什么。\n\n## 分点展开\n\n**1. 公式本身**\n\n- 书中原文给出的公式是：**Agent = LLM（大语言模型）+ 上下文 + 工具**，并强调这里的加号表示「工程组件的组合」，而不是强化学习中的形式化定义。\n- 这个公式被定位为全书的结构骨架，贯穿引言、正文与后记。\n\n**2. 三个组成部分的作用**\n\n- **LLM = 大脑（决策核心）**：不只是模型参数，而是 Agent 的整个决策内核——理解意图、思考规划、做出判断。对应学术概念中的「策略（Policy）」，即决定「下一步做什么」的决策逻辑。\n- **上下文 = 眼睛（信息视野）**：不只是输入给模型的文本，而是 Agent 在每个决策点收到并保留的信息表示，即「在每个决策点能看到的全部信息」。对应学术概念中的「观察与历史」。\n- **工具 = 手脚（行动接口）**：Agent 用来感知或改变外部世界的接口，包括工具定义、调用协议和适配器。感知类工具承载环境到 Agent 的观察，执行类工具承载 Agent 到环境的行动。对应「观察/行动接口」。\n\n**3. 公式的边界与延伸**\n\n- 该公式只描述 **Agent 边界之内**的实现，不包含 Agent 与之交互的 Environment（环境）。\n- 在生产形态下，同一骨架可展开为 **Agent = Model + Harness**，其中 Harness = 上下文管理 + 工具接口 + 约束 + 验证 + 纠正。上下文与工具让 Agent「能做事」，约束预防错误，验证发现偏差，纠正使闭环形成。\n- 三个工程组件可映射到强化学习（第八章）中的策略与交互接口，但不是严格的一一等同关系。\n\n## 引用\n\n- [[ch1#现代-agent--llm--上下文--工具|现代 Agent 的最小工程实现可以用一个简洁的公式来表达：Agent = LLM（大语言模型，Large Language Model）+ 上下文 + 工具]]\n- [[ch1#现代-agent--llm--上下文--工具|这里的加号表示工程组件的组合，而不是强化学习中的形式化定义]]\n- [[ch1#现代-agent--llm--上下文--工具|LLM 是 Agent 的大脑：它不只是一组模型参数，而是 Agent 的整个决策内核——理解意图、思考规划、做出判断]]\n- [[ch1#现代-agent--llm--上下文--工具|上下文是 Agent 的眼睛：它不只是输入给模型的那段文本，而是 Agent 在每个决策点收到并保留的信息表示]]\n- [[ch1#现代-agent--llm--上下文--工具|工具是 Agent 的手脚：这里的\"工具\"指 Agent 用来感知或改变外部世界的接口，包括工具定义、调用协议和适配器]]\n- [[ch1#现代-agent--llm--上下文--工具|换一种更直观的说法：Agent = 大脑 + 眼睛 + 手脚。大脑负责思考和决策，眼睛接收环境提供的观察，手脚将决策转化为作用于环境的行动]]\n- [[ch1#本章小结|Agent = 大脑 + 眼睛 + 手脚：LLM 是大脑（决策核心），上下文是眼睛（决定它能看到什么），工具是手脚（决定它能做什么）。三者缺一不可]]\n- [[ch1#现代-agent--llm--上下文--工具|这个公式只描述 Agent 边界之内的实现，不包含 Agent 与之交互的 Environment（环境）]]\n- [[ch1#harness-工程模型之外的竞争力|Agent = Model + Harness]]\n- [[ch1#harness-工程模型之外的竞争力|Harness = 上下文管理 + 工具接口 + 约束 + 验证 + 纠正]]\n\n需要说明：关于「Agent = 大模型 + 规划 + 记忆 + 工具使用」这类常见表述，**书中没有讲到**，本书的核心公式是三项式的。",
+     "reasoning_content": "Thedelegatereturned comprehensiveinformation. Let me now composethe answer in Chinese, followingthe format: conclusion first,then points, then citations.",
+     "role": "assistant"
+    },
+    "usage": {
+     "prompt_tokens": 2761,
+     "cached_tokens": 768,
+     "completion_tokens": 946,
+     "reasoning_tokens": 0
+    },
+    "latency_ms": 16724,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "stop"
+   }
+  ]
+ }
+}

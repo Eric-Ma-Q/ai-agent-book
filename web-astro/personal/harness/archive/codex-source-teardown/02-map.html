@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 产品地图：CLI 只是其中一个客户端 · Codex 源码拆解</title>
+<meta name="description" content="第一次读 Codex 仓库，最容易把 CLI 当成全部。实际上 CLI 只是入口之一：TUI 与 exec 在进程内使用 app-server 客户端，桌面与移动通过 daemon 连远程 app-server，TypeScript SDK 又走 CLI 的 JSONL。理解「运行时 / 协议 / ">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" aria-current="page" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="02-map">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 02 章 · 运行时与表面分开</p>
+  <h1>产品地图：CLI 只是其中一个客户端</h1>
+  <p class="lead">第一次读 Codex 仓库，最容易把 CLI 当成全部。实际上 CLI 只是入口之一：TUI 与 exec 在进程内使用 app-server 客户端，桌面与移动通过 daemon 连远程 app-server，TypeScript SDK 又走 CLI 的 JSONL。理解「运行时 / 协议 / 表面」三层，后面的循环、工具与权限才有位置。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>CLI 是入口，不是运行时；运行时在 <code>codex-rs/core</code>，协议层在 <code>app-server</code>。</li><li>TUI 与 exec 用 in-process app-server 客户端；桌面 / 移动通过 daemon；TS SDK 走 CLI JSONL。</li><li>这套分层的收益是多端复用，代价是协议兼容、实验面与生命周期复杂度。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>一个本地 CLI，为什么会长出 app-server、daemon 和 SDK 这么多入口？</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C21">
+  <b>实现差异</b><p>Codex 把「运行时」与「表面」拆开：core 负责 agent，app-server 负责协议，TUI / exec / App / SDK 只消费协议。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>一张图：谁在跑，谁在连</h2>
+
+  <p>把入口按「是否拥有运行时」分开，关系会清楚很多：TUI 与 exec 是进程内的 app-server 客户端；桌面 / 移动通过 daemon 连远程 app-server；TypeScript SDK 则拉起 CLI，交换 JSONL 事件。</p>
+  <div class="tw"><table>
+      <thead><tr><th>入口</th><th>运行时在哪</th><th>连接方式</th><th>证据</th></tr></thead>
+      <tbody>
+      <tr><td>TUI</td><td>本进程</td><td>in-process app-server client</td><td><code>app-server-client/README.md:3-11</code></td></tr>
+      <tr><td>exec</td><td>本进程</td><td>in-process app-server client</td><td>同上</td></tr>
+      <tr><td>桌面 / 移动</td><td>本机或远端</td><td>app-server daemon + remote control</td><td><code>app-server-daemon/README.md:6-9</code></td></tr>
+      <tr><td>TypeScript SDK</td><td>子进程 CLI</td><td>stdin / stdout JSONL</td><td><code>sdk/typescript/README.md:5</code></td></tr>
+      <tr><td>Python SDK</td><td>子进程 / app-server</td><td>协议封装</td><td><code>sdk/python/tests/test_app_server_run.py:138</code></td></tr>
+      </tbody>
+    </table></div>
+
+<div class="ev" data-evidence data-path="codex-rs/app-server-client/README.md" data-lines="3-11" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-client/README.md#L3-L11">
+  <header><span class="path">codex-rs/app-server-client/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-client/README.md#L3-L11">3-11</a> · TUI / exec 不直接跑 core，而是走 app-server 客户端</header>
+  <pre>Shared in-process app-server client used by conversational CLI surfaces:
+
+- `codex-exec`
+- `codex-tui`
+
+## Purpose
+
+This crate centralizes startup and lifecycle management for an in-process
+`codex-app-server` runtime, so CLI clients do not need to duplicate:</pre>
+</div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>CLI 的命令面：入口很多，职责不同</h2>
+
+  <p>CLI 同时承担交互入口、非交互执行、会话管理、App 安装器和协议服务。把它们混成一个「大命令」，就会误以为所有能力都在同一个进程里。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/cli/src/main.rs" data-lines="171-179" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cli/src/main.rs#L171-L179">
+  <header><span class="path">codex-rs/cli/src/main.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cli/src/main.rs#L171-L179">171-179</a> · app-server、remote-control、App 安装器是并列子命令</header>
+  <pre>/// [experimental] Run the app server or related tooling.
+    AppServer(AppServerCommand),
+
+    /// [experimental] Manage the app-server daemon with remote control enabled.
+    RemoteControl(RemoteControlCommand),
+
+    /// Launch the Desktop app (opens the app installer if missing).
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    App(app_cmd::AppCommand),</pre>
+</div>
+  <p>注意 <code>App</code> 只负责安装 / 打开桌面 App；它不把 App 的内部实现带进仓库。这也是第 01 章边界的具体体现。</p>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>代码地图：先看职责，不看目录数量</h2>
+
+  <p>仓库很大，但产品相关的职责可以压成六块。数字只用来判断体量，不用来证明重要性。</p>
+  <div class="source-stats"><div class="stat"><b>5,927</b><span>codex-rs Rust 文件</span><em>逐文件遍历</em></div><div class="stat"><b>2,314,917</b><span>codex-rs Rust 行</span><em>splitlines 累加</em></div><div class="stat"><b>651 / 276,232</b><span>core 文件 / 行</span><em>运行时主体</em></div></div>
+  <div class="tw"><table>
+      <thead><tr><th>目录</th><th>职责</th><th>读它的理由</th></tr></thead>
+      <tbody>
+      <tr><td><code>core</code></td><td>session、turn、工具、上下文、权限、review</td><td>产品行为的主战场</td></tr>
+      <tr><td><code>app-server</code></td><td>JSON-RPC、thread / turn、客户端生命周期</td><td>多端复用的协议层</td></tr>
+      <tr><td><code>sandboxing</code></td><td>Seatbelt / Landlock / Windows 后端</td><td>权限不只靠弹窗</td></tr>
+      <tr><td><code>network-proxy</code></td><td>HTTP / SOCKS5 策略代理</td><td>网络访问也是权限面</td></tr>
+      <tr><td><code>memories</code></td><td>两阶段记忆管线</td><td>会话外上下文</td></tr>
+      <tr><td><code>cloud-*</code></td><td>Cloud 客户端</td><td>只能看客户端，服务端不可验证</td></tr>
+      </tbody>
+    </table></div>
+
+<div class="ev" data-evidence data-path="codex-rs/Cargo.toml" data-lines="1-2" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/Cargo.toml#L1-L2">
+  <header><span class="path">codex-rs/Cargo.toml</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/Cargo.toml#L1-L2">1-2</a> · 168 个 workspace 条目（含测试支持目录）</header>
+  <pre>[workspace]
+members = [</pre>
+</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>取舍：复用协议，还是让每个表面各跑一套</h2>
+
+  <p>让 TUI、exec、桌面、移动、SDK 共用 app-server，能把「会话、工具、权限、压缩」集中在一处；代价是协议要背兼容债，实验能力要通过 capability 协商，daemon 还要处理重启、升级与远程控制。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>多端共享同一套 thread / turn / item 语义，运行时只维护一份。</div><div><b>付出什么</b>协议层要持续兼容；experimental 方法多，客户端要做能力协商；daemon 生命周期成为新的故障面。</div></div></div>
+  <div class="note info">不要把「有 app-server」写成「所有端都走同一个进程」。TUI / exec 是 in-process 客户端，桌面 / 移动才通过 daemon；TS SDK 又是 CLI JSONL。</div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-client/README.md#L3-L11">app-server-client/README.md:3-11</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-daemon/README.md#L6-L9">app-server-daemon/README.md:6-9</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/cli/src/main.rs#L171-L179">cli/src/main.rs:171-179</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/sdk/typescript/README.md#L5-L5">sdk/typescript/README.md:5</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/Cargo.toml#L1-L2">Cargo.toml:1-2</a></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="01-scope.html"><small>← 上一章</small><b>01 取证边界</b></a><a class="next" href="03-loop.html"><small>下一章 →</small><b>03 主循环</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

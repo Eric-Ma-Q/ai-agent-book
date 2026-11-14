@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>08 产品表面：thread / turn / item 比 UI 更长寿 · Codex 源码拆解</title>
+<meta name="description" content="如果只有 CLI，UI 与运行时可以糊在一起。但 Codex 还要服务 TUI、exec、桌面、移动与 SDK，于是把会话抽象成 thread / turn / item，用 JSON-RPC 暴露成 app-server。协议层让多端共享运行时，也把「兼容」变成长期成本。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" aria-current="page" title="产品表面">08 产品表面</a><a href="09-difference.html" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="08-surface">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 08 章 · 协议层为什么值得单独存在</p>
+  <h1>产品表面：thread / turn / item 比 UI 更长寿</h1>
+  <p class="lead">如果只有 CLI，UI 与运行时可以糊在一起。但 Codex 还要服务 TUI、exec、桌面、移动与 SDK，于是把会话抽象成 thread / turn / item，用 JSON-RPC 暴露成 app-server。协议层让多端共享运行时，也把「兼容」变成长期成本。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>app-server 协议有 186 个请求方法，其中 74 个是 variant 级 experimental；实验面很大。</li><li>TUI / exec 用 in-process 客户端；桌面 / 移动通过 daemon；TS SDK 走 CLI JSONL，Python SDK 走 app-server。</li><li>协议把多端复用变成现实，也把「方法稳定性、能力协商、daemon 生命周期」变成新产品面。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>为什么不能让每个表面直接调 core，而要单独维护一个 app-server？</div>
+
+<div class="judgment new-surface" data-product-judgment data-judgment="new-surface" data-claim="C21">
+  <b>本副本可证的新增面</b><p>在本副本里，app-server 是 TUI、exec、桌面、移动与 SDK 的共同协议层；这是 039 材料里没有展开的新增面，但不代表其他产品没有类似层。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>协议面：186 个请求，74 个 experimental</h2>
+
+  <p>协议定义不是几个枚举，而是一整张请求表。静态计数得到 186 个请求方法，其中 74 个带 variant 级 experimental 标记。这个比例说明：它既要支撑稳定客户端，也承载大量仍在演进的会话能力。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/app-server-protocol/src/protocol/common.rs" data-lines="522-530" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/common.rs#L522-L530">
+  <header><span class="path">codex-rs/app-server-protocol/src/protocol/common.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/common.rs#L522-L530">522-530</a> · 请求表从一个宏开始</header>
+  <pre>client_request_definitions! {
+    Initialize =&gt; "initialize" {
+        params: v1::InitializeParams,
+        serialization: None,
+        response: v1::InitializeResponse,
+    },
+
+    #[experimental("server/diagnostics")]
+    /// Read content-free, process-local diagnostics.</pre>
+</div>
+  <p>方法多不是优点本身；它意味着客户端必须做能力协商，文档也要区分稳定与实验。</p>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>thread / turn：会话不是一条日志</h2>
+
+  <p>协议把会话拆成 thread、turn、item。turn 有明确的完成 / 中断 / 失败 / 进行中状态；客户端可以订阅事件，也可以按 thread 历史回读。这样 UI 不必理解 core 的内部状态，只需要消费协议对象。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/app-server-protocol/src/protocol/v2/turn.rs" data-lines="34-41" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/v2/turn.rs#L34-L41">
+  <header><span class="path">codex-rs/app-server-protocol/src/protocol/v2/turn.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/v2/turn.rs#L34-L41">34-41</a> · turn 的四种状态</header>
+  <pre>pub enum TurnStatus {
+    Completed,
+    Interrupted,
+    Failed,
+    InProgress,
+}</pre>
+</div>
+  <div class="tw"><table>
+      <thead><tr><th>对象</th><th>回答什么</th><th>客户端怎么用</th></tr></thead>
+      <tbody>
+      <tr><td>thread</td><td>一段可持续的会话</td><td>列表、恢复、归档、分裂</td></tr>
+      <tr><td>turn</td><td>一次用户输入触发的执行</td><td>订阅事件、取消、读 usage</td></tr>
+      <tr><td>item</td><td>消息 / 工具调用 / 文件变更</td><td>渲染时间线、定位审批</td></tr>
+      </tbody>
+    </table></div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>连接方式：in-process、daemon、SDK 不是同一条路</h2>
+
+  <p>TUI 与 exec 用 in-process app-server 客户端，省掉进程边界；桌面 / 移动通过 daemon 连远程 app-server；TypeScript SDK 拉起 CLI 交换 JSONL，Python SDK 则直接跑 app-server。把它们都说成「走同一个协议」会掩盖传输差异。</p>
+
+<div class="ev" data-evidence data-path="codex-rs/app-server-client/README.md" data-lines="3-11" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-client/README.md#L3-L11">
+  <header><span class="path">codex-rs/app-server-client/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-client/README.md#L3-L11">3-11</a> · TUI / exec 是 in-process 客户端</header>
+  <pre>Shared in-process app-server client used by conversational CLI surfaces:
+
+- `codex-exec`
+- `codex-tui`
+
+## Purpose
+
+This crate centralizes startup and lifecycle management for an in-process
+`codex-app-server` runtime, so CLI clients do not need to duplicate:</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/app-server-daemon/README.md" data-lines="1-9" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-daemon/README.md#L1-L9">
+  <header><span class="path">codex-rs/app-server-daemon/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-daemon/README.md#L1-L9">1-9</a> · 桌面 / 移动通过 daemon</header>
+  <pre># codex-app-server-daemon
+
+&gt; `codex-app-server-daemon` is experimental and its lifecycle contract may
+&gt; change while the remote-management flow is still being developed.
+
+`codex-app-server-daemon` backs the machine-readable `codex app-server`
+lifecycle commands used by remote clients such as the desktop and mobile apps.
+It is intended for Codex instances launched over SSH, including fresh developer
+machines that should expose app-server with `remote_control` enabled.</pre>
+</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>取舍：协议复用，还是表面各自为政</h2>
+
+  <p>协议层让多端共享 thread / turn / item，也让「会话恢复、审批、usage、文件变更」有一套共同语义；代价是协议要长期兼容，experimental 方法要协商，daemon 还要处理升级、重启与远程控制。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>多端共享运行时与事件模型；新增表面不必重写 core 集成。</div><div><b>付出什么</b>协议兼容成本高；实验方法多；daemon 生命周期成为新的故障面。</div></div></div>
+  <div class="note info">不要把「有 app-server」写成「所有端都走远程进程」。in-process、daemon、CLI JSONL、SDK 封装是四种不同传输。</div>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/common.rs#L522-L530">app-server-protocol/common.rs:522-530</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/v2/turn.rs#L34-L41">app-server-protocol/v2/turn.rs:34-41</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-client/README.md#L3-L11">app-server-client/README.md:3-11</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-daemon/README.md#L1-L9">app-server-daemon/README.md:1-9</a></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/sdk/typescript/README.md#L5-L5">sdk/typescript/README.md:5</a></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="07-agents.html"><small>← 上一章</small><b>07 多 Agent</b></a><a class="next" href="09-difference.html"><small>下一章 →</small><b>09 差异判断</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

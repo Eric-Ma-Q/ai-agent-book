@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Super-agent 结构图：输入、两级过滤、Router / Worker 双层、订阅直通、上下文与交互机制、存算与环境分离、Watchdog 与实验数字，一张图看完《Super-agent 设计探索》。">
+<title>Super-agent 结构图 · 一条事件从进入环境到变成结果</title>
+<style>
+  :root{
+    --ink:#12161c; --muted:#5c6675; --faint:#8a93a0;
+    --line:#ccd2da; --soft:#e4e1d9; --paper:#fcfbf7;
+    --router:#1d4ed8; --router-bg:#eff3ff;
+    --worker:#0f766e; --worker-bg:#ebf7f4;
+    --env:#6d28d9; --env-bg:#f3eeff;
+    --wd:#b91c1c; --wd-bg:#fdeeee;
+    --acc:#b45309; --acc-bg:#fdf4e6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#e6e3dc;color:var(--ink);padding:30px 0;
+       font:13px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .page{width:1520px;margin:0 auto;background:var(--paper);padding:40px 46px 34px;
+        box-shadow:0 3px 30px rgba(20,24,32,.12)}
+  /* ---------- header ---------- */
+  .eyebrow{font-size:11.5px;letter-spacing:.14em;color:var(--acc);text-transform:uppercase;font-weight:700}
+  h1{font-size:38px;line-height:1.15;margin:8px 0 6px;letter-spacing:-.01em}
+  h1 em{font-style:normal;color:var(--faint);font-weight:400;font-size:22px;margin-left:12px;letter-spacing:0}
+  .lede{max-width:1080px;color:#333c49;font-size:13.5px;line-height:1.7}
+  .lede b{font-weight:600;color:var(--ink)}
+  .chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:11.5px;color:var(--muted);background:#fff}
+  .chip.k{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .hr{height:1px;background:var(--soft);margin:24px 0 22px}
+  /* ---------- band ---------- */
+  .band{border:1px solid var(--soft);background:#fff;padding:15px 17px 16px;position:relative}
+  .band + .band{margin-top:0}
+  .band.dash{border-style:dashed}
+  .bh{display:flex;align-items:baseline;gap:9px;margin-bottom:11px}
+  .no{font:700 10.5px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff;background:var(--ink);
+      padding:4px 5px 3px;border-radius:2px;letter-spacing:.04em}
+  .bt{font-size:16px;font-weight:700;letter-spacing:.01em}
+  .bs{font-size:11.5px;color:var(--muted)}
+  .grid{display:grid;gap:10px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g5{grid-template-columns:repeat(5,1fr)}
+  .card{border:1px solid var(--line);background:#fff;padding:10px 12px;border-radius:2px}
+  .card h4{font-size:13.5px;margin-bottom:4px;display:flex;gap:6px;align-items:center}
+  .card p{font-size:11.5px;color:var(--muted);line-height:1.62}
+  .card .tag{font:600 9.5px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:2px;
+             padding:1px 5px;color:var(--muted);letter-spacing:.03em}
+  .card.tinted{background:#fbfbf9}
+  .r{border-top:3px solid var(--router)} .w{border-top:3px solid var(--worker)}
+  .e{border-top:3px solid var(--env)} .k{border-top:3px solid var(--acc)} .d{border-top:3px solid var(--wd)}
+  .soft-note{font-size:11px;color:var(--faint);margin-top:9px;padding-top:9px;border-top:1px dashed var(--soft)}
+  .soft-note b{color:var(--muted);font-weight:600}
+  /* ---------- join arrows ---------- */
+  .join{height:30px;position:relative;border-left:0}
+  .join .lbl{position:absolute;left:50%;top:2px;transform:translateX(-50%);background:var(--paper);
+             padding:0 8px;font-size:10.5px;color:var(--faint);white-space:nowrap}
+  .join .shaft{position:absolute;left:50%;top:0;bottom:6px;width:0;border-left:1.5px solid var(--line)}
+  .join .head{position:absolute;left:calc(50% - 4.5px);bottom:0;width:0;height:0;
+              border:4.5px solid transparent;border-top:7px solid var(--line)}
+  .join.solid .shaft{border-left:2px solid var(--ink)}
+  .join.solid .head{border-top-color:var(--ink)}
+  .jrow{display:grid;grid-template-columns:1fr 1fr;height:58px;position:relative}
+  .jcell{position:relative}
+  .jcell .cap{position:absolute;left:50%;transform:translateX(-50%);top:0;font-size:10.5px;color:var(--muted);
+              white-space:nowrap;background:var(--paper);padding:0 7px}
+  .jcell .cap b{color:var(--ink)}
+  .jcell.right .cap{left:auto;right:0;transform:none}
+  .jcell .shaft{position:absolute;left:50%;top:12px;bottom:8px;border-left:1.5px dashed var(--faint)}
+  .jcell .head{position:absolute;left:calc(50% - 4.5px);bottom:0;width:0;height:0;
+               border:4.5px solid transparent;border-top:7px solid var(--faint)}
+  .jcell.strong .shaft{border-left:2px solid var(--ink)}
+  .jcell.strong .head{border-top-color:var(--ink)}
+  /* ---------- worker inner ---------- */
+  .wk{border:1px solid #bfe3dc;background:var(--worker-bg);padding:9px 10px;border-radius:2px}
+  .wk .name{font-weight:700;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+  .wk .name span{font:600 9.5px ui-monospace,Menlo,monospace;color:var(--worker)}
+  .wk ul{list-style:none;margin-top:5px;font-size:10.8px;color:#3f5d58;line-height:1.6}
+  .wk li:before{content:"·";margin-right:5px;color:var(--worker)}
+  .router-box{border:1px solid #c3d2f7;background:var(--router-bg);padding:11px 12px 12px;border-radius:2px}
+  .router-box h3{font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .router-box h3 .sub{font-size:10.5px;font-weight:400;color:#41558a}
+  .rgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .ri{background:#fff;border:1px solid #d3defb;padding:8px 9px;border-radius:2px}
+  .ri .t{font-size:11.8px;font-weight:700;margin-bottom:3px;color:#1b2b52}
+  .ri p{font-size:10.6px;color:#4a5a7c;line-height:1.55}
+  /* ---------- mechanism panel ---------- */
+  .mech{border:1px solid var(--soft);background:#fbfbf8;padding:12px}
+  .mech h5{font-size:12px;margin-bottom:5px;color:var(--ink);display:flex;gap:6px;align-items:center}
+  .mech h5 i{font-style:normal;font:700 9.5px ui-monospace,Menlo,monospace;color:#fff;background:var(--acc);padding:2px 4px;border-radius:2px}
+  .mech p{font-size:10.8px;color:#4e5866;line-height:1.62}
+  .mech code{font:600 10.5px ui-monospace,Menlo,monospace;background:#efeee8;padding:0 3px;border-radius:2px}
+  .chain{display:flex;align-items:center;gap:5px;margin-top:6px;flex-wrap:wrap}
+  .node{font-size:10.2px;border:1px solid #d8d3c6;background:#fff;padding:2px 6px;border-radius:2px;color:#4a5361}
+  .arw{color:var(--faint);font-size:10px}
+  /* ---------- watchdog ---------- */
+  .wdband{border:1.5px dashed #e0b4b4;background:var(--wd-bg);padding:13px 16px 14px}
+  .wdband .bh .no{background:var(--wd)}
+  .wdgrid{display:grid;grid-template-columns:1.15fr 1fr 1fr 1.05fr;gap:9px}
+  .wditem{background:#fff;border:1px solid #eccfcf;padding:9px 10px;border-radius:2px}
+  .wditem .t{font-weight:700;font-size:11.8px;color:#7a1d1d;margin-bottom:3px}
+  .wditem p{font-size:10.7px;color:#6b4a4a;line-height:1.58}
+  .wdflag{border-left:3px solid var(--wd);background:#fff;padding:9px 12px;margin-top:10px;font-size:11.2px;color:#5c3a3a}
+  .wdflag b{color:#7a1d1d}
+  /* ---------- metrics ---------- */
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border:1px solid var(--soft);background:#fff}
+  .m{padding:11px 13px;border-right:1px solid var(--soft)}
+  .m:last-child{border-right:0}
+  .m .v{font:700 19px/1.2 ui-monospace,Menlo,monospace;letter-spacing:-.02em}
+  .m .v small{font-size:10.5px;font-weight:600;color:var(--muted);margin-left:2px}
+  .m .k{font-size:10.6px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .bound{display:flex;gap:14px;margin-top:9px;font-size:10.7px;color:var(--faint);line-height:1.6}
+  .bound b{color:#8a4a12;font-weight:600}
+  /* ---------- legend / footer ---------- */
+  .legend{display:flex;gap:22px;align-items:center;margin-top:16px;font-size:10.8px;color:var(--muted);flex-wrap:wrap}
+  .legend i{display:inline-block;width:26px;height:0;border-top:2px solid var(--ink);vertical-align:middle;margin-right:6px}
+  .legend i.dash{border-top:1.5px dashed var(--faint)}
+  .legend i.thin{border-top:1px solid var(--line)}
+  .foot{margin-top:14px;padding-top:11px;border-top:1px solid var(--soft);font-size:10.5px;color:var(--faint);display:flex;justify-content:space-between;gap:20px}
+  .foot span:last-child{text-align:right}
+  .foot a{color:var(--acc);text-decoration:none;border-bottom:1px solid currentColor}
+
+  /* ---------- 归档页外壳 ---------- */
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);padding:0}
+  .shell{max-width:1620px;margin:0 auto;padding:24px 20px 96px}
+  .canvas{overflow:visible}
+  .page{width:min(1520px,100%);margin:0 auto;padding:30px 40px 30px;border:1px solid var(--soft);box-shadow:none;background:var(--paper)}
+  .hint{max-width:1520px;margin:0 auto 8px;font-size:12px;color:var(--muted)}
+  @media (max-width:1280px){
+    .shell{padding:16px 14px 88px}
+    .page{padding:24px 22px 24px}
+    h1{font-size:32px}
+    .rgrid{grid-template-columns:repeat(3,1fr)}
+    .metrics{grid-template-columns:repeat(3,1fr)}
+    .m{border-bottom:1px solid var(--soft)}
+  }
+  @media (max-width:900px){
+    .g2,.g3,.g4,.g5,.rgrid,.wdgrid{grid-template-columns:1fr!important}
+    .metrics{grid-template-columns:1fr 1fr}
+    .jrow{grid-template-columns:1fr;height:auto;row-gap:12px}
+    .jcell{height:56px}
+    .bh{flex-wrap:wrap;row-gap:2px}
+    .foot{flex-direction:column}
+    .lede{font-size:12.5px}
+  }
+  @media print{
+    @page{size:A3 landscape;margin:8mm}
+    body{background:#fff}
+    .shell{padding:0;max-width:none}
+    .canvas{overflow:visible}
+    .page{width:auto;border:0;padding:0}
+    .hint{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+<p class="hint">按 <b>Cmd/Ctrl + P</b> 可选 A3 横向打印，或存为 PDF；正文页与结构图都来自同一份整理。</p>
+<div class="canvas">
+<div class="page">
+
+  <div class="eyebrow">架构结构图 · 整理自《Super-agent 设计探索》（DeepSeek Harness，2026-11-01）</div>
+  <h1>Super-agent 结构图<em>把 Session 变成实现细节</em></h1>
+  <p class="lede">四个特征（<b>连续 / 高效 / 主动 / 持久</b>）由五个模块承担。<b>Router</b> 持有全局连续性与记忆，只分派不干活；<b>Worker</b> 上下文隔离、并行执行、不对外说话；<b>事件驱动</b>先把噪音挡在模型之外；<b>计算 / 状态 / 环境</b>拆开，Loop 上云、状态入库、环境留在原处；<b>Watchdog</b> 是主系统之外的控制回路。下面按「一条事件从进入到变成结果」的顺序画。</p>
+  <div class="chips">
+    <span class="chip k">双层架构</span>
+    <span class="chip">事件驱动 · 两级过滤</span>
+    <span class="chip">订阅直通 · 投机执行</span>
+    <span class="chip">Inline &amp; Spill · 链式召回</span>
+    <span class="chip">异步 ReAct</span>
+    <span class="chip">存算分离 · BYOM</span>
+    <span class="chip">Watchdog</span>
+  </div>
+
+  <div class="hr"></div>
+
+  <!-- 01 输入 -->
+  <div class="band">
+    <div class="bh"><span class="no">01</span><span class="bt">输入：环境事件取代提示词</span>
+      <span class="bs">Trigger 是主输入，人键入的提示词降为辅助；同一 PR / 同一 IM 话题 / 同一封邮件串下的连续事件构成可订阅的 Thread</span></div>
+    <div class="grid g3">
+      <div class="card k"><h4>IM 群聊 <span class="tag">低打扰 · 短消息</span></h4>
+        <p>有人反馈缺陷、讨论方案，往往不 @ 任何人。信息密度低、打扰成本高，输出侧因此只给结论。</p></div>
+      <div class="card k"><h4>GitHub PR / issue <span class="tag">评审评论 · CI</span></h4>
+        <p>代码评审评论、CI 运行结果；按 PR 归并成 Thread，后续评论可直接直通已订阅的 Worker。</p></div>
+      <div class="card k"><h4>邮件 · 日程 <span class="tag">结构化为先</span></h4>
+        <p>邀约、待办与往来邮件串。个人助手场景的主要入口，天然带结构化字段与时间约束。</p></div>
+    </div>
+    <div class="soft-note"><b>事件载荷：</b>来源 · 群组 / 仓库 · 发起人 · thread id · 摘要 · 引用对象 id。thread id 是后面订阅表与链式召回的共同主键。</div>
+  </div>
+
+  <div class="join"><span class="lbl">所有事件先进入准入层</span><span class="shaft"></span><span class="head"></span></div>
+
+  <!-- 02 过滤 -->
+  <div class="band">
+    <div class="bh"><span class="no">02</span><span class="bt">准入：两级过滤，程序挡噪音、模型做判断</span>
+      <span class="bs">真实环境是「高噪音、低触发率」；每条消息都问一次模型，成本与延迟都撑不住</span></div>
+    <div class="grid g2">
+      <div class="card"><h4>FAST PATH · 程序层 <span class="tag">确定性 · 不调模型</span></h4>
+        <p>按来源、群组范围、人 / 机器人白名单做快速准入：明确请求、候选事件、直接忽略三档。绝大多数消息在这里被丢掉。</p></div>
+      <div class="card"><h4>SLOW PATH · 语义层 <span class="tag">需要理解才交给模型</span></h4>
+        <p>通过程序层的候选交给 LLM，按提示词策略与上下文判断「是否值得处理」。策略可随时开关、新增，是面向人的扩展点。</p></div>
+    </div>
+    <div class="soft-note"><b>只有同时通过两层的候选</b>才可能变成新任务；被程序层挡掉的事件不进入任何会话，也不产生 token。</div>
+  </div>
+
+  <div class="join solid"><span class="lbl">通过两层的候选才值得处理</span><span class="shaft"></span><span class="head"></span></div>
+
+  <!-- 03 Router -->
+  <div class="band" style="padding:13px 15px 15px">
+    <div class="bh"><span class="no" style="background:var(--router)">03</span><span class="bt">Router 层 · 常驻</span>
+      <span class="bs">全局序点、协调点、记忆；只处理人机交互与分派，不执行具体任务，甚至可以不配 Bash</span></div>
+    <div class="router-box">
+      <h3>一个常驻会话，承接所有入口的人类交互 <span class="sub">跨任务的信息与决策都在这里汇总；因为只做轻量分派，较轻的模型就能兼顾速度与效果</span></h3>
+      <div class="rgrid">
+        <div class="ri"><div class="t">全局记忆</div><p>跨任务共享的事实与决策。先在 IM 说方案 A、后在 PR 改成 B，它知道是同一条线。</p></div>
+        <div class="ri"><div class="t">订阅表</div><p>Thread ⇄ Worker 多对多。有表才能让已归属的事件绕开 Router 直通执行者。</p></div>
+        <div class="ri"><div class="t">批处理</div><p>上一轮推理期间到达的事件积压，下一轮一并注入，在 prefill 阶段并行算。</p></div>
+        <div class="ri"><div class="t">分派与协调</div><p>新任务开 Worker；跨任务协同由 Router 中转；同层不点对点通信。</p></div>
+        <div class="ri"><div class="t">唯一出口</div><p>Worker 只汇报状态，对外只有 Router 说话，避免多会话各自回复造成混乱。</p></div>
+      </div>
+    </div>
+    <div class="soft-note"><b>与 Agent Team 的分工：</b>Team Lead 要在单任务内部拆步骤、高频协调，推理负载重；Router 只处理任务之间的高层关联。把 Team Lead 用提示词约束成「不亲自执行、只对外交互与分派」，也可视为这种双层——双层是职责划分，不要求每层只有一个会话。</div>
+  </div>
+
+  <div class="jrow">
+    <div class="jcell strong"><span class="cap"><b>新任务 → 分派</b> Slow · Router 判断并建 Worker</span><span class="shaft"></span><span class="head"></span></div>
+    <div class="jcell right"><span class="cap"><b>已订阅 Thread → 直通</b> Fast · 不经 Router 转发</span><span class="shaft"></span><span class="head"></span></div>
+  </div>
+
+  <!-- 04 Worker -->
+  <div class="band">
+    <div class="bh"><span class="no" style="background:var(--worker)">04</span><span class="bt">Worker 层 · 隔离执行</span>
+      <span class="bs">独立上下文、完整工具、通常配最强模型；直接决定任务结果与代码质量，但不直接对用户说话</span></div>
+    <div class="grid g3">
+      <div class="wk"><div class="name">Worker A <span>隔离上下文</span></div>
+        <ul><li>只订阅自己负责的 Thread</li><li>复现 → 定位 → 提 PR</li><li>关键结论回 Router</li></ul></div>
+      <div class="wk"><div class="name">Worker B <span>完整工具</span></div>
+        <ul><li>内部可再开 Subagent</li><li>推理与工具调用不外泄</li><li>可自判事件是否仍在范围内</li></ul></div>
+      <div class="wk"><div class="name">Worker C <span>可嵌套</span></div>
+        <ul><li>本身可以是一个 Agent Team</li><li>嵌套细节对 Router 透明</li><li>共享环境下自行发现冲突</li></ul></div>
+    </div>
+    <div class="soft-note"><b>冲突靠订阅解，不靠通信：</b>多个 Worker 订阅同一 Thread，同一工作环境（如一个 PR）里的新事件同时直通给所有订阅者，它们不必点对点协商就有机会看到彼此的操作；少数跨任务协同由 Router 中转。<b>扩展：</b>单 Router 不够用时，层内加多层过滤或水平切分为多个 Router——切得越细，吞吐越高，跨片记忆与连续性越低。</div>
+  </div>
+
+  <!-- 05 机制 -->
+  <div class="band">
+    <div class="bh"><span class="no" style="background:var(--acc)">05</span><span class="bt">三个支撑机制：上下文、交互、提前行动</span>
+      <span class="bs">都挂在上面两层上，不新增层；每一条都在替人省一次手动操作</span></div>
+    <div class="grid g3">
+      <div class="mech"><h5><i>A</i>Inline &amp; Spill</h5>
+        <p>把窗口当缓存管：只给 id 与摘要 → 按局部性内联相邻内容（前后消息、相邻评论、正文前 50 字）→ 超预算就截断、留续读入口，需要全文再调工具。</p>
+        <div class="chain"><span class="node">ID + 摘要</span><span class="arw">→</span><span class="node">内联相邻</span><span class="arw">→</span><span class="node">Spill 留引用</span></div></div>
+      <div class="mech"><h5><i>B</i>链式召回</h5>
+        <p>每类对象带唯一 id，注入时内联下一跳 id，对象之间连成引用图；模型从当前事件逐跳展开，每次召回同样遵守 Inline &amp; Spill。</p>
+        <div class="chain"><span class="node">当前消息</span><span class="arw">→</span><span class="node">Thread</span><span class="arw">→</span><span class="node">Worker 会话</span><span class="arw">→</span><span class="node">另一 Thread</span></div></div>
+      <div class="mech"><h5><i>C</i>投机执行</h5>
+        <p>还不确定结果会不会被采用时，先按环境信号在后台试：会前备好日程冲突、背景与草稿；群里静默复现并找修复。有价值就交付，没价值就丢掉。</p>
+        <p style="margin-top:5px"><b>门槛：</b>「确认问题」且「简单修复」同时成立才出声，放宽任一条就变成抢答。</p></div>
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      <div class="mech"><h5><i>D</i>异步 ReAct Loop</h5>
+        <p><code>run()</code> 阻塞整个会话 → 改成 <code>start()</code> 立即返回 Started，后台继续跑；期间前台可接新指令；结果作为一条新事件回到会话；过长可调 <code>stop()</code>。新输入在当前推理步结束后即被处理，不等后台工具完成。</p>
+        <div class="chain"><span class="node">start()</span><span class="arw">→</span><span class="node">后台执行</span><span class="arw">→</span><span class="node">结果入队为事件</span><span class="arw">→</span><span class="node">暂停 / stop()</span></div></div>
+      <div class="mech"><h5><i>E</i>多信道输出</h5>
+        <p>推理与工具调用留在 Worker 内部，对外只有 Router，再按信道带宽定制：IM 只问直接问题、给短结论（单次不超过 100 词）；GitHub / 邮件按规范写清背景、改动与验证，做成结构化异步交付。</p></div>
+    </div>
+  </div>
+
+  <div class="join"><span class="lbl">Loop 要长期在线：把三件绑在一起的事拆开</span><span class="shaft"></span><span class="head"></span></div>
+
+  <!-- 06 分离 -->
+  <div class="band">
+    <div class="bh"><span class="no" style="background:var(--env)">06</span><span class="bt">计算 / 状态 / 环境分离</span>
+      <span class="bs">顺序不能换：先分计算与状态，再分 Loop 与执行环境</span></div>
+    <div class="grid g3">
+      <div class="card e"><h4>云端无状态 Loop <span class="tag">可水平扩展</span></h4>
+        <p>推进 Agent Loop 的计算不保存状态，放进云端弹性容器，可重启、可替换、可扩缩。Agent 由此摆脱单台设备的生命周期。</p></div>
+      <div class="card e"><h4>会话状态入库 <span class="tag">连续性</span></h4>
+        <p>Session 等状态写进数据库。容器换了，上下文还在；连续性由持久化存储保障，而不是由某个进程活着保障。</p></div>
+      <div class="card e"><h4>端侧瘦 daemon <span class="tag">BYOM</span></h4>
+        <p>重状态的执行环境留在原地：未提交修改、私有凭据、内网依赖、特定硬件。端侧只跑一个不保存会话状态的 daemon，执行命令、返回结果。</p></div>
+    </div>
+    <div class="soft-note"><b>为什么不让环境上云：</b>沙箱重建要同步本地修改、凭据与内网服务，成本高又容易漏；要求用户迁到云端则迁移成本太高。<b>收益：</b>一个 Agent 可用多台机器；个人设备重新上线后，云端可自动触发需要在该设备上完成的任务。<b>对照脑手分离：</b>共同点是 harness 无状态、日志外置；差别在场景（可重建沙箱 vs 不可重建的日常机器）与主要风险（沙箱逃逸 vs 云端 Loop 与全部端侧设备之间的信任边界）。</div>
+  </div>
+
+  <!-- 07 Watchdog -->
+  <div class="band dash wdband" style="border-color:#e0b4b4">
+    <div class="bh"><span class="no">07</span><span class="bt">Watchdog · 主系统之外</span>
+      <span class="bs" style="color:#8a5a5a">独立控制回路，定时驱动；不是一个监控脚本，而是一个完整的 Agent 会话</span></div>
+    <div class="wdgrid">
+      <div class="wditem"><div class="t">探活不够，要看进展</div>
+        <p>多数异常不是进程崩溃，而是陷入无效循环或偏离目标。因此既要盯基础设施存活，也要盯任务本身有没有实质进展。</p></div>
+      <div class="wditem"><div class="t">它修什么</div>
+        <p>接口报错、状态恢复失败等基础设施故障；外部偶发故障则持续复查直到恢复。</p></div>
+      <div class="wditem"><div class="t">运维接口变对话</div>
+        <p>自身带完整工具，维护者可用自然语言问故障原因，也可让它在线改提示词、调触发规则。</p></div>
+      <div class="wditem" style="border-color:#e0b4b4;background:#fffaf9"><div class="t">它的失败模式</div>
+        <p>与被监控系统同源（同批模型、同套提示词与工具），可能共享盲区，却握有改主系统的权限。原文未讨论。</p></div>
+    </div>
+  </div>
+
+  <div class="hr" style="margin:20px 0 16px"></div>
+
+  <!-- 08 数字 -->
+  <div class="bh"><span class="no">08</span><span class="bt">原文数字：能读出什么，不能读出什么</span>
+    <span class="bs">7.1 端到端消融、7.2 Router 压测；均为自报，未独立复现</span></div>
+  <div class="metrics">
+    <div class="m"><div class="v">12.4<small>/ 15.7 分</small></div><div class="k">Super-agent 完成时间 p50 / p95（单会话 p95 曾达 29.5 分）</div></div>
+    <div class="m"><div class="v">1.0 → 2.8</div><div class="k">Router 平均 batch：1 → 40 条/分到达时的积压规模</div></div>
+    <div class="m"><div class="v">2.5 → 3.9<small>s</small></div><div class="k">单次请求耗时；积压涨了，耗时代价很小</div></div>
+    <div class="m"><div class="v">6.4 → 1.6<small>s</small></div><div class="k">单个决定分摊的推理时间，随批处理下降</div></div>
+    <div class="m"><div class="v">+30% / +37%</div><div class="k">去掉直通：Router 决定数 +30%，读缓存 token +37%（2323 万 → 3177 万）</div></div>
+  </div>
+  <div class="bound">
+    <span><b>六个限制：</b>合成负载 · 编码工作换成纯耗时工具 · 仅 5 次重复 · 间隔与时长按 1/4 缩放 · 7.2 的 Worker 是 Mock · 同一团队自评无第三方复现</span>
+    <span><b>另：</b>3–5 个活跃 Session 是经验观察，没有实验支撑，不能写进需求当硬指标。</span>
+  </div>
+
+  <div class="legend">
+    <span><i></i>主路径 / 同步</span>
+    <span><i class="dash"></i>直通 · 异步 · 外部控制回路</span>
+    <span><i class="thin"></i>分层边界</span>
+    <span>虚线框 = 原文未明确画出的边界（Watchdog 位置为便于阅读的简化，原文只说它在主系统之外）</span>
+  </div>
+
+  <div class="foot">
+    <span>结构依据：原文第 2、5、6 节（双层与分离）、第 3 节（事件驱动）、第 4 节（交互）、第 7 节（Watchdog）、第 8 节（实验）</span>
+    <span>正文：<a href="super-agent-design-2026-11.html">Super-agent 设计探索 · 把 Session 变成实现细节</a> · 整理 2026-11-02</span>
+  </div>
+</div>
+</div>
+</div>
+</body>
+</html>

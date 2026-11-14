@@ -1,0 +1,7 @@
+/* Header button for global settings. Mirrors the other personal entries and
+   only adds the selected state; sizing on narrow screens is handled together
+   with the other grouped entries in header-entry-groups.css. */
+.settings-entry[aria-current='page'] {
+  background: var(--surface);
+  border-color: var(--muted);
+}

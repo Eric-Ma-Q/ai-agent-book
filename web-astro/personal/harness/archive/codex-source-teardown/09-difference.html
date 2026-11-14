@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>09 差异判断：Codex 与 Claude Code 不在同一个证据层 · Codex 源码拆解</title>
+<meta name="description" content="把 Codex 与 039 的 Claude Code 放在一起，最容易滑向「谁更强」。这一章只做三件事：先说明材料不对称，再按同一用户问题逐行对照，最后把判断限制在四种类型里。大部分机制是共有的；真正的差异集中在协议层、执行层、记忆管线与仓库边界。">
+<script>
+try{
+  var k=localStorage.getItem('harness-theme');
+  var d=k==='dark'||(k!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  if(d)document.documentElement.classList.add('dark');
+}catch(e){}
+</script>
+<link rel="stylesheet" href="teardown.css">
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html">Codex 源码拆解</a>
+  <nav class="chapters" aria-label="章节"><a href="01-scope.html" title="取证边界">01 取证边界</a><a href="02-map.html" title="产品地图">02 产品地图</a><a href="03-loop.html" title="主循环">03 主循环</a><a href="04-tools.html" title="工具系统">04 工具系统</a><a href="05-context.html" title="上下文与记忆">05 上下文与记忆</a><a href="06-permission.html" title="权限与沙箱">06 权限与沙箱</a><a href="07-agents.html" title="多 Agent">07 多 Agent</a><a href="08-surface.html" title="产品表面">08 产品表面</a><a href="09-difference.html" aria-current="page" title="差异判断">09 差异判断</a><a href="10-lessons.html" title="结论与自测">10 结论与自测</a></nav>
+  <button class="theme" type="button" data-theme-toggle>深色</button>
+</div></div>
+<div id="progress" aria-hidden="true"></div>
+<main data-chapter="09-difference">
+<div class="wrap">
+  <nav class="crumbs" aria-label="位置"><span>Harness 学习</span><span>/</span><span>产品功能拆解</span><span>/</span><a href="index.html">Codex 源码拆解</a></nav>
+  <p class="kicker">第 09 章 · 哪些是共有，哪些只是实现不同</p>
+  <h1>差异判断：Codex 与 Claude Code 不在同一个证据层</h1>
+  <p class="lead">把 Codex 与 039 的 Claude Code 放在一起，最容易滑向「谁更强」。这一章只做三件事：先说明材料不对称，再按同一用户问题逐行对照，最后把判断限制在四种类型里。大部分机制是共有的；真正的差异集中在协议层、执行层、记忆管线与仓库边界。</p>
+  <div class="tldr"><h2>30 秒版</h2><ol><li>039 是泄露副本，本专题是官方仓库；证据等级不同，不能把「039 没看到」当成「Claude Code 没有」。</li><li>循环、工具、压缩、权限、子 Agent、hooks、项目指令都是共有问题，差别多在实现结构。</li><li>协议层、unified exec、code mode、两阶段记忆与 message board 是本副本更显式的面；只写「这一版新增了」，不写无法证伪的最高级判断。</li></ol></div>
+
+<div class="problem" data-user-problem><b>用户问题</b>Codex 与 Claude Code 到底哪里不同，哪些不同只是材料造成的？</div>
+
+<div class="judgment unverifiable" data-product-judgment data-judgment="unverifiable" data-claim="C01-C22">
+  <b>不可验证</b><p>两边材料不在同一证据层：039 是泄露的 sourcemap 反解副本，本专题是 Apache-2.0 官方仓库。差异章只比较两边都有材料的问题。</p>
+</div>
+
+
+<section id="s01">
+  <h2><span class="num">01</span>先看材料，再看产品</h2>
+
+  <p>039 的强项是「非公开源码产品也能逐行复核」，弱项是类型定义、feature-gated 模块与构建态代码可能缺失；Codex 的强项是官方仓库完整，弱项是 App / Cloud / 模型服务不在仓库。把两者放在一张表里，先标证据等级，再谈差异。</p>
+  <div class="tw"><table>
+      <thead><tr><th>材料</th><th>能证明</th><th>不能证明</th></tr></thead>
+      <tbody>
+      <tr><td>039：Claude Code v2.1.88 泄露副本</td><td>运行时函数体、工具契约、部分未发布功能接线</td><td>缺失模块的实现、线上开关、其他版本行为</td></tr>
+      <tr><td>046：openai/codex 官方仓库</td><td>CLI / 协议 / 沙箱 / 记忆 / 多 Agent 的当前实现</td><td>App / Cloud / 模型服务内部、账号默认值</td></tr>
+      </tbody>
+    </table></div>
+
+<div class="ev" data-evidence data-path="codex-rs/app-server-protocol/src/protocol/common.rs" data-lines="522-523" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/common.rs#L522-L523">
+  <header><span class="path">codex-rs/app-server-protocol/src/protocol/common.rs</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/common.rs#L522-L523">522-523</a> · 协议层是本副本更显式的面</header>
+  <pre>client_request_definitions! {
+    Initialize =&gt; "initialize" {</pre>
+</div>
+
+<div class="ev" data-evidence data-path="codex-rs/memories/README.md" data-lines="29-38" data-href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/memories/README.md#L29-L38">
+  <header><span class="path">codex-rs/memories/README.md</span><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/memories/README.md#L29-L38">29-38</a> · 记忆是会话外管线，不是循环里的顺手一笔</header>
+  <pre>## When it runs
+
+The pipeline is triggered when a root session starts, and only if:
+
+- the session is not ephemeral
+- the memory feature is enabled
+- the session is not a sub-agent session
+- the state DB is available</pre>
+</div>
+
+</section>
+
+
+<section id="s02">
+  <h2><span class="num">02</span>11 行差异表</h2>
+
+  <p>每一行只回答一个用户问题。判断类型写在最后一列：<b>共有机制</b>、<b>实现差异</b>、<b>本副本可证的新增面</b>、<b>不可验证</b>。</p>
+  <div class="tw"><table>
+      <thead><tr><th>#</th><th>用户问题</th><th>Codex 的选择</th><th>039 的对照</th><th>判断</th></tr></thead>
+      <tbody>
+      <tr><td>1</td><td>Agent 怎么跑起来</td><td>Rust `SessionTask` + `run_turn` + sampling / tool loop</td><td>TypeScript async generator `queryLoop`</td><td><span class="verdict shared">共有机制</span><br><small>共有机制，结构不同</small></td></tr>
+      <tr><td>2</td><td>用户中途插话怎么办</td><td>input queue + steering 优先</td><td>中断与继续由生成器和状态机处理</td><td><span class="verdict implementation">实现差异</span><br><small>实现差异</small></td></tr>
+      <tr><td>3</td><td>工具直接给模型，还是让模型写代码</td><td>direct / deferred / code mode / hidden 四象限</td><td>工具池、并发安全标记、工具搜索</td><td><span class="verdict implementation">实现差异</span><br><small>问题相同；暴露矩阵与 code mode 在本副本更显式</small></td></tr>
+      <tr><td>4</td><td>长命令怎么跑</td><td>unified exec：PTY、可复用进程、`write_stdin`</td><td>Bash 工具与后台任务</td><td><span class="verdict implementation">实现差异</span><br><small>共有问题；Codex 把 PTY 会话做成一等工具</small></td></tr>
+      <tr><td>5</td><td>上下文怎么压缩</td><td>90% 派生上限 + 65% 条件异步预跑 + 20k 摘要</td><td>多段压缩流水线与 autocompact 公式</td><td><span class="verdict implementation">实现差异</span><br><small>共有问题；异步预跑是明显实现差异</small></td></tr>
+      <tr><td>6</td><td>权限怎么裁</td><td>4 approval + 4 sandbox policy + 5 sandbox type + execpolicy + network proxy</td><td>多模式权限裁决、分类器、沙箱边界</td><td><span class="verdict implementation">实现差异</span><br><small>共有问题；跨平台沙箱与网络代理更外显</small></td></tr>
+      <tr><td>7</td><td>子 Agent 怎么管</td><td>role + spawn / wait / send / close / resume + V1 6 / V2 4（含 root）</td><td>子 Agent、任务、swarm 后端</td><td><span class="verdict implementation">实现差异</span><br><small>共有问题；message board 与 role 是本副本新增协调面</small></td></tr>
+      <tr><td>8</td><td>项目指令放哪</td><td>发现向上找根，最终按 user → thread → 根→cwd 拼接</td><td>`CLAUDE.md` 类项目指令</td><td><span class="verdict shared">共有机制</span><br><small>共有问题，文件名与发现规则不同</small></td></tr>
+      <tr><td>9</td><td>记忆放哪</td><td>会话外两阶段管线：rollout 抽取 + 全局合并；默认关闭</td><td>会话内多层记忆</td><td><span class="verdict implementation">实现差异</span><br><small>实现差异；不能断言谁更好</small></td></tr>
+      <tr><td>10</td><td>多端怎么复用</td><td>app-server JSON-RPC 作为共同协议；daemon 服务桌面/移动</td><td>039 副本未见对应协议层</td><td><span class="verdict new-surface">本副本可证的新增面</span><br><small>本副本可证的新增面；不写无法证伪的最高级判断</small></td></tr>
+      <tr><td>11</td><td>仓库边界</td><td>CLI / 协议 / 沙箱在本仓库；App / Cloud / 模型不在</td><td>039 是泄露源码，不能按官方仓库复核</td><td><span class="verdict unverifiable">不可验证</span><br><small>不可验证：材料性质不同</small></td></tr>
+      </tbody>
+    </table></div>
+  <div class="note warn">「本副本可证的新增面」只表示：在这个 SHA 能指到实现，且 039 的材料里没有对应实现。它不表示其他产品没有，也不表示它是最早出现的。</div>
+
+</section>
+
+
+<section id="s03">
+  <h2><span class="num">03</span>四种判断，四种写法</h2>
+
+
+<div class="judgment shared" data-product-judgment data-judgment="shared" data-claim="C04-C05">
+  <b>共有机制</b><p>两边都有同类机制，问题相同；写结构差异，不写优劣。例：循环、工具、压缩、权限、子 Agent。</p>
+</div>
+
+<div class="judgment implementation" data-product-judgment data-judgment="implementation" data-claim="C09">
+  <b>实现差异</b><p>问题相同、实现不同；写清换来什么、付出什么。例：Codex 的 unified exec 把 PTY 会话做成一等工具。</p>
+</div>
+
+<div class="judgment new-surface" data-product-judgment data-judgment="new-surface" data-claim="C21">
+  <b>本副本可证的新增面</b><p>本副本能指到实现、039 材料未见对应实现；只写「这一版新增了」。例：app-server 协议层。</p>
+</div>
+
+<div class="judgment unverifiable" data-product-judgment data-judgment="unverifiable" data-claim="C01-C22">
+  <b>不可验证</b><p>不在仓库或材料不足；写清「只能看到什么」。例：App / Cloud / 模型服务的内部行为。</p>
+</div>
+
+</section>
+
+
+<section id="s04">
+  <h2><span class="num">04</span>取舍：可比，但不能比「谁更强」</h2>
+
+  <p>同问题对照能帮读者理解设计空间；但材料不对称、版本不同、产品边界不同，任何「谁更好」的结论都会超出证据。页面能给的，是一张可复核的差异表和四种判断类型。</p>
+  <div data-tradeoff><div class="tradeoff"><div><b>换来什么</b>读者能按同一问题比较结构，而不是背功能列表。</div><div><b>付出什么</b>材料与版本不对称；仓库外部分不可验证；差异不等于优劣。</div></div></div>
+
+</section>
+
+
+<section id="s05">
+  <h2><span class="num">05</span>一张表读完后，记住三件事</h2>
+
+  <ol>
+    <li><b>共有机制占多数</b>：循环、工具、压缩、权限、子 Agent、hooks、项目指令，两边都要解决。</li>
+    <li><b>真正的结构差异在协议与执行层</b>：app-server 把多端复用做成产品面；unified exec 把 PTY 会话做成一等工具；code mode 把工具调用变成可编程 cell。</li>
+    <li><b>仓库边界不是产品优劣</b>：App / Cloud / 模型不在仓库，只能标不可验证；不能把「看不到」写成「没有」。在 039 那边同理，不能把「副本缺失」写成「产品没有」。</li>
+  </ol>
+
+</section>
+
+  <section id="sources"><h2><span class="num">§</span>来源与证据</h2>
+  <ul class="src"><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L8">openai/codex README</a> <span>· 产品入口</span></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/app-server-protocol/src/protocol/common.rs#L522-L530">app-server-protocol/common.rs:522</a> <span>· 协议层</span></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/core/src/unified_exec/mod.rs#L74-L77">unified_exec/mod.rs:74-77</a> <span>· PTY 上限</span></li><li><a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/codex-rs/memories/README.md#L29-L38">memories/README.md:29-38</a> <span>· 记忆管线</span></li><li><a href="../cc-source-teardown/index.html">039 Claude Code 源码拆解</a> <span>· 对照材料</span></li></ul>
+  <p class="fine">代码引用来自 <a href="https://github.com/openai/codex/blob/8703d32bd0ea5cf26768859a3dd476df906ba053/README.md#L1-L1">openai/codex</a> 固定提交 <code>8703d32bd0ea5cf26768859a3dd476df906ba053</code>（2026-11-09T03:58:05Z）；行号以该提交为准。源码以 Apache-2.0 发布，引用仅用于评论与分析。</p>
+</section>
+  <nav class="pager" aria-label="翻页"><a href="08-surface.html"><small>← 上一章</small><b>08 产品表面</b></a><a class="next" href="10-lessons.html"><small>下一章 →</small><b>10 结论与自测</b></a></nav>
+</div>
+</main>
+<footer><div class="wrap">
+  <p>本页是基于 <code>openai/codex</code> 固定提交的研究笔记，不是 OpenAI 官方文档。桌面 App、Codex Web / 云端服务与模型服务不在本仓库，内部实现不可验证；本页只描述仓库里能看到的客户端、协议与运行时。</p>
+  <p><a href="index.html">阅读地图</a> · 生成于 <code>personal/harness/teardown-codex/</code> · 源码 Apache-2.0 · 固定提交 <code>8703d32b</code></p>
+</div></footer>
+<script>
+(function(){
+  var bar=document.getElementById('progress');
+  function paint(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  }
+  addEventListener('scroll',paint,{passive:true});
+  addEventListener('resize',paint);
+  paint();
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var dark=document.documentElement.classList.toggle('dark');
+      try{localStorage.setItem('harness-theme',dark?'dark':'light')}catch(e){}
+      btn.textContent=dark?'浅色':'深色';
+    });
+    btn.textContent=document.documentElement.classList.contains('dark')?'浅色':'深色';
+  });
+})();
+</script>
+</body>
+</html>

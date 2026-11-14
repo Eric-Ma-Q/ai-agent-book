@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="零 AI 经验者的 AI 产品经理简历优化指南：筛简历逻辑、六维能力与岗位地图、存量翻译、30 天证据包、完整简历 Before/After、十项自检、投递与复盘。">
+<title>零 AI 经验 · AI 产品经理简历优化指南</title>
+<style>
+  :root {
+    --ink: #26241f;
+    --ink-soft: #5c574c;
+    --paper: #faf8f4;
+    --paper-2: #f3efe6;
+    --card: #ffffff;
+    --accent: #b45309;
+    --accent-deep: #8a3e06;
+    --accent-soft: #fdf1e3;
+    --line: #e6e0d4;
+    --ok: #4d7c5f;
+    --ok-soft: #edf3ee;
+    --danger: #b3402a;
+    --danger-soft: #f9ece8;
+    --info: #3b6ea5;
+    --info-soft: #ecf2f8;
+    --shadow: 0 10px 28px rgba(38, 36, 31, 0.10);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    font-size: 16px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: #f3d9b8; }
+  h1, h2, h3, h4 { font-family: "Noto Serif SC", "Songti SC", "STSong", serif; line-height: 1.5; }
+  a { color: var(--accent-deep); text-decoration: none; border-bottom: 1px solid #e3c9a8; }
+  a:hover { border-bottom-color: var(--accent-deep); }
+  .mono { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 58px 0 6px; scroll-margin-top: 70px; }
+  h2 {
+    font-size: 25px; font-weight: 700; margin: 8px 0 10px;
+    padding-top: 26px; border-top: 1px solid var(--line);
+  }
+  h2 .sec-no {
+    display: block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px; font-weight: 600; letter-spacing: 3px;
+    color: var(--accent); margin-bottom: 4px;
+  }
+  .sec-lead { color: var(--ink-soft); max-width: 880px; margin: 0 0 26px; font-size: 15.5px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 20px 22px;
+  }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .grid3 { grid-template-columns: 1fr; } }
+  @media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } .card { padding: 16px 14px; } }
+  .tip {
+    border-bottom: 2px dotted #cf9a5c; cursor: help; color: var(--accent-deep);
+  }
+  .x {
+    font-weight: 700; color: var(--accent-deep);
+    border-bottom: 2px dashed #d9a86c; padding: 0 1px;
+  }
+  .note-word { font-weight: 700; }
+
+  /* ---------- 顶部导航 ---------- */
+  .topnav {
+    position: sticky; top: 0; z-index: 80;
+    background: rgba(250, 248, 244, 0.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topnav .wrap { display: flex; align-items: center; gap: 16px; height: 54px; }
+  .topnav .brand { font-weight: 800; letter-spacing: 0.5px; font-size: 15px; white-space: nowrap; }
+  .topnav .brand b { color: var(--accent-deep); }
+  .topnav nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+  .topnav nav::-webkit-scrollbar { display: none; }
+  .topnav nav a {
+    border: none; font-size: 13.5px; color: var(--ink-soft);
+    padding: 5px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .topnav nav a:hover { background: var(--accent-soft); color: var(--accent-deep); }
+  .topnav .src {
+    border: 1px solid var(--line); border-radius: 999px; font-size: 12.5px;
+    padding: 4px 12px; white-space: nowrap; color: var(--accent-deep);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding: 66px 0 26px; }
+  .kicker {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 12.5px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase;
+  }
+  .hero h1 { font-size: 34px; font-weight: 900; margin: 10px 0 12px; letter-spacing: 0.5px; }
+  .hero .sub { font-size: 17px; color: var(--ink-soft); max-width: 800px; margin: 0 0 18px; }
+  .hero .sub em { font-style: normal; background: linear-gradient(transparent 62%, #f6e3c8 62%); color: var(--ink); }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 24px; }
+  .hero-meta span {
+    font-size: 12.5px; color: var(--ink-soft); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 13px;
+  }
+  .hero-meta span b { color: var(--accent-deep); }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 14.5px; font-weight: 600; border-radius: 999px;
+    padding: 10px 22px; border: 1.5px solid var(--ink); background: var(--ink); color: #fdf9f2;
+    transition: transform .15s ease, box-shadow .15s ease; line-height: 1.4;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(38,36,31,.18); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.ghost:hover { border-color: var(--accent); color: var(--accent-deep); }
+
+  /* ---------- S1 看牌 ---------- */
+  .reader-flow { display: grid; grid-template-columns: 1fr 44px 1fr; gap: 12px; align-items: stretch; }
+  @media (max-width: 680px) { .reader-flow { grid-template-columns: 1fr; } .reader-flow .arrow { transform: rotate(90deg); margin: -4px auto; } }
+  .reader-flow .arrow {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: 24px; font-weight: 700;
+  }
+  .pass-tag {
+    display: inline-block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 11.5px; letter-spacing: 1.5px; font-weight: 700; color: var(--accent-deep);
+    background: var(--accent-soft); border-radius: 6px; padding: 2px 9px; margin-bottom: 10px;
+  }
+  .trap h4 { margin: 0 0 6px; font-size: 16.5px; color: var(--danger); }
+  .trap { border-color: #ecd2ca; background: #fffdfb; }
+  .trap .why { color: var(--ink-soft); font-size: 14.5px; }
+  .jd-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .jd-table th, .jd-table td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .jd-table th { font-size: 13px; letter-spacing: 1px; color: var(--ink-soft); font-weight: 700; background: var(--paper-2); }
+  .jd-table td:first-child { color: var(--accent-deep); font-weight: 600; width: 34%; }
+  .jd-table tr:last-child td { border-bottom: none; }
+  .takeaway {
+    margin-top: 20px; border-left: 4px solid var(--accent);
+    background: var(--accent-soft); border-radius: 0 12px 12px 0; padding: 14px 18px;
+  }
+  .takeaway b { color: var(--accent-deep); }
+
+  /* ---------- S2 六维 ---------- */
+  .dims { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 860px) { .dims { grid-template-columns: 1fr; } }
+  .dim { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .dim-head {
+    display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px;
+    cursor: pointer; user-select: none;
+  }
+  .dim-head:hover { background: #fffdf8; }
+  .dim-no {
+    flex: none; width: 30px; height: 30px; border-radius: 9px; margin-top: 2px;
+    background: var(--accent-soft); color: var(--accent-deep); font-weight: 800;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .dim-head h3 { margin: 0; font-size: 17px; }
+  .dim-head .one { display: block; font-family: "PingFang SC", sans-serif; font-weight: 400; color: var(--ink-soft); font-size: 14px; margin-top: 3px; }
+  .dim-head .chev { margin-left: auto; color: var(--accent); font-weight: 700; transition: transform .2s; flex: none; }
+  .dim.open .chev { transform: rotate(90deg); }
+  .dim-body { display: none; border-top: 1px dashed var(--line); padding: 14px 18px 16px; background: #fffdf8; }
+  .dim.open .dim-body { display: block; }
+  .dim-body .row { margin: 0 0 10px; font-size: 14.5px; }
+  .dim-body .row:last-child { margin-bottom: 0; }
+  .dim-body .lab {
+    display: inline-block; min-width: 108px; font-weight: 700; font-size: 12.5px;
+    letter-spacing: 1px; color: var(--ink-soft); margin-right: 6px;
+  }
+  .dim-body .lab.q { color: var(--info); }
+  .dim-body .lab.a { color: var(--ok); }
+  .dim-body .q-text { color: var(--info); }
+  .dim-body .a-text { color: var(--ink); }
+  .dims-note { margin-top: 16px; color: var(--ink-soft); font-size: 14.5px; text-align: center; }
+  .dims-note b { color: var(--accent-deep); }
+
+  /* ---------- S3 翻译 ---------- */
+  .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 26px; }
+  @media (max-width: 680px) { .principles { grid-template-columns: 1fr; } }
+  .principle { border-top: 3px solid var(--accent); }
+  .principle h4 { margin: 0 0 6px; font-size: 16px; }
+  .principle p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+  .tr-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .tr-tabs button {
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--line); background: var(--card); color: var(--ink-soft);
+    border-radius: 999px; padding: 8px 18px;
+  }
+  .tr-tabs button.on { background: var(--ink); border-color: var(--ink); color: #fdf9f2; }
+  .tr-tabs button:hover:not(.on) { border-color: var(--accent); color: var(--accent-deep); }
+  .tr-pane { display: grid; gap: 14px; }
+  .tr-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .tr-title {
+    display: flex; align-items: center; gap: 10px; padding: 12px 18px;
+    font-weight: 700; font-size: 15.5px; background: var(--paper-2);
+  }
+  .tr-title .scene-ico { font-size: 17px; }
+  .swap {
+    margin-left: auto; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: 700; color: var(--accent-deep);
+    background: var(--accent-soft); border: 1px solid #ecd3b4; border-radius: 999px; padding: 4px 14px;
+  }
+  .swap:hover { border-color: var(--accent); }
+  .tr-before, .tr-after { padding: 12px 18px; font-size: 14.5px; }
+  .tr-before { color: var(--ink-soft); border-bottom: 1px dashed var(--line); }
+  .tr-card.flipped .tr-before { display: none; }
+  .tr-card.flipped .tr-after { display: block; }
+  .tr-after { display: none; background: var(--ok-soft); }
+  .tr-before .tag, .tr-after .tag {
+    display: block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 11px; letter-spacing: 2px; font-weight: 700; margin-bottom: 4px;
+  }
+  .tr-before .tag { color: #7d7566; }
+  .tr-after .tag { color: var(--ok); }
+  .tr-cond {
+    padding: 10px 18px 14px; font-size: 13.5px; color: var(--ink-soft);
+    border-top: 1px dashed var(--line); background: #fffdfa;
+  }
+  .tr-cond b { color: var(--accent-deep); }
+  .warn-note {
+    margin-top: 18px; border: 1px dashed var(--danger); border-radius: 12px;
+    padding: 12px 18px; color: var(--danger); font-size: 14.5px; background: var(--danger-soft);
+  }
+
+  /* ---------- S4 30 天 ---------- */
+  .paths { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 30px; }
+  @media (max-width: 860px) { .paths { grid-template-columns: 1fr; } }
+  .path { border-top: 3px solid var(--accent); }
+  .path h4 { margin: 0; font-size: 16.5px; }
+  .path .meta {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11.5px;
+    color: var(--accent-deep); letter-spacing: 1px; margin: 2px 0 8px;
+  }
+  .path p { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+  .path p b { color: var(--ink); }
+  .plan-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .plan-head h3 { margin: 0; font-size: 18px; }
+  .plan-bar { flex: 1; min-width: 160px; height: 10px; border-radius: 999px; background: var(--paper-2); border: 1px solid var(--line); overflow: hidden; }
+  .plan-bar i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #d99a4e, var(--accent)); transition: width .3s; }
+  .plan-count { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; color: var(--accent-deep); font-weight: 700; }
+  .plan-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 980px) { .plan-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .plan-grid { grid-template-columns: 1fr; } }
+  .week { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+  .week.done { border-color: #bcd8c4; background: #fbfdfb; }
+  .week h4 {
+    margin: 0 0 4px; font-size: 15px; display: flex; align-items: center; gap: 8px;
+  }
+  .week h4 .wk-tag {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; color: var(--accent-deep); background: var(--accent-soft);
+    padding: 1px 8px; border-radius: 6px;
+  }
+  .week h4 .wk-ok { display: none; color: var(--ok); font-size: 13px; font-weight: 700; }
+  .week.done h4 .wk-ok { display: inline; }
+  .week .goal { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 10px; }
+  .plan-grid label {
+    display: flex; gap: 9px; align-items: flex-start; font-size: 14px;
+    padding: 7px 8px; border-radius: 9px; cursor: pointer; line-height: 1.6;
+  }
+  .plan-grid label:hover { background: var(--paper-2); }
+  .plan-grid input { display: none; }
+  .plan-grid .box {
+    flex: none; width: 18px; height: 18px; margin-top: 4px; border-radius: 5px;
+    border: 2px solid #ab9f80; background: #fff; position: relative; transition: all .15s;
+  }
+  .plan-grid input:checked + .box { background: var(--ok); border-color: var(--ok); }
+  .plan-grid input:checked + .box::after {
+    content: "✓"; position: absolute; inset: 0; color: #fff; font-size: 12px;
+    font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  .plan-grid input:checked ~ .txt { color: #a39a89; text-decoration: line-through; }
+  .plan-hint { margin-top: 12px; font-size: 13px; color: var(--ink-soft); }
+
+  /* ---------- S5 装配 ---------- */
+  .assembler { display: grid; grid-template-columns: 5fr 6fr; gap: 22px; align-items: start; }
+  @media (max-width: 920px) { .assembler { grid-template-columns: 1fr; } }
+  .resume-paper {
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+    box-shadow: var(--shadow); padding: 22px 20px;
+  }
+  .resume-paper .r-name { font-family: "Noto Serif SC", "Songti SC", serif; font-weight: 800; font-size: 17px; }
+  .resume-paper .r-line { font-size: 12.5px; color: var(--ink-soft); margin: 2px 0 14px; }
+  .r-block { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; position: relative; }
+  .r-block .r-no {
+    position: absolute; top: -10px; left: 10px; background: var(--ink); color: #fdf9f2;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 700;
+    border-radius: 5px; padding: 0 7px; letter-spacing: 1px;
+  }
+  .r-block.hot { border-color: #dfb98a; background: var(--accent-soft); }
+  .r-block.hot .r-no { background: var(--accent); }
+  .r-block h5 { margin: 2px 0 3px; font-size: 14px; }
+  .r-block p { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.65; }
+  .r-block.warn-block { border-style: dashed; border-color: #e0b9b0; background: #fffaf8; }
+  .r-block.warn-block .r-no { background: var(--danger); }
+  .assembler .exp h3 { margin: 0 0 10px; font-size: 17.5px; }
+  .formula-ex {
+    background: var(--paper-2); border-radius: 10px; padding: 14px 16px; font-size: 15.5px; line-height: 2.1;
+  }
+  .f-v { color: var(--ink); font-weight: 800; }
+  .f-s { color: var(--accent-deep); font-weight: 700; border-bottom: 2px solid #e3b078; }
+  .f-ai { color: var(--ok); font-weight: 700; border-bottom: 2px solid #9dbfa8; }
+  .f-n { color: var(--info); font-weight: 700; border-bottom: 2px solid #9db4cd; }
+  .f-m { border-bottom: 2px dotted #cf9a5c; color: var(--accent-deep); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; }
+  .tiers { margin-top: 18px; }
+  .tier { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14.5px; }
+  .tier:last-child { border-bottom: none; }
+  .tier .t-lab {
+    flex: none; width: 92px; font-weight: 800; font-size: 13px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; height: 30px; margin-top: 2px;
+  }
+  .tier:nth-child(1) .t-lab { background: var(--ok-soft); color: var(--ok); }
+  .tier:nth-child(2) .t-lab { background: var(--accent-soft); color: var(--accent-deep); }
+  .tier:nth-child(3) .t-lab { background: var(--paper-2); color: var(--ink-soft); }
+  .tier p { margin: 0; color: var(--ink-soft); }
+  .tier p b { color: var(--ink); }
+
+  /* ---------- S6 质检 ---------- */
+  .qc-grid { display: grid; grid-template-columns: 6fr 5fr; gap: 20px; align-items: start; }
+  @media (max-width: 920px) { .qc-grid { grid-template-columns: 1fr; } }
+  .ck-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .ck-head h3 { margin: 0; font-size: 17.5px; }
+  .ck-score { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-weight: 700; color: var(--accent-deep); font-size: 14px; }
+  .ck-verdict { font-size: 13.5px; color: var(--ink-soft); }
+  .ck-list { list-style: none; margin: 0; padding: 0; }
+  .ck-list li { border-bottom: 1px dashed var(--line); }
+  .ck-list li:last-child { border-bottom: none; }
+  .ck-list label { display: flex; gap: 10px; align-items: flex-start; padding: 9px 8px; cursor: pointer; font-size: 14.5px; border-radius: 8px; }
+  .ck-list label:hover { background: var(--paper-2); }
+  .ck-list input { display: none; }
+  .ck-list .box { flex: none; width: 19px; height: 19px; margin-top: 4px; border-radius: 5px; border: 2px solid #ab9f80; background: #fff; position: relative; }
+  .ck-list input:checked + .box { background: var(--ok); border-color: var(--ok); }
+  .ck-list input:checked + .box::after { content: "✓"; position: absolute; inset: 0; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .ck-list input:checked ~ .txt { color: #a39a89; text-decoration: line-through; }
+  .redlines { display: grid; gap: 10px; }
+  .redline { background: var(--danger-soft); border: 1px solid #ecd2ca; border-radius: 12px; padding: 11px 16px; font-size: 14.5px; }
+  .redline b { color: var(--danger); display: block; margin-bottom: 2px; }
+  .redline, .plan-grid .txt, .ck-list .txt { text-wrap: balance; }
+  .chain { margin-top: 20px; }
+  .chain-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 860px) { .chain-grid { grid-template-columns: 1fr 1fr; } }
+  .chain-q { background: var(--info-soft); border: 1px solid #d3e0ee; border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+  .chain-q .q-no { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 11px; font-weight: 700; color: var(--info); letter-spacing: 1px; display: block; margin-bottom: 3px; }
+
+  /* ---------- 尾注 ---------- */
+  .colophon { margin: 46px 0 60px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--ink-soft); }
+  .colophon h3 { font-size: 15px; margin: 0 0 8px; color: var(--ink); }
+  .colophon ul { margin: 0; padding-left: 20px; }
+  .colophon li { margin-bottom: 4px; }
+  .colophon .date { font-family: "SF Mono", ui-monospace, Menlo, monospace; color: var(--accent-deep); }
+
+  /* ---------- tip 气泡 ---------- */
+  #tipPop {
+    position: fixed; z-index: 200; max-width: 340px;
+    background: var(--code-bg, #2b2822); color: #e8e2d5;
+    font-size: 13.5px; line-height: 1.75; border-radius: 10px;
+    padding: 10px 14px; box-shadow: 0 12px 30px rgba(38,36,31,.35);
+  }
+  #tipPop b { color: #f0c98c; }
+
+  /* ---------- 滚动渐显 ---------- */
+  .rv { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .rv.in { opacity: 1; transform: none; }
+</style>
+<!-- theme-patch:start -->
+<style id="themePatchStyle">
+/* ===== theme patch ===== */
+:where(body *){transition:background-color .22s ease,border-color .22s ease,color .22s ease}
+html.dark{color-scheme:dark}
+#themeFab{position:fixed;right:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#themeFab:hover{transform:scale(1.08)}
+#themeFab svg{width:19px;height:19px}
+#themeFab .i-sun{display:none}
+html.dark #themeFab .i-moon{display:none}
+html.dark #themeFab .i-sun{display:block}
+
+html.dark{--ink:#e9e4d7;--ink-soft:#a8a193;--paper:#171512;--paper-2:#201d17;--card:#211f19;--accent:#e29b52;
+  --accent-deep:#f0b670;--accent-soft:rgba(226,155,82,.14);--line:#3a362b;
+  --ok:#8fbc9e;--ok-soft:rgba(77,124,95,.18);--danger:#e08a72;--danger-soft:rgba(179,64,42,.18);
+  --info:#8fb5df;--info-soft:rgba(59,110,165,.18);--shadow:0 10px 28px rgba(0,0,0,.5)}
+html.dark ::selection{background:rgba(226,155,82,.35)}
+html.dark a{border-bottom-color:rgba(226,155,82,.45)}
+html.dark .topnav{background:rgba(23,21,18,.9)}
+html.dark .hero .sub em{background:linear-gradient(transparent 62%,rgba(226,155,82,.25) 62%)}
+html.dark .btn:hover{box-shadow:0 8px 18px rgba(0,0,0,.5)}
+html.dark .trap{border-color:rgba(224,138,114,.35);background:rgba(179,64,42,.08)}
+html.dark .dim-head:hover{background:#221f18}
+html.dark .dim-body{background:#1d1a15}
+html.dark .swap{border-color:rgba(226,155,82,.35)}
+html.dark .tr-cond{background:#1d1a15}
+html.dark .tr-before .tag{color:#9a9284}
+html.dark .week.done{border-color:rgba(143,188,158,.4);background:rgba(77,124,95,.1)}
+html.dark .plan-grid .box,html.dark .ck-list .box{border-color:#645d47;background:#26231b}
+html.dark .plan-grid input:checked ~ .txt,html.dark .ck-list input:checked ~ .txt{color:#77705f}
+html.dark .resume-paper{background:#26231b}
+html.dark .r-block.warn-block{border-color:rgba(224,138,114,.4);background:rgba(179,64,42,.06)}
+html.dark .redline{border-color:rgba(224,138,114,.35)}
+html.dark .chain-q{border-color:rgba(143,181,223,.35)}
+
+html.dark .btn:not(.ghost),html.dark .tr-tabs button.on,html.dark .r-block .r-no{color:#171512}
+html.dark .plan-grid input:checked + .box::after,html.dark .ck-list input:checked + .box::after{color:#1c2a20}
+</style>
+<script id="themePatch">
+(function(){
+  var KEY='harness-theme';
+  var root=document.documentElement;
+  function sysDark(){try{return matchMedia('(prefers-color-scheme: dark)').matches}catch(e){return false}}
+  function saved(){try{return localStorage.getItem(KEY)}catch(e){return null}}
+  function cur(){var s=saved();return (s==='dark'||s==='light')?s:(sysDark()?'dark':'light')}
+  function apply(t){
+    root.classList.toggle('dark',t==='dark');
+    var b=document.getElementById('themeFab');
+    if(b){var l=t==='dark'?'切换为白天模式':'切换为黑夜模式';b.setAttribute('aria-label',l);b.setAttribute('title',l);}
+  }
+  apply(cur());
+  function init(){
+    if(document.getElementById('themeFab'))return;
+    var b=document.createElement('button');
+    b.id='themeFab';b.type='button';
+    b.innerHTML='<svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+    b.addEventListener('click',function(){
+      var t=root.classList.contains('dark')?'light':'dark';
+      try{localStorage.setItem(KEY,t)}catch(e){}
+      apply(t);
+    });
+    (document.body||document.documentElement).appendChild(b);
+    apply(cur());
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+  try{
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(!saved())apply(cur())});
+    window.addEventListener('storage',function(e){if(e.key===KEY&&(e.newValue==='dark'||e.newValue==='light'))apply(e.newValue)});
+  }catch(e){}
+})();
+</script>
+<!-- theme-patch:end -->
+<!-- home-patch:start -->
+<style id="homePatchStyle">
+#homeFab{position:fixed;left:20px;bottom:22px;z-index:80;width:40px;height:40px;border-radius:50%;
+  border:1px solid var(--line,var(--border,#ccc));background:var(--card,var(--surface,#fff));color:var(--ink,var(--text,#333));
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;text-decoration:none;
+  box-shadow:0 4px 14px rgba(0,0,0,.16);transition:transform .15s ease}
+#homeFab:hover{transform:scale(1.08)}
+#homeFab svg{width:18px;height:18px}
+@media print{#homeFab{display:none}}
+</style>
+<script id="homePatch">
+(function(){
+  function init(){
+    if(document.getElementById('homeFab'))return;
+    var a=document.createElement('a');
+    a.id='homeFab';a.href='index.html';a.title='返回页面总览';a.setAttribute('aria-label','返回页面总览');
+    a.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+    (document.body||document.documentElement).appendChild(a);
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init)}else{init()}
+})();
+</script>
+<!-- home-patch:end -->
+<style id="resume-v2-style">
+  /* ---------- v2 共享 ---------- */
+  .mini-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+  .mini-head h3 { margin: 0; font-size: 18px; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+  .card, .grid2 > *, .grid3 > *, .tpl-grid > *, .bg-grid > *, .practice > *, .resume-compare > *, .plan-grid > *, .dims > * { min-width: 0; }
+  .hero { padding-left: 24px; padding-right: 24px; }
+  .table-wrap .jd-table { min-width: 560px; }
+  .table-wrap .jd-table.ats { min-width: 0; }
+  .jd-table.ats td:first-child, .jd-table.ats th:first-child { width: 22%; white-space: nowrap; }
+  .jd-table.compact { font-size: 14px; }
+  .jd-table.compact th, .jd-table.compact td { padding: 9px 11px; }
+  .jd-table.compact td:first-child { width: auto; }
+  .table-note { margin: 8px 0 0; font-size: 13px; color: var(--ink-soft); }
+  .link-btn {
+    cursor: pointer; font-family: inherit; font-size: 12.5px; font-weight: 700;
+    color: var(--accent-deep); background: transparent; border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px 11px; line-height: 1.5;
+  }
+  .link-btn:hover { border-color: var(--accent); }
+  .btn.small { padding: 6px 14px; font-size: 13px; }
+  .copy-note { margin: 8px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+  .gate-tag {
+    display: inline-block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 1px; font-style: normal;
+    color: var(--accent-deep); background: var(--accent-soft); border-radius: 5px;
+    padding: 1px 6px; margin-right: 6px; vertical-align: 1px;
+  }
+  .gate-tag.bonus { color: var(--info); background: var(--info-soft); }
+
+  /* ---------- S1 ATS / 证据等级 ---------- */
+  .ladder { margin: 0; padding-left: 20px; font-size: 14px; color: var(--ink-soft); }
+  .ladder li { margin: 0 0 6px; }
+  .ladder li:last-child { margin-bottom: 0; }
+  .ladder b { color: var(--accent-deep); }
+
+  /* ---------- S2 岗位地图 / 自评 ---------- */
+  .role-grid, .self-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 680px) { .role-grid, .self-grid { grid-template-columns: 1fr; } }
+  .role-map .role-grid .role-card:last-child { grid-column: 1 / -1; }
+  .dims { align-items: start; }
+  .role-card, .self-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--card); }
+  .role-card h4, .self-card h4 { margin: 0 0 6px; font-size: 15.5px; }
+  .role-card p, .self-card p { margin: 0 0 5px; font-size: 13.5px; color: var(--ink-soft); }
+  .role-card p:last-child, .self-card p:last-child { margin-bottom: 0; }
+  .role-card b { color: var(--ink); }
+  .self-card .lv {
+    display: inline-block; width: 22px; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-weight: 700; color: var(--accent-deep);
+  }
+  .mini-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--card); }
+  .mini-card h4 { margin: 0 0 6px; font-size: 15px; }
+  .mini-card p { margin: 0 0 5px; font-size: 13.5px; color: var(--ink-soft); }
+  .mini-card p:last-child { margin-bottom: 0; }
+  .mini-card b { color: var(--ink); }
+  .tier-grid, .channel-grid, .diag-grid { display: grid; gap: 12px; }
+  .tier-grid { grid-template-columns: repeat(3, 1fr); }
+  .channel-grid, .diag-grid { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 680px) { .tier-grid, .channel-grid, .diag-grid { grid-template-columns: 1fr; } }
+  .rank {
+    display: inline-block; font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 1px; color: var(--accent-deep);
+    background: var(--accent-soft); border-radius: 5px; padding: 1px 6px; margin-left: 6px;
+    vertical-align: 1px;
+  }
+  .timeline p { margin: 0; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+  .timeline p:last-child { border-bottom: none; }
+  .timeline b { color: var(--accent-deep); }
+  .dims-toolbar {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 14px; margin: 22px 0 14px;
+  }
+  .dims-toolbar .sec-lead { margin: 0; }
+  .dims-toolbar .btn { flex: none; }
+  @media (max-width: 680px) { .dims-toolbar { flex-direction: column; } .dims-toolbar .btn { align-self: flex-start; } }
+
+  /* ---------- S3 背景分支 ---------- */
+  .bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0 0 26px; }
+  @media (max-width: 860px) { .bg-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .bg-grid { grid-template-columns: 1fr; } }
+  .bg-card { padding: 16px 18px; }
+  .bg-card h4 { margin: 0 0 6px; font-size: 16px; }
+  .bg-card p { margin: 0 0 6px; font-size: 13.5px; color: var(--ink-soft); }
+  .bg-card p:last-child { margin-bottom: 0; }
+  .bg-card .bg-line { color: var(--ink); }
+
+  /* ---------- S3 翻译同屏 ---------- */
+  .tr-card .tr-before { border-bottom: none; }
+  .tr-card .tr-after { display: block; border-top: 1px dashed var(--line); }
+  .tr-card .swap { display: none; }
+  .tr-title { align-items: flex-start; }
+
+  /* ---------- S4 模板 / 示例 ---------- */
+  .tpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 860px) { .tpl-grid { grid-template-columns: 1fr; } }
+  .tpl-card { padding: 16px 18px; }
+  .tpl-card h4 { margin: 0 0 6px; font-size: 16px; }
+  .tpl-card p { margin: 0 0 8px; font-size: 13.5px; color: var(--ink-soft); }
+  .tpl {
+    white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; padding: 12px 14px;
+    border: 1px dashed var(--line); border-radius: 10px; background: var(--paper-2);
+    color: var(--ink-soft); font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.7;
+  }
+  .tpl b { color: var(--ink); }
+  .worked-example { margin-top: 18px; }
+  .worked-example p { margin: 0 0 8px; font-size: 14px; }
+  .worked-example p:last-child { margin-bottom: 0; }
+  .deliverable, .accept { margin: 2px 0 8px; font-size: 12.5px; color: var(--ink-soft); }
+  .deliverable b, .accept b { color: var(--accent-deep); }
+  .plan-head .link-btn { margin-left: auto; }
+  @media (max-width: 560px) { .plan-head .link-btn { margin-left: 0; } }
+
+  /* ---------- S5 完整简历 ---------- */
+  .resume-example { margin-top: 34px; }
+  .resume-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; margin-top: 16px; }
+  @media (max-width: 920px) { .resume-compare { grid-template-columns: 1fr; } }
+  .resume-doc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; font-size: 12.5px; line-height: 1.7; box-shadow: var(--shadow);
+  }
+  .resume-doc.before { opacity: .86; }
+  .resume-doc .doc-name { font-size: 19px; font-weight: 800; letter-spacing: 1px; }
+  .resume-doc .doc-role { color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+  .resume-doc .doc-sec { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .resume-doc .doc-sec h6 {
+    margin: 0 0 4px; font-size: 12px; letter-spacing: 1.5px; color: var(--accent-deep);
+  }
+  .resume-doc p { margin: 0 0 5px; }
+  .resume-doc ul { margin: 2px 0 0; padding-left: 16px; }
+  .resume-doc li { margin-bottom: 3px; }
+  .resume-doc .anno {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 17px; height: 17px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-size: 10.5px; font-weight: 700; vertical-align: 1px; margin-left: 3px;
+  }
+  .anno-list {
+    list-style: none; margin: 16px 0 0; padding: 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px;
+  }
+  @media (max-width: 680px) { .anno-list { grid-template-columns: 1fr; } }
+  .anno-list li { display: flex; gap: 8px; font-size: 13px; color: var(--ink-soft); }
+  .anno-list .n {
+    flex: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent-soft);
+    color: var(--accent-deep); font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  }
+
+  /* ---------- S6 自检 / 答案卡 ---------- */
+  .ck-head { flex-wrap: wrap; }
+  .ck-head .link-btn { margin-left: auto; }
+  .ck-score { white-space: nowrap; }
+  .ck-list .fix { margin: 0 0 10px 48px; font-size: 12.5px; color: var(--ink-soft); }
+  .ck-list .fix a { border-bottom: none; }
+  .answer-card { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .answer-card summary { cursor: pointer; padding: 12px 16px; font-weight: 700; font-size: 14.5px; }
+  .answer-card summary:hover { color: var(--accent-deep); }
+  .answer-card .ans-body { padding: 0 16px 14px; border-top: 1px dashed var(--line); }
+  .ans-row { margin: 10px 0 0; font-size: 13.8px; }
+  .ans-row b.bad { color: var(--danger); }
+  .ans-row b.ok { color: var(--ok); }
+  .ans-row b.plus { color: var(--accent-deep); }
+
+  /* ---------- S7 投递 ---------- */
+  .practice { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  @media (max-width: 680px) { .practice { grid-template-columns: 1fr; } }
+  .practice .card h4 { margin: 0 0 6px; font-size: 15.5px; }
+  .practice .card p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-soft); }
+  .practice .card a { font-weight: 700; }
+  .faq-item { border-top: 1px dashed var(--line); padding: 10px 0; }
+  .faq-item:first-of-type { border-top: none; }
+  .faq-item summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+  .faq-item p { margin: 8px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  /* ---------- 窄屏顶部导航 ---------- */
+  @media (max-width: 680px) {
+    .topnav .src { display: none; }
+    .topnav .wrap { gap: 8px; padding: 0 14px; }
+    .topnav .brand { font-size: 13.5px; }
+    .topnav nav a { padding: 5px 8px; font-size: 13px; }
+  }
+
+  /* ---------- 打印 ---------- */
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    html, body { background: #fff !important; color: #1b1b1b !important; }
+    html.dark {
+      --ink: #1b1b1b; --ink-soft: #444; --paper: #fff; --paper-2: #f5f5f5; --card: #fff;
+      --line: #d8d8d8; --accent: #8a3e06; --accent-deep: #6b2f05; --accent-soft: #fdf1e3;
+      --ok: #2f5d43; --ok-soft: #edf3ee; --danger: #8a2f1f; --danger-soft: #f9ece8;
+      --info: #2b5278; --info-soft: #ecf2f8; --shadow: none;
+    }
+    .topnav, .hero-cta, .tr-tabs, .print-hide, #themeFab, #homeFab, #tipPop,
+    #harness-floating-nav, .dims-toolbar .btn, .ck-head .link-btn, .plan-head .link-btn { display: none !important; }
+    .wrap { max-width: none; padding: 0; }
+    section { padding: 16px 0 4px; }
+    h2 { break-after: avoid; }
+    .card, .dim, .tr-card, .resume-doc, .tpl-card, .week, .answer-card { break-inside: avoid; box-shadow: none; }
+    .dim-body { display: block !important; }
+    .tr-pane[hidden] { display: block !important; }
+    .resume-compare { grid-template-columns: 1fr 1fr; }
+    details:not([open]) > *:not(summary) { display: block !important; }
+    details > summary { list-style: none; }
+    .rv { opacity: 1 !important; transform: none !important; }
+    .table-wrap { overflow: visible; }
+    .table-wrap .jd-table { min-width: 0; }
+    .resume-doc { font-size: 11px; }
+    a { color: #1b1b1b; text-decoration: underline; }
+    .colophon a::after { content: " (" attr(href) ")"; font-size: 9px; }
+  }
+
+  /* ---------- 减少动态 ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .rv { opacity: 1; transform: none; transition: none; }
+    * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+</style>
+<noscript><style>
+  .dim-body { display: block !important; }
+  .tr-pane[hidden] { display: block !important; }
+  .tr-tabs, #dimsToggle { display: none !important; }
+  .rv { opacity: 1 !important; transform: none !important; }
+</style></noscript>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap">
+    <div class="brand">AI PM 简历<b>改造指南</b></div>
+    <nav aria-label="章节导航">
+      <a href="#s1">① 看牌</a>
+      <a href="#s2">② 定标</a>
+      <a href="#s3">③ 翻译</a>
+      <a href="#s4">④ 补证据</a>
+      <a href="#s5">⑤ 装配</a>
+      <a href="#s6">⑥ 质检</a>
+      <a href="#s7">⑦ 投递</a>
+    </nav>
+    <div class="src">无经验转型 · 30 天 + 投递</div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="kicker">AI Product Manager · Career Playbook</div>
+  <h1>零 AI 经验，简历怎么敲开 AI 产品经理的门</h1>
+  <p class="sub">写给想做 AI 产品经理、但简历上还没有一行「AI 经验」的你。这一页把整件事拆成七步：看懂筛简历的人在筛什么 → 对准能力画像 → 翻译你已有的经历 → 30 天补出可验证的证据 → 装配成简历 → 出厂质检 → 投递与复盘。前六步把简历做对，第七步把它送出去。核心结论不变：<em>零经验的简历不是「写」出来的——是先把证据做出来，再翻译成招聘方的语言。</em></p>
+  <div class="hero-meta">
+    <span><b>写给</b> 传统 PM / 运营 / 业务岗转型者</span>
+    <span><b>方法</b> 翻译存量 + 补增量</span>
+    <span><b>节奏</b> 30 天证据 + 持续投递</span>
+    <span><b>产物</b> 完整简历 · 5 套模板 · 投递清单</span>
+  </div>
+  <div class="hero-cta">
+    <a class="btn" href="#s1">从第一步开始</a>
+    <a class="btn ghost" href="#resume-example">先看完整简历</a>
+    <a class="btn ghost" href="#s7">直接看怎么投</a>
+    <button class="btn ghost" type="button" id="printPage">打印 / 存为 PDF</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ S1 看牌 ============ -->
+  <section id="s1">
+    <h2><span class="sec-no">STEP 01 · 看牌</span>先看清对手：筛你简历的人在筛什么</h2>
+    <p class="sec-lead">简历不是写给自己的作文，是给两批完全不同的读者做的「信号板」。他们各只有几十秒，都在找<span class="tip" data-t="signal">可信信号</span>，而不是兴趣陈述。</p>
+
+    <div class="grid2 rv">
+      <div class="card">
+        <span class="pass-tag">第一遍 · 机器与 HR 初筛 · 约 10–20 秒</span>
+        <p style="margin:0; font-size:15px;">只认三样：<b>关键词命中</b>（AI / 大模型 / LLM / Agent / RAG…）、<b>岗位与年限匹配</b>、<b>公司与项目辨识度</b>。没有命中词就直接淘汰——你的热情、潜力、学习能力强，都来不及被读到。</p>
+      </div>
+      <div class="card">
+        <span class="pass-tag">第二遍 · 用人经理复筛 · 约 1–3 分钟</span>
+        <p style="margin:0; font-size:15px;">翻项目区，只找三样：<b>你「做出来」过什么</b>、<b>你对 AI 的理解是名词还是动词</b>、<b>这个叙事经不经得起三层追问</b>。形容词在这一遍全部失效。通过 30 秒初筛后还有约 11.5 分钟深读；第二页也要放证据。</p>
+      </div>
+    </div>
+
+    <div class="grid3 rv" style="margin-top:16px;">
+      <div class="card trap">
+        <h4>误区一 · 名词裸奔</h4>
+        <p class="why">技能栏堆满 ChatGPT / Dify / RAG / Agent，项目区却没有一个字呼应。筛简历的人对这种模式（俗称 <b>AI-washing</b>）的敏感度在 2026 年已经很高——名词越多，越像不懂。</p>
+      </div>
+      <div class="card trap">
+        <h4>误区二 · 全盘藏拙</h4>
+        <p class="why">只写传统项目，打算面试再讲 AI。结果：<b>初筛就被过滤，根本到不了面试</b>。AI 证据必须写在纸上，而且放在前 1/3 屏。</p>
+      </div>
+      <div class="card trap">
+        <h4>误区三 · 过度升格</h4>
+        <p class="why">把「用 ChatGPT 写周报」写成「主导 AIGC 落地」。两层追问就穿帮，而且会连累简历里<b>真实部分</b>的信誉——整份简历被降级处理。</p>
+      </div>
+    </div>
+
+    <div class="card rv" style="margin-top:16px; padding:0; overflow:hidden;">
+      <table class="jd-table">
+        <tr><th style="width:34%;">JD 上的原话</th><th>筛简历的人真正想确认的</th></tr>
+        <tr><td>熟悉大模型能力边界</td><td>你知不知道模型会在哪类任务上出错，会不会把 LLM 当精准数据库用</td></tr>
+        <tr><td>有 RAG / Agent 落地经验</td><td>有没有一个 AI 功能从需求 → 验收 → 上线 → 迭代跟过全程</td></tr>
+        <tr><td>懂 prompt / 上下文工程</td><td>你的上下文是不是有版本、有对比、有评测——而不是一堆聊天记录</td></tr>
+        <tr><td>对数据敏感</td><td>有没有为 AI 功能定义过「什么算对」：采纳率、复核率、badcase 率</td></tr>
+        <tr><td>跨职能协作</td><td>在算法、工程、标注、合规之间，PM 怎么搭桥、怎么拍板</td></tr>
+        <tr><td>加分项：有 AI 作品</td><td>一条能点开的链接：demo、复盘、评测文章——它比十行形容词都硬</td></tr>
+      </table>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <div class="mini-head"><h3>机器怎么读：ATS 六查</h3><span class="pass-tag">第一遍之前</span></div>
+      <div class="table-wrap">
+        <table class="jd-table compact ats">
+          <thead><tr><th style="width:18%;">查什么</th><th>合格线</th></tr></thead>
+          <tbody>
+            <tr><td>文件</td><td>同一份内容存 PDF + DOCX；文件名写成 <span class="mono">姓名-岗位方向-YYYY.MM.pdf</span>，方向随版本改；不要扫描件、嵌入图片或图片型 PDF。主流 ATS 现在多数也收 PDF（Greenhouse 简历口 2026-08 更新后也列 PDF），但解析与预览各走各的，双份成本只有一次导出</td></tr>
+            <tr><td>结构</td><td>用标准标题：个人简介 / 工作经历 / 项目经历 / 技能 / 教育；不要把正文放表格、文本框或分栏里</td></tr>
+            <tr><td>关键词</td><td>JD 里的名词要在正文出现一次，并带上下文；语义层读整段证据，只在技能栏堆 RAG / Agent / 多模态不算命中</td></tr>
+            <tr><td>可读</td><td>公司名、职位、时间用文字，不用图标；正文不用图片承载；导出后复制一段文字检查是否乱码</td></tr>
+            <tr><td>时间</td><td>倒序，格式统一（如 <span class="mono">2021.03–至今</span>）；空窗期用一句话解释，不要留问号</td></tr>
+            <tr><td>长度</td><td>约 8 年以内写 1 页，最多 2 页；边距不小于 1.5 cm，正文 10.5–11 pt</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2 rv" style="margin-top:16px;">
+      <div class="card">
+        <h3 style="margin-top:0; font-size:17px;">证据等级：从 L0 到 L4</h3>
+        <ol class="ladder">
+          <li><b>L4 可点开</b>：demo、复盘文章、公开评测集。筛简历的人会点，也点得开。</li>
+          <li><b>L3 有分母的数字</b>：78% 采纳率、20 条用例、-23% 处理时长；说得出基线。</li>
+          <li><b>L2 产物</b>：PRD、评测集、流程图、badcase 记录；能拿出来看。</li>
+          <li><b>L1 职责</b>：负责 / 参与 / 推动；没有产物时至少写清范围。</li>
+          <li><b>L0 形容词</b>：热爱、了解、精通、学习能力强；不构成证据。</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0; font-size:17px;">零经验者的最低组合</h3>
+        <p style="margin:0 0 8px;"><b>1 个 L4 + 2 个 L3</b>：放在前 1/3 屏，分别对应“做过”“做成了”“能复用”。</p>
+        <p style="margin:0 0 8px;">没有 L4 时，先发一篇评测 / 拆解文章，或录一段 30 秒 demo 视频；不要用“学习中”占位。</p>
+        <p style="margin:0;">每个 L3 数字都要准备一句“分母是什么、怎么测的”；答不出就降到 L2，别硬写。</p>
+      </div>
+    </div>
+
+    <div class="takeaway rv"><b>本节小结：</b>初筛筛关键词，复筛筛证据；ATS 只决定你能不能被看见。零经验者的全部任务 = 在前 1/3 屏放 1 个 L4 + 2 个 L3，并让每一个词都经得起追问。</div>
+  </section>
+
+  <!-- ============ S2 定标 ============ -->
+  <section id="s2">
+    <h2><span class="sec-no">STEP 02 · 定标</span>对准画像：AI 产品经理的六维能力</h2>
+    <div class="role-map rv">
+      <div class="mini-head"><h3>先选方向：五类 AI PM 岗</h3><span class="pass-tag">不是所有岗位都适合零经验</span></div>
+      <p class="sec-lead" style="margin-bottom:10px;">同样是“AI 产品经理”，应用层、平台评测、行业方案要的证据不一样。先选一条主投方向，再按权重补六维，不要六维平均用力。</p>
+      <div class="role-grid">
+        <div class="role-card" data-role="app">
+          <h4>应用层 AI 产品（C 端 / B 端）</h4>
+          <p><b>关键词：</b>AI 产品经理、AI 应用产品经理；LLM 应用、场景落地、用户增长</p>
+          <p><b>权重最高：</b>场景选择 / 评测 / 体验</p>
+          <p><b>首个证据：</b>一个真实场景的 demo + 含数字复盘</p>
+        </div>
+        <div class="role-card" data-role="agent">
+          <h4>Agent / 工作流产品</h4>
+          <p><b>关键词：</b>Agent 产品经理、AI 工作流产品；Agent、工具调用、编排、多轮任务</p>
+          <p><b>权重最高：</b>任务拆解 / 失效模式 / 成本</p>
+          <p><b>首个证据：</b>一个多步任务的工作流 + 3 类失败案例</p>
+        </div>
+        <div class="role-card" data-role="platform">
+          <h4>平台 / 评测产品</h4>
+          <p><b>关键词：</b>AI 平台产品经理、模型评测产品；模型平台、评测集、数据闭环、标注</p>
+          <p><b>权重最高：</b>评测设计 / 指标体系 / 工程协作</p>
+          <p><b>首个证据：</b>20–50 条评测集 + 一份评测报告</p>
+        </div>
+        <div class="role-card" data-role="industry">
+          <h4>行业解决方案</h4>
+          <p><b>关键词：</b>行业 AI 产品经理、解决方案产品；金融 / 医疗 / HR / 政务、交付、合规</p>
+          <p><b>权重最高：</b>行业流程 / 权限 / 合规 / ROI</p>
+          <p><b>首个证据：</b>一份行业场景 PRD（可参考报销审核）</p>
+        </div>
+        <div class="role-card" data-role="model">
+          <h4>模型 / 算法产品（技术向）</h4>
+          <p><b>关键词：</b>模型产品经理、算法产品；训练、微调、数据、指标</p>
+          <p><b>权重最高：</b>技术理解 / 数据 / 实验</p>
+          <p><b>首个证据：</b>通常要技术背景；零经验者作为冲刺目标，不主投</p>
+        </div>
+      </div>
+      <p class="table-note">前四类对非技术背景更友好；第五类不要硬投。还有一条岔路：FDE 要生产级动手，技术是入场券，不想动手就别把它当退路。选方向时优先看“你的原生资产能不能直接变成证据”，而不是看 title 热不热。</p>
+    </div>
+
+    <div class="self-assess rv">
+      <div class="mini-head"><h3>六维自评：先补“低于 2 分 × 权重高”的那一维</h3><span class="pass-tag">0 / 1 / 2 / 3 分</span></div>
+      <div class="self-grid">
+        <div class="self-card"><h4>模型认知</h4><p><span class="lv">0</span>说不出模型何时会错</p><p><span class="lv">2</span>能举 3 个翻车案例和绕法</p><p><span class="lv">3</span>能判断该不该用模型并设计兜底</p></div>
+        <div class="self-card"><h4>上下文工程</h4><p><span class="lv">0</span>只会聊天</p><p><span class="lv">2</span>管过上下文预算（指令、检索、工具返回、历史）并做版本对比</p><p><span class="lv">3</span>能设计压缩、结构化输出与回滚</p></div>
+        <div class="self-card"><h4>RAG / Agent</h4><p><span class="lv">0</span>只会名词</p><p><span class="lv">2</span>搭过一个小应用，知道失效模式</p><p><span class="lv">3</span>能排查检索 / 循环 / 成本问题并做取舍，会用 MCP 接工具</p></div>
+        <div class="self-card"><h4>评测</h4><p><span class="lv">0</span>没定义过“什么算对”</p><p><span class="lv">2</span>写过 20 条用例</p><p><span class="lv">3</span>能建评测集、基线、灰度与回流</p></div>
+        <div class="self-card"><h4>成本 / 延迟</h4><p><span class="lv">0</span>没算过账</p><p><span class="lv">2</span>估过一次 token 成本</p><p><span class="lv">3</span>能做大 / 小模型、缓存、流式的取舍</p></div>
+        <div class="self-card"><h4>产品基本功</h4><p><span class="lv">0</span>只看技术</p><p><span class="lv">2</span>能写场景评估与人工复核</p><p><span class="lv">3</span>能平衡价值 / 容错 / 合规并推动上线</p></div>
+      </div>
+      <p class="table-note">1 分 = 能解释概念但没做过。低于 2 分且岗位权重高的维度先补；自评结果不用填进页面，心里有数即可。补法就在下面六张卡里。</p>
+    </div>
+
+    <div class="dims-toolbar rv">
+      <p class="sec-lead">JD 千变万化，落到能力上就是六维。好消息：其中四维不要求写代码；更好的消息：每一维都能在 30 天内制造出“可验证的最小证据”。<b>点击每张卡展开</b>，看面试官怎么验、零经验怎么补、简历上怎么写。</p>
+      <button class="btn ghost small" type="button" id="dimsToggle" aria-controls="dimsGrid">展开全部</button>
+    </div>
+
+    <div class="dims rv" id="dimsGrid">
+      <div class="dim open" data-dim="1">
+        <div class="dim-head" role="button" tabindex="0" aria-expanded="true" aria-controls="dim-1">
+          <div class="dim-no">1</div>
+          <h3>模型认知：知道边界在哪<span class="one">知道 LLM 擅长什么、必然在哪出错，以及什么时候根本不该用模型</span></h3>
+          <span class="chev">›</span>
+        </div>
+        <div class="dim-body" id="dim-1">
+          <p class="row"><span class="lab">边界感</span><span class="a-text">幻觉<span class="tip" data-t="halluc">?</span>、知识截止、算不准数、长指令遗忘是固有缺陷；规则能解决的任务就不要上模型——「不该用」的判断比「会用」更稀缺。</span></p>
+          <p class="row"><span class="lab q">面试官怎么验</span><span class="q-text">「这个场景为什么用大模型而不用规则？模型错了会怎样？」</span></p>
+          <p class="row"><span class="lab a">零经验怎么补</span><span class="a-text">把日常被 AI 坑过的瞬间变成素材：收集 3 个「模型翻车案例 + 你的绕法」，这就是最真实的边界认知证据。</span></p>
+          <p class="row"><span class="lab">简历句式</span><span class="a-text">为客服摘要建立 3 类失效模式清单（幻觉 / 漏项 / 越权），并设计规则兜底与人工复核。</span></p>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="2">
+        <div class="dim-head" role="button" tabindex="0" aria-expanded="false" aria-controls="dim-2">
+          <div class="dim-no">2</div>
+          <h3>上下文工程：管好模型的整个输入<span class="one">把上下文当产品配置，而不是聊天记录</span></h3>
+          <span class="chev">›</span>
+        </div>
+        <div class="dim-body" id="dim-2">
+          <p class="row"><span class="lab">专业做法</span><span class="a-text">角色设定、输入约束、<span class="tip" data-t="fewshot">few-shot</span>、<span class="tip" data-t="structout">结构化输出</span>、上下文预算与压缩、版本管理与回滚——prompt 只是其中一层。</span></p>
+          <p class="row"><span class="lab q">面试官怎么验</span><span class="q-text">「prompt 迭代了几版？两版的效果差异是怎么量出来的？」</span></p>
+          <p class="row"><span class="lab a">零经验怎么补</span><span class="a-text">为你某项重复工作写一个可复用模板，做两版对比、各跑 10 个样本、记录差异——这就是一次微型 <span class="tip" data-t="evals">evals</span>。</span></p>
+          <p class="row"><span class="lab">简历句式</span><span class="a-text">维护 12 个场景的 prompt 模板库，按版本对比 10 个样本，结构化输出成功率从 <span class="x">X%</span> 升到 <span class="x">Y%</span>。</span></p>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="3">
+        <div class="dim-head" role="button" tabindex="0" aria-expanded="false" aria-controls="dim-3">
+          <div class="dim-no">3</div>
+          <h3>RAG 与 Agent 的架构认知<span class="one">知道每层解决什么问题，更要知道它们怎么失效</span></h3>
+          <span class="chev">›</span>
+        </div>
+        <div class="dim-body" id="dim-3">
+          <p class="row"><span class="lab">分工</span><span class="a-text"><span class="tip" data-t="rag">RAG</span> 解决「知识要新、要私有」，<span class="tip" data-t="agent">Agent</span> 解决「任务要多步」，<span class="tip" data-t="orchest">工作流编排</span>平台是它们的表达层；检索也可以由 Agent 按需调工具完成，长上下文只适合稳定小语料。</span></p>
+          <p class="row"><span class="lab q">面试官怎么验</span><span class="q-text">「检索出来的内容不对，你怎么排查？Agent 陷入死循环怎么办？」——考的是失效模式。</span></p>
+          <p class="row"><span class="lab a">零经验怎么补</span><span class="a-text">用 Coze / Dify 这类零代码平台搭一个小应用。不会写代码不是借口——切块策略、终止条件这些<b>产品决策</b>才是 PM 的价值。</span></p>
+          <p class="row"><span class="lab">简历句式</span><span class="a-text">用 Dify 搭客服知识库问答，定位 3 类检索失败并调整切块策略；记录每版召回与命中率变化。</span></p>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="4">
+        <div class="dim-head" role="button" tabindex="0" aria-expanded="false" aria-controls="dim-4">
+          <div class="dim-no">4</div>
+          <h3>评测与数据闭环（evals）<span class="one">AI PM 的核心新产出：定义「什么算对」</span></h3>
+          <span class="chev">›</span>
+        </div>
+        <div class="dim-body" id="dim-4">
+          <p class="row"><span class="lab">为什么关键</span><span class="a-text">AI 输出不可确定，所以「建评测集 + 定基线 + <span class="tip" data-t="gray">灰度</span> + <span class="tip" data-t="badcase">badcase</span> 回流」成了 AI PM 区别于传统 PM 的标志性能力，正从工程岗向产品岗渗透。</span></p>
+          <p class="row"><span class="lab q">面试官怎么验</span><span class="q-text">「上线前你怎么证明新版比旧版好？上线后发现 5% 的错答怎么办？」</span></p>
+          <p class="row"><span class="lab a">零经验怎么补</span><span class="a-text">给任何一个 AI 输出定 3–5 条验收标准、20 条用例；每条多跑几次（至少 3 次）看稳定性，轨迹单独打分，能力集与回归集分套。20 条很少，但足以把你的简历从「使用者」堆里区分出来。</span></p>
+          <p class="row"><span class="lab">简历句式</span><span class="a-text">建立 20 条客服摘要评测集与 5 条验收标准，badcase 回流 12 条；每版上线前跑 3 次取稳定值，与基线对比。</span></p>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="5">
+        <div class="dim-head" role="button" tabindex="0" aria-expanded="false" aria-controls="dim-5">
+          <div class="dim-no">5</div>
+          <h3>成本、延迟与工程权衡<span class="one">PM 要能算一笔账：这个功能一天烧多少钱</span></h3>
+          <span class="chev">›</span>
+        </div>
+        <div class="dim-body" id="dim-5">
+          <p class="row"><span class="lab">常识项</span><span class="a-text"><span class="tip" data-t="token">token</span> 有价，缓存写入、联网检索、文件存储也计价；首字延迟影响体验、大模型兜底 + 小模型与缓存前置是常见省钱结构、流式输出改善等待感。</span></p>
+          <p class="row"><span class="lab q">面试官怎么验</span><span class="q-text">「这个功能一天成本多少？预算砍半你先砍哪里？」</span></p>
+          <p class="row"><span class="lab a">零经验怎么补</span><span class="a-text">给自己做过的一个功能粗估一笔账：日调用量 × 单次 token 成本，再写一条降本替代方案。</span></p>
+          <p class="row"><span class="lab">简历句式</span><span class="a-text">估算日调用 2,000 次的 token 成本，设计小模型前置 + 缓存，单次成本下降 <span class="x">X%</span>。</span></p>
+        </div>
+      </div>
+
+      <div class="dim" data-dim="6">
+        <div class="dim-head" role="button" tabindex="0" aria-expanded="false" aria-controls="dim-6">
+          <div class="dim-no">6</div>
+          <h3>AI 时代的产品基本功<span class="one">场景选择、人机协作、预期管理、安全合规</span></h3>
+          <span class="chev">›</span>
+        </div>
+        <div class="dim-body" id="dim-6">
+          <p class="row"><span class="lab">判断框架</span><span class="a-text">场景选择看「高频 × 容错 × 有数据」；协作设计用「AI 建议 + <span class="tip" data-t="hitl">人工复核</span>」；还要管理预期（AI 不是 100%）与合规（数据不出域、内容安全）。</span></p>
+          <p class="row"><span class="lab q">面试官怎么验</span><span class="q-text">「为什么这个场景适合 AI？答错的代价由谁兜？」</span></p>
+          <p class="row"><span class="lab a">零经验怎么补</span><span class="a-text">写一页「AI 场景评估」：价值 × 容错 × 数据可得 × 成本四象限，评 2–3 个你业务里的候选场景。</span></p>
+          <p class="row"><span class="lab">简历句式</span><span class="a-text">完成客服场景四象限评估，选择「高频 × 高容错」场景做试点，并定义人工复核比例与升级路径。</span></p>
+        </div>
+      </div>
+    </div>
+
+    <p class="dims-note rv">前三维证明你<b>懂 AI</b>，中间两维证明你<b>能落地</b>，最后一维证明你<b>还是个产品经理</b>。</p>
+  </section>
+
+  <!-- ============ S3 翻译存量 ============ -->
+  <section id="s3">
+    <h2><span class="sec-no">STEP 03 · 翻译存量</span>你大概率有 AI 经历，只是还没翻译</h2>
+    <p class="sec-lead">多数转型者的问题不是「没有经历」，而是「经历用了旧语言」。先按背景选叙事，再用三原则翻译；每张卡同时给出 BEFORE 与 AFTER，直接对照着改。</p>
+
+    <div class="bg-grid rv">
+      <div class="card bg-card" data-bg="b2b">
+        <span class="pass-tag">B 端 PM</span>
+        <h4>流程、权限、交付</h4>
+        <p><b>最强资产：</b>复杂流程、角色权限、客户交付与验收。</p>
+        <p><b>第一条 AI 证据：</b>把一条高频流程做成 AI 助手 + 人工复核，留下评测与 badcase。</p>
+        <p class="bg-line"><b>叙事：</b>“我懂复杂流程，能把它变成可控的 AI 工作流。”</p>
+      </div>
+      <div class="card bg-card" data-bg="b2c">
+        <span class="pass-tag">C 端 PM</span>
+        <h4>用户、增长、实验</h4>
+        <p><b>最强资产：</b>用户洞察、增长指标、A/B 与体验设计。</p>
+        <p><b>第一条 AI 证据：</b>做一个 AI 功能原型，定义关键行为指标，跑一次小流量对比。</p>
+        <p class="bg-line"><b>叙事：</b>“我懂用户与增长，能用 AI 提升关键行为，而不是加一个聊天框。”</p>
+      </div>
+      <div class="card bg-card" data-bg="data">
+        <span class="pass-tag">数据 / 分析</span>
+        <h4>指标、口径、实验</h4>
+        <p><b>最强资产：</b>指标定义、口径、SQL、实验分析。</p>
+        <p><b>第一条 AI 证据：</b>为 AI 输出建 20 条评测集与验收标准，做 badcase 归因。</p>
+        <p class="bg-line"><b>叙事：</b>“我能定义什么算对，并让 AI 的效果可衡量。”</p>
+      </div>
+      <div class="card bg-card" data-bg="ops">
+        <span class="pass-tag">运营 / 市场</span>
+        <h4>内容、活动、客服</h4>
+        <p><b>最强资产：</b>一线语料、内容生产、活动与客服流程。</p>
+        <p><b>第一条 AI 证据：</b>整理 500+ 条语料，做内容生成模板或客服摘要，统计采纳率。</p>
+        <p class="bg-line"><b>叙事：</b>“我懂一线语料和流程，能把它变成 AI 的输入与验收标准。”</p>
+      </div>
+      <div class="card bg-card" data-bg="consult">
+        <span class="pass-tag">咨询 / 行业</span>
+        <h4>行业知识、方案、ROI</h4>
+        <p><b>最强资产：</b>行业约束、方案设计、价值测算与汇报。</p>
+        <p><b>第一条 AI 证据：</b>写一份行业场景 PRD，明确 AI 边界、权限、合规与 ROI。</p>
+        <p class="bg-line"><b>叙事：</b>“我懂行业约束，能判断 AI 该做什么、不该做什么。”</p>
+      </div>
+      <div class="card bg-card" data-bg="grad">
+        <span class="pass-tag">应届 / 转专业</span>
+        <h4>学习、项目、开源</h4>
+        <p><b>最强资产：</b>时间、学习能力、课程项目与开源协作。</p>
+        <p><b>第一条 AI 证据：</b>一个完整 side project + 评测报告 + 公开复盘，不拼头衔拼作品。</p>
+        <p class="bg-line"><b>叙事：</b>“我没有资历包袱，能用作品证明动手与判断。”</p>
+      </div>
+    </div>
+
+    <div class="principles rv">
+      <div class="card principle"><h4>① 动词化 AI</h4><p>不写「了解 AI」，写「用 AI 做了什么、指标变了多少」。名词是 Knowledge，动词是 Evidence。</p></div>
+      <div class="card principle"><h4>② 量化锚点</h4><p>没有 AI 指标，就先量化效率、质量、覆盖——省时 X%、返工率、语料条数，都是锚点。</p></div>
+      <div class="card principle"><h4>③ 诚实分层</h4><p>用过 / 推动过 / 主导过，措辞绝不越层。越层的每一句都会在追问里变成减分项。</p></div>
+    </div>
+
+    <div class="tr-tabs rv" role="tablist">
+      <button class="on" id="tab-tr-a" data-pane="tr-a" role="tab" aria-selected="true" aria-controls="tr-a" tabindex="0">A · 直接可写<span style="opacity:.7">（今天就会用 AI）</span></button>
+      <button id="tab-tr-b" data-pane="tr-b" role="tab" aria-selected="false" aria-controls="tr-b" tabindex="-1">B · 挖掘可写<span style="opacity:.7">（旧工作藏着地基）</span></button>
+      <button id="tab-tr-c" data-pane="tr-c" role="tab" aria-selected="false" aria-controls="tr-c" tabindex="-1">C · 补完可写<span style="opacity:.7">（做完再回来抄）</span></button>
+    </div>
+
+    <div class="tr-pane rv" id="tr-a" role="tabpanel" aria-labelledby="tab-tr-a">
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">📄</span>日常文档与 PRD<button class="swap">看改写 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>使用 ChatGPT 辅助日常文档撰写。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>搭建团队 PRD / 评审纪要的 prompt 模板库（12 个场景），初稿撰写耗时约 -40%，模板被 3 个兄弟团队复用。</div>
+        <div class="tr-cond"><b>前提：</b>模板库真实存在（今天就能建）；数字按真实情况估，且说得出估法。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">🔍</span>调研与信息抽取<button class="swap">看改写 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>用 AI 工具做过竞品调研。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>用 LLM 结构化抽取 47 份竞品公开资料生成对比矩阵，调研周期 2 周 → 3 天，结论支撑 2 项版本规划决策。</div>
+        <div class="tr-cond"><b>前提：</b>你真的跑过这种抽取并保存了输出物，面试时能当场演示方法。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">📝</span>会议与协作流程<button class="swap">看改写 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>负责会议纪要与待办跟进。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>为需求评审引入 AI 纪要流程，并自建 5 条质量验收标准（决议项零遗漏、待办可执行），评审返工沟通明显减少。</div>
+        <div class="tr-cond"><b>前提：</b>验收标准是你定的，不是工具默认的——「自己定标准」才是 PM 价值的证据。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">💬</span>客服与工单摘要</div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>用 AI 帮忙总结客服工单。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>为客服工单设计 AI 摘要模板：固定「问题—已做—待办—风险」四段，抽 30 条工单对比人工摘要，关键信息遗漏率从 <span class="x">X%</span> 降到 <span class="x">Y%</span>，摘要被 8 名客服日常使用。</div>
+        <div class="tr-cond"><b>前提：</b>你真的跑过 30 条对比，且能说清“关键信息”怎么定义。</div>
+      </div>
+    </div>
+
+    <div class="tr-pane rv" id="tr-b" role="tabpanel" aria-labelledby="tab-tr-b" hidden>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">📊</span>数据分析与口径<button class="swap">看改写 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>负责业务数据分析与周报。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>设计 <span class="x">N</span> 个业务指标的口径与异常判定规则（本质是规则引擎），该思路可直接迁移为 AI 功能的评测基线与兜底策略。</div>
+        <div class="tr-cond"><b>前提：</b>口径与规则确实是你做的；「可迁移」点到为止，展开留给面试。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">📚</span>FAQ 与知识库<button class="swap">看改写 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>维护产品 FAQ 与客服话术。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>整理并打标 500+ 条客服语料，建立「问题—意图—标准答案」结构——即 RAG 知识库与评测集的原型资产。</div>
+        <div class="tr-cond"><b>前提：</b>语料真实存在，且结构化标签是你加的。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">🎯</span>策略与人群运营<button class="swap">看改写 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>负责推送策略与活动人群圈选。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>搭建 30+ 条「人群 × 时机 × 文案」规则策略并复盘点击率，理解「召回—排序—反馈」闭环，具备与算法团队对齐的语言。</div>
+        <div class="tr-cond"><b>前提：</b>数字真实；「理解闭环」要能在白板上画出来再写。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">📦</span>项目交付与售前</div>
+        <div class="tr-before"><span class="tag">BEFORE · 原写法</span>负责项目交付与客户培训。</div>
+        <div class="tr-after"><span class="tag">AFTER · 改写后</span>在 5 个交付项目中整理「高频问题—权限—标准答案」知识包，后来成为内部 RAG 问答的语料底稿；交付周期从 <span class="x">X</span> 周降到 <span class="x">Y</span> 周。</div>
+        <div class="tr-cond"><b>前提：</b>知识包真实存在；不要把“后来被复用”写成“我主导了 RAG”。</div>
+      </div>
+    </div>
+
+    <div class="tr-pane rv" id="tr-c" role="tabpanel" aria-labelledby="tab-tr-c" hidden>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">🛠️</span>Side Project<button class="swap">看句式 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 常见错写</span>自学 AI 产品知识，对大模型应用有浓厚兴趣。</div>
+        <div class="tr-after"><span class="tag">AFTER · 做完可写</span>独立开发「<span class="x">场景名</span>助手」（RAG + 工作流编排）：从 0 到上线 <span class="x">X</span> 周，服务 <span class="x">N</span> 人；迭代 3 版 prompt、1 版切块策略，检索命中率 <span class="x">X%</span>，沉淀 badcase 20+ 条。</div>
+        <div class="tr-cond"><b>前提：</b>见第四步「做出来」路径。<span class="x">虚线词</span>必须等真的做完才能填。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">🏢</span>内部 0→1 试点<button class="swap">看句式 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 常见错写</span>持续关注 AI 在业务中的应用机会。</div>
+        <div class="tr-after"><span class="tag">AFTER · 做完可写</span>在业务内部发起 AI 工单摘要试点：定义采纳率与复核率双指标，人工复核比例 100% → <span class="x">X%</span>，周节省工时约 <span class="x">X</span> 小时；试点报告含 4 类失效模式与对策。</div>
+        <div class="tr-cond"><b>前提：</b>见第四步「搬进来」路径——被否了也能写，见那条路径的说明。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">✍️</span>评测与拆解文章<button class="swap">看句式 →</button></div>
+        <div class="tr-before"><span class="tag">BEFORE · 常见错写</span>长期输出 AI 行业观察与思考。</div>
+        <div class="tr-after"><span class="tag">AFTER · 做完可写</span>发布《<span class="x">某产品</span> AI 功能深度评测》：复现 3 类 badcase 并给出 evals 改进方案，全网阅读 <span class="x">X</span>。</div>
+        <div class="tr-cond"><b>前提：</b>见第四步「写出来」路径；简历里附链接。</div>
+      </div>
+      <div class="tr-card">
+        <div class="tr-title"><span class="scene-ico">🌱</span>开源 / 社区贡献</div>
+        <div class="tr-before"><span class="tag">BEFORE · 常见错写</span>关注开源 AI 项目。</div>
+        <div class="tr-after"><span class="tag">AFTER · 做完可写</span>给 <span class="x">项目名</span> 提交 3 个文档 / 评测相关 PR（已合并 2 个），并写了一份中文部署与评测笔记；理解 issue 分流与维护者协作。</div>
+        <div class="tr-cond"><b>前提：</b>PR 链接可查；只写你实际改过的部分。</div>
+      </div>
+    </div>
+
+    <div class="takeaway rv"><b>翻译后自检：</b>这件事我真的做过吗？数字有分母吗？动词层级对吗？答不上来的，回到 STEP 04 补证据，或降到“用过 / 了解”。</div>
+
+    <div class="warn-note rv">C 类卡片里的 <span class="x">虚线空格</span>必须等真的做完才能填。宁可晚一个月投简历，也不要交一份经不起三层追问的简历——穿帮的代价比空白大得多。</div>
+  </section>
+
+  <!-- ============ S4 补增量 ============ -->
+  <section id="s4">
+    <h2><span class="sec-no">STEP 04 · 补增量</span>30 天证据工厂：没有经验，就造「最小可验证经验」</h2>
+    <p class="sec-lead">四条路径按「可信度 ÷ 成本」排序。证书排在最后——它能给你关键词，不能给你证据；作品和试点才一锤定音。</p>
+
+    <div class="paths rv">
+      <div class="card path">
+        <h4>① 做出来 · Side Project</h4>
+        <div class="meta">2–4 周 · 可信度最高</div>
+        <p>选你最熟的领域，用 Coze / Dify 等零代码编排（或 v0 / Lovable 这类 AI 原型工具）+ 大模型 API 搭一个<b>真问题的小应用</b>。难点不在技术而在产品决策：为什么选这个场景、评测集怎么建、检索不准怎么调、badcase 怎么修。产出两件东西：<b>可访问的 demo + 一篇含数字的复盘</b>。</p>
+      </div>
+      <div class="card path">
+        <h4>② 写出来 · 评测与拆解报告</h4>
+        <div class="meta">1–2 周 / 篇 · 零成本起步</div>
+        <p>挑一个你天天在用的 AI 产品做结构化拆解：场景四象限评估 + 复现 3 个 badcase + 提出你自己的 evals 方案。发在知乎 / 公众号 / 即刻，简历留链接。<b>面试官点开看到的不是热情，是方法。</b></p>
+      </div>
+      <div class="card path">
+        <h4>③ 搬进来 · 内部 0→1 试点</h4>
+        <div class="meta">4–6 周 · 叙事最强</div>
+        <p>在本职团队找一个「高频 + 容错 + 有语料」的小场景立项。<b>哪怕最后被否</b>，「试点报告 + 被否原因 + 下一步」也是完整的好故事——面试官清楚：在公司内部推动过 AI 试点的人，来了不需要适应期。</p>
+      </div>
+      <div class="card path">
+        <h4>④ 学出来 · 课程与证书</h4>
+        <div class="meta">1–4 周 · 只做背书</div>
+        <p>权重最低。挑课时短、有动手作业的；把课程作业当<b>作品集条目</b>用，而不是把证书截图放简历正文。它解决「关键词命中」，解决不了「可信信号」。</p>
+      </div>
+    </div>
+
+    <div class="evidence-pack rv">
+      <div class="mini-head"><h3>作品证据包：30 天真正要交付的五件东西</h3><span class="pass-tag">模板可直接选中复制</span></div>
+      <p class="sec-lead">30 天计划真正要交付的不是“学过”，是下面五件可展示的资产。模板是结构，不是成绩；数字必须换成你自己的，且说得出分母。</p>
+      <div class="tpl-grid">
+        <div class="card tpl-card" data-template="project">
+          <h4>01 · 项目一页纸</h4>
+          <p>面试官最先看的一页。没有它，demo 只是玩具。</p>
+          <pre class="tpl"># 项目名：为谁解决什么问题
+背景 / 用户 / 现状：
+范围（做什么 / 不做什么）：
+AI 方案：为什么用模型、为什么不用规则
+评测：20 条用例 + 5 条验收标准 + 基线
+结果：采纳率 / 时长 / 覆盖（写分母）
+失效与兜底：3 类 badcase + 人工复核
+下一步：先做什么、不做什么</pre>
+        </div>
+        <div class="card tpl-card" data-template="eval">
+          <h4>02 · 20 条评测集</h4>
+          <p>先写“什么算对”，再谈效果。每条都要有判定标准。</p>
+          <pre class="tpl">#,输入,期望输出,判定标准,结果,备注
+1,退款多久到账,按支付渠道说明 1–3 个工作日,含渠道与时效,通过,
+2,发票抬头写错,引导修改并说明重开规则,不含越权承诺,失败,转人工
+3,...
+4,...</pre>
+        </div>
+        <div class="card tpl-card" data-template="badcase">
+          <h4>03 · badcase 记录</h4>
+          <p>失败是资产，不是污点；关键是能说清根因与回归。</p>
+          <pre class="tpl">日期,场景,输入,错误,影响,根因,修法,回归
+10-08,退款,用户问跨月退款,答成 7 天,可能误导,检索到旧政策,更新知识库,已回归
+10-09,越权,用户要求直接退款,承诺可退,合规风险,缺少规则约束,加人工复核,已回归</pre>
+        </div>
+        <div class="card tpl-card" data-template="demo">
+          <h4>04 · demo 说明页</h4>
+          <p>不能公开公司项目时，用脱敏数据 + 录屏，也要写清限制。</p>
+          <pre class="tpl">一句话：为谁解决什么问题
+30 秒录屏 / 试用链接：
+试用方式：3 步以内
+已知限制：3 条，不藏
+评测摘要：用例数 / 通过率 / 基线
+迭代记录：3 版，每版改了什么</pre>
+        </div>
+        <div class="card tpl-card" data-template="retro">
+          <h4>05 · 复盘文章</h4>
+          <p>发在知乎 / 公众号 / 即刻，简历附链接；面试官看的是方法。</p>
+          <pre class="tpl">标题：一个 [场景] AI 助手的 30 天
+结论先行：3 条
+场景与方法：为什么选、怎么做
+数据与评测：分母、基线、失败
+失败与修法：3 类 badcase
+下一步：2 条
+参考：公开资料</pre>
+        </div>
+      </div>
+      <p class="copy-note">模板可以直接选中复制；不要用图片代替文字，打印和 ATS 都读不到。</p>
+    </div>
+
+    <div class="card worked-example rv" data-example="cs-summary">
+      <div class="mini-head"><h3>示例：客服摘要助手</h3><span class="pass-tag">数字为演示口径</span></div>
+      <div class="grid2">
+        <div>
+          <p><b>场景：</b>客服每天处理 200+ 工单，人工摘要平均 4 分钟，漏项多。</p>
+          <p><b>方案：</b>工单正文 + 对话记录 → 固定四段摘要（问题 / 已做 / 待办 / 风险）；规则校验 + 人工复核。</p>
+          <p><b>评测：</b>30 条真实工单（脱敏），5 条验收标准；人工摘要为基线。</p>
+        </div>
+        <div>
+          <p><b>结果：</b>采纳率 78%，单均处理时长 -23%，关键信息遗漏 6% → 2%。</p>
+          <p><b>失效：</b>幻觉（编造承诺）、漏项（漏待办）、越权（直接答应退款）；对应规则兜底 / 复核 / 拒答。</p>
+          <p><b>下一步：</b>补多轮对话摘要；把 badcase 回流到评测集。</p>
+        </div>
+      </div>
+      <p class="table-note">这个项目就是 STEP 05 完整简历里的 AI 项目；所有数字都是演示，换成你自己的真实数据，并准备好分母。</p>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <h3 style="margin-top:0; font-size:18px;">30 天不够怎么办</h3>
+      <div class="tier-grid">
+        <div class="mini-card"><h4>30 天</h4><p><b>每周：</b>15–20 小时</p><p><b>适合：</b>脱产 / 有明确场景 / 有相关经验</p><p><b>交付：</b>1 个 demo + 20 条评测 + 1 篇复盘</p></div>
+        <div class="mini-card"><h4>60 天</h4><p><b>每周：</b>8–10 小时</p><p><b>适合：</b>在职、只能晚上和周末</p><p><b>交付：</b>先发评测文章，再做 demo；第 6 周开始投</p></div>
+        <div class="mini-card"><h4>90 天</h4><p><b>每周：</b>4–6 小时</p><p><b>适合：</b>出差多 / 家庭负担重</p><p><b>交付：</b>内部试点优先；外部作品可后补</p></div>
+      </div>
+      <p class="table-note">没有条件做 side project：优先内部试点（4–6 周）、评测 / 拆解文章（1–2 周）、课程作业（1–4 周）或开源 issue / PR（2–4 周）。它们仍然是 L3/L4 证据，不要用“我在学”替代。</p>
+    </div>
+
+    <div class="rv" id="plan">
+      <div class="plan-head">
+        <h3>30 天冲刺 · 勾选存本地</h3>
+        <div class="plan-bar"><i id="planBarFill"></i></div>
+        <span class="plan-count" id="planCount">0 / 13</span>
+        <button class="link-btn" type="button" id="resetPlan">重置</button>
+      </div>
+      <div class="plan-grid">
+        <div class="week" data-wk>
+          <h4><span class="wk-tag">W1</span>定标<span class="wk-ok">✓ 本周完成</span></h4>
+          <p class="goal">目标：锁定场景，建立评测意识</p>
+          <p class="deliverable"><b>本周交付：</b>场景评估一页纸 + 20 条评测用例</p>
+          <p class="accept"><b>完成标准：</b>能讲清为什么选这个场景，20 条用例都有“什么算对”</p>
+          <label><input type="checkbox" data-plan-item="p1"><span class="box"></span><span class="txt">用四象限（价值 × 容错 × 数据 × 成本）选定 1 个场景</span></label>
+          <label><input type="checkbox" data-plan-item="p2"><span class="box"></span><span class="txt">通读 2 份官方文档的 RAG 与 evals 章节</span></label>
+          <label><input type="checkbox" data-plan-item="p3"><span class="box"></span><span class="txt">手写 20 条评测用例（输入 + 期望输出）</span></label>
+        </div>
+        <div class="week" data-wk>
+          <h4><span class="wk-tag">W2</span>造物<span class="wk-ok">✓ 本周完成</span></h4>
+          <p class="goal">目标：跑通 MVP，留下过程资产</p>
+          <p class="deliverable"><b>本周交付：</b>可运行 MVP + 3 版 prompt 记录 + badcase 清单</p>
+          <p class="accept"><b>完成标准：</b>陌生人能按说明跑通；每版改动能说清差异</p>
+          <label><input type="checkbox" data-plan-item="p4"><span class="box"></span><span class="txt">用零代码平台搭出 MVP 并跑通全流程</span></label>
+          <label><input type="checkbox" data-plan-item="p5"><span class="box"></span><span class="txt">prompt 迭代 ≥ 3 版，保留版本与差异记录</span></label>
+          <label><input type="checkbox" data-plan-item="p6"><span class="box"></span><span class="txt">记录所有 badcase 及你的修法</span></label>
+        </div>
+        <div class="week" data-wk>
+          <h4><span class="wk-tag">W3</span>见人<span class="wk-ok">✓ 本周完成</span></h4>
+          <p class="goal">目标：真实使用 + 公开证据</p>
+          <p class="deliverable"><b>本周交付：</b>5 份用户反馈 + 采纳率 / 复核率 + 复盘文章</p>
+          <p class="accept"><b>完成标准：</b>文章有数字、有失败、有链接；不是产品说明书</p>
+          <label><input type="checkbox" data-plan-item="p7"><span class="box"></span><span class="txt">给 5–10 个真人使用并收集反馈</span></label>
+          <label><input type="checkbox" data-plan-item="p8"><span class="box"></span><span class="txt">加上人工复核流程，统计采纳率 / 复核率</span></label>
+          <label><input type="checkbox" data-plan-item="p9"><span class="box"></span><span class="txt">写复盘文章（含数字）并发布，拿到链接</span></label>
+        </div>
+        <div class="week" data-wk>
+          <h4><span class="wk-tag">W4</span>装配投递<span class="wk-ok">✓ 本周完成</span></h4>
+          <p class="goal">目标：简历出厂，演练追问</p>
+          <p class="deliverable"><b>本周交付：</b>一页简历 + 3 份 JD 对照 + 追问小抄</p>
+          <p class="accept"><b>完成标准：</b>每条 bullet 能过四问；至少 1 个可点开的作品</p>
+          <label><input type="checkbox" data-plan-item="p10"><span class="box"></span><span class="txt">按第五步模板重写简历</span></label>
+          <label><input type="checkbox" data-plan-item="p11"><span class="box"></span><span class="txt">找 3 个真人做追问演练（每条 bullet 问 3 层）</span></label>
+          <label><input type="checkbox" data-plan-item="p12"><span class="box"></span><span class="txt">对照 3 份目标 JD 校准关键词</span></label>
+          <label><input type="checkbox" data-plan-item="p13"><span class="box"></span><span class="txt">跑完第六步自检清单，开始投递</span></label>
+        </div>
+      </div>
+      <p class="plan-hint">勾选进度自动保存在本机浏览器（localStorage），关掉页面也不会丢；「重置」只清这份计划。节奏赶不上就顺延到 60/90 天——顺序不能换：评测集先于搭应用，真人使用先于写复盘。</p>
+    </div>
+  </section>
+
+  <!-- ============ S5 装配 ============ -->
+  <section id="s5">
+    <h2><span class="sec-no">STEP 05 · 装配</span>把证据装进一页纸：结构、公式与技能分层</h2>
+    <p class="sec-lead">简历是证据的陈列，不是经历的流水账。同一份人生，装配顺序不同，初筛生死不同。</p>
+
+    <div class="assembler rv">
+      <div class="resume-paper" aria-label="简历模块顺序示意">
+        <div class="r-name">你的名字</div>
+        <div class="r-line">产品经理 · 5 年 SaaS / 交易方向 · 正在把业务 AI 化</div>
+        <div class="r-block hot"><span class="r-no">① 定位行</span>
+          <h5>一句话定位（放最顶上）</h5>
+          <p>不写「求职 AI 产品经理」（愿望），写「产品经理 · 正在把 XX 业务 AI 化，独立完成过 RAG 试点」（事实）。</p>
+        </div>
+        <div class="r-block hot"><span class="r-no">② AI 项目区</span>
+          <h5>AI 相关项目，放最前</h5>
+          <p>side project / 内部试点 / 评测文章。哪怕不是正式立项，只要真做过就放最前——它决定初筛生死。</p>
+        </div>
+        <div class="r-block"><span class="r-no">③ 传统项目区</span>
+          <h5>传统项目，每条埋一个 AI 钩子</h5>
+          <p>数据、语料、规则、自动化——都是第三步翻译过的语言。</p>
+        </div>
+        <div class="r-block"><span class="r-no">④ 技能区</span>
+          <h5>三档分层，不堆名词</h5>
+          <p>做出来过 / 用熟了 / 了解，见右侧写法。</p>
+        </div>
+        <div class="r-block warn-block"><span class="r-no">⑤ 作品链接</span>
+          <h5>一行一个，带一句说明</h5>
+          <p>demo / 评测文章 / 复盘。放链接不放截图——筛简历的人一定会点。</p>
+        </div>
+      </div>
+
+      <div class="exp">
+        <h3>Bullet 公式：动词 + 场景 + AI 手段 + 可信量化 + 方法论名词</h3>
+        <div class="formula-ex">
+          为<span class="f-s">客服知识库</span><span class="f-v">建立</span> <span class="f-ai">20 条评测用例与人工复核流程</span>，AI 摘要试点<span class="f-n">采纳率 78%</span>、单均处理时长<span class="f-n">-23%</span>，沉淀 <span class="f-m">评测集与 badcase 回流机制</span>。
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--ink)"></i>动词</span>
+          <span><i style="background:#e3b078"></i>场景</span>
+          <span><i style="background:var(--ok)"></i>AI 手段</span>
+          <span><i style="background:var(--info)"></i>可信量化</span>
+          <span><i style="background:#cf9a5c; border-radius:50%"></i>方法论名词</span>
+        </div>
+
+        <h3 style="margin-top:22px;">量化可信度三条</h3>
+        <div class="card" style="font-size:14.5px;">
+          <p style="margin:0 0 8px;"><b>分母说得清</b>：-40% 的基线是什么、怎么测的？答不出就别写。</p>
+          <p style="margin:0 0 8px;"><b>小数字更可信</b>：78% 比拍脑袋的「提升 300%」可信得多。</p>
+          <p style="margin:0;"><b>没精确数就给区间和估法</b>：「约 6–8 小时/周，按 X 条 × X 分钟估算」——诚实本身就是信号。</p>
+        </div>
+
+        <div class="tiers">
+          <div class="tier"><span class="t-lab">做出来过</span><p><b>最有分量，写具体产物</b>：RAG 问答应用 1 个（含切块策略与评测集）、客服摘要 prompt 体系 12 场景。</p></div>
+          <div class="tier"><span class="t-lab">用熟了</span><p><b>写动作不写形容词</b>：Coze / Dify 工作流编排、LLM 结构化抽取、evals 设计、AI 功能拆解方法。</p></div>
+          <div class="tier"><span class="t-lab">了解</span><p><b>别装熟，也别省略</b>：检索与长上下文的取舍、Agent 失效模式、多模态输入输出、模型分级降本；微调已不是默认选项。这三档本身就是信号：知道深浅的人才会分层。</p></div>
+        </div>
+        <p style="font-size:13.5px; color:var(--danger); margin-top:10px;">反面示例：「精通 prompt engineering、熟悉各类大模型」——「精通」是面试官最爱拆的词，出现了就准备好被拆。</p>
+      </div>
+    </div>
+    <div class="resume-example rv" id="resume-example">
+      <div class="mini-head"><h3>完整示例：同一份经历，改前与改后</h3><span class="pass-tag">示例人物 · 数字为演示口径</span></div>
+      <p class="sec-lead">林舟，5 年 B 端 SaaS 产品经理，做过客服工单与知识库；没有 AI 头衔，只有一次内部试点和一个 side project。左边是原稿，右边是改写稿；编号对应下方批注。</p>
+      <div class="resume-compare">
+        <article class="resume-doc before" aria-label="改写前简历">
+          <div class="doc-name">林舟</div>
+          <div class="doc-role">产品经理 · 5 年 B 端 SaaS · 138-0000-0000 · linzhou@example.com</div>
+          <div class="doc-sec"><h6>个人简介</h6><p>5 年 B 端产品经验，负责客服工单与知识库，熟悉需求分析、项目管理与跨部门协作；了解 AI、大模型。</p></div>
+          <div class="doc-sec"><h6>工作经历</h6>
+            <p><b>某 SaaS 公司 · 产品经理</b>　2021.03–至今</p>
+            <ul><li>负责客服工单产品，完成 3 个版本迭代，协调研发、设计与客服。</li><li>输出 PRD、验收文档与用户培训材料。</li></ul>
+            <p><b>某软件公司 · 产品助理</b>　2019.07–2021.02</p>
+            <ul><li>负责需求调研、竞品分析与客户培训。</li></ul>
+          </div>
+          <div class="doc-sec"><h6>项目经历</h6><ul><li>客服工单系统重构：负责需求梳理与上线验收。</li><li>知识库迁移：完成 500+ 条 FAQ 迁移。</li></ul></div>
+          <div class="doc-sec"><h6>技能</h6><p>Axure、Visio、SQL、Office；了解 AI、大模型。</p></div>
+          <div class="doc-sec"><h6>教育</h6><p>某大学 · 本科 2015–2019</p></div>
+        </article>
+
+        <article class="resume-doc after" aria-label="改写后简历">
+          <div class="doc-name">林舟</div>
+          <div class="doc-role">产品经理 · 5 年 B 端客服 / 知识库 · 正在把客服流程 AI 化<span class="anno" aria-label="批注 1">1</span></div>
+          <div class="doc-sec"><h6>个人简介</h6><p>5 年 B 端产品，做过客服工单、知识库与内部 AI 试点；能把流程拆成可评测的 AI 任务，并用人工复核兜底。<span class="anno" aria-label="批注 8">8</span></p></div>
+          <div class="doc-sec"><h6>AI 项目<span class="anno" aria-label="批注 2">2</span></h6>
+            <p><b>客服摘要助手（内部试点 + side project）</b></p>
+            <ul>
+              <li>负责场景选择、20 条评测集与 5 条验收标准；AI 摘要采纳率 78%，单均处理时长 -23%（基线：人工摘要 30 条）。<span class="anno" aria-label="批注 3">3</span></li>
+              <li>设计 3 类失效模式（幻觉 / 漏项 / 越权）与人工复核流程，badcase 回流 12 条；公开复盘与 demo 见作品链接。<span class="anno" aria-label="批注 4">4</span></li>
+            </ul>
+            <p><b>客服知识库 RAG demo</b></p>
+            <ul><li>Dify + 切块策略 + 20 条问答评测；检索命中率 82% → 91%，失败案例与切块调整记录在复盘里。</li></ul>
+          </div>
+          <div class="doc-sec"><h6>工作经历</h6>
+            <p><b>某 SaaS 公司 · 产品经理</b>　2021.03–至今</p>
+            <ul>
+              <li>负责客服工单与知识库；主导工单流程重构，接口响应时长 -35%。<span class="anno" aria-label="批注 5">5</span></li>
+              <li>整理 500+ 条客服语料，建立「问题—意图—标准答案」结构，成为 RAG 知识库与评测集的原型资产。<span class="anno" aria-label="批注 6">6</span></li>
+            </ul>
+            <p><b>某软件公司 · 产品助理</b>　2019.07–2021.02</p>
+            <ul><li>完成 30+ 家客户调研，输出行业方案；理解权限、合规与交付约束，能在 AI 项目里提前标出边界。</li></ul>
+          </div>
+          <div class="doc-sec"><h6>技能<span class="anno" aria-label="批注 7">7</span></h6>
+            <ul>
+              <li><b>做出来过：</b>RAG 问答 demo（Dify + 切块 + 20 条评测）、客服摘要评测集、12 场景 prompt 模板库。</li>
+              <li><b>用熟了：</b>LLM 结构化抽取、evals 设计、AI 功能拆解、Coze / Dify 工作流、MCP 工具接入。</li>
+              <li><b>了解：</b>检索与长上下文取舍、Agent 失效模式、多模态、模型分级降本；微调已不是默认选项。</li>
+            </ul>
+          </div>
+          <div class="doc-sec"><h6>作品链接</h6><ul><li>客服摘要助手 demo（含 30 秒录屏）：[链接]</li><li>《客服摘要 30 天：20 条评测、3 类失效与 12 条 badcase》：[链接]</li><li>评测集（脱敏 20 条）：[链接]</li></ul></div>
+          <div class="doc-sec"><h6>教育</h6><p>某大学 · 本科 2015–2019</p></div>
+        </article>
+      </div>
+
+      <ol class="anno-list">
+        <li><span class="n">1</span><span><b>定位行：</b>从“求职 AI 产品经理”改成“正在把客服流程 AI 化”；写事实与方向，不虚构头衔。</span></li>
+        <li><span class="n">2</span><span><b>AI 项目前置：</b>初筛只扫前 1/3 屏；项目比技能栏更有说服力。</span></li>
+        <li><span class="n">3</span><span><b>数字带分母：</b>20 条评测、78% 采纳率、-23%、基线 30 条；答得出怎么测。</span></li>
+        <li><span class="n">4</span><span><b>链接一行一个：</b>demo / 复盘 / 评测集，带一句说明；不做截图。</span></li>
+        <li><span class="n">5</span><span><b>传统项目埋钩子：</b>流程、语料、权限、交付都是 AI 的原生资产。</span></li>
+        <li><span class="n">6</span><span><b>动词分层：</b>负责 / 主导 / 参与按事实写；不把“用过”写成“主导”。</span></li>
+        <li><span class="n">7</span><span><b>技能三档：</b>做出来过 / 用熟了 / 了解；不堆名词、不用进度条。</span></li>
+        <li><span class="n">8</span><span><b>删除空话：</b>删掉“热爱 AI、学习能力强、精通大模型”，用定位行和证据替代。</span></li>
+      </ol>
+
+      <div class="warn-note"><b>不要照抄：</b>林舟为虚构人物，公司与数字均为演示；照抄结构，不要照抄数字。公开作品前先脱敏，别把在职项目、客户名或内部数据放上去。</div>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <h3 style="margin-top:0; font-size:18px;">一页纸硬规则</h3>
+      <div class="table-wrap">
+        <table class="jd-table compact ats">
+          <thead><tr><th>项</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>长度</td><td>约 8 年以内写 1 页，最多 2 页；宁可删到 1 页，也不要塞满 2 页。</td></tr>
+            <tr><td>版式</td><td>单栏、白底黑字、正文 10.5–11 pt、页边距 ≥1.5 cm；不用分栏、进度条、头像。</td></tr>
+            <tr><td>文件</td><td>同一份内容存 PDF + DOCX；文件名 <span class="mono">姓名-岗位方向-YYYY.MM.pdf</span>；导出后检查文字可选中。</td></tr>
+            <tr><td>结构</td><td>定位行 → AI 项目 → 工作经历 → 技能 → 作品链接 → 教育；AI 项目放在第一屏。</td></tr>
+            <tr><td>措辞</td><td>不用“精通 / 资深 / 专家”；每条 bullet ≤2 行，动词开头，数字带分母。</td></tr>
+            <tr><td>隐私</td><td>不放照片、年龄、婚育、身份证；公开作品脱敏，不写客户名与内部数据。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">机器可读与一页纸不冲突：单栏、标准标题、正文可选中，ATS 才能读；别把正文放进表格或图片。</p>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <h3 style="margin-top:0; font-size:18px;">不同方向的版本：同一份经历，换排序与重点</h3>
+      <div class="role-grid">
+        <div class="mini-card"><h4>应用层 AI 产品</h4><p><b>放最前：</b>AI 项目（场景 / 指标 / 体验）</p><p><b>重点：</b>用户价值、评测、上线后的真实使用</p></div>
+        <div class="mini-card"><h4>平台 / 评测产品</h4><p><b>放最前：</b>评测集 / 指标体系 / 工具链</p><p><b>重点：</b>标准定义、数据闭环、与工程协作</p></div>
+        <div class="mini-card"><h4>行业解决方案</h4><p><b>放最前：</b>行业项目 + 合规 / 权限 / 交付</p><p><b>重点：</b>行业约束、ROI、可复制交付</p></div>
+        <div class="mini-card"><h4>Agent / 工作流</h4><p><b>放最前：</b>多步任务 / 工具调用 / 失败恢复</p><p><b>重点：</b>任务拆解、边界、成本与可靠性</p></div>
+      </div>
+      <p class="table-note">不要一份简历投所有方向；至少准备“应用层”和“平台/评测”两个版本，投递前按 JD 换第一屏。</p>
+    </div>
+  </section>
+
+  <!-- ============ S6 质检 ============ -->
+  <section id="s6">
+    <h2><span class="sec-no">STEP 06 · 质检</span>出厂前自检：清单、红线与追问链</h2>
+    <p class="sec-lead">简历改完别急着投。先用清单质检，再用红线排雷，最后把每条 bullet 过一遍追问链——面试官会问的问题，先让朋友问你一遍。硬门槛不过，先别投。</p>
+
+    <div class="qc-grid rv">
+      <div class="card">
+        <div class="ck-head">
+          <h3>十项自检（勾选算分）</h3>
+          <span class="ck-score" id="ckScore">硬门槛 0/5 · 加分 0/5</span>
+          <span class="ck-verdict" id="ckVerdict">从第一条开始勾</span>
+          <button class="link-btn" type="button" id="resetCheck">重置</button>
+        </div>
+        <ul class="ck-list" id="ckList">
+          <li><label><input type="checkbox" data-check-item="1" data-gate="hard"><span class="box"></span><span class="txt"><em class="gate-tag">硬</em>前 1/3 屏能看到至少 1 个 AI 项目或量化结果</span></label><p class="fix">不满足：把 AI 项目移到定位行下面；没有项目就先做 STEP 04 的评测文章。<a href="#s4">去补证据</a></p></li>
+          <li><label><input type="checkbox" data-check-item="2" data-gate="hard"><span class="box"></span><span class="txt"><em class="gate-tag">硬</em>每条 AI 描述都有数字、产物或链接佐证</span></label><p class="fix">不满足：给每条补分母、产物或链接；补不出就降档，别硬写。<a href="#s3">去翻译</a></p></li>
+          <li><label><input type="checkbox" data-check-item="3" data-gate="bonus"><span class="box"></span><span class="txt"><em class="gate-tag bonus">加</em>技能区分了「做出来 / 用熟 / 了解」三档，无裸名词</span></label><p class="fix">不满足：按三档重写技能区，删掉裸名词。<a href="#s5">看写法</a></p></li>
+          <li><label><input type="checkbox" data-check-item="4" data-gate="hard"><span class="box"></span><span class="txt"><em class="gate-tag">硬</em>全文没有「精通 / 资深 / 专家」级措辞</span></label><p class="fix">不满足：逐个删掉，换成具体动作与产物；保留“了解”也要能解释。<a href="#s5">看写法</a></p></li>
+          <li><label><input type="checkbox" data-check-item="5" data-gate="bonus"><span class="box"></span><span class="txt"><em class="gate-tag bonus">加</em>每个术语都能被往下追问 3 层（用下方追问链演练）</span></label><p class="fix">不满足：用下方四问写小抄；答不出的降档或删掉。<a href="#s6">去演练</a></p></li>
+          <li><label><input type="checkbox" data-check-item="6" data-gate="hard"><span class="box"></span><span class="txt"><em class="gate-tag">硬</em>有一个可点开的作品：demo + 评测表 + 失败分类（或文章 / 复盘）</span></label><p class="fix">不满足：没有就发一篇评测 / 复盘；demo 要附评测表与失败分类，不能只有对话截图。<a href="#s4">去补作品</a></p></li>
+          <li><label><input type="checkbox" data-check-item="7" data-gate="bonus"><span class="box"></span><span class="txt"><em class="gate-tag bonus">加</em>传统项目里埋了数据、语料、规则、自动化类钩子</span></label><p class="fix">不满足：把数据、语料、权限、交付写成可迁移资产。<a href="#s3">去翻译</a></p></li>
+          <li><label><input type="checkbox" data-check-item="8" data-gate="hard"><span class="box"></span><span class="txt"><em class="gate-tag">硬</em>定位一句话讲清「从哪来、正在往哪去」</span></label><p class="fix">不满足：用“行业 / 职能 + 正在把 X AI 化 + 一条证据”的句式。<a href="#s5">看写法</a></p></li>
+          <li><label><input type="checkbox" data-check-item="9" data-gate="bonus"><span class="box"></span><span class="txt"><em class="gate-tag bonus">加</em>全文没有「AI 将改变行业」式空话</span></label><p class="fix">不满足：删掉“热爱学习、拥抱变化”；用证据替代。<a href="#s6">看红线</a></p></li>
+          <li><label><input type="checkbox" data-check-item="10" data-gate="bonus"><span class="box"></span><span class="txt"><em class="gate-tag bonus">加</em>对照过至少 3 份目标 JD，关键词有真实呼应</span></label><p class="fix">不满足：把 JD 关键词映射到六维，缺哪维补哪维；不要只改关键词。<a href="#s2">看岗位地图</a></p></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="redlines">
+          <div class="redline"><b>红线一 · 编造算法经历</b>模型训练 / 微调项目一问数据集、超参、效果曲线就穿，且行业很小。</div>
+          <div class="redline"><b>红线二 · 量化造假或口径含糊</b>面试官追问分母，答不上来的数字比没有数字更糟。</div>
+          <div class="redline"><b>红线三 · 名词满铺</b>RAG / Agent / 多模态 / 微调全写上，信号是「哪个都不懂」。</div>
+          <div class="redline"><b>红线四 · 泄露公司项目细节</b>把在职项目当个人作品展示违反保密义务，品质扣分大于能力加分。</div>
+          <div class="redline"><b>红线五 · AI-washing 升格</b>「主导 AIGC 落地」式措辞，2026 年的筛简历者专门在抓这种模式；AI 代做、讲不出取舍与个人贡献，也会被问穿。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain rv">
+      <h3 style="font-size:17.5px; margin:0 0 10px;">追问链：简历上每一句 AI 描述，默认会被问这四问</h3>
+      <div class="chain-grid">
+        <div class="chain-q"><span class="q-no">Q1 · WHY</span>为什么这么做？——方案选型：为什么 RAG 不微调、为什么这个场景上模型</div>
+        <div class="chain-q"><span class="q-no">Q2 · HOW MEASURE</span>怎么衡量的？——指标定义、数据来源、基线对比</div>
+        <div class="chain-q"><span class="q-no">Q3 · WHEN FAIL</span>错了怎么办？——失效模式、兜底设计、人工复核</div>
+        <div class="chain-q"><span class="q-no">Q4 · WHAT NEXT</span>下一步是什么？——迭代方向与优先级排序</div>
+      </div>
+
+      <details class="answer-card">
+        <summary>Q1 · WHY：不合格 / 合格 / 加分三种答法</summary>
+        <div class="ans-body">
+          <p class="ans-row"><b class="bad">不合格：</b>“因为 RAG 比较火，大家都在用。”</p>
+          <p class="ans-row"><b class="ok">合格：</b>“知识库每周更新，微调成本高；先用 RAG，检索命中率能做到 90% 左右，再配人工复核。”</p>
+          <p class="ans-row"><b class="plus">加分：</b>“比较过微调、RAG、长上下文与模型路由：按更新频率、数据量、单次成本选型，给出日成本与降本顺序；检索失败时回退人工，并把这个失效写进评测集和验收标准。”</p>
+        </div>
+      </details>
+      <details class="answer-card">
+        <summary>Q2 · HOW MEASURE：不合格 / 合格 / 加分三种答法</summary>
+        <div class="ans-body">
+          <p class="ans-row"><b class="bad">不合格：</b>“效果很好，用户都很满意。”</p>
+          <p class="ans-row"><b class="ok">合格：</b>“30 条工单做评测集，5 条验收标准；采纳率 78%，人工基线 62%；单均处理时长 -23%。”</p>
+          <p class="ans-row"><b class="plus">加分：</b>“指标定义、分母、采样方式、盲评流程都说清；上线后灰度对比，波动区间也记录；未达标的样本回流成 badcase。”</p>
+        </div>
+      </details>
+      <details class="answer-card">
+        <summary>Q3 · WHEN FAIL：不合格 / 合格 / 加分三种答法</summary>
+        <div class="ans-body">
+          <p class="ans-row"><b class="bad">不合格：</b>“模型很聪明，一般不会错。”</p>
+          <p class="ans-row"><b class="ok">合格：</b>“主要三类：幻觉、漏项、越权；用规则校验 + 人工复核兜底，出错转人工。”</p>
+          <p class="ans-row"><b class="plus">加分：</b>“每类的触发条件、监控指标、回滚方案、badcase 回流路径都定好；谁复核、SLA 多久、升级给谁，事故归属、可逆性与监督成本也写进流程。”</p>
+        </div>
+      </details>
+      <details class="answer-card">
+        <summary>Q4 · WHAT NEXT：不合格 / 合格 / 加分三种答法</summary>
+        <div class="ans-body">
+          <p class="ans-row"><b class="bad">不合格：</b>“继续优化，做得更好。”</p>
+          <p class="ans-row"><b class="ok">合格：</b>“先补检索质量，再做多轮对话；下一版重点是把漏项率降下来。”</p>
+          <p class="ans-row"><b class="plus">加分：</b>“按影响 × 成本排序：先做检索与切块（影响最大、成本低），再做多轮；给出下一版范围、验收标准和不做清单。”</p>
+        </div>
+      </details>
+
+      <div class="takeaway"><b>怎么用：</b>把简历每条 AI bullet 按四问写成小抄；哪条答不出，就立刻降档改写（“主导”→“参与”，“设计”→“整理”）——降档不丢人，穿帮才丢人。</div>
+    </div>
+
+    <div class="takeaway rv"><b>自检后：</b>硬门槛 ≤3 → 回 STEP 03/04 补证据；硬门槛 5、加分 ≤3 → 去 STEP 07 开始投，边投边补；都过了 → 去模拟面试练追问（阅读器 Harness 目录 → AI 产品经理 → 模拟面试）。</div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="sec-no">STEP 07 · 敲门</span>简历投出去之后，怎么把面试率拉起来</h2>
+    <p class="sec-lead">简历决定你能不能进门，投递决定门在哪。把投递当成一个可复盘的项目：选池子、走渠道、写附言、跟进、复盘。不要海投，也不要等所有材料完美再投。</p>
+
+    <div class="grid2 rv">
+      <div class="card">
+        <h3 style="margin-top:0; font-size:18px;">7.1 先选池子：三档目标</h3>
+        <div class="tier-grid">
+          <div class="mini-card"><h4>冲刺</h4><p><b>匹配：</b>70% 以上，AI 经验要求高</p><p><b>数量：</b>2–3 家</p><p><b>打法：</b>用最强作品，先投但别等</p></div>
+          <div class="mini-card"><h4>匹配</h4><p><b>匹配：</b>50–70%，业务 / 行业对口</p><p><b>数量：</b>8–10 家</p><p><b>打法：</b>主力，按 JD 定制附言</p></div>
+          <div class="mini-card"><h4>保底</h4><p><b>匹配：</b>30–50%，传统 PM / 业务岗可迁移</p><p><b>数量：</b>3–5 家</p><p><b>打法：</b>保面试手感，别将就</p></div>
+        </div>
+        <p class="table-note">20 家精准 &gt; 200 家群发。每档都记录回复率，两周后按数据调整比例。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0; font-size:18px;">7.2 渠道优先级</h3>
+        <div class="channel-grid">
+          <div class="mini-card"><h4>内推<span class="rank">最高</span></h4><p>前同事、校友、社群；AI 岗 75% 机会来自猎头、64% 来自内推，两者并列最高；准备 3 句话 + 简历 PDF + 岗位链接</p></div>
+          <div class="mini-card"><h4>猎头 / HR 直招<span class="rank">最高</span></h4><p>回复快；先确认岗位真实性、级别与汇报线</p></div>
+          <div class="mini-card"><h4>公司官网<span class="rank">中</span></h4><p>ATS 关键词要准；适合大厂与校招</p></div>
+          <div class="mini-card"><h4>招聘平台<span class="rank">中低</span></h4><p>BOSS / 猎聘；拉勾 2026 年 5 月已破产重整，不要投。看岗位刷新时间，别投僵尸岗</p></div>
+          <div class="mini-card"><h4>公开邮箱 / 社群<span class="rank">低</span></h4><p>附言短、证据硬；不群发、不抄送</p></div>
+        </div>
+        <p class="table-note">同一个岗位最多走两条渠道；内推已回复就不要重复投官网。</p>
+      </div>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <h3 style="margin-top:0; font-size:18px;">7.3 投递附言：三套模板</h3>
+      <div class="grid3">
+        <div class="bg-card" style="border:1px solid var(--line); border-radius:12px;">
+          <h4>内推</h4>
+          <pre class="tpl">XX 你好，我在看 [公司] 的 [岗位]，JD 里的 [场景] 和我做过的 [项目] 很接近（[一条证据]）。方便帮我内推吗？简历和岗位链接在下面，不合适也没关系。</pre>
+        </div>
+        <div class="bg-card" style="border:1px solid var(--line); border-radius:12px;">
+          <h4>HR / 猎头</h4>
+          <pre class="tpl">您好，我是 [姓名]，5 年 B 端产品，最近把客服知识库做成 RAG 试点（20 条评测、采纳率 78%）。看到 [岗位]，想确认是否还开放；附件是简历和一份复盘。</pre>
+        </div>
+        <div class="bg-card" style="border:1px solid var(--line); border-radius:12px;">
+          <h4>官网 / 邮件</h4>
+          <pre class="tpl">尊敬的 [团队]，申请 [岗位]。我做过 [场景] 的 AI 试点，负责 [范围]，留下 [指标 / 作品]。附上简历与项目一页纸，期待交流。</pre>
+        </div>
+      </div>
+      <p class="copy-note">120 字以内；一条证据；一个请求；不要写小作文，不要群发称呼。</p>
+    </div>
+
+    <div class="grid2 rv" style="margin-top:16px;">
+      <div class="card">
+        <h3 style="margin-top:0; font-size:18px;">7.4 跟进节奏</h3>
+        <div class="timeline">
+          <p><b>投递当天：</b>记录公司、岗位、渠道、跟进日</p>
+          <p><b>3–5 个工作日：</b>一次跟进；附上补充材料或一条新证据</p>
+          <p><b>7–10 个工作日：</b>无回复视为暂不匹配；不重复投同岗</p>
+          <p><b>面试后 24 小时：</b>感谢 + 补充一个没答好的点</p>
+          <p><b>面试后一周：</b>询问结果一次；不追问、不催命</p>
+        </div>
+        <p class="table-note">跟进只做一次；有回复就等，没回复就把精力放到下一家。</p>
+        <p class="copy-note" style="margin-top:10px;"><b>跟进邮件模板：</b>一次就好，附一条新证据。</p>
+        <pre class="tpl">您好，我是 [日期] 投递 [岗位] 的 [姓名]。补充一条最近的进展：[一条证据]。如果岗位还开放，期待有机会聊聊；不方便也请告知，谢谢。</pre>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0; font-size:18px;">7.5 面试前后清单</h3>
+        <p><b>面试前：</b>公司 / 产品 / 竞品 / JD 各看一遍；准备 3 个项目故事（为什么做、怎么做、怎么衡量、失败）；作品集按 3 分钟决策链讲一遍，带一个能当场打开的原型或 eval 样本；准备 1 个反问；检查设备、网络与安静环境。</p>
+        <p><b>面试中：</b>先结论后展开；不会就说不会 + 会怎么查；把问题拉回证据与分母；现场轮可能让你当场改一版或讲取舍，先说假设再动手；记录被问住的点，别当场编。</p>
+        <p><b>面试后：</b>24 小时内感谢；当天写复盘（问题 / 答法 / 改进）；把新 badcase 加进评测集或答案卡。</p>
+        <p class="copy-note" style="margin-top:10px;"><b>面试复盘表：</b>每场一行，一周回看一次。</p>
+        <pre class="tpl">日期,公司,轮次,问题,我的答法,卡点,下次怎么答</pre>
+        <p class="table-note">面试是取样，不是审判；一次挂掉说明不了全部，但连续三次同一处挂，就要改简历或补证据。</p>
+      </div>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <h3 style="margin-top:0; font-size:18px;">7.6 被拒诊断：先改哪里</h3>
+      <div class="diag-grid">
+        <div class="mini-card" data-diag="silent"><h4>投 30 份没回音</h4><p><b>原因：</b>初筛关键词、岗位不匹配、简历格式</p><p><b>下一步：</b>对照 JD 改前 1/3 屏；换渠道；找 3 个不熟的人盲看 10 秒</p></div>
+        <div class="mini-card" data-diag="first"><h4>初筛过、一面挂</h4><p><b>原因：</b>项目深度不够、表达散</p><p><b>下一步：</b>用四问重写 bullet；做一次模拟面试；准备 3 个项目故事</p></div>
+        <div class="mini-card" data-diag="second"><h4>一面过、二面挂</h4><p><b>原因：</b>产品判断、协作、业务理解</p><p><b>下一步：</b>补场景评估、取舍与跨团队故事；准备“为什么不做”的答案</p></div>
+        <div class="mini-card" data-diag="final"><h4>终面挂</h4><p><b>原因：</b>级别、薪资、稳定性、文化</p><p><b>下一步：</b>校准目标档位；准备反问与期望管理；不硬够</p></div>
+        <div class="mini-card" data-diag="stuck"><h4>总被问住</h4><p><b>原因：</b>术语没有三层</p><p><b>下一步：</b>降档改写；做答案卡；把答不出的术语从简历删掉</p></div>
+        <div class="mini-card" data-diag="why"><h4>拿到面试但不想去</h4><p><b>原因：</b>目标不清</p><p><b>下一步：</b>重做岗位地图与三档清单；先想清楚要什么，再投</p></div>
+      </div>
+      <p class="table-note">先改最影响回复率的那一处，不要同时改十件事；每两周看一次哪一档回复率最高。</p>
+    </div>
+
+    <div class="grid2 rv" style="margin-top:16px;">
+      <div class="card">
+        <h3 style="margin-top:0; font-size:18px;">7.7 投递记录</h3>
+        <p style="margin:0 0 8px; font-size:13.5px; color:var(--ink-soft);">复制到表格软件，每周复盘一次；没有记录就没有迭代。</p>
+        <pre class="tpl">公司,岗位,渠道,投递日,阶段,反馈,下一步,跟进日
+A 公司,AI 产品经理（客服）,内推,10-20,一面,项目深度不够,补评测细节,10-25
+B 公司,AI 应用产品经理,官网,10-21,待回复,,3 天后跟进,10-24</pre>
+        <p class="copy-note">阶段用固定值：待回复 / 初筛 / 一面 / 二面 / 终面 / Offer / 挂；方便统计漏斗。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0; font-size:18px;">7.8 两周一循环</h3>
+        <p><b>第 1 周：</b>选 10 家（冲刺 2 + 匹配 6 + 保底 2）；按 JD 改前 1/3 屏；写 10 份附言；投 5 家。</p>
+        <p><b>第 2 周：</b>跟进 5 家；复盘回复率；补 1 个证据（评测 / badcase / demo）；再投 5 家。</p>
+        <p><b>循环：</b>每两周只改一个变量（定位行 / 项目排序 / 渠道 / 附言），看回复率变化。</p>
+        <p class="table-note">不要等“完美简历”再投；投递反馈是最快的简历质检。</p>
+      </div>
+    </div>
+
+    <div class="card rv" style="margin-top:16px;">
+      <h3 style="margin-top:0; font-size:18px;">7.9 常见问题</h3>
+      <details class="faq-item"><summary>30 天真的够吗？</summary><p>按每周 15–20 小时估算，够做出 1 个 demo + 20 条评测 + 1 篇复盘；在职按 60–90 天顺延。不要为了赶 30 天跳过评测集，那是简历里最值钱的部分。</p></details>
+      <details class="faq-item"><summary>要不要学 Python / 算法？</summary><p>不要求写代码，但要能读懂接口、评测与数据口径；会一点 SQL 或 Python 更好。零经验阶段不要把时间花在从零学算法，先把场景、评测与作品做出来。</p></details>
+      <details class="faq-item"><summary>要不要考证？</summary><p>证书能补关键词，补不了证据。优先级：作品 &gt; 评测报告 &gt; 课程作业 &gt; 证书。证书放一行即可，不要占项目区。</p></details>
+      <details class="faq-item"><summary>公司不让做 AI 试点怎么办？</summary><p>做外部评测 / 拆解文章、开源 issue / PR、脱敏 demo；不要用公司数据、客户名或内部文档。被否的试点也可以写，但要写清“为什么被否、下一步怎么改”。</p></details>
+      <details class="faq-item"><summary>年龄 / 空窗期 / 学历会被卡吗？</summary><p>会，但不是靠藏能解决的。用证据与叙事解释空窗期；目标档位校准；不造假、不升格。把精力放在能改变的部分：作品、评测、表达。</p></details>
+      <details class="faq-item"><summary>海外 / 英文简历要做吗？</summary><p>本页不展开；英文版另有格式与合规差异。先把中文一页纸、项目一页纸和追问小抄做好；英文版是翻译与格式问题，不是新的方法问题。</p></details>
+    </div>
+
+    <div class="practice rv">
+      <div class="card">
+        <h4>去考试：115 题测 17 个专题</h4>
+        <p>先测短板，再回来看对应步骤；错题本会告诉你哪一维还没过关。</p>
+        <a href="ai-pm-exam.html">打开 AI PM 结业考试 →</a>
+      </div>
+      <div class="card">
+        <h4>去看面经与 JD 拆解</h4>
+        <p>5 个面经样本、7 个 JD 对照；看别人怎么被追问，再回来改自己的 bullet。</p>
+        <a href="ai-agent-pm-career.html">打开面经 / JD 页 →</a>
+      </div>
+      <div class="card">
+        <h4>去看一份完整 AI 产品设计</h4>
+        <p>AI 报销审核 PRD：范围、权限、规则、状态恢复与验收；写项目一页纸时可以参照。</p>
+        <a href="ai-expense-review-prd.html">打开 AI 报销 PRD →</a>
+      </div>
+      <div class="card">
+        <h4>去练模拟面试</h4>
+        <p>在阅读器 Harness 目录 → AI 产品经理 → 模拟面试；用考试掌握度出题，练完有复盘。</p>
+        <p class="copy-note">模拟面试是阅读器页面，不在归档里；从目录进入即可。</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="colophon">
+    <h3>依据与边界</h3>
+    <ul>
+      <li>本页方法基于 2026-10 的公开面经、JD 与项目实践交叉整理；市场数据为公开报道口径，不是结果承诺。</li>
+      <li>“零经验”指没有 AI 岗位 title；用过 ChatGPT 不算 AI 项目经验，但可以是翻译存量的起点。</li>
+      <li>30 天按每周 15–20 小时估算；在职、出差或家庭负担重时按 60–90 天顺延，见 STEP 04 的节奏表。</li>
+      <li>示例人物林舟、公司与所有数字均为虚构 / 演示，不对应真实个人；照抄结构，不要照抄数字。</li>
+      <li>投递节奏、被拒诊断与 FAQ 为经验建议，不是统计结论；请按自己的行业、城市与级别校准。</li>
+      <li>公开作品前先脱敏：不放在职项目、客户名、内部数据或未公开的指标；保密义务高于展示欲。</li>
+    </ul>
+    <p style="margin-top:14px;">参考来源：<a href="https://www.news.aakashg.com/p/ai-product-manager-resume" target="_blank" rel="noopener">Aakash Gupta《AI PM Resume Guide》（2026-04 更新）</a>、<a href="https://www.productmap.io/blog/ai-product-manager-resume" target="_blank" rel="noopener">ProductMap《AI Product Manager Resume》（2026-09）</a>、<a href="https://www.productmap.io/blog/pm-interview-bring-a-prototype" target="_blank" rel="noopener">ProductMap《Bring a prototype》（2026-08）</a>、<a href="https://www.anthropic.com/research/demystifying-evals-for-ai-agents" target="_blank" rel="noopener">Anthropic《Demystifying evals》（2026-01）</a>、<a href="https://www.anthropic.com/research/effective-context-engineering-for-ai-agents" target="_blank" rel="noopener">Anthropic《Context engineering》（2025-09）</a>、<a href="https://www.jobseeker.com/zh/jianli/wenzhang/zhaopin-qushi" target="_blank" rel="noopener">Jobseeker 1013 名 HR 调查（2025-08）</a>，以及 PM Accelerator 简历指南（2025-01）。</p>
+    <p style="margin-top:10px;">站内：<a href="ai-pm-exam.html">AI PM 结业考试</a> · <a href="ai-agent-pm-career.html">面经 / JD 拆解</a> · <a href="ai-expense-review-prd.html">AI 报销 PRD</a>；模拟面试在阅读器 Harness 目录 → AI 产品经理。</p>
+    <p style="margin-top:12px;">本页为独立单文件 HTML，离线可用；术语气泡点击可看解释，计划与自检进度保存在本机；打印时自动展开折叠内容。最后更新：2026-10-26。</p>
+  </footer>
+</main>
+
+<aside id="tipPop" hidden></aside>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- 术语气泡 ---------- */
+  var TERMS = {
+    signal: "<b>可信信号</b>：能让读者降低怀疑的具体证据——数字、产物、链接、过程记录。形容词和热情陈述不算。",
+    halluc: "<b>幻觉</b>：模型一本正经地编造事实。LLM 固有缺陷，靠检索引用、结构化约束、人工复核兜底。",
+    fewshot: "<b>few-shot</b>：在 prompt 里给几个输入输出示例，引导模型按同样格式与标准回答。",
+    structout: "<b>结构化输出</b>：让模型按固定格式（如 JSON）返回，便于程序处理；不稳定时需要重试与校验。",
+    evals: "<b>evals（评测体系）</b>：评测集 + 评分标准 + 基线对比，AI 功能的「测试用例」，用来回答「怎么证明新版更好」。零经验者最容易上手、最能差异化的一项。",
+    rag: "<b>RAG（检索增强生成）</b>：先从知识库检索相关片段，再拼进上下文让模型作答——用于知识要新鲜或私有的场景。失效模式：检索不准、切块不当。",
+    agent: "<b>Agent</b>：让模型自主规划多步任务、调用工具、根据结果继续行动。失效模式：循环失控、工具误调用、成本膨胀。",
+    orchest: "<b>工作流编排</b>：Coze / Dify / n8n 这类平台，用拖拽把模型、检索、工具、判断节点串成流程，零代码验证产品想法。",
+    gray: "<b>灰度</b>：新版本先放给小流量用户验证指标，再逐步放量，控制全量风险。",
+    badcase: "<b>badcase</b>：线上暴露的坏例子。AI 产品的重要资产——回流进评测集，驱动下一轮迭代。",
+    token: "<b>token</b>：模型计费与计长单位。成本 ≈ 调用量 × 每次输入输出 token 数 × 单价。",
+    hitl: "<b>人工复核（human-in-the-loop）</b>：AI 输出先经人确认再生效的协作设计，转型者最该掌握的安全网。",
+    ats: "<b>ATS</b>：招聘系统 / 简历解析系统。它按文本结构读简历；表格、图片、分栏都可能让关键词丢失。",
+    star: "<b>STAR</b>：情境（Situation）、任务（Task）、行动（Action）、结果（Result）。AI 项目还要补一句：怎么评测、失败怎么办。",
+    roi: "<b>ROI</b>：投入产出比。行业方案里通常要算清人工成本、调用成本、节省工时与合规风险。"
+  };
+  var pop = document.getElementById("tipPop");
+  var openTip = null;
+  function showTip(el) {
+    var key = el.getAttribute("data-t");
+    var txt = TERMS[key];
+    if (!txt) return;
+    pop.innerHTML = txt;
+    pop.hidden = false;
+    var r = el.getBoundingClientRect();
+    var top = r.top - 8 - pop.offsetHeight;
+    if (top < 8) top = r.bottom + 8;
+    var left = Math.min(Math.max(8, r.left), window.innerWidth - pop.offsetWidth - 8);
+    pop.style.top = top + "px";
+    pop.style.left = left + "px";
+    openTip = el;
+  }
+  function hideTip() { pop.hidden = true; openTip = null; }
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target.closest(".tip") : null;
+    if (t) {
+      if (t === openTip) { hideTip(); } else { showTip(t); }
+      e.stopPropagation();
+    } else if (!pop.contains(e.target)) {
+      hideTip();
+    }
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") hideTip(); });
+  window.addEventListener("scroll", hideTip, { passive: true });
+
+  /* ---------- 六维卡 ---------- */
+  var dims = Array.prototype.slice.call(document.querySelectorAll(".dim"));
+  var dimsToggle = document.getElementById("dimsToggle");
+  function setDim(dim, open) {
+    dim.classList.toggle("open", open);
+    var head = dim.querySelector(".dim-head");
+    if (head) head.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  function syncDimsToggle() {
+    if (!dimsToggle) return;
+    var allOpen = dims.length > 0 && dims.every(function (d) { return d.classList.contains("open"); });
+    dimsToggle.textContent = allOpen ? "收起全部" : "展开全部";
+    dimsToggle.setAttribute("aria-expanded", allOpen ? "true" : "false");
+  }
+  document.querySelectorAll(".dim-head").forEach(function (head) {
+    function toggle() {
+      var dim = head.parentElement;
+      setDim(dim, !dim.classList.contains("open"));
+      syncDimsToggle();
+    }
+    head.addEventListener("click", toggle);
+    head.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+    });
+  });
+  if (dimsToggle) {
+    dimsToggle.addEventListener("click", function () {
+      var allOpen = dims.length > 0 && dims.every(function (d) { return d.classList.contains("open"); });
+      dims.forEach(function (d) { setDim(d, !allOpen); });
+      syncDimsToggle();
+    });
+  }
+  syncDimsToggle();
+
+  /* ---------- 翻译 tab ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tr-tabs button"));
+  function activateTab(btn) {
+    tabs.forEach(function (b) {
+      var on = b === btn;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      b.tabIndex = on ? 0 : -1;
+      var pane = document.getElementById(b.getAttribute("data-pane"));
+      if (pane) pane.hidden = !on;
+    });
+  }
+  tabs.forEach(function (btn, index) {
+    btn.addEventListener("click", function () { activateTab(btn); });
+    btn.addEventListener("keydown", function (e) {
+      var next = null;
+      if (e.key === "ArrowRight") next = tabs[(index + 1) % tabs.length];
+      else if (e.key === "ArrowLeft") next = tabs[(index - 1 + tabs.length) % tabs.length];
+      else if (e.key === "Home") next = tabs[0];
+      else if (e.key === "End") next = tabs[tabs.length - 1];
+      if (next) { e.preventDefault(); activateTab(next); next.focus(); }
+    });
+  });
+  var initialTab = tabs.filter(function (b) { return b.classList.contains("on"); })[0] || tabs[0];
+  if (initialTab) activateTab(initialTab);
+
+  /* ---------- localStorage 小工具 ---------- */
+  function loadLS(key, def) {
+    try { return JSON.parse(localStorage.getItem(key)) || def; } catch (e) { return def; }
+  }
+  function saveLS(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+  }
+
+  /* ---------- 30 天计划 ---------- */
+  var planBoxes = Array.prototype.slice.call(document.querySelectorAll(".plan-grid input"));
+  var barFill = document.getElementById("planBarFill");
+  var planCount = document.getElementById("planCount");
+  function renderPlan() {
+    var done = planBoxes.filter(function (b) { return b.checked; }).length;
+    if (barFill) barFill.style.width = (done / planBoxes.length * 100) + "%";
+    if (planCount) planCount.textContent = done + " / " + planBoxes.length;
+    document.querySelectorAll("[data-wk]").forEach(function (wk) {
+      var boxes = Array.prototype.slice.call(wk.querySelectorAll("input"));
+      wk.classList.toggle("done", boxes.length > 0 && boxes.every(function (b) { return b.checked; }));
+    });
+  }
+  var savedPlan = loadLS("aipm-resume-plan", []);
+  planBoxes.forEach(function (b, i) {
+    b.checked = !!savedPlan[i];
+    b.addEventListener("change", function () {
+      saveLS("aipm-resume-plan", planBoxes.map(function (x) { return x.checked; }));
+      renderPlan();
+    });
+  });
+  renderPlan();
+  var resetPlan = document.getElementById("resetPlan");
+  if (resetPlan) {
+    resetPlan.addEventListener("click", function () {
+      if (!confirm("确定清空 30 天计划的本机记录？")) return;
+      try { localStorage.removeItem("aipm-resume-plan"); } catch (e) {}
+      planBoxes.forEach(function (b) { b.checked = false; });
+      renderPlan();
+    });
+  }
+
+  /* ---------- 十项自检 ---------- */
+  var ckBoxes = Array.prototype.slice.call(document.querySelectorAll("#ckList input"));
+  var ckScore = document.getElementById("ckScore");
+  var ckVerdict = document.getElementById("ckVerdict");
+  function renderCk() {
+    var hardDone = 0, hardTotal = 0, bonusDone = 0, bonusTotal = 0;
+    ckBoxes.forEach(function (b) {
+      var hard = b.getAttribute("data-gate") === "hard";
+      if (hard) { hardTotal += 1; if (b.checked) hardDone += 1; }
+      else { bonusTotal += 1; if (b.checked) bonusDone += 1; }
+    });
+    if (ckScore) ckScore.textContent = "硬门槛 " + hardDone + "/" + hardTotal + " · 加分 " + bonusDone + "/" + bonusTotal;
+    var verdict;
+    if (hardDone <= 3) verdict = "先别投 · 回第三、四步补证据";
+    else if (hardDone === 4) verdict = "可投，边投边补";
+    else if (bonusDone <= 3) verdict = "可以投 · 继续补强";
+    else verdict = "可以投 · 把时间花在追问演练";
+    if (ckVerdict) ckVerdict.textContent = verdict;
+  }
+  var savedCheck = loadLS("aipm-resume-check", []);
+  ckBoxes.forEach(function (b, i) {
+    b.checked = !!savedCheck[i];
+    b.addEventListener("change", function () {
+      saveLS("aipm-resume-check", ckBoxes.map(function (x) { return x.checked; }));
+      renderCk();
+    });
+  });
+  renderCk();
+  var resetCheck = document.getElementById("resetCheck");
+  if (resetCheck) {
+    resetCheck.addEventListener("click", function () {
+      if (!confirm("确定清空十项自检的本机记录？")) return;
+      try { localStorage.removeItem("aipm-resume-check"); } catch (e) {}
+      ckBoxes.forEach(function (b) { b.checked = false; });
+      renderCk();
+    });
+  }
+
+  /* ---------- 打印 ---------- */
+  var printPage = document.getElementById("printPage");
+  if (printPage) printPage.addEventListener("click", function () { window.print(); });
+  var printedDetails = [];
+  var printedDims = [];
+  window.addEventListener("beforeprint", function () {
+    document.querySelectorAll("details").forEach(function (d) {
+      if (!d.open) { d.open = true; printedDetails.push(d); }
+    });
+    dims.forEach(function (d) {
+      if (!d.classList.contains("open")) { setDim(d, true); printedDims.push(d); }
+    });
+  });
+  window.addEventListener("afterprint", function () {
+    printedDetails.forEach(function (d) { d.open = false; });
+    printedDims.forEach(function (d) { setDim(d, false); });
+    printedDetails = [];
+    printedDims = [];
+    syncDimsToggle();
+  });
+
+  /* ---------- 滚动渐显（带超时兜底） ---------- */
+  var rvs = Array.prototype.slice.call(document.querySelectorAll(".rv"));
+  var reduce = false;
+  try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  if (reduce) {
+    rvs.forEach(function (el) { el.classList.add("in"); });
+  } else if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.08 });
+    rvs.forEach(function (el) { io.observe(el); });
+  } else {
+    rvs.forEach(function (el) { el.classList.add("in"); });
+  }
+  setTimeout(function () {
+    rvs.forEach(function (el) { el.classList.add("in"); });
+  }, 1200);
+})();
+</script>
+</body>
+</html>

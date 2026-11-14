@@ -1,0 +1,29 @@
+---
+// Requirement 029: global settings. The model profile editor moved out of the
+// lab because the lab, page assistant and interview all share one catalog.
+import Layout from '../../src/layouts/Layout.astro';
+import Header from '../../src/components/Header.astro';
+import '../client/lab/lab.css';
+import '../client/settings/settings.css';
+import '../client/update/update.css';
+---
+
+<Layout locale="zh-CN" title="设置 · 模型配置">
+  <Header locale="zh-CN" />
+  <main id="main-content" class="lab-page page-width settings-page">
+    <header class="lab-head">
+      <p class="eyebrow">全局配置</p>
+      <h1>设置</h1>
+      <p class="lab-lead">
+        模型档案是全局配置：Agent 实验台、随页问答、模拟面试都读这里的地址、密钥与模型 ID。密钥只保存在这台机器上，不回显、不入库。
+      </p>
+    </header>
+    <div id="settings-root" class="lab-root">
+      <p class="lab-muted">正在加载……</p>
+    </div>
+    <section id="update-root" class="settings-section"></section>
+  </main>
+  <script>
+    import '../client/settings/main.ts';
+  </script>
+</Layout>

@@ -1,0 +1,283 @@
+{
+ "version": 1,
+ "entries": {
+  "91f3f510cc4f1123d933": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Theuser asks acomputational question.Let me searchthe book—thisrelatesto contextaccumulation/ tokencost ofresending full history. Letme search.\n\nIshould searchthe book for relevantcontent (e.g., \"前缀\",\"重发\",\"上下文累积\",\"O(n²)\").\n\nLet me doboth:search bookand run python.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"每轮重发完整历史 累计 token 平方级增长\", \"top_k\": 6}",
+        "name": "search_book"
+       },
+       "id": "call_00_ved80hjqsbxex1rlr4dymyqo",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"code\": \"\\nprefix = 1000\\nper_round = 500\\nrounds = 10\\n\\ntotal = 0\\nrows = []\\nfor r in range(1, rounds + 1):\\n    ctx = prefix + per_round * (r - 1)   # 本轮输入长度：初始前缀 + 之前各轮新增\\n    total += ctx\\n    rows.append((r, ctx, total))\\n    print(f\\\"第{r:2d}轮 输入={ctx:5d} token  累计={total:6d}\\\")\\n\\nprint(\\\"总计:\\\", total)\\nprint(\\\"公式: n*L0 + d*n(n-1)/2 =\\\", rounds*prefix + per_round*rounds*(rounds-1)//2)\\nprint(\\\"第10轮输入:\\\", prefix + per_round*9)\\n\"}",
+        "name": "run_python"
+       },
+       "id": "call_01_9lvwpz2f8nuh501927dsxsq4",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 1266,
+     "cached_tokens": 1152,
+     "completion_tokens": 337,
+     "reasoning_tokens": 71
+    },
+    "latency_ms": 6071,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "d672ae13d275089e34a5": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme read the relevant section tocite properly. The KV Cachesection and \"缓存命中率\" maybe. Let me readch2 sectionsto cite the quadraticgrowth /fullhistory resending.\n\nLet me read \"kv-cache-的原理与约束\" and \"带工具调用的多轮交互agent-的核心循环\".",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2, \"section_id\": \"kv-cache-的原理与约束\"}",
+        "name": "read_section"
+       },
+       "id": "call_00_pbkkc2e96p7mu3wpb5bw2esb",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"无状态 每次重发完整历史 累计读取 token 代价 二次增长\", \"top_k\": 6}",
+        "name": "search_book"
+       },
+       "id": "call_01_0ecj0492yfpgh808mp8s5bmz",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 3096,
+     "cached_tokens": 1152,
+     "completion_tokens": 188,
+     "reasoning_tokens": 65
+    },
+    "latency_ms": 4241,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "33fe4890c5168d306e36": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme also checkwhether thebook has a sectiondiscussingthequadraticgrowth ofcumulative cache reads withrounds. Chapter 1思考题 mentions\"ReAct 循环中，累计缓存读取量随轮数近似二次方增长\". Let mesearch for it inchapter 1.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"ReAct 循环 累计缓存读取量 二次方增长 前缀缓存\", \"chapter\": 1, \"top_k\": 6}",
+        "name": "search_book"
+       },
+       "id": "call_00_sg8r8s68dgzr82fc6rv1ouny",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"缓存读取 命中 计费 无缓存 成本对比 轮数\", \"chapter\": 2, \"top_k\": 6}",
+        "name": "search_book"
+       },
+       "id": "call_01_cm88mv361fzk6cjyn8h81v2u",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 5933,
+     "cached_tokens": 3072,
+     "completion_tokens": 219,
+     "reasoning_tokens": 57
+    },
+    "latency_ms": 2442,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "a4672fe9841df5a4ca28": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme also read section\"状态更新的两种实现与缓存代价\" and\"kv-cache-与-prompt-cache两个层级的缓存\" to give accurate citationsaboutaccumulation. Actually the question isjust arithmetic. Butadding bookcontext is valuable. Let me read the状态更新 section forthe formula.\n\nActually let meread the section thatdiscusses the quadratic accumulationcost model.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2, \"section_id\": \"状态更新的两种实现与缓存代价\"}",
+        "name": "read_section"
+       },
+       "id": "call_00_k43qn69refxiuas31akdq7ha",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"chapter\": 2}",
+        "name": "list_chapters"
+       },
+       "id": "call_01_4wun9fazm8du0pcasvtvmxke",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 8327,
+     "cached_tokens": 5888,
+     "completion_tokens": 168,
+     "reasoning_tokens": 77
+    },
+    "latency_ms": 2259,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "6ac07a57bc77ffbcc7c7": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme also check chapter2 miscfor \"累计\"token计算 example，还有chapter 1 ReAct 循环部分可能有累计token 计算。搜索\"平方级\" 或 \"n(n-1)/2\"。跟\"每轮重发完整历史\"累计读取。可能书中在第1章思考题提到\"累计缓存读取量随轮数近似二次方增长\"。Maybe there's a computationin chapter 2 or chapter10. Let me search \"累计读取\"和 \"n²\".\n\nAlsomightbeasection in chapter2 about promptcache成本计算。Let me search abitmoreforrelevance,then answer.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"累计 token 数量 计算 例子 10 轮\", \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_00_4uqnp3k2btiwejbvw0t9m1ti",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"平方级 二次方 上下文长度 成本 增长\", \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_01_y9qkut85ji7qee3prkz9sak9",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 11261,
+     "cached_tokens": 8320,
+     "completion_tokens": 257,
+     "reasoning_tokens": 135
+    },
+    "latency_ms": 3515,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "254fac2c0ea975eef86e": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Nowlet me also check chapter2's section about每轮重发完整历史累计读取 token的二次增长 — maybe there isa section thatquantifies this.Let me search \"重发\" or\"重复计费\".\n\nActually there's the思考题 inch1: \"ReAct 循环中，累计缓存读取量随轮数近似二次方增长\". Let me lookat chapter 1's ReAct sectionfor cumulativecost discussion. Let me search\"累计\" in chapter1.",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"chapter\": 1, \"query\": \"累计 缓存读取量 二次方增长 每轮重发\", \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_00_tx0zvoghmnpae20m9zwc20uk",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"轨迹 不断增长 每轮 重新发送 完整历史 成本\", \"chapter\": 2, \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_01_5r49o63j0pp3imb6wecpenjh",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 14804,
+     "cached_tokens": 11136,
+     "completion_tokens": 265,
+     "reasoning_tokens": 106
+    },
+    "latency_ms": 3245,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "241d1467829fa4bb2d33": [
+   {
+    "message": {
+     "content": "",
+     "reasoning_content": "Letme also check whether the bookhas anexample computingsuchcumulative tokens. Search for 实验2-...maybe \"累计读取\" or\"平方级\". Alsochapter 1 思考题references\"累计缓存读取量随轮数近似二次方增长\". Let me searchfor a specific numericexample in chapter 2like\"第10 轮\"or \"二次\".\n\nLetme search \"缓存读取\" and\"命中token数\".",
+     "role": "assistant",
+     "tool_calls": [
+      {
+       "function": {
+        "arguments": "{\"query\": \"缓存读取量 命中 缓存 计费 线性增长\", \"top_k\": 8}",
+        "name": "search_book"
+       },
+       "id": "call_00_04ohling9eyz2x6zsxvampwj",
+       "type": "function"
+      },
+      {
+       "function": {
+        "arguments": "{\"query\": \"每轮新增 500 token 例子 计算\", \"top_k\": 5}",
+        "name": "search_book"
+       },
+       "id": "call_01_895qchp7hoo95tm9m426nv0w",
+       "type": "function"
+      }
+     ]
+    },
+    "usage": {
+     "prompt_tokens": 17915,
+     "cached_tokens": 14720,
+     "completion_tokens": 213,
+     "reasoning_tokens": 92
+    },
+    "latency_ms": 3024,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "tool_calls"
+   }
+  ],
+  "24b3850ff5beb1c989b0": [
+   {
+    "message": {
+     "content": "## 结论\n\n**10 轮累计读取 32,500 个 token**（每轮都得把完整历史重发一遍）。\n\n沙箱实跑结果：\n\n| 轮次 | 本轮输入 | 累计读取 |\n|---|---|---|\n| 1 | 1000 | 1,000 |\n| 2 | 1500 | 2,500 |\n| 3 | 2000 | 4,500 |\n| 4 | 2500 | 7,000 |\n| 5 | 3000 | 10,000 |\n| 6 | 3500 | 13,500 |\n| 7 | 4000 | 17,500 |\n| 8 | 4500 | 22,000 |\n| 9 | 5000 | 27,000 |\n| 10 | 5500 | **32,500** |\n\n## 怎么算的\n\n1. **每轮输入长度**：第 r 轮的上下文 = 初始前缀 + 之前各轮新增 = 1000 + 500×(r−1)。所以第 10 轮单轮输入是 5500 token，是首轮的 5.5 倍。\n2. **累计量公式**：累计 = n·L₀ + d·n(n−1)/2 = 10×1000 + 500×10×9/2 = 10000 + 22500 = **32500**（与逐轮累加结果一致，我在代码里做了两个口径的互相验证）。\n3. **增长形状**：单轮输入随轮数是线性增长，但累计读取量随轮数是**二次（平方）增长**——如果轮数翻倍到 20 轮，累计会涨到约 115,000，接近 10 轮的 3.5 倍，而不是 2 倍。\n\n```python\nprefix, per_round, rounds = 1000, 500, 10\ntotal = 0\nfor r in range(1, rounds + 1):\n    ctx = prefix + per_round * (r - 1)   # 本轮输入 = 前缀 + 已累积的新增\n    total += ctx\n    print(f\"第{r}轮 输入={ctx} 累计={total}\")\nprint(\"总计:\", total)\n```\n\n## 书中对应的解释\n\n这正是书里反复强调的「模型 API 是无状态的」所导致的必然后果：Agent 框架每轮都得自己把完整历史重新构造并送回去。由此带来两个层面的代价——没有缓存时是重复的前向计算，有 Prompt Cache 时则是重复的**缓存读取**（读取虽便宜，但依然按 token 计费、随轨迹长度线性累加，累计起来就是二次增长）。\n\n- 无状态与重发历史：[[ch2#带工具调用的多轮交互agent-的核心循环|模型不会“记住”上一次的对话，Agent 框架必须每次都把完整历史送回去]]\n- 无缓存时累计计算量平方级增长：[[ch2#kv-cache-的原理与约束|前缀长到 N 个 token 时要算 N 组，累计计算量与 N² 成正比]]\n- 命中缓存后仍要付读取成本：[[ch1#思考题|累计缓存读取量随轮数近似二次方增长]]\n- 缓存读取单价：[[ch2#kv-cache-与-prompt-cache两个层级的缓存|缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一]]\n\n**一点补充（不在本题计算内，属本书之外的常识）**：上面 32,500 是「按输入长度计费」的 token 数。如果开启 Prompt Cache，实际账单中只有新增部分的 prefill 按全价计费，已命中前缀部分按折扣价计（书中给的例子约十分之一），所以真实美元成本会显著低于 32,500 token 的全价——但 token 的**读取流量**仍然是 32,500，这正是「累计缓存读取量二次方增长」这一问题意识所在。\n\n## 引用\n\n- [[ch2#带工具调用的多轮交互agent-的核心循环|模型不会“记住”上一次的对话，Agent 框架必须每次都把完整历史送回去]]\n- [[ch2#kv-cache-的原理与约束|前缀长到 N 个 token 时要算 N 组，累计计算量与 N² 成正比]]\n- [[ch1#思考题|累计缓存读取量随轮数近似二次方增长]]\n- [[ch2#kv-cache-与-prompt-cache两个层级的缓存|缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一]]",
+     "reasoning_content": "Ihave enough. The bookcoversthis qualitatively: 无状态、每轮重发完整历史、累计计算量与 N² 成正比、思考题提到\"累计缓存读取量随轮数近似二次方增长\"。Let me citethose.\n\nProvideanswer:32500 tokens total. Alsomention formulaand growth:第10轮单轮 5500，累计32500，约等于n*平均.\n\nLet me cite: [[ch2#带工具调用的多轮交互agent-的核心循环|每次调用都是无状态的...必须每次都把完整历史送回去]],[[ch2#kv-cache-的原理与约束|累计计算量与 N² 成正比]], [[ch1#思考题|累计缓存读取量随轮数近似二次方增长]],[[ch2#kv-cache-与-prompt-cache两个层级的缓存|缓存读取的成本远低于首次计算]]。\n\nCareful with exactquotes: \"这就是前面所说的“每次调用都是无状态的”：模型不会“记住”上一次的对话，Agent 框架必须每次都把完整历史送回去。\" — length ok(abitlong; keep10–60 chars). I'll takea shorter segment: \"模型不会“记住”上一次的对话，Agent 框架必须每次都把完整历史送回去\"— 33chars, contiguousin original. Good.\n\n\"前缀长到 N 个 token时要算N 组，累计计算量与 N² 成正比\"— contiguous.Good.\n\n\"累计缓存读取量随轮数近似二次方增长\" — from思考题. Good.\n\n\"缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一\" — contiguous?Original:\"缓存读取的成本远低于首次计算，例如 Anthropic、DeepSeek、GPT-5 约为十分之一。\" Yes.\n\nAlsomention no cachevswithprompt cachedistinction.\n\nAlso note thatthe 500newtokens per round —第10轮输入5500.\n\nWriteanswer.",
+     "role": "assistant"
+    },
+    "usage": {
+     "prompt_tokens": 20631,
+     "cached_tokens": 17792,
+     "completion_tokens": 1421,
+     "reasoning_tokens": 415
+    },
+    "latency_ms": 11136,
+    "retries": [],
+    "model": "big-pickle",
+    "finish_reason": "stop"
+   }
+  ]
+ }
+}
